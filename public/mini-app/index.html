@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <title>Balancy</title>
+    <script>
+      (function setBalancyClientRev() {
+        var BALANCY_CLIENT_ASSET_REV = "20260512d";
+        window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
+        var link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = "/mini-app/styles.css?v=" + BALANCY_CLIENT_ASSET_REV;
+        document.head.appendChild(link);
+      })();
+    </script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar topbar-compact">
+        <div class="brand-title">Balancy</div>
+        <button id="refreshButton" class="refresh-text-btn" type="button">Обновить</button>
+      </header>
+
+      <main class="content tabbed-content">
+        <section id="screen-home" class="screen screen-active" data-screen="home">
+          <section class="card hero-card hero-balance-card">
+            <div class="hero-balance-top">
+              <div>
+                <p class="section-label">Общий баланс</p>
+                <h2 id="userName">Загрузка...</h2>
+              </div>
+              <label class="hero-currency-field">
+                <span class="hero-currency-label">Валюта</span>
+                <select
+                  id="homeReportingCurrencyInput"
+                  class="hero-currency-select"
+                  aria-label="Валюта отображения баланса"
+                ></select>
+              </label>
+            </div>
+            <div class="hero-balance-main">
+              <div class="hero-balance-copy">
+                <strong id="totalBalanceConverted">0</strong>
+                <p id="statusText" class="muted">Подключаем приложение...</p>
+                <div class="balance-trend">
+                  <span class="balance-trend-positive" id="monthlyIncomeInline">+0.00 USD</span>
+                  <span class="muted">за этот месяц</span>
+                </div>
+              </div>
+            </div>
+            <details class="currency-breakdown">
+              <summary class="currency-breakdown-summary">
+                <span class="currency-breakdown-title">Остатки по валютам</span>
+                <span class="currency-breakdown-hint muted"></span>
+              </summary>
+              <div class="currency-breakdown-inner">
+                <div id="homeBalancesByCurrencyList" class="currency-breakdown-strip"></div>
+              </div>
+            </details>
+          </section>
+
+          <section class="card compact-section-card">
+            <div class="section-header">
+              <div>
+                <p class="section-label">Счета</p>
+                <h2>Все счета</h2>
+              </div>
+              <button
+                class="text-link-button"
+                data-open-screen="accounts"
+                data-scroll-screen-top="true"
+                type="button"
+              >
+                Все счета
+              </button>
+            </div>
+            <div id="homeAccountsList" class="accounts-list"></div>
+            <div class="section-footer-note">
+              <div class="section-footer-actions">
+                <p id="ratesStatusText" class="muted secondary-status">
+                  Курсы валют еще не синхронизированы
+                </p>
+                <div class="toolbar-actions-row">
+                  <button
+                    id="syncRatesButton"
+                    class="toolbar-text-btn"
+                    type="button"
+                    title="Загрузить курсы валют"
+                  >
+                    Курсы
+                  </button>
+                  <button
+                    class="toolbar-text-btn"
+                    data-refresh-action="true"
+                    type="button"
+                    title="Обновить данные приложения"
+                  >
+                    Обновить
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card compact-section-card">
+            <div class="section-header">
+              <div>
+                <p class="section-label">Последние операции</p>
+                <h2>История</h2>
+              </div>
+              <button class="text-link-button" data-open-screen="activity" type="button">
+                Все
+              </button>
+            </div>
+            <div id="homeRecentActivityList" class="entries-list"></div>
+          </section>
+
+          <div class="hidden-summary">
+            <span id="accountsCount">0</span>
+            <span id="categoriesCount">0</span>
+            <span id="monthlyIncome">0</span>
+            <span id="monthlyExpense">0</span>
+          </div>
+        </section>
+
+        <section id="screen-accounts" class="screen" data-screen="accounts">
+          <section class="card">
+            <div class="section-header">
+              <div>
+                <p class="section-label">Счета</p>
+                <h2 id="accountsTitle">Ваши счета</h2>
+              </div>
+            </div>
+            <div id="accountsList" class="accounts-list"></div>
+          </section>
+
+          <section class="card">
+            <p id="accountFormTitle" class="section-label">Новый счет</p>
+            <form id="accountForm" class="stacked-form stacked-form--dense">
+              <label>
+                <span>Название</span>
+                <input id="nameInput" name="name" placeholder="Например: TBC card" required type="text" />
+              </label>
+
+              <label>
+                <span>Тип</span>
+                <select id="typeInput" name="type">
+                  <option value="cash">Наличные</option>
+                  <option value="card">Карта</option>
+                  <option value="crypto">Крипта</option>
+                  <option value="savings">Накопления</option>
+                  <option value="other">Другое</option>
+                </select>
+              </label>
+
+              <label>
+                <span>Валюта</span>
+                <select id="currencyInput" name="currencyCode"></select>
+              </label>
+
+              <label>
+                <span>Стартовый баланс</span>
+                <input id="balanceInput" name="balance" placeholder="0" step="0.01" type="number" />
+              </label>
+
+              <p id="accountsStatusText" class="muted form-status"></p>
+              <div class="form-actions">
+                <button id="submitButton" class="primary-button" type="button">Создать счет</button>
+                <button id="cancelAccountEditButton" class="ghost-button hidden-button" type="button">
+                  Отмена
+                </button>
+              </div>
+            </form>
+          </section>
+        </section>
+
+        <section id="screen-activity" class="screen" data-screen="activity">
+          <section class="card">
+            <div class="section-header">
+              <div>
+                <p class="section-label">Операции</p>
+                <h2>Доходы и расходы</h2>
+              </div>
+            </div>
+            <form id="entryForm" class="stacked-form">
+              <label>
+                <span>Тип операции</span>
+                <select id="entryKindInput" name="kind">
+                  <option value="expense">Расход</option>
+                  <option value="income">Доход</option>
+                </select>
+              </label>
+
+              <label>
+                <span>Счет</span>
+                <select id="entryAccountInput" name="accountId"></select>
+              </label>
+
+              <label>
+                <span>Категория</span>
+                <select id="entryCategoryInput" name="categoryId"></select>
+              </label>
+
+              <label>
+                <span>Сумма</span>
+                <input id="entryAmountInput" min="0.01" name="amount" placeholder="0" required step="0.01" type="number" />
+              </label>
+
+              <label>
+                <span>Дата и время</span>
+                <div class="native-datetime-shell">
+                  <input id="entryDateInput" name="occurredAt" required type="datetime-local" />
+                </div>
+              </label>
+
+              <label>
+                <span>Комментарий</span>
+                <input id="entryNoteInput" name="note" placeholder="Необязательно" type="text" />
+              </label>
+
+              <button id="entrySubmitButton" class="primary-button" type="button">Сохранить операцию</button>
+            </form>
+          </section>
+
+          <section class="card">
+            <div class="section-header">
+              <div>
+                <p class="section-label">Переводы</p>
+                <h2>Между счетами</h2>
+              </div>
+            </div>
+            <form id="transferForm" class="stacked-form">
+              <label>
+                <span>Со счета</span>
+                <select id="transferFromAccountInput" name="fromAccountId"></select>
+              </label>
+
+              <label>
+                <span>На счет</span>
+                <select id="transferToAccountInput" name="toAccountId"></select>
+              </label>
+
+              <label>
+                <span>Сумма списания</span>
+                <input id="transferFromAmountInput" min="0.01" name="fromAmount" placeholder="0" required step="0.01" type="number" />
+              </label>
+
+              <label>
+                <span>Сумма зачисления</span>
+                <input id="transferToAmountInput" min="0.01" name="toAmount" placeholder="Оставьте пустым для автоконвертации" step="0.01" type="number" />
+              </label>
+
+              <label>
+                <span>Дата и время</span>
+                <div class="native-datetime-shell">
+                  <input id="transferDateInput" name="occurredAt" required type="datetime-local" />
+                </div>
+              </label>
+
+              <label>
+                <span>Комментарий</span>
+                <input id="transferNoteInput" name="note" placeholder="Необязательно" type="text" />
+              </label>
+
+              <button id="transferSubmitButton" class="primary-button" type="button">Сохранить перевод</button>
+            </form>
+          </section>
+
+          <section class="card">
+            <div class="section-header">
+              <div>
+                <p class="section-label">История операций</p>
+                <h2>Последние записи</h2>
+              </div>
+            </div>
+            <div id="recentEntriesList" class="entries-list"></div>
+          </section>
+
+          <section class="card">
+            <div class="section-header">
+              <div>
+                <p class="section-label">История переводов</p>
+                <h2>Последние переводы</h2>
+              </div>
+            </div>
+            <div id="recentTransfersList" class="entries-list"></div>
+          </section>
+        </section>
+
+        <section id="screen-categories" class="screen" data-screen="categories">
+          <section class="card">
+            <div class="section-header">
+              <div>
+                <p class="section-label">Категории</p>
+                <h2>Справочник категорий</h2>
+              </div>
+            </div>
+            <div class="category-columns">
+              <div>
+                <p class="section-label">Доходы</p>
+                <div id="incomeCategoriesList" class="category-list"></div>
+              </div>
+              <div>
+                <p class="section-label">Расходы</p>
+                <div id="expenseCategoriesList" class="category-list"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <p id="categoryFormTitle" class="section-label">Новая категория</p>
+            <form id="categoryForm" class="stacked-form stacked-form--dense">
+              <label>
+                <span>Тип категории</span>
+                <select id="categoryKindInput" name="kind">
+                  <option value="expense">Расход</option>
+                  <option value="income">Доход</option>
+                </select>
+              </label>
+
+              <label>
+                <span>Название категории</span>
+                <input id="categoryNameInput" name="name" placeholder="Например: Продукты" required type="text" />
+              </label>
+
+              <div class="form-actions">
+                <button id="categorySubmitButton" class="primary-button" type="button">
+                  Создать категорию
+                </button>
+                <button id="cancelCategoryEditButton" class="ghost-button hidden-button" type="button">
+                  Отмена
+                </button>
+              </div>
+            </form>
+          </section>
+        </section>
+
+        <section id="screen-reports" class="screen" data-screen="reports">
+          <section class="card">
+            <p class="section-label">Отчет</p>
+            <form id="reportForm" class="stacked-form">
+              <label>
+                <span>Период</span>
+                <select id="reportPeriodInput" name="period">
+                  <option value="week">Неделя</option>
+                  <option value="month" selected>Месяц</option>
+                  <option value="quarter">3 месяца</option>
+                  <option value="custom">Произвольный период</option>
+                </select>
+              </label>
+
+              <label>
+                <span>Валюта отчета</span>
+                <select id="reportingCurrencyInput" name="reportingCurrency"></select>
+              </label>
+
+              <label>
+                <span>Статья (опционально)</span>
+                <select id="reportCategoryFilterInput" name="reportCategoryFilter">
+                  <option value="">Все статьи</option>
+                </select>
+              </label>
+
+              <label>
+                <span>Дата начала</span>
+                <div class="native-datetime-shell">
+                  <input id="reportStartDateInput" name="startDate" type="date" />
+                </div>
+              </label>
+
+              <label>
+                <span>Дата конца</span>
+                <div class="native-datetime-shell">
+                  <input id="reportEndDateInput" name="endDate" type="date" />
+                </div>
+              </label>
+
+              <button id="reportSubmitButton" class="primary-button" type="button">
+                Построить отчет
+              </button>
+            </form>
+          </section>
+
+          <section class="card">
+            <div class="section-header">
+              <div>
+                <p class="section-label">Результат</p>
+                <h2 id="reportTitle">Отчет за месяц</h2>
+              </div>
+            </div>
+            <div class="stats-grid compact-stats-grid">
+              <article class="stat-box stat-income">
+                <span class="summary-label">Доходы</span>
+                <div class="report-value-stack">
+                  <strong class="report-value-amount" id="reportIncomeValue">0</strong>
+                  <span class="report-value-currency" id="reportIncomeCurrency"></span>
+                </div>
+              </article>
+              <article class="stat-box stat-expense">
+                <span class="summary-label">Расходы</span>
+                <div class="report-value-stack">
+                  <strong class="report-value-amount" id="reportExpenseValue">0</strong>
+                  <span class="report-value-currency" id="reportExpenseCurrency"></span>
+                </div>
+              </article>
+              <article class="stat-box">
+                <span class="summary-label">Итог периода</span>
+                <div class="report-value-stack">
+                  <strong class="report-value-amount" id="reportNetValue">0</strong>
+                  <span class="report-value-currency" id="reportNetCurrency"></span>
+                </div>
+              </article>
+              <article class="stat-box" id="reportTransfersStatBox">
+                <span class="summary-label">Переводов</span>
+                <div class="report-value-stack report-value-stack-plain">
+                  <strong class="report-value-amount" id="reportTransfersCountValue">0</strong>
+                </div>
+              </article>
+            </div>
+
+            <div class="report-balance-box">
+              <span class="summary-label">Текущий общий баланс</span>
+              <div class="report-value-stack">
+                <strong class="report-value-amount" id="reportCurrentBalanceValue">0</strong>
+                <span class="report-value-currency" id="reportCurrentBalanceCurrency"></span>
+              </div>
+            </div>
+
+            <div class="report-categories-blocks">
+              <div>
+                <p class="section-label balance-label">Доходы по статьям</p>
+                <div id="reportIncomeCategoriesList" class="category-list"></div>
+              </div>
+              <div>
+                <p class="section-label balance-label">Расходы по статьям</p>
+                <div id="reportExpenseCategoriesList" class="category-list"></div>
+              </div>
+            </div>
+          </section>
+        </section>
+      </main>
+
+      <nav class="bottom-nav">
+        <button class="bottom-nav-button is-active" data-open-screen="home" type="button">
+          <span class="nav-icon" aria-hidden="true">
+            <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none">
+              <path d="M4 10.5L12 4L20 10.5V19A1 1 0 0 1 19 20H5A1 1 0 0 1 4 19V10.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M9 20V13H15V20" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Главная</span>
+        </button>
+        <button class="bottom-nav-button" data-open-screen="reports" type="button">
+          <span class="nav-icon" aria-hidden="true">
+            <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none">
+              <path d="M5 5V19H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 15L11 11L14 13L18 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Отчеты</span>
+        </button>
+        <button
+          id="addOperationButton"
+          class="bottom-nav-button bottom-nav-button-accent"
+          type="button"
+        >
+          <span class="nav-plus">+</span>
+        </button>
+        <button class="bottom-nav-button" data-open-screen="categories" type="button">
+          <span class="nav-icon" aria-hidden="true">
+            <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none">
+              <path d="M7 7H17L20 10V17A1 1 0 0 1 19 18H7A2 2 0 0 1 5 16V9A2 2 0 0 1 7 7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <circle cx="16.5" cy="10.5" r="1.2" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="nav-label">Категории</span>
+        </button>
+        <button class="bottom-nav-button" data-open-screen="accounts" type="button">
+          <span class="nav-icon" aria-hidden="true">
+            <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none">
+              <rect x="4" y="6" width="16" height="12" rx="2.5" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M4 10H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M8 14H10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Счета</span>
+        </button>
+      </nav>
+    </div>
+
+    <div id="entryTypeModal" class="entry-type-modal" hidden>
+      <button id="entryTypeModalBackdrop" class="entry-type-backdrop" type="button"></button>
+        <div class="entry-type-sheet">
+          <p class="section-label">Новая операция</p>
+          <h2>Что добавить?</h2>
+          <div class="entry-type-modal-grid">
+            <div class="entry-type-actions">
+              <button
+                class="entry-type-action income"
+                data-entry-kind="income"
+                type="button"
+              >
+                Доход
+              </button>
+              <button
+                class="entry-type-action expense"
+                data-entry-kind="expense"
+                type="button"
+              >
+                Расход
+              </button>
+            </div>
+            <button id="entryTypeOpenTransferButton" class="entry-type-action entry-type-transfer-wide" type="button">
+              Обмен между счетами
+            </button>
+          </div>
+          <button id="entryTypeModalClose" class="text-link-button entry-type-close" type="button">
+            Отмена
+          </button>
+        </div>
+    </div>
+
+    <script>
+      (function () {
+        function showScriptLoadFailure() {
+          var statusEl = document.getElementById("statusText");
+          var nameEl = document.getElementById("userName");
+          if (nameEl) {
+            nameEl.textContent = "Код приложения не загрузился";
+          }
+          if (statusEl) {
+            statusEl.className = "inline-error";
+            statusEl.textContent =
+              "Не удалось загрузить файл app.js по сети. Обычно это кэш Telegram, устаревший ngrok-предпросмотр или backend не того домена. Закройте мини-приложение полностью, проверьте APP_URL у бота, перезапустите сервер с последней версией кода.";
+          }
+        }
+
+        var CLIENT_ASSET_REV =
+          typeof window.__BALANCY_CLIENT_ASSET_REV === "string"
+            ? window.__BALANCY_CLIENT_ASSET_REV
+            : "20260512d";
+
+        var scriptEl = document.createElement("script");
+        scriptEl.type = "module";
+        scriptEl.src = "/mini-app/app.js?v=" + CLIENT_ASSET_REV;
+        scriptEl.onerror = showScriptLoadFailure;
+        document.body.appendChild(scriptEl);
+      })();
+    </script>
+  </body>
+</html>

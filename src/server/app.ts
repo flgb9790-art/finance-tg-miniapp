@@ -1,0 +1,604 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import express from "express";
+import { env } from "../config/env.js";
+import {
+  createAccount,
+  deleteAccount,
+  listAccounts,
+  updateAccount
+} from "../services/accounts.js";
+import {
+  createCategory,
+  deleteCategory,
+  listCategories,
+  updateCategory
+} from "../services/categories.js";
+import {
+  createEntry,
+} from "../services/entries.js";
+import {
+  getLatestExchangeRateUpdate,
+  syncExchangeRates
+} from "../services/exchange-rates.js";
+import { getCurrencyByCode, listActiveCurrencies } from "../services/currencies.js";
+import {
+  getDashboardSummary,
+  getRecentActivity,
+  getReport,
+  resolveReportRange
+} from "../services/reports.js";
+import { createTransfer } from "../services/transfers.js";
+import { registerTelegramUser } from "../services/users.js";
+import {
+  toTelegramBotUser,
+  validateTelegramWebAppInitData
+} from "../lib/telegram-webapp.js";
+import type { OperationKind } from "../shared/domain.js";
+
+const currentFilePath = fileURLToPath(import.meta.url);
+const currentDirPath = path.dirname(currentFilePath);
+const projectRootPath = path.resolve(currentDirPath, "../../");
+const publicPath = path.join(projectRootPath, "public");
+const miniAppHtmlPath = path.join(publicPath, "mini-app", "index.html");
+
+function getTelegramInitData(req: express.Request): string {
+  const headerValue = req.header("x-telegram-init-data");
+
+  if (!headerValue) {
+    throw new Error("Missing x-telegram-init-data header");
+  }
+
+  return headerValue;
+}
+
+async function authenticateMiniAppUser(req: express.Request) {
+  const initData = getTelegramInitData(req);
+  const webAppUser = validateTelegramWebAppInitData(
+    initData,
+    env.telegramBotToken
+  );
+
+  return registerTelegramUser(toTelegramBotUser(webAppUser));
+}
+
+async function resolveReportingCurrency(req: express.Request): Promise<string> {
+  const requestedCurrency =
+    typeof req.query.reportingCurrency === "string"
+      ? req.query.reportingCurrency.trim().toUpperCase()
+      : env.reportingCurrency;
+
+  const currency = await getCurrencyByCode(requestedCurrency);
+
+  if (!currency) {
+    throw new Error("Reporting currency is invalid");
+  }
+
+  return currency.code;
+}
+
+export function createHttpApp(): express.Express {
+  const app = express();
+
+  app.use(express.json());
+  app.use(
+    express.static(publicPath, {
+      setHeaders(res, absolutePathOnDisk) {
+        const posixPath = absolutePathOnDisk.replaceAll("\\", "/");
+        if (posixPath.includes("/mini-app/")) {
+          res.setHeader(
+            "Cache-Control",
+            "private, no-cache, no-store, max-age=0, must-revalidate"
+          );
+        }
+      }
+    })
+  );
+
+  app.get("/health", (_req, res) => {
+    res.json({ ok: true });
+  });
+
+  app.get("/mini-app", (_req, res) => {
+    res.setHeader(
+      "Cache-Control",
+      "private, no-cache, no-store, max-age=0, must-revalidate"
+    );
+    res.sendFile(miniAppHtmlPath);
+  });
+
+  app.get("/api/bootstrap", async (req, res) => {
+    try {
+      const appUser = await authenticateMiniAppUser(req);
+      const reportingCurrency = await resolveReportingCurrency(req);
+      const accounts = await listAccounts(appUser.id);
+      const categories = await listCategories(appUser.id);
+      const currencies = await listActiveCurrencies();
+      const activity = await getRecentActivity(appUser.id);
+      let summary = null;
+      let report = null;
+
+      try {
+        summary = await getDashboardSummary(appUser.id, reportingCurrency);
+      } catch (error) {
+        console.error("Failed to build dashboard summary", error);
+      }
+
+      try {
+        const reportRange = resolveReportRange("month");
+        report = await getReport({
+          userId: appUser.id,
+          period: "month",
+          startDate: reportRange.startDate,
+          endDate: reportRange.endDate,
+          reportingCurrency
+        });
+      } catch (error) {
+        console.error("Failed to build default report", error);
+      }
+
+      res.json({
+        user: appUser,
+        accounts,
+        categories,
+        currencies,
+        recentEntries: activity.recentEntries,
+        recentTransfers: activity.recentTransfers,
+        summary,
+        report
+      });
+    } catch (error) {
+      console.error("Failed to bootstrap mini app", error);
+
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Failed to bootstrap mini app"
+      });
+    }
+  });
+
+  app.post("/api/accounts", async (req, res) => {
+    try {
+      const appUser = await authenticateMiniAppUser(req);
+
+      const name =
+        typeof req.body?.name === "string" ? req.body.name.trim() : "";
+      const type =
+        typeof req.body?.type === "string" ? req.body.type.trim() : "";
+      const currencyCode =
+        typeof req.body?.currencyCode === "string"
+          ? req.body.currencyCode.trim().toUpperCase()
+          : "";
+      const balance = Number(req.body?.balance ?? 0);
+
+      if (!name) {
+        res.status(400).json({ error: "Account name is required" });
+        return;
+      }
+
+      if (!["cash", "card", "crypto", "savings", "other"].includes(type)) {
+        res.status(400).json({ error: "Account type is invalid" });
+        return;
+      }
+
+      if (!currencyCode) {
+        res.status(400).json({ error: "Currency is required" });
+        return;
+      }
+
+      const currency = await getCurrencyByCode(currencyCode);
+
+      if (!currency) {
+        res.status(400).json({ error: "Currency code is invalid" });
+        return;
+      }
+
+      if (Number.isNaN(balance)) {
+        res.status(400).json({ error: "Balance must be a number" });
+        return;
+      }
+
+      const account = await createAccount({
+        userId: appUser.id,
+        name,
+        type: type as "cash" | "card" | "crypto" | "savings" | "other",
+        currencyCode,
+        balance
+      });
+
+      res.status(201).json({ account });
+    } catch (error) {
+      console.error("Failed to create account from mini app", error);
+
+      res.status(400).json({
+        error:
+          error instanceof Error ? error.message : "Failed to create account"
+      });
+    }
+  });
+
+  app.patch("/api/accounts/:accountId", async (req, res) => {
+    try {
+      const appUser = await authenticateMiniAppUser(req);
+      const accountId =
+        typeof req.params.accountId === "string" ? req.params.accountId.trim() : "";
+      const name =
+        typeof req.body?.name === "string" ? req.body.name.trim() : "";
+      const type =
+        typeof req.body?.type === "string" ? req.body.type.trim() : "";
+      const currencyCode =
+        typeof req.body?.currencyCode === "string"
+          ? req.body.currencyCode.trim().toUpperCase()
+          : "";
+      const balance = Number(req.body?.balance ?? 0);
+
+      if (!accountId) {
+        res.status(400).json({ error: "Account id is required" });
+        return;
+      }
+
+      if (!name) {
+        res.status(400).json({ error: "Account name is required" });
+        return;
+      }
+
+      if (!["cash", "card", "crypto", "savings", "other"].includes(type)) {
+        res.status(400).json({ error: "Account type is invalid" });
+        return;
+      }
+
+      if (!currencyCode) {
+        res.status(400).json({ error: "Currency is required" });
+        return;
+      }
+
+      const currency = await getCurrencyByCode(currencyCode);
+
+      if (!currency) {
+        res.status(400).json({ error: "Currency code is invalid" });
+        return;
+      }
+
+      if (Number.isNaN(balance)) {
+        res.status(400).json({ error: "Balance must be a number" });
+        return;
+      }
+
+      const account = await updateAccount({
+        accountId,
+        userId: appUser.id,
+        name,
+        type: type as "cash" | "card" | "crypto" | "savings" | "other",
+        currencyCode,
+        balance
+      });
+
+      res.json({ account });
+    } catch (error) {
+      console.error("Failed to update account from mini app", error);
+
+      res.status(400).json({
+        error:
+          error instanceof Error ? error.message : "Failed to update account"
+      });
+    }
+  });
+
+  app.delete("/api/accounts/:accountId", async (req, res) => {
+    try {
+      const appUser = await authenticateMiniAppUser(req);
+      const accountId =
+        typeof req.params.accountId === "string" ? req.params.accountId.trim() : "";
+
+      if (!accountId) {
+        res.status(400).json({ error: "Account id is required" });
+        return;
+      }
+
+      await deleteAccount(accountId, appUser.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Failed to delete account from mini app", error);
+
+      const message =
+        error instanceof Error ? error.message : "Failed to delete account";
+      const normalizedMessage = message.toLowerCase();
+
+      res.status(400).json({
+        error:
+          normalizedMessage.includes("foreign key") ||
+          normalizedMessage.includes("on delete restrict")
+            ? "Нельзя удалить счет, пока он используется в операциях или переводах."
+            : message
+      });
+    }
+  });
+
+  app.post("/api/categories", async (req, res) => {
+    try {
+      const appUser = await authenticateMiniAppUser(req);
+      const name =
+        typeof req.body?.name === "string" ? req.body.name.trim() : "";
+      const kind =
+        typeof req.body?.kind === "string" ? req.body.kind.trim() : "";
+
+      if (!name) {
+        res.status(400).json({ error: "Category name is required" });
+        return;
+      }
+
+      if (!["income", "expense"].includes(kind)) {
+        res.status(400).json({ error: "Category kind is invalid" });
+        return;
+      }
+
+      const category = await createCategory({
+        userId: appUser.id,
+        kind: kind as OperationKind,
+        name
+      });
+
+      res.status(201).json({ category });
+    } catch (error) {
+      console.error("Failed to create category from mini app", error);
+
+      res.status(400).json({
+        error:
+          error instanceof Error ? error.message : "Failed to create category"
+      });
+    }
+  });
+
+  app.patch("/api/categories/:categoryId", async (req, res) => {
+    try {
+      const appUser = await authenticateMiniAppUser(req);
+      const categoryId =
+        typeof req.params.categoryId === "string"
+          ? req.params.categoryId.trim()
+          : "";
+      const name =
+        typeof req.body?.name === "string" ? req.body.name.trim() : "";
+      const kind =
+        typeof req.body?.kind === "string" ? req.body.kind.trim() : "";
+
+      if (!categoryId) {
+        res.status(400).json({ error: "Category id is required" });
+        return;
+      }
+
+      if (!name) {
+        res.status(400).json({ error: "Category name is required" });
+        return;
+      }
+
+      if (!["income", "expense"].includes(kind)) {
+        res.status(400).json({ error: "Category kind is invalid" });
+        return;
+      }
+
+      const category = await updateCategory({
+        userId: appUser.id,
+        categoryId,
+        name,
+        kind: kind as OperationKind
+      });
+
+      res.json({ category });
+    } catch (error) {
+      console.error("Failed to update category from mini app", error);
+
+      res.status(400).json({
+        error:
+          error instanceof Error ? error.message : "Failed to update category"
+      });
+    }
+  });
+
+  app.delete("/api/categories/:categoryId", async (req, res) => {
+    try {
+      const appUser = await authenticateMiniAppUser(req);
+      const categoryId =
+        typeof req.params.categoryId === "string"
+          ? req.params.categoryId.trim()
+          : "";
+
+      if (!categoryId) {
+        res.status(400).json({ error: "Category id is required" });
+        return;
+      }
+
+      await deleteCategory(categoryId, appUser.id);
+
+      res.status(204).send();
+    } catch (error) {
+      console.error("Failed to delete category from mini app", error);
+
+      res.status(400).json({
+        error:
+          error instanceof Error ? error.message : "Failed to delete category"
+      });
+    }
+  });
+
+  app.post("/api/entries", async (req, res) => {
+    try {
+      const appUser = await authenticateMiniAppUser(req);
+      const kind =
+        typeof req.body?.kind === "string" ? req.body.kind.trim() : "";
+      const accountId =
+        typeof req.body?.accountId === "string" ? req.body.accountId.trim() : "";
+      const categoryId =
+        typeof req.body?.categoryId === "string"
+          ? req.body.categoryId.trim()
+          : "";
+      const amount = Number(req.body?.amount ?? 0);
+      const note =
+        typeof req.body?.note === "string" && req.body.note.trim()
+          ? req.body.note.trim()
+          : null;
+      const occurredAt =
+        typeof req.body?.occurredAt === "string" && req.body.occurredAt.trim()
+          ? req.body.occurredAt.trim()
+          : new Date().toISOString();
+
+      if (!["income", "expense"].includes(kind)) {
+        res.status(400).json({ error: "Operation kind is invalid" });
+        return;
+      }
+
+      if (!accountId) {
+        res.status(400).json({ error: "Account is required" });
+        return;
+      }
+
+      if (!categoryId) {
+        res.status(400).json({ error: "Category is required" });
+        return;
+      }
+
+      if (Number.isNaN(amount) || amount <= 0) {
+        res.status(400).json({ error: "Amount must be greater than 0" });
+        return;
+      }
+
+      const entry = await createEntry({
+        userId: appUser.id,
+        kind: kind as OperationKind,
+        accountId,
+        categoryId,
+        amount,
+        note,
+        occurredAt
+      });
+
+      res.status(201).json({ entry });
+    } catch (error) {
+      console.error("Failed to create entry from mini app", error);
+
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Failed to create entry"
+      });
+    }
+  });
+
+  app.post("/api/transfers", async (req, res) => {
+    try {
+      const appUser = await authenticateMiniAppUser(req);
+      const fromAccountId =
+        typeof req.body?.fromAccountId === "string"
+          ? req.body.fromAccountId.trim()
+          : "";
+      const toAccountId =
+        typeof req.body?.toAccountId === "string"
+          ? req.body.toAccountId.trim()
+          : "";
+      const fromAmount = Number(req.body?.fromAmount ?? 0);
+      const toAmount =
+        req.body?.toAmount === null || req.body?.toAmount === undefined || req.body?.toAmount === ""
+          ? null
+          : Number(req.body?.toAmount);
+      const note =
+        typeof req.body?.note === "string" && req.body.note.trim()
+          ? req.body.note.trim()
+          : null;
+      const occurredAt =
+        typeof req.body?.occurredAt === "string" && req.body.occurredAt.trim()
+          ? req.body.occurredAt.trim()
+          : new Date().toISOString();
+
+      if (!fromAccountId || !toAccountId) {
+        res.status(400).json({ error: "Both accounts are required" });
+        return;
+      }
+
+      if (Number.isNaN(fromAmount) || fromAmount <= 0) {
+        res.status(400).json({ error: "Transfer amount must be greater than 0" });
+        return;
+      }
+
+      if (toAmount !== null && (Number.isNaN(toAmount) || toAmount <= 0)) {
+        res.status(400).json({ error: "Target amount must be greater than 0" });
+        return;
+      }
+
+      const transfer = await createTransfer({
+        userId: appUser.id,
+        fromAccountId,
+        toAccountId,
+        fromAmount,
+        toAmount,
+        note,
+        occurredAt
+      });
+
+      res.status(201).json({ transfer });
+    } catch (error) {
+      console.error("Failed to create transfer from mini app", error);
+
+      res.status(400).json({
+        error:
+          error instanceof Error ? error.message : "Failed to create transfer"
+      });
+    }
+  });
+
+  app.get("/api/reports", async (req, res) => {
+    try {
+      const appUser = await authenticateMiniAppUser(req);
+      const period =
+        typeof req.query.period === "string" ? req.query.period : "month";
+      const startDate =
+        typeof req.query.startDate === "string" ? req.query.startDate : undefined;
+      const endDate =
+        typeof req.query.endDate === "string" ? req.query.endDate : undefined;
+      const reportingCurrency = await resolveReportingCurrency(req);
+
+      const categoryIdRaw =
+        typeof req.query.categoryId === "string" ? req.query.categoryId.trim() : "";
+      const categoryId = categoryIdRaw.length > 0 ? categoryIdRaw : undefined;
+
+      if (!["week", "month", "quarter", "custom"].includes(period)) {
+        res.status(400).json({ error: "Report period is invalid" });
+        return;
+      }
+
+      const report = await getReport({
+        userId: appUser.id,
+        period: period as "week" | "month" | "quarter" | "custom",
+        startDate,
+        endDate,
+        reportingCurrency,
+        categoryId
+      });
+
+      res.json({ report });
+    } catch (error) {
+      console.error("Failed to load report", error);
+
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Failed to load report"
+      });
+    }
+  });
+
+  app.post("/api/exchange-rates/sync", async (req, res) => {
+    try {
+      await authenticateMiniAppUser(req);
+      const result = await syncExchangeRates();
+      const ratesUpdatedAt = await getLatestExchangeRateUpdate();
+
+      res.json({
+        ...result,
+        ratesUpdatedAt
+      });
+    } catch (error) {
+      console.error("Failed to sync exchange rates", error);
+
+      res.status(400).json({
+        error:
+          error instanceof Error ? error.message : "Failed to sync exchange rates"
+      });
+    }
+  });
+
+  return app;
+}

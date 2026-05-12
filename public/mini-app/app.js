@@ -1,0 +1,2262 @@
+const tg = window.Telegram?.WebApp;
+
+const userNameElement = document.getElementById("userName");
+const statusTextElement = document.getElementById("statusText");
+const accountsTitleElement = document.getElementById("accountsTitle");
+const accountFormTitleElement = document.getElementById("accountFormTitle");
+const accountsCountElement = document.getElementById("accountsCount");
+const categoriesCountElement = document.getElementById("categoriesCount");
+const monthlyIncomeElement = document.getElementById("monthlyIncome");
+const monthlyExpenseElement = document.getElementById("monthlyExpense");
+const monthlyIncomeInlineElement = document.getElementById("monthlyIncomeInline");
+const totalBalanceConvertedElement = document.getElementById("totalBalanceConverted");
+const homeReportingCurrencyInput = document.getElementById("homeReportingCurrencyInput");
+const homeBalancesByCurrencyListElement = document.getElementById("homeBalancesByCurrencyList");
+const ratesStatusTextElement = document.getElementById("ratesStatusText");
+const homeAccountsListElement = document.getElementById("homeAccountsList");
+const accountsListElement = document.getElementById("accountsList");
+const incomeCategoriesListElement = document.getElementById("incomeCategoriesList");
+const expenseCategoriesListElement = document.getElementById("expenseCategoriesList");
+const recentEntriesListElement = document.getElementById("recentEntriesList");
+const recentTransfersListElement = document.getElementById("recentTransfersList");
+const homeRecentActivityListElement = document.getElementById("homeRecentActivityList");
+const refreshButton = document.getElementById("refreshButton");
+const syncRatesButton = document.getElementById("syncRatesButton");
+const accountForm = document.getElementById("accountForm");
+const submitButton = document.getElementById("submitButton");
+const cancelAccountEditButton = document.getElementById("cancelAccountEditButton");
+const accountsStatusTextElement = document.getElementById("accountsStatusText");
+const currencyInput = document.getElementById("currencyInput");
+const categoryForm = document.getElementById("categoryForm");
+const categorySubmitButton = document.getElementById("categorySubmitButton");
+const categoryFormTitleElement = document.getElementById("categoryFormTitle");
+const cancelCategoryEditButton = document.getElementById("cancelCategoryEditButton");
+const swipeDelegationRoot = document.querySelector("main.tabbed-content");
+const entryForm = document.getElementById("entryForm");
+const entrySubmitButton = document.getElementById("entrySubmitButton");
+const entryKindInput = document.getElementById("entryKindInput");
+const entryAccountInput = document.getElementById("entryAccountInput");
+const entryCategoryInput = document.getElementById("entryCategoryInput");
+const entryDateInput = document.getElementById("entryDateInput");
+const transferForm = document.getElementById("transferForm");
+const transferSubmitButton = document.getElementById("transferSubmitButton");
+const transferFromAccountInput = document.getElementById("transferFromAccountInput");
+const transferToAccountInput = document.getElementById("transferToAccountInput");
+const transferDateInput = document.getElementById("transferDateInput");
+const reportForm = document.getElementById("reportForm");
+const reportSubmitButton = document.getElementById("reportSubmitButton");
+const reportPeriodInput = document.getElementById("reportPeriodInput");
+const reportingCurrencyInput = document.getElementById("reportingCurrencyInput");
+const reportCategoryFilterInput = document.getElementById("reportCategoryFilterInput");
+const reportStartDateInput = document.getElementById("reportStartDateInput");
+const reportEndDateInput = document.getElementById("reportEndDateInput");
+const reportTitleElement = document.getElementById("reportTitle");
+const reportIncomeValueElement = document.getElementById("reportIncomeValue");
+const reportIncomeCurrencyElement = document.getElementById("reportIncomeCurrency");
+const reportExpenseValueElement = document.getElementById("reportExpenseValue");
+const reportExpenseCurrencyElement = document.getElementById("reportExpenseCurrency");
+const reportNetValueElement = document.getElementById("reportNetValue");
+const reportNetCurrencyElement = document.getElementById("reportNetCurrency");
+const reportTransfersCountValueElement = document.getElementById("reportTransfersCountValue");
+const reportCurrentBalanceValueElement = document.getElementById("reportCurrentBalanceValue");
+const reportCurrentBalanceCurrencyElement = document.getElementById("reportCurrentBalanceCurrency");
+const reportIncomeCategoriesListElement = document.getElementById("reportIncomeCategoriesList");
+const reportExpenseCategoriesListElement = document.getElementById("reportExpenseCategoriesList");
+const reportTransfersStatBox = document.getElementById("reportTransfersStatBox");
+const addOperationButton = document.getElementById("addOperationButton");
+const entryTypeModalElement = document.getElementById("entryTypeModal");
+const entryTypeModalBackdrop = document.getElementById("entryTypeModalBackdrop");
+const entryTypeModalCloseButton = document.getElementById("entryTypeModalClose");
+const entryTypeActionButtons = Array.from(document.querySelectorAll("[data-entry-kind]"));
+const screenElements = Array.from(document.querySelectorAll(".screen"));
+const navButtons = Array.from(document.querySelectorAll(".bottom-nav-button"));
+const openScreenButtons = Array.from(document.querySelectorAll("[data-open-screen]"));
+
+const state = {
+  user: null,
+  accounts: [],
+  categories: [],
+  currencies: [],
+  recentEntries: [],
+  recentTransfers: [],
+  summary: null,
+  report: null,
+  editingAccountId: null,
+  editingCategoryId: null
+};
+
+(function noteClientBundleEvaluated() {
+  try {
+    if (statusTextElement && statusTextElement.textContent.includes("Подключаем")) {
+      statusTextElement.textContent =
+        "Код интерфейса загружен, ждём Telegram и ответ сервера…";
+    }
+  } catch {
+    //
+  }
+})();
+
+const POPULAR_CURRENCY_CODES = [
+  "USD",
+  "EUR",
+  "GBP",
+  "PLN",
+  "BYN",
+  "RUB",
+  "GEL",
+  "UAH",
+  "TRY",
+  "CHF"
+];
+
+const FALLBACK_CURRENCIES = [
+  { code: "AED", name: "UAE Dirham", symbol: "AED" },
+  { code: "AMD", name: "Armenian Dram", symbol: "AMD" },
+  { code: "AUD", name: "Australian Dollar", symbol: "AUD" },
+  { code: "AZN", name: "Azerbaijani Manat", symbol: "AZN" },
+  { code: "BGN", name: "Bulgarian Lev", symbol: "BGN" },
+  { code: "BRL", name: "Brazilian Real", symbol: "BRL" },
+  { code: "USD", name: "US Dollar", symbol: "$" },
+  { code: "CAD", name: "Canadian Dollar", symbol: "CAD" },
+  { code: "CNY", name: "Chinese Yuan", symbol: "CNY" },
+  { code: "CZK", name: "Czech Koruna", symbol: "CZK" },
+  { code: "DKK", name: "Danish Krone", symbol: "DKK" },
+  { code: "EUR", name: "Euro", symbol: "EUR" },
+  { code: "HKD", name: "Hong Kong Dollar", symbol: "HKD" },
+  { code: "HUF", name: "Hungarian Forint", symbol: "HUF" },
+  { code: "INR", name: "Indian Rupee", symbol: "INR" },
+  { code: "JPY", name: "Japanese Yen", symbol: "JPY" },
+  { code: "KGS", name: "Kyrgyzstani Som", symbol: "KGS" },
+  { code: "KZT", name: "Kazakhstani Tenge", symbol: "KZT" },
+  { code: "MDL", name: "Moldovan Leu", symbol: "MDL" },
+  { code: "MXN", name: "Mexican Peso", symbol: "MXN" },
+  { code: "NOK", name: "Norwegian Krone", symbol: "NOK" },
+  { code: "NZD", name: "New Zealand Dollar", symbol: "NZD" },
+  { code: "RUB", name: "Russian Ruble", symbol: "RUB" },
+  { code: "GEL", name: "Georgian Lari", symbol: "GEL" },
+  { code: "PLN", name: "Polish Zloty", symbol: "PLN" },
+  { code: "BYN", name: "Belarusian Ruble", symbol: "BYN" },
+  { code: "GBP", name: "British Pound", symbol: "GBP" },
+  { code: "RON", name: "Romanian Leu", symbol: "RON" },
+  { code: "SEK", name: "Swedish Krona", symbol: "SEK" },
+  { code: "SGD", name: "Singapore Dollar", symbol: "SGD" },
+  { code: "THB", name: "Thai Baht", symbol: "THB" },
+  { code: "UAH", name: "Ukrainian Hryvnia", symbol: "UAH" },
+  { code: "TRY", name: "Turkish Lira", symbol: "TRY" },
+  { code: "CHF", name: "Swiss Franc", symbol: "CHF" },
+  { code: "UZS", name: "Uzbekistani Som", symbol: "UZS" },
+  { code: "ZAR", name: "South African Rand", symbol: "ZAR" }
+];
+
+function normalizeCurrency(currency) {
+  if (!currency || typeof currency !== "object") {
+    return null;
+  }
+
+  const code = String(currency.code ?? currency.currency_code ?? "").trim().toUpperCase();
+
+  if (!code) {
+    return null;
+  }
+
+  const name = String(currency.name ?? currency.currency_name ?? code).trim() || code;
+  const symbol = String(currency.symbol ?? currency.currency_symbol ?? "").trim();
+
+  return { code, name, symbol };
+}
+
+let blurSnapTimer = null;
+
+function isFormTextField(element) {
+  if (!element || element.nodeType !== 1) {
+    return false;
+  }
+
+  const tag = element.tagName;
+
+  if (tag === "TEXTAREA") {
+    return true;
+  }
+
+  if (tag === "SELECT") {
+    return true;
+  }
+
+  if (tag !== "INPUT") {
+    return false;
+  }
+
+  const type = (element.getAttribute("type") || "text").toLowerCase();
+
+  return ![
+    "button",
+    "submit",
+    "reset",
+    "hidden",
+    "checkbox",
+    "radio",
+    "file",
+    "image"
+  ].includes(type);
+}
+
+/**
+ * Состояние «клавиатура / поле в фокусе» только по activeElement.
+ * В Telegram WebView на iOS высота visualViewport может оставаться заниженной
+ * ещё несколько секунд после закрытия клавиатуры — если ориентироваться на неё,
+ * нижнее меню не появляется долгое время.
+ */
+function syncViewportMetrics() {
+  document.body.classList.toggle(
+    "keyboard-open",
+    isFormTextField(document.activeElement)
+  );
+}
+
+function scheduleScrollFieldIntoView(element) {
+  if (!element || typeof element.scrollIntoView !== "function") {
+    return;
+  }
+
+  const run = () => {
+    element.scrollIntoView({
+      block: "center",
+      behavior: "smooth",
+      inline: "nearest"
+    });
+  };
+
+  window.requestAnimationFrame(run);
+  window.setTimeout(run, 120);
+  window.setTimeout(run, 360);
+}
+
+function getAvailableCurrencies() {
+  const source = state.currencies.length > 0 ? state.currencies : FALLBACK_CURRENCIES;
+  const normalized = source
+    .map((currency) => normalizeCurrency(currency))
+    .filter(Boolean);
+
+  if (normalized.length === 0) {
+    return [...FALLBACK_CURRENCIES];
+  }
+
+  const uniqueCurrencies = normalized.filter(
+    (currency, index, array) => array.findIndex((item) => item.code === currency.code) === index
+  );
+
+  return uniqueCurrencies.sort((a, b) => a.code.localeCompare(b.code, "en"));
+}
+
+function safeRenderStep(label, callback) {
+  try {
+    callback();
+  } catch (error) {
+    console.error(`UI render failed: ${label}`, error);
+  }
+}
+
+function getStoredReportingCurrency() {
+  try {
+    return window.localStorage.getItem("reportingCurrency") ?? "USD";
+  } catch {
+    return "USD";
+  }
+}
+
+function setStoredReportingCurrency(currencyCode) {
+  try {
+    window.localStorage.setItem("reportingCurrency", currencyCode);
+  } catch {
+    //
+  }
+}
+
+function currentReportingCurrencySelection() {
+  const fromHome = homeReportingCurrencyInput?.value?.trim();
+  if (fromHome) {
+    return fromHome;
+  }
+
+  const fromReport = reportingCurrencyInput.value?.trim();
+  if (fromReport) {
+    return fromReport;
+  }
+
+  return getStoredReportingCurrency();
+}
+
+function selectHasCurrencyCode(selectEl, code) {
+  if (!selectEl || !code) {
+    return false;
+  }
+
+  return Array.from(selectEl.options).some((option) => option.value === code);
+}
+
+function syncReportingCurrencyInputs(nextCode) {
+  if (!nextCode) {
+    return;
+  }
+
+  if (selectHasCurrencyCode(reportingCurrencyInput, nextCode)) {
+    reportingCurrencyInput.value = nextCode;
+  }
+
+  if (selectHasCurrencyCode(homeReportingCurrencyInput, nextCode)) {
+    homeReportingCurrencyInput.value = nextCode;
+  }
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function stripHtmlToSnippet(html) {
+  return String(html)
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function setStatus(text, type = "muted") {
+  statusTextElement.textContent = text;
+  statusTextElement.className =
+    type === "error" ? "inline-error" : type === "success" ? "inline-success" : "muted";
+}
+
+function setAccountsStatus(text, type = "muted") {
+  if (!accountsStatusTextElement) {
+    return;
+  }
+
+  accountsStatusTextElement.textContent = text;
+  accountsStatusTextElement.className =
+    type === "error"
+      ? "inline-error form-status"
+      : type === "success"
+        ? "inline-success form-status"
+        : "muted form-status";
+}
+
+function formatMoneyAmount(value) {
+  const number = Number(value ?? 0);
+
+  return new Intl.NumberFormat("ru-RU", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(number);
+}
+
+function formatMoney(value, currencyCode = "") {
+  const formatted = formatMoneyAmount(value);
+
+  return currencyCode ? `${formatted} ${currencyCode}` : formatted;
+}
+
+function formatEntryAmountStackHtml(prefix, amount, currencyCode, modifierClass) {
+  const amountText = escapeHtml(`${prefix}${formatMoneyAmount(amount)}`);
+  const currencyText = escapeHtml(currencyCode || "");
+
+  return `<div class="entry-amount-stack ${modifierClass}">
+    <span class="entry-amount-value">${amountText}</span>
+    <span class="entry-amount-currency">${currencyText}</span>
+  </div>`;
+}
+
+function formatTransferAmountStackHtml(transfer) {
+  const fromAmount = escapeHtml(formatMoneyAmount(transfer.from_amount));
+  const fromCur = escapeHtml(transfer.from_currency_code || "");
+  const toAmount = escapeHtml(formatMoneyAmount(transfer.to_amount));
+  const toCur = escapeHtml(transfer.to_currency_code || "");
+
+  return `<div class="entry-amount-stack entry-amount-transfer entry-amount-transfer-compact">
+    <div class="entry-transfer-inline-row entry-transfer-sum-row">
+      <span class="entry-amount-value">${fromAmount}</span>
+      <span class="entry-transfer-dash" aria-hidden="true">→</span>
+      <span class="entry-amount-value">${toAmount}</span>
+    </div>
+    <div class="entry-transfer-inline-row entry-transfer-ccy-row">
+      <span class="entry-amount-currency">${fromCur}</span>
+      <span class="entry-transfer-dash-soft" aria-hidden="true">→</span>
+      <span class="entry-amount-currency">${toCur}</span>
+    </div>
+  </div>`;
+}
+
+const ACCOUNT_EDIT_ICON_SVG = `<svg class="icon-action-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <path d="M4 20h4l10.5-10.5a2.12 2.12 0 0 0-3-3L5 17v3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+  <path d="m13.5 6.5 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+</svg>`;
+
+const ACCOUNT_DELETE_ICON_SVG = `<svg class="icon-action-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+  <path d="M5 7h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+  <path d="M8 7l.9 12.1A2 2 0 0 0 10.9 21h2.2a2 2 0 0 0 2-1.9L16 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+</svg>`;
+
+function getInitData() {
+  const value = tg?.initData ?? window.Telegram?.WebApp?.initData ?? "";
+  return typeof value === "string" ? value.trim() : "";
+}
+
+async function waitForTelegramInitData(maxMs = 12000, stepMs = 50) {
+  const deadline = Date.now() + maxMs;
+
+  while (Date.now() < deadline) {
+    const value = getInitData();
+
+    if (value) {
+      return value;
+    }
+
+    await new Promise((resolve) => {
+      window.setTimeout(resolve, stepMs);
+    });
+  }
+
+  return "";
+}
+
+function formatType(type) {
+  const labels = {
+    cash: "Наличные",
+    card: "Карта",
+    crypto: "Крипта",
+    savings: "Накопления",
+    other: "Другое"
+  };
+
+  return labels[type] ?? type;
+}
+
+function formatKind(kind) {
+  return kind === "income" ? "Доход" : "Расход";
+}
+
+function getAccountTypeIcon(type) {
+  const icons = {
+    cash: `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M4 8.5C4 7.67 4.67 7 5.5 7H18.5C19.33 7 20 7.67 20 8.5V15.5C20 16.33 19.33 17 18.5 17H5.5C4.67 17 4 16.33 4 15.5V8.5Z" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M7 12H11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="16.5" cy="12" r="1.5" fill="currentColor"/>
+      </svg>
+    `,
+    card: `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="3.5" y="6.5" width="17" height="11" rx="2.5" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M3.5 10H20.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M7 14H10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    `,
+    crypto: `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 4V20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M8.5 7.5H13.5C15.16 7.5 16.5 8.84 16.5 10.5C16.5 12.16 15.16 13.5 13.5 13.5H8.5H14C15.93 13.5 17.5 15.07 17.5 17C17.5 18.93 15.93 20.5 14 20.5H8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `,
+    savings: `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M5 10.5C5 8.01 7.01 6 9.5 6H14.5C16.99 6 19 8.01 19 10.5V15.5C19 17.43 17.43 19 15.5 19H8.5C6.57 19 5 17.43 5 15.5V10.5Z" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M9 12H15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M12 9V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    `,
+    other: `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M9.5 12H14.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    `
+  };
+
+  return icons[type] ?? icons.other;
+}
+
+function getEntryIcon(kind) {
+  const icons = {
+    income: `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 18V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M8 10L12 6L16 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `,
+    expense: `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 6V18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M8 14L12 18L16 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `,
+    transfer: `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M6 8H18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M14 4L18 8L14 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M18 16H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M10 12L6 16L10 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `
+  };
+
+  return icons[kind] ?? icons.transfer;
+}
+
+function formatReportPeriod(period) {
+  const labels = {
+    week: "неделю",
+    month: "месяц",
+    quarter: "3 месяца",
+    custom: "выбранный период"
+  };
+
+  return labels[period] ?? "период";
+}
+
+function formatDateTime(value) {
+  return new Date(value).toLocaleString("ru-RU");
+}
+
+function getCurrentLocalDateTimeValue() {
+  const now = new Date();
+  const timezoneOffsetInMs = now.getTimezoneOffset() * 60 * 1000;
+  return new Date(now.getTime() - timezoneOffsetInMs).toISOString().slice(0, 16);
+}
+
+function getCurrentLocalDateValue() {
+  return getCurrentLocalDateTimeValue().slice(0, 10);
+}
+
+function toIsoDate(localDateTime) {
+  return new Date(localDateTime).toISOString();
+}
+
+function toDateRangeStart(dateValue) {
+  return `${dateValue}T00:00`;
+}
+
+function toDateRangeEnd(dateValue) {
+  return `${dateValue}T23:59`;
+}
+
+function toggleReportDateInputs() {
+  const isCustom = reportPeriodInput.value === "custom";
+  reportStartDateInput.disabled = !isCustom;
+  reportEndDateInput.disabled = !isCustom;
+}
+
+function formatCurrencyOption(currency) {
+  return `${currency.code} — ${currency.name}`;
+}
+
+function openScreen(screenName) {
+  const nextScreen = screenName || "home";
+
+  screenElements.forEach((screenElement) => {
+    const isActive = screenElement.dataset.screen === nextScreen;
+    screenElement.classList.toggle("screen-active", isActive);
+  });
+
+  navButtons.forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.openScreen === nextScreen);
+  });
+}
+
+function openEntryTypeModal() {
+  entryTypeModalElement.hidden = false;
+}
+
+function closeEntryTypeModal() {
+  entryTypeModalElement.hidden = true;
+}
+
+function openEntryScreenForKind(kind) {
+  closeEntryTypeModal();
+  openScreen("activity");
+  entryKindInput.value = kind;
+  populateCategoryOptions();
+  document.getElementById("entryForm")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function resetAccountForm() {
+  state.editingAccountId = null;
+  accountForm.reset();
+  document.getElementById("typeInput").value = "cash";
+  populateCurrencyOptions();
+  if (currencyInput.querySelector('option[value="USD"]')) {
+    currencyInput.value = "USD";
+  }
+  setAccountsStatus("");
+}
+
+function startAccountEdit(accountId) {
+  collapseSwipeRowsExcept(null);
+
+  const account = state.accounts.find((item) => item.id === accountId);
+
+  if (!account) {
+    setAccountsStatus("Счет не найден.", "error");
+    return;
+  }
+
+  state.editingAccountId = account.id;
+  document.getElementById("nameInput").value = account.name;
+  document.getElementById("typeInput").value = account.type;
+  populateCurrencyOptions();
+  currencyInput.value = account.currency_code;
+  document.getElementById("balanceInput").value = String(account.balance);
+  setAccountsStatus("Режим редактирования: измените данные ниже и нажмите «Сохранить изменения».", "success");
+  openScreen("accounts");
+
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      accountForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.setTimeout(() => {
+        document.getElementById("nameInput")?.focus({ preventScroll: true });
+      }, 320);
+    });
+  });
+}
+
+function renderSummary(summary) {
+  categoriesCountElement.textContent = String(summary?.categoriesCount ?? 0);
+  monthlyIncomeElement.textContent = formatMoney(summary?.monthlyIncome ?? 0, summary?.reportingCurrency ?? "");
+  monthlyExpenseElement.textContent = formatMoney(summary?.monthlyExpense ?? 0, summary?.reportingCurrency ?? "");
+  monthlyIncomeInlineElement.textContent = `+${formatMoney(
+    summary?.monthlyIncome ?? 0,
+    summary?.reportingCurrency ?? ""
+  )}`;
+  totalBalanceConvertedElement.textContent = formatMoney(
+    summary?.totalBalanceConverted ?? 0,
+    summary?.reportingCurrency ?? ""
+  );
+  syncReportingCurrencyInputs(summary?.reportingCurrency ?? "");
+  ratesStatusTextElement.textContent = summary?.ratesUpdatedAt
+    ? `Курсы обновлены: ${formatDateTime(summary.ratesUpdatedAt)}`
+    : "Курсы валют еще не синхронизированы";
+
+  const balances = Object.entries(summary?.balancesByCurrency ?? {});
+
+  if (!homeBalancesByCurrencyListElement) {
+    return;
+  }
+
+  if (balances.length === 0) {
+    homeBalancesByCurrencyListElement.innerHTML =
+      `<p class="currency-breakdown-empty muted">Нет остатков по валютам — добавьте счета.</p>`;
+    return;
+  }
+
+  const sortedBalances = balances.sort(([a], [b]) => a.localeCompare(b, "en"));
+
+  homeBalancesByCurrencyListElement.innerHTML = sortedBalances
+    .map(
+      ([currencyCode, amount]) =>
+        `<div class="currency-mini-pill">${escapeHtml(formatMoney(amount, currencyCode))}</div>`
+    )
+    .join("");
+}
+
+function renderAccountsList(targetElement, accounts, emptyDescription) {
+  if (!targetElement) {
+    return;
+  }
+
+  if (accounts.length === 0) {
+    targetElement.innerHTML = `
+      <div class="empty-state">
+        <strong>Пока нет счетов</strong>
+        <p class="account-meta">${escapeHtml(emptyDescription)}</p>
+      </div>
+    `;
+    return;
+  }
+
+  targetElement.innerHTML = accounts
+    .map(
+      (account) =>
+        `${
+          targetElement === accountsListElement
+            ? `
+        <article class="account-item swipe-row">
+          <div class="swipe-row-actions" aria-hidden="true">
+            <button class="icon-action-button" data-account-edit-id="${escapeHtml(account.id)}" type="button" title="Редактировать" aria-label="Редактировать счет">
+              ${ACCOUNT_EDIT_ICON_SVG}
+            </button>
+            <button class="icon-action-button icon-action-button-danger" data-account-delete-id="${escapeHtml(account.id)}" type="button" title="Удалить" aria-label="Удалить счет">
+              ${ACCOUNT_DELETE_ICON_SVG}
+            </button>
+          </div>
+          <div class="swipe-row-sheet swipe-row-sheet--accent">
+            <div class="account-item-header">
+              <div class="item-leading">
+                <div class="account-icon account-icon-${escapeHtml(account.type)}">${getAccountTypeIcon(
+                  account.type
+                )}</div>
+                <div class="item-copy">
+                  <div class="account-name">${escapeHtml(account.name)}</div>
+                  <div class="account-meta">${escapeHtml(account.currency_code)} · ${escapeHtml(
+                  formatType(account.type)
+                )}</div>
+                </div>
+              </div>
+              <div class="account-balance-stack" aria-label="Баланс">
+                <span class="account-balance-value">${escapeHtml(formatMoneyAmount(account.balance))}</span>
+                <span class="account-balance-currency">${escapeHtml(account.currency_code)}</span>
+              </div>
+            </div>
+          </div>
+        </article>`
+            : `
+        <article class="account-item">
+          <div class="account-item-header">
+            <div class="item-leading">
+              <div class="account-icon account-icon-${escapeHtml(account.type)}">${getAccountTypeIcon(
+                account.type
+              )}</div>
+              <div class="item-copy">
+                <div class="account-name">${escapeHtml(account.name)}</div>
+                <div class="account-meta">${escapeHtml(account.currency_code)} · ${escapeHtml(
+                formatType(account.type)
+              )}</div>
+              </div>
+            </div>
+            <div class="account-balance-stack" aria-label="Баланс">
+              <span class="account-balance-value">${escapeHtml(formatMoneyAmount(account.balance))}</span>
+              <span class="account-balance-currency">${escapeHtml(account.currency_code)}</span>
+            </div>
+          </div>
+        </article>`
+        }`
+    )
+    .join("");
+}
+
+function collapseSwipeRowsExcept(exceptRow) {
+  document.querySelectorAll(".swipe-row").forEach((row) => {
+    if (exceptRow && row === exceptRow) {
+      return;
+    }
+
+    const sheet = row.querySelector(".swipe-row-sheet");
+
+    if (sheet instanceof HTMLElement) {
+      sheet.style.transform = "";
+      sheet.classList.remove("is-dragging");
+    }
+
+    row.classList.remove("swipe-row--revealed");
+    row.querySelector(".swipe-row-actions")?.setAttribute("aria-hidden", "true");
+  });
+}
+
+let swipeRowHandlersInstalled = false;
+
+function attachSwipeRowHandlers() {
+  if (swipeRowHandlersInstalled || !swipeDelegationRoot) {
+    return;
+  }
+
+  swipeRowHandlersInstalled = true;
+
+  let activePointerId = null;
+  let activeSheet = null;
+  let activeRow = null;
+  let startX = 0;
+  let startY = 0;
+  let startTranslate = 0;
+  let axis = /** @type {null | "h"} */ (null);
+
+  function readRevealPx() {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue("--swipe-row-reveal").trim();
+    const n = parseFloat(raw);
+
+    return Number.isFinite(n) ? n : 112;
+  }
+
+  function parseTranslateX(sheet) {
+    const m = (sheet.style.transform || "").match(/translateX\((-?\d+(?:\.\d+)?)px\)/);
+
+    return m ? Number(m[1]) : 0;
+  }
+
+  function applyTranslate(sheet, row, x) {
+    const R = readRevealPx();
+    const clamped = Math.max(-R, Math.min(0, x));
+
+    sheet.style.transform = clamped === 0 ? "" : `translateX(${clamped}px)`;
+
+    const revealed = clamped <= -R * 0.38;
+
+    row.classList.toggle("swipe-row--revealed", revealed);
+    row.querySelector(".swipe-row-actions")?.setAttribute("aria-hidden", revealed ? "false" : "true");
+  }
+
+  function cleanupTracking() {
+    if (activeSheet) {
+      activeSheet.classList.remove("is-dragging");
+    }
+
+    activePointerId = null;
+    activeSheet = null;
+    activeRow = null;
+    axis = null;
+    startTranslate = 0;
+  }
+
+  function finishSwipe(event) {
+    if (
+      activePointerId === null ||
+      event.pointerId !== activePointerId ||
+      !activeSheet ||
+      !activeRow
+    ) {
+      return;
+    }
+
+    activeSheet.classList.remove("is-dragging");
+
+    try {
+      activeSheet.releasePointerCapture(event.pointerId);
+    } catch (_) {
+      //
+    }
+
+    const R = readRevealPx();
+    const cur = parseTranslateX(activeSheet);
+    const travelled = Math.abs(event.clientX - startX) + Math.abs(event.clientY - startY);
+
+    if (axis === "h") {
+      applyTranslate(activeSheet, activeRow, Math.abs(cur) < R * 0.42 ? 0 : -R);
+    } else if (travelled < 14 && Math.abs(startTranslate) > 8) {
+      applyTranslate(activeSheet, activeRow, 0);
+    }
+
+    cleanupTracking();
+  }
+
+  swipeDelegationRoot.addEventListener("pointerdown", (event) => {
+    if (!(event.target instanceof Element)) {
+      return;
+    }
+
+    if (event.pointerType === "mouse" && event.button !== 0) {
+      return;
+    }
+
+    const actionHost = event.target.closest(
+      "[data-account-edit-id],[data-account-delete-id],[data-category-edit-id],[data-category-delete-id]"
+    );
+
+    if (actionHost?.closest(".swipe-row-actions")) {
+      return;
+    }
+
+    const row = event.target.closest(".swipe-row");
+    const sheet = row?.querySelector(".swipe-row-sheet");
+
+    if (!(row instanceof HTMLElement) || !(sheet instanceof HTMLElement)) {
+      return;
+    }
+
+    if (!swipeDelegationRoot.contains(row)) {
+      return;
+    }
+
+    collapseSwipeRowsExcept(row);
+
+    activePointerId = event.pointerId;
+    activeRow = row;
+    activeSheet = sheet;
+    startX = event.clientX;
+    startY = event.clientY;
+    startTranslate = parseTranslateX(sheet);
+    axis = null;
+  });
+
+  swipeDelegationRoot.addEventListener(
+    "pointermove",
+    (event) => {
+      if (
+        activePointerId === null ||
+        event.pointerId !== activePointerId ||
+        !activeSheet ||
+        !activeRow
+      ) {
+        return;
+      }
+
+      const dx = event.clientX - startX;
+      const dy = event.clientY - startY;
+
+      if (axis === null) {
+        if (Math.abs(dx) + Math.abs(dy) < 8) {
+          return;
+        }
+
+        if (Math.abs(dy) > Math.abs(dx) * 1.18) {
+          cleanupTracking();
+          return;
+        }
+
+        axis = "h";
+        activeSheet.classList.add("is-dragging");
+
+        try {
+          activeSheet.setPointerCapture(event.pointerId);
+        } catch (_) {
+          //
+        }
+      }
+
+      if (axis !== "h") {
+        return;
+      }
+
+      event.preventDefault();
+
+      applyTranslate(activeSheet, activeRow, startTranslate + dx);
+    },
+    { passive: false }
+  );
+
+  swipeDelegationRoot.addEventListener("pointerup", finishSwipe);
+
+  swipeDelegationRoot.addEventListener("pointercancel", finishSwipe);
+
+  swipeDelegationRoot.addEventListener(
+    "pointerleave",
+    (event) => {
+      if (
+        activePointerId === null ||
+        event.pointerId !== activePointerId ||
+        !activeSheet ||
+        !(event.pointerType === "mouse")
+      ) {
+        return;
+      }
+
+      finishSwipe(event);
+    },
+    true
+  );
+
+  document.addEventListener("pointerdown", (event) => {
+    if (!(event.target instanceof Element)) {
+      return;
+    }
+
+    if (event.target.closest(".swipe-row")) {
+      return;
+    }
+
+    collapseSwipeRowsExcept(null);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      collapseSwipeRowsExcept(null);
+    }
+  });
+}
+
+function renderAccounts(accounts) {
+  accountsCountElement.textContent = String(accounts.length);
+  accountsTitleElement.textContent = accounts.length > 0 ? "Ваши счета" : "Счета пока пусты";
+  submitButton.textContent = state.editingAccountId ? "Сохранить изменения" : "Создать счет";
+  accountFormTitleElement.textContent = state.editingAccountId
+    ? "Редактировать счет"
+    : "Новый счет";
+  cancelAccountEditButton.classList.toggle("hidden-button", !state.editingAccountId);
+  renderAccountsList(
+    accountsListElement,
+    accounts,
+    "Создайте первый счет на этой вкладке."
+  );
+  renderAccountsList(
+    homeAccountsListElement,
+    accounts.slice(0, 4),
+    "Создайте первый счет, и он появится здесь."
+  );
+}
+
+function syncCategoryFormChrome() {
+  if (!categoryFormTitleElement || !categorySubmitButton) {
+    return;
+  }
+
+  const editing = Boolean(state.editingCategoryId);
+
+  categoryFormTitleElement.textContent = editing ? "Редактировать категорию" : "Новая категория";
+  categorySubmitButton.textContent = editing ? "Сохранить изменения" : "Создать категорию";
+
+  cancelCategoryEditButton?.classList.toggle("hidden-button", !editing);
+}
+
+function resetCategoryForm() {
+  state.editingCategoryId = null;
+  categoryForm.reset();
+  document.getElementById("categoryKindInput").value = "expense";
+  syncCategoryFormChrome();
+}
+
+function startCategoryEdit(categoryId) {
+  collapseSwipeRowsExcept(null);
+
+  const category = state.categories.find((item) => item.id === categoryId);
+
+  if (!category) {
+    setStatus("Категория не найдена.", "error");
+    return;
+  }
+
+  state.editingCategoryId = category.id;
+  document.getElementById("categoryKindInput").value = category.kind;
+  document.getElementById("categoryNameInput").value = category.name;
+  syncCategoryFormChrome();
+  setStatus("Отредактируйте поля ниже и нажмите «Сохранить изменения».", "success");
+  openScreen("categories");
+
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      categoryForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+      window.setTimeout(() => {
+        document.getElementById("categoryNameInput")?.focus({ preventScroll: true });
+      }, 320);
+    });
+  });
+}
+
+function renderCategories(categories) {
+  const incomeCategories = categories.filter((category) => category.kind === "income");
+  const expenseCategories = categories.filter((category) => category.kind === "expense");
+
+  const renderList = (targetElement, items) => {
+    if (items.length === 0) {
+      targetElement.innerHTML = `
+        <div class="empty-state">
+          <strong>Пока пусто</strong>
+          <p class="account-meta">Добавьте первую категорию на этой вкладке.</p>
+        </div>
+      `;
+      return;
+    }
+
+    targetElement.innerHTML = items
+      .map(
+        (category) => `
+          <div class="category-item swipe-row">
+            <div class="swipe-row-actions" aria-hidden="true">
+              <button class="icon-action-button" data-category-edit-id="${escapeHtml(category.id)}" type="button" title="Редактировать" aria-label="Редактировать категорию">
+                ${ACCOUNT_EDIT_ICON_SVG}
+              </button>
+              <button class="icon-action-button icon-action-button-danger" data-category-delete-id="${escapeHtml(category.id)}" type="button" title="Удалить" aria-label="Удалить категорию">
+                ${ACCOUNT_DELETE_ICON_SVG}
+              </button>
+            </div>
+            <div class="swipe-row-sheet">
+              <div class="category-strip-content">
+                <strong>${escapeHtml(category.name)}</strong>
+                <div class="account-meta">${escapeHtml(formatKind(category.kind))}</div>
+              </div>
+            </div>
+          </div>
+        `
+      )
+      .join("");
+  };
+
+  renderList(incomeCategoriesListElement, incomeCategories);
+  renderList(expenseCategoriesListElement, expenseCategories);
+  syncCategoryFormChrome();
+}
+
+function renderRecentEntries(entries) {
+  if (entries.length === 0) {
+    recentEntriesListElement.innerHTML = `
+      <div class="empty-state">
+        <strong>Операций пока нет</strong>
+        <p class="account-meta">Добавьте первую операцию на этой вкладке.</p>
+      </div>
+    `;
+    return;
+  }
+
+  recentEntriesListElement.innerHTML = entries
+    .map((entry) => {
+      const amountClass =
+        entry.kind === "income" ? "entry-amount-income" : "entry-amount-expense";
+      const amountPrefix = entry.kind === "income" ? "+" : "-";
+
+      return `
+        <article class="entry-item">
+          <div class="item-leading">
+            <div class="entry-icon entry-icon-${escapeHtml(entry.kind)}">${getEntryIcon(entry.kind)}</div>
+            <div class="entry-main">
+              <div class="entry-title-row">
+                <strong>${escapeHtml(entry.category?.name ?? "Без категории")}</strong>
+              </div>
+              <div class="account-meta">
+                ${escapeHtml(entry.account?.name ?? "Счет")} · ${escapeHtml(formatDateTime(entry.occurred_at))}
+              </div>
+              ${
+                entry.note
+                  ? `<div class="account-meta">${escapeHtml(entry.note)}</div>`
+                  : ""
+              }
+            </div>
+          </div>
+          ${formatEntryAmountStackHtml(amountPrefix, entry.amount, entry.currency_code, amountClass)}
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function renderRecentTransfers(transfers) {
+  if (transfers.length === 0) {
+    recentTransfersListElement.innerHTML = `
+      <div class="empty-state">
+        <strong>Переводов пока нет</strong>
+        <p class="account-meta">Создайте первый перевод между счетами.</p>
+      </div>
+    `;
+    return;
+  }
+
+  recentTransfersListElement.innerHTML = transfers
+    .map(
+      (transfer) => `
+        <article class="entry-item">
+          <div class="item-leading">
+            <div class="entry-icon entry-icon-transfer">${getEntryIcon("transfer")}</div>
+            <div class="entry-main">
+              <div class="entry-title-row">
+                <strong>${escapeHtml(transfer.from_account?.name ?? "Счет")} → ${escapeHtml(
+                  transfer.to_account?.name ?? "Счет"
+                )}</strong>
+              </div>
+              <div class="transfer-meta">${escapeHtml(formatDateTime(transfer.occurred_at))}</div>
+              ${
+                transfer.note
+                  ? `<div class="account-meta">${escapeHtml(transfer.note)}</div>`
+                  : ""
+              }
+            </div>
+          </div>
+          ${formatTransferAmountStackHtml(transfer)}
+        </article>
+      `
+    )
+    .join("");
+}
+
+function renderHomeRecentActivity(entries, transfers) {
+  const combined = [
+    ...entries.slice(0, 3).map((entry) => ({
+      type: "entry",
+      occurredAt: entry.occurred_at,
+      payload: entry
+    })),
+    ...transfers.slice(0, 2).map((transfer) => ({
+      type: "transfer",
+      occurredAt: transfer.occurred_at,
+      payload: transfer
+    }))
+  ]
+    .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
+    .slice(0, 4);
+
+  if (combined.length === 0) {
+    homeRecentActivityListElement.innerHTML = `
+      <div class="empty-state">
+        <strong>Пока нет активности</strong>
+        <p class="account-meta">Последние операции и переводы появятся здесь автоматически.</p>
+      </div>
+    `;
+    return;
+  }
+
+  homeRecentActivityListElement.innerHTML = combined
+    .map((item) => {
+      if (item.type === "entry") {
+        const entry = item.payload;
+        const amountPrefix = entry.kind === "income" ? "+" : "-";
+        const amountClass =
+          entry.kind === "income" ? "entry-amount-income" : "entry-amount-expense";
+
+        return `
+          <article class="entry-item">
+            <div class="item-leading">
+              <div class="entry-icon entry-icon-${escapeHtml(entry.kind)}">${getEntryIcon(entry.kind)}</div>
+              <div class="entry-main">
+                <div class="entry-title-row">
+                  <strong>${escapeHtml(entry.category?.name ?? "Без категории")}</strong>
+                </div>
+                <div class="account-meta">
+                  ${escapeHtml(entry.account?.name ?? "Счет")} · ${escapeHtml(formatDateTime(entry.occurred_at))}
+                </div>
+              </div>
+            </div>
+            ${formatEntryAmountStackHtml(amountPrefix, entry.amount, entry.currency_code, amountClass)}
+          </article>
+        `;
+      }
+
+      const transfer = item.payload;
+
+      return `
+        <article class="entry-item">
+          <div class="item-leading">
+            <div class="entry-icon entry-icon-transfer">${getEntryIcon("transfer")}</div>
+            <div class="entry-main">
+              <div class="entry-title-row">
+                <strong>${escapeHtml(transfer.from_account?.name ?? "Счет")} → ${escapeHtml(
+                  transfer.to_account?.name ?? "Счет"
+                )}</strong>
+              </div>
+              <div class="transfer-meta">${escapeHtml(formatDateTime(transfer.occurred_at))}</div>
+            </div>
+          </div>
+          ${formatTransferAmountStackHtml(transfer)}
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function renderCategoryBreakdownList(targetElement, items, emptyTitle, emptyHint) {
+  if (!targetElement) {
+    return;
+  }
+
+  const list = Array.isArray(items) ? items : [];
+
+  if (list.length === 0) {
+    targetElement.innerHTML = `
+      <div class="empty-state">
+        <strong>${escapeHtml(emptyTitle)}</strong>
+        <p class="account-meta">${escapeHtml(emptyHint)}</p>
+      </div>
+    `;
+    return;
+  }
+
+  targetElement.innerHTML = list
+    .map(
+      (item) => `
+        <div class="category-item">
+          <div>
+            <strong>${escapeHtml(item.categoryName)}</strong>
+          </div>
+          <div class="account-balance-stack" aria-label="Сумма">
+            <span class="account-balance-value">${escapeHtml(formatMoneyAmount(item.total))}</span>
+            <span class="account-balance-currency">${escapeHtml(item.currencyCode ?? "")}</span>
+          </div>
+        </div>
+      `
+    )
+    .join("");
+}
+
+function renderReport(report) {
+  const periodPhrase = formatReportPeriod(report?.period ?? "month");
+  const applied = report?.appliedCategory;
+
+  if (applied) {
+    const kindLabel = applied.kind === "income" ? "доходы" : "расходы";
+    reportTitleElement.textContent = `«${applied.name}» (${kindLabel}), ${periodPhrase}`;
+  } else {
+    reportTitleElement.textContent = `Отчет за ${periodPhrase}`;
+  }
+
+  const reportingCode = report?.reportingCurrency ?? "";
+
+  reportIncomeValueElement.textContent = formatMoneyAmount(report?.incomes ?? 0);
+  if (reportIncomeCurrencyElement) {
+    reportIncomeCurrencyElement.textContent = reportingCode;
+  }
+
+  reportExpenseValueElement.textContent = formatMoneyAmount(report?.expenses ?? 0);
+  if (reportExpenseCurrencyElement) {
+    reportExpenseCurrencyElement.textContent = reportingCode;
+  }
+
+  reportNetValueElement.textContent = formatMoneyAmount(report?.net ?? 0);
+  if (reportNetCurrencyElement) {
+    reportNetCurrencyElement.textContent = reportingCode;
+  }
+
+  reportTransfersCountValueElement.textContent = String(report?.transfersCount ?? 0);
+
+  if (reportTransfersStatBox) {
+    reportTransfersStatBox.hidden = Boolean(applied);
+  }
+
+  reportCurrentBalanceValueElement.textContent = formatMoneyAmount(report?.currentTotalBalance ?? 0);
+  if (reportCurrentBalanceCurrencyElement) {
+    reportCurrentBalanceCurrencyElement.textContent = reportingCode;
+  }
+
+  renderCategoryBreakdownList(
+    reportIncomeCategoriesListElement,
+    report?.incomeByCategory ?? [],
+    "Нет доходов по статьям",
+    applied
+      ? "За этот период не было записей по выбранной статье."
+      : "Когда появятся операции-доходы, они сгруппируются здесь по статьям."
+  );
+
+  renderCategoryBreakdownList(
+    reportExpenseCategoriesListElement,
+    report?.expenseByCategory ?? [],
+    "Нет расходов по статьям",
+    applied
+      ? "За этот период не было записей по выбранной статье."
+      : "Когда появятся расходы, здесь будет разбивка по статьям."
+  );
+}
+
+function populateAccountOptions() {
+  const accountOptions = state.accounts
+    .map(
+      (account) =>
+        `<option value="${escapeHtml(account.id)}">${escapeHtml(account.name)} · ${escapeHtml(account.currency_code)}</option>`
+    )
+    .join("");
+
+  if (state.accounts.length === 0) {
+    entryAccountInput.innerHTML = `<option value="">Сначала создайте счет</option>`;
+    transferFromAccountInput.innerHTML = `<option value="">Сначала создайте счет</option>`;
+    transferToAccountInput.innerHTML = `<option value="">Сначала создайте счет</option>`;
+    return;
+  }
+
+  entryAccountInput.innerHTML = accountOptions;
+  transferFromAccountInput.innerHTML = accountOptions;
+  transferToAccountInput.innerHTML = accountOptions;
+
+  if (state.accounts.length > 1) {
+    transferToAccountInput.selectedIndex = 1;
+  }
+}
+
+function populateCurrencyOptions() {
+  const filteredCurrencies = getAvailableCurrencies();
+
+  if (filteredCurrencies.length === 0) {
+    currencyInput.innerHTML = `<option value="">Валюты недоступны</option>`;
+    return;
+  }
+
+  const currentValue = currencyInput.value;
+
+  currencyInput.innerHTML = filteredCurrencies
+    .map(
+      (currency) =>
+        `<option value="${escapeHtml(currency.code)}">${escapeHtml(
+          formatCurrencyOption(currency)
+        )}</option>`
+    )
+    .join("");
+
+  if (
+    currentValue &&
+    filteredCurrencies.some((currency) => currency.code === currentValue)
+  ) {
+    currencyInput.value = currentValue;
+    return;
+  }
+
+  if (filteredCurrencies.some((currency) => currency.code === "USD")) {
+    currencyInput.value = "USD";
+    return;
+  }
+
+  currencyInput.value = filteredCurrencies[0].code;
+}
+
+function populateReportingCurrencyOptions() {
+  const filteredCurrencies = getAvailableCurrencies();
+  const emptyMarkup = `<option value="">Валюты недоступны</option>`;
+
+  if (filteredCurrencies.length === 0) {
+    reportingCurrencyInput.innerHTML = emptyMarkup;
+    if (homeReportingCurrencyInput) {
+      homeReportingCurrencyInput.innerHTML = emptyMarkup;
+    }
+    return;
+  }
+
+  const optionsMarkup = filteredCurrencies
+    .map(
+      (currency) =>
+        `<option value="${escapeHtml(currency.code)}">${escapeHtml(
+          formatCurrencyOption(currency)
+        )}</option>`
+    )
+    .join("");
+
+  const compactMarkup = filteredCurrencies
+    .map(
+      (currency) =>
+        `<option value="${escapeHtml(currency.code)}">${escapeHtml(currency.code)}</option>`
+    )
+    .join("");
+
+  const currentValue =
+    homeReportingCurrencyInput?.value ||
+    reportingCurrencyInput.value ||
+    getStoredReportingCurrency();
+
+  reportingCurrencyInput.innerHTML = optionsMarkup;
+  if (homeReportingCurrencyInput) {
+    homeReportingCurrencyInput.innerHTML = compactMarkup;
+  }
+
+  if (
+    currentValue &&
+    filteredCurrencies.some((currency) => currency.code === currentValue)
+  ) {
+    syncReportingCurrencyInputs(currentValue);
+    return;
+  }
+
+  if (filteredCurrencies.some((currency) => currency.code === "USD")) {
+    syncReportingCurrencyInputs("USD");
+    return;
+  }
+
+  syncReportingCurrencyInputs(filteredCurrencies[0].code);
+}
+
+function populateReportCategoryFilterOptions() {
+  if (!reportCategoryFilterInput) {
+    return;
+  }
+
+  const currentValue = reportCategoryFilterInput.value;
+  const incomeList = state.categories
+    .filter((category) => category.kind === "income")
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  const expenseList = state.categories
+    .filter((category) => category.kind === "expense")
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"));
+
+  const incomeOptions = incomeList
+    .map(
+      (category) =>
+        `<option value="${escapeHtml(category.id)}">${escapeHtml(category.name)}</option>`
+    )
+    .join("");
+
+  const expenseOptions = expenseList
+    .map(
+      (category) =>
+        `<option value="${escapeHtml(category.id)}">${escapeHtml(category.name)}</option>`
+    )
+    .join("");
+
+  reportCategoryFilterInput.innerHTML =
+    `<option value="">Все статьи</option>` +
+    `<optgroup label="Доходы">${incomeOptions || `<option disabled value="">Нет статей</option>`}</optgroup>` +
+    `<optgroup label="Расходы">${expenseOptions || `<option disabled value="">Нет статей</option>`}</optgroup>`;
+
+  if (
+    currentValue &&
+    state.categories.some((category) => category.id === currentValue)
+  ) {
+    reportCategoryFilterInput.value = currentValue;
+  }
+}
+
+function populateCategoryOptions() {
+  const selectedKind = entryKindInput.value;
+  const filteredCategories = state.categories.filter(
+    (category) => category.kind === selectedKind
+  );
+
+  if (filteredCategories.length === 0) {
+    entryCategoryInput.innerHTML = `<option value="">Сначала создайте категорию</option>`;
+    return;
+  }
+
+  entryCategoryInput.innerHTML = filteredCategories
+    .map(
+      (category) =>
+        `<option value="${escapeHtml(category.id)}">${escapeHtml(category.name)}</option>`
+    )
+    .join("");
+}
+
+function renderAll() {
+  safeRenderStep("summary", () => renderSummary(state.summary));
+  safeRenderStep("accounts", () => renderAccounts(state.accounts));
+  safeRenderStep("categories", () => renderCategories(state.categories));
+  safeRenderStep("recentEntries", () => renderRecentEntries(state.recentEntries));
+  safeRenderStep("recentTransfers", () => renderRecentTransfers(state.recentTransfers));
+  safeRenderStep("homeActivity", () =>
+    renderHomeRecentActivity(state.recentEntries, state.recentTransfers)
+  );
+  safeRenderStep("report", () => renderReport(state.report));
+  safeRenderStep("accountOptions", () => populateAccountOptions());
+  safeRenderStep("currencyOptions", () => populateCurrencyOptions());
+  safeRenderStep("reportingCurrencyOptions", () => populateReportingCurrencyOptions());
+  safeRenderStep("reportCategoryFilterOptions", () => populateReportCategoryFilterOptions());
+  safeRenderStep("categoryOptions", () => populateCategoryOptions());
+}
+
+function resolveFetchUrl(url) {
+  if (typeof url !== "string") {
+    return url;
+  }
+
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+
+  try {
+    return new URL(url, window.location.origin).href;
+  } catch {
+    return url;
+  }
+}
+
+async function apiFetch(url, options = {}) {
+  const method = String(options.method ?? "GET").toUpperCase();
+  const optionHeaders = { ...(options.headers ?? {}) };
+
+  const headers = {
+    ...optionHeaders,
+    "Content-Type":
+      optionHeaders["Content-Type"] ??
+      (method === "GET" || method === "HEAD" ? undefined : "application/json"),
+    "x-telegram-init-data": getInitData(),
+    "ngrok-skip-browser-warning": "true",
+    "bypass-tunnel-reminder": "true"
+  };
+
+  if (headers["Content-Type"] === undefined) {
+    delete headers["Content-Type"];
+  }
+
+  const response = await fetch(resolveFetchUrl(url), {
+    ...options,
+    headers
+  });
+
+  const responseText = await response.text();
+  const trimmed = responseText.trim();
+  const contentType = response.headers.get("content-type") ?? "";
+  const declaresJson = contentType.includes("application/json");
+
+  let payload = {};
+  let usableJson = trimmed.length === 0;
+
+  if (trimmed.length > 0) {
+    const tryParse = declaresJson || trimmed.startsWith("{") || trimmed.startsWith("[");
+    if (tryParse) {
+      try {
+        payload = JSON.parse(responseText);
+        usableJson = true;
+      } catch {
+        usableJson = false;
+        payload = { error: stripHtmlToSnippet(responseText) };
+      }
+    } else {
+      usableJson = false;
+      payload = { error: stripHtmlToSnippet(responseText) };
+    }
+  }
+
+  if (!response.ok) {
+    const message =
+      typeof payload?.error === "string" && payload.error
+        ? payload.error
+        : `HTTP ${response.status}`;
+    throw new Error(message);
+  }
+
+  if (!usableJson && trimmed.length > 0) {
+    const hint =
+      /ngrok|loca\.lt|tunnel/i.test(trimmed)
+        ? " Похоже на страницу туннеля (ngrok/localtunnel): проверьте URL и BOT_APP_URL."
+        : "";
+    throw new Error(`Сервер вернул HTML или не-JSON при успешном ответе.${hint}`);
+  }
+
+  return payload;
+}
+
+async function loadReport() {
+  const params = new URLSearchParams();
+  params.set("period", reportPeriodInput.value);
+  params.set("reportingCurrency", currentReportingCurrencySelection());
+
+  if (reportPeriodInput.value === "custom") {
+    params.set("startDate", toIsoDate(toDateRangeStart(reportStartDateInput.value)));
+    params.set("endDate", toIsoDate(toDateRangeEnd(reportEndDateInput.value)));
+  }
+
+  const filterCategoryId = reportCategoryFilterInput?.value?.trim();
+  if (filterCategoryId) {
+    params.set("categoryId", filterCategoryId);
+  }
+
+  const payload = await apiFetch(`/api/reports?${params.toString()}`);
+  state.report = payload.report;
+  renderReport(state.report);
+}
+
+async function loadApp() {
+  if (!tg) {
+    userNameElement.textContent = "Откройте приложение из Telegram";
+    setStatus("Mini app должен открываться из Telegram, чтобы получить данные пользователя.", "error");
+    return;
+  }
+
+  try {
+    try {
+      if (typeof tg.ready === "function") {
+        tg.ready();
+      }
+    } catch (error) {
+      console.warn("Telegram.WebApp.ready failed", error);
+    }
+
+    try {
+      if (typeof tg.expand === "function") {
+        tg.expand();
+      }
+    } catch (error) {
+      console.warn("Telegram.WebApp.expand failed", error);
+    }
+
+    try {
+      tg.disableVerticalSwipes?.();
+    } catch (error) {
+      console.warn("disableVerticalSwipes is unavailable", error);
+    }
+
+    syncViewportMetrics();
+
+    if (!getInitData()) {
+      userNameElement.textContent = "Подключение...";
+      setStatus("Ожидаем данные сессии от Telegram...");
+    }
+
+    const initDataReady = await waitForTelegramInitData(12000);
+
+    if (!initDataReady) {
+      userNameElement.textContent = "Ожидаем Telegram";
+      setStatus(
+        "Telegram WebApp еще не передал данные сессии. Закройте mini app и откройте снова из бота.",
+        "error"
+      );
+      return;
+    }
+
+    let bootstrapAbort = undefined;
+
+    try {
+      if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+        bootstrapAbort = AbortSignal.timeout(45000);
+      }
+    } catch (_) {
+      /* Older WebViews: no AbortSignal.timeout */
+    }
+
+    setStatus("Загружаем данные...");
+    const reportingCurrency = currentReportingCurrencySelection();
+    const fetchOptions = bootstrapAbort !== undefined ? { signal: bootstrapAbort } : undefined;
+
+    const payload = await apiFetch(
+      `/api/bootstrap?reportingCurrency=${encodeURIComponent(reportingCurrency)}`,
+      fetchOptions ?? {}
+    );
+    const user = payload.user;
+
+    state.user = user;
+    state.accounts = payload.accounts ?? [];
+    state.categories = payload.categories ?? [];
+    state.currencies = Array.isArray(payload.currencies) ? payload.currencies : [];
+    state.recentEntries = payload.recentEntries ?? [];
+    state.recentTransfers = payload.recentTransfers ?? [];
+    state.summary = payload.summary ?? null;
+    state.report = payload.report ?? null;
+
+    const resolvedReportingCurrency = payload.summary?.reportingCurrency ?? reportingCurrency;
+    setStoredReportingCurrency(resolvedReportingCurrency);
+    syncReportingCurrencyInputs(resolvedReportingCurrency);
+
+    userNameElement.textContent =
+      [user.first_name, user.last_name].filter(Boolean).join(" ") ||
+      user.username ||
+      "Пользователь";
+
+    renderAll();
+    setStatus(
+      "Все готово. Интерфейс разбит по вкладкам и стал проще для ежедневного использования.",
+      "success"
+    );
+  } catch (error) {
+    console.error(error);
+    userNameElement.textContent = "Не удалось загрузить приложение";
+    let message = error instanceof Error ? error.message : "Unknown error";
+
+    const aborted =
+      (error instanceof Error && error.name === "AbortError") ||
+      (typeof DOMException !== "undefined" &&
+        error instanceof DOMException &&
+        error.name === "AbortError");
+
+    if (aborted) {
+      message =
+        "Сервер не ответил вовремя. Проверьте интернет или что backend доступен по тому же домену, что и приложение.";
+    }
+
+    setStatus(message, "error");
+  }
+}
+
+async function handleCreateAccount(event) {
+  event.preventDefault();
+
+  const formData = new FormData(accountForm);
+  const payload = {
+    name: String(formData.get("name") ?? ""),
+    type: String(formData.get("type") ?? "cash"),
+    currencyCode: String(formData.get("currencyCode") ?? "USD"),
+    balance: Number(formData.get("balance") ?? 0)
+  };
+
+  submitButton.disabled = true;
+  setAccountsStatus(state.editingAccountId ? "Сохраняем счет..." : "Создаем счет...");
+
+  try {
+    const isEditing = Boolean(state.editingAccountId);
+    const response = await apiFetch(
+      isEditing
+        ? `/api/accounts/${encodeURIComponent(state.editingAccountId)}`
+        : "/api/accounts",
+      {
+        method: isEditing ? "PATCH" : "POST",
+        body: JSON.stringify(payload)
+      }
+    );
+
+    const nextAccount = response.account ?? null;
+
+    if (nextAccount) {
+      if (isEditing) {
+        state.accounts = state.accounts.map((account) =>
+          account.id === nextAccount.id ? nextAccount : account
+        );
+      } else {
+        state.accounts = [...state.accounts, nextAccount];
+      }
+    }
+
+    resetAccountForm();
+    setAccountsStatus(isEditing ? "Счет обновлен." : "Счет создан.", "success");
+    renderAll();
+    await loadApp();
+  } catch (error) {
+    console.error(error);
+    setAccountsStatus(
+      error instanceof Error ? error.message : "Не удалось сохранить счет",
+      "error"
+    );
+  } finally {
+    submitButton.disabled = false;
+  }
+}
+
+async function handleDeleteAccount(accountId) {
+  setAccountsStatus("Удаляем счет...");
+
+  try {
+    await apiFetch(`/api/accounts/${encodeURIComponent(accountId)}`, {
+      method: "DELETE"
+    });
+
+    state.accounts = state.accounts.filter((account) => account.id !== accountId);
+
+    if (state.editingAccountId === accountId) {
+      resetAccountForm();
+    }
+
+    setAccountsStatus("Счет удален.", "success");
+    renderAll();
+    await loadApp();
+  } catch (error) {
+    console.error(error);
+    setAccountsStatus(
+      error instanceof Error ? error.message : "Не удалось удалить счет",
+      "error"
+    );
+  }
+}
+
+function attachAccountsListListener() {
+  accountsListElement.addEventListener("click", (event) => {
+    const target = event.target;
+
+    if (!(target instanceof Element)) {
+      return;
+    }
+
+    const editControl = target.closest("[data-account-edit-id]");
+    const deleteControl = target.closest("[data-account-delete-id]");
+
+    const editId = editControl?.dataset.accountEditId;
+    const deleteId = deleteControl?.dataset.accountDeleteId;
+
+    if (editId) {
+      startAccountEdit(editId);
+      return;
+    }
+
+    if (deleteId) {
+      void handleDeleteAccount(deleteId);
+    }
+  });
+}
+
+function submitFormSafely(form) {
+  if (typeof form.requestSubmit === "function") {
+    form.requestSubmit();
+    return;
+  }
+
+  form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+}
+
+async function handleCategorySubmit(event) {
+  event.preventDefault();
+
+  const formData = new FormData(categoryForm);
+  const payload = {
+    kind: String(formData.get("kind") ?? "expense"),
+    name: String(formData.get("name") ?? "")
+  };
+
+  const isEditing = Boolean(state.editingCategoryId);
+
+  categorySubmitButton.disabled = true;
+  setStatus(isEditing ? "Сохраняем категорию..." : "Создаем категорию...");
+
+  try {
+    if (isEditing) {
+      await apiFetch(`/api/categories/${encodeURIComponent(state.editingCategoryId)}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload)
+      });
+    } else {
+      await apiFetch("/api/categories", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+    }
+
+    resetCategoryForm();
+    setStatus(isEditing ? "Категория обновлена." : "Категория создана.", "success");
+    await loadApp();
+  } catch (error) {
+    console.error(error);
+    setStatus(
+      error instanceof Error ? error.message : "Не удалось сохранить категорию",
+      "error"
+    );
+  } finally {
+    categorySubmitButton.disabled = false;
+  }
+}
+
+async function handleDeleteCategory(categoryId) {
+  setStatus("Удаляем категорию...");
+
+  try {
+    await apiFetch(`/api/categories/${encodeURIComponent(categoryId)}`, {
+      method: "DELETE"
+    });
+
+    state.categories = state.categories.filter((category) => category.id !== categoryId);
+
+    if (state.editingCategoryId === categoryId) {
+      resetCategoryForm();
+    }
+
+    setStatus(
+      "Категория удалена. Старые операции сохранены, но у них больше не будет этой статьи.",
+      "success"
+    );
+    renderAll();
+    await loadApp();
+  } catch (error) {
+    console.error(error);
+    setStatus(
+      error instanceof Error ? error.message : "Не удалось удалить категорию",
+      "error"
+    );
+  }
+}
+
+async function handleCreateEntry(event) {
+  event.preventDefault();
+
+  const formData = new FormData(entryForm);
+  const rawDate = String(formData.get("occurredAt") ?? "");
+  const payload = {
+    kind: String(formData.get("kind") ?? "expense"),
+    accountId: String(formData.get("accountId") ?? ""),
+    categoryId: String(formData.get("categoryId") ?? ""),
+    amount: Number(formData.get("amount") ?? 0),
+    note: String(formData.get("note") ?? "").trim(),
+    occurredAt: rawDate ? toIsoDate(rawDate) : new Date().toISOString()
+  };
+
+  entrySubmitButton.disabled = true;
+  setStatus("Сохраняем операцию...");
+
+  try {
+    await apiFetch("/api/entries", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    entryForm.reset();
+    entryKindInput.value = "expense";
+    entryDateInput.value = getCurrentLocalDateTimeValue();
+    populateCategoryOptions();
+    setStatus("Операция сохранена.", "success");
+    await loadApp();
+  } catch (error) {
+    console.error(error);
+    setStatus(error instanceof Error ? error.message : "Не удалось сохранить операцию", "error");
+  } finally {
+    entrySubmitButton.disabled = false;
+  }
+}
+
+async function handleCreateTransfer(event) {
+  event.preventDefault();
+
+  const formData = new FormData(transferForm);
+  const rawDate = String(formData.get("occurredAt") ?? "");
+  const rawToAmount = String(formData.get("toAmount") ?? "").trim();
+  const payload = {
+    fromAccountId: String(formData.get("fromAccountId") ?? ""),
+    toAccountId: String(formData.get("toAccountId") ?? ""),
+    fromAmount: Number(formData.get("fromAmount") ?? 0),
+    toAmount: rawToAmount ? Number(rawToAmount) : null,
+    note: String(formData.get("note") ?? "").trim(),
+    occurredAt: rawDate ? toIsoDate(rawDate) : new Date().toISOString()
+  };
+
+  transferSubmitButton.disabled = true;
+  setStatus("Сохраняем перевод...");
+
+  try {
+    await apiFetch("/api/transfers", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    transferForm.reset();
+    transferDateInput.value = getCurrentLocalDateTimeValue();
+    setStatus("Перевод сохранен.", "success");
+    await loadApp();
+  } catch (error) {
+    console.error(error);
+    setStatus(error instanceof Error ? error.message : "Не удалось сохранить перевод", "error");
+  } finally {
+    transferSubmitButton.disabled = false;
+  }
+}
+
+async function handleSyncRates() {
+  syncRatesButton.disabled = true;
+  setStatus("Обновляем курсы валют...");
+
+  try {
+    await apiFetch("/api/exchange-rates/sync", {
+      method: "POST",
+      body: JSON.stringify({})
+    });
+    setStatus("Курсы валют обновлены.", "success");
+    await loadApp();
+  } catch (error) {
+    console.error(error);
+    setStatus(error instanceof Error ? error.message : "Не удалось обновить курсы", "error");
+  } finally {
+    syncRatesButton.disabled = false;
+  }
+}
+
+async function handleBuildReport(event) {
+  event.preventDefault();
+  reportSubmitButton.disabled = true;
+  setStatus("Строим отчет...");
+
+  try {
+    await loadReport();
+    setStatus("Отчет обновлен.", "success");
+  } catch (error) {
+    console.error(error);
+    setStatus(error instanceof Error ? error.message : "Не удалось построить отчет", "error");
+  } finally {
+    reportSubmitButton.disabled = false;
+  }
+}
+
+function handleOpenScreenButtonClick(button) {
+  const screenName = button.dataset.openScreen;
+
+  if (!screenName) {
+    return;
+  }
+
+  openScreen(screenName);
+
+  if (button.dataset.scrollScreenTop === "true") {
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
+  }
+
+  const focusTargetId = button.dataset.focusTarget;
+
+  if (focusTargetId) {
+    document.getElementById(focusTargetId)?.focus();
+    return;
+  }
+
+  const label = button.textContent?.trim();
+
+  if (label?.includes("Новая операция")) {
+    entryKindInput.value = "expense";
+    populateCategoryOptions();
+    document.getElementById("entryAmountInput")?.focus();
+  } else if (label?.includes("Перевод")) {
+    document.getElementById("transferFromAmountInput")?.focus();
+  }
+}
+
+function attachCategoryListsListener() {
+  const onCategoryListClick = (event) => {
+    const target = event.target;
+
+    if (!(target instanceof Element)) {
+      return;
+    }
+
+    const editControl = target.closest("[data-category-edit-id]");
+    const deleteControl = target.closest("[data-category-delete-id]");
+
+    const editId = editControl?.dataset.categoryEditId;
+    const deleteId = deleteControl?.dataset.categoryDeleteId;
+
+    if (editId) {
+      startCategoryEdit(editId);
+      return;
+    }
+
+    if (deleteId) {
+      void handleDeleteCategory(deleteId);
+    }
+  };
+
+  incomeCategoriesListElement.addEventListener("click", onCategoryListClick);
+  expenseCategoriesListElement.addEventListener("click", onCategoryListClick);
+}
+
+if (refreshButton) {
+  refreshButton.addEventListener("click", () => {
+    void loadApp();
+  });
+}
+
+Array.from(document.querySelectorAll("[data-refresh-action]")).forEach((button) => {
+  button.addEventListener("click", () => {
+    void loadApp();
+  });
+});
+
+if (syncRatesButton) {
+  syncRatesButton.addEventListener("click", () => {
+    void handleSyncRates();
+  });
+}
+
+if (addOperationButton) {
+  addOperationButton.addEventListener("click", () => {
+    openEntryTypeModal();
+  });
+}
+
+if (entryTypeModalBackdrop) {
+  entryTypeModalBackdrop.addEventListener("click", () => {
+    closeEntryTypeModal();
+  });
+}
+
+if (entryTypeModalCloseButton) {
+  entryTypeModalCloseButton.addEventListener("click", () => {
+    closeEntryTypeModal();
+  });
+}
+
+entryTypeActionButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    openEntryScreenForKind(button.dataset.entryKind ?? "expense");
+  });
+});
+
+document.getElementById("entryTypeOpenTransferButton")?.addEventListener("click", () => {
+  closeEntryTypeModal();
+  openScreen("activity");
+  window.setTimeout(() => {
+    transferForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("transferFromAmountInput")?.focus();
+  }, 120);
+});
+
+attachAccountsListListener();
+attachSwipeRowHandlers();
+attachCategoryListsListener();
+
+window.addEventListener("focus", () => {
+  void loadApp();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    void loadApp();
+  }
+});
+
+document.addEventListener("focusin", (event) => {
+  window.clearTimeout(blurSnapTimer);
+  blurSnapTimer = null;
+
+  if (isFormTextField(event.target)) {
+    syncViewportMetrics();
+    scheduleScrollFieldIntoView(event.target);
+  } else {
+    syncViewportMetrics();
+  }
+});
+document.addEventListener("focusout", () => {
+  window.requestAnimationFrame(() => {
+    syncViewportMetrics();
+  });
+  blurSnapTimer = window.setTimeout(() => {
+    blurSnapTimer = null;
+    syncViewportMetrics();
+  }, 100);
+});
+
+accountForm.addEventListener("submit", (event) => {
+  void handleCreateAccount(event);
+});
+
+submitButton.addEventListener("click", () => {
+  submitFormSafely(accountForm);
+});
+
+cancelAccountEditButton?.addEventListener("click", () => {
+  resetAccountForm();
+  renderAccounts(state.accounts);
+});
+
+reportingCurrencyInput.addEventListener("change", () => {
+  setStoredReportingCurrency(reportingCurrencyInput.value);
+  syncReportingCurrencyInputs(reportingCurrencyInput.value);
+  void loadApp();
+});
+
+homeReportingCurrencyInput?.addEventListener("change", () => {
+  setStoredReportingCurrency(homeReportingCurrencyInput.value);
+  syncReportingCurrencyInputs(homeReportingCurrencyInput.value);
+  void loadApp();
+});
+
+categoryForm.addEventListener("submit", (event) => {
+  void handleCategorySubmit(event);
+});
+
+categorySubmitButton.addEventListener("click", () => {
+  submitFormSafely(categoryForm);
+});
+
+cancelCategoryEditButton?.addEventListener("click", () => {
+  resetCategoryForm();
+  renderCategories(state.categories);
+});
+
+entryForm.addEventListener("submit", (event) => {
+  void handleCreateEntry(event);
+});
+
+entrySubmitButton.addEventListener("click", () => {
+  submitFormSafely(entryForm);
+});
+
+transferForm.addEventListener("submit", (event) => {
+  void handleCreateTransfer(event);
+});
+
+transferSubmitButton.addEventListener("click", () => {
+  submitFormSafely(transferForm);
+});
+
+reportForm.addEventListener("submit", (event) => {
+  void handleBuildReport(event);
+});
+
+reportSubmitButton.addEventListener("click", () => {
+  submitFormSafely(reportForm);
+});
+
+entryKindInput.addEventListener("change", () => {
+  populateCategoryOptions();
+});
+
+reportPeriodInput.addEventListener("change", () => {
+  toggleReportDateInputs();
+});
+
+openScreenButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    handleOpenScreenButtonClick(button);
+  });
+});
+
+
+try {
+  entryDateInput.value = getCurrentLocalDateTimeValue();
+
+  transferDateInput.value = getCurrentLocalDateTimeValue();
+  reportStartDateInput.value = getCurrentLocalDateValue();
+  reportEndDateInput.value = getCurrentLocalDateValue();
+  toggleReportDateInputs();
+  openScreen("home");
+  syncViewportMetrics();
+  populateCurrencyOptions();
+  populateReportingCurrencyOptions();
+  populateReportCategoryFilterOptions();
+
+  void loadApp();
+} catch (error) {
+  console.error("Mini app boot failed before loadApp", error);
+  userNameElement.textContent = "Ошибка запуска";
+  statusTextElement.textContent =
+    "Не удалось инициализировать интерфейс. Обновите экран («Обновить») или откройте приложение из бота снова.";
+  statusTextElement.className = "inline-error";
+}
