@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513tg-home-quick-actions";
+        var BALANCY_CLIENT_ASSET_REV = "20260513tg-nav-overflow-fix";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -543,6 +543,29 @@
             <span id="monthlyIncome">0</span>
             <span id="monthlyExpense">0</span>
           </div>
+        </section>
+
+        <section id="screen-more" class="screen tg-only-block" data-screen="more">
+          <section class="card tg-more-screen-card">
+            <div class="section-header">
+              <div>
+                <p class="section-label">Раздел</p>
+                <h2>Ещё</h2>
+              </div>
+            </div>
+            <p class="muted tg-more-screen-lead">
+              История и счета доступны здесь. Ниже можно быстро добавить операцию.
+            </p>
+            <div class="tg-more-screen-actions">
+              <button type="button" class="primary-button" data-open-screen="history">
+                История операций
+              </button>
+              <button type="button" class="ghost-button" data-open-screen="accounts">Счета</button>
+              <button type="button" class="ghost-button" id="tgMoreOpenEntryModalButton">
+                Новая операция
+              </button>
+            </div>
+          </section>
         </section>
 
         <section id="screen-accounts" class="screen" data-screen="accounts">
@@ -1613,15 +1636,6 @@
           </span>
           <span class="nav-label">Операции</span>
         </button>
-        <button class="bottom-nav-button" data-open-screen="history" type="button">
-          <span class="nav-icon" aria-hidden="true">
-            <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none">
-              <path d="M4 6H20M4 12H20M4 18H14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-              <path d="M17 16V20M15 18H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            </svg>
-          </span>
-          <span class="nav-label">История</span>
-        </button>
         <button class="bottom-nav-button" data-open-screen="reports" type="button">
           <span class="nav-icon" aria-hidden="true">
             <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none">
@@ -1629,14 +1643,7 @@
               <path d="M8 15L11 11L14 13L18 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </span>
-          <span class="nav-label">Отчеты</span>
-        </button>
-        <button
-          id="addOperationButton"
-          class="bottom-nav-button bottom-nav-button-accent"
-          type="button"
-        >
-          <span class="nav-plus">+</span>
+          <span class="nav-label">Отчёты</span>
         </button>
         <button class="bottom-nav-button" data-open-screen="categories" type="button">
           <span class="nav-icon" aria-hidden="true">
@@ -1647,7 +1654,33 @@
           </span>
           <span class="nav-label">Категории</span>
         </button>
-        <button class="bottom-nav-button" data-open-screen="accounts" type="button">
+        <button class="bottom-nav-button tg-only-block" data-open-screen="more" type="button">
+          <span class="nav-icon" aria-hidden="true">
+            <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none">
+              <path d="M7 12H17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              <path d="M7 6H17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              <path d="M7 18H17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span class="nav-label">Ещё</span>
+        </button>
+        <button class="bottom-nav-button bottom-nav-item--web-only" data-open-screen="history" type="button">
+          <span class="nav-icon" aria-hidden="true">
+            <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none">
+              <path d="M4 6H20M4 12H20M4 18H14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M17 16V20M15 18H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">История</span>
+        </button>
+        <button
+          id="addOperationButton"
+          class="bottom-nav-button bottom-nav-button-accent bottom-nav-item--web-only"
+          type="button"
+        >
+          <span class="nav-plus">+</span>
+        </button>
+        <button class="bottom-nav-button bottom-nav-item--web-only" data-open-screen="accounts" type="button">
           <span class="nav-icon" aria-hidden="true">
             <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none">
               <rect x="4" y="6" width="16" height="12" rx="2.5" stroke="currentColor" stroke-width="1.8"/>

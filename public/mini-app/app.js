@@ -7,7 +7,8 @@ const WEB_PAGE_TITLES = {
   history: "История",
   reports: "Отчёты",
   categories: "Категории",
-  accounts: "Счета"
+  accounts: "Счета",
+  more: "Ещё"
 };
 
 const userNameElement = document.getElementById("userName");
@@ -741,7 +742,12 @@ function openScreen(screenName, options = {}) {
   });
 
   navButtons.forEach((button) => {
-    button.classList.toggle("is-active", button.dataset.openScreen === nextScreen);
+    const target = button.dataset.openScreen ?? "";
+    let active = target === nextScreen;
+    if (!isWebMode && target === "more" && (nextScreen === "history" || nextScreen === "accounts")) {
+      active = true;
+    }
+    button.classList.toggle("is-active", active);
   });
 
   document.querySelectorAll("[data-web-nav]").forEach((button) => {
@@ -5294,6 +5300,10 @@ document.addEventListener("click", (event) => {
   } catch {
     //
   }
+});
+
+document.getElementById("tgMoreOpenEntryModalButton")?.addEventListener("click", () => {
+  openEntryTypeModal();
 });
 
 openScreenButtons.forEach((button) => {
