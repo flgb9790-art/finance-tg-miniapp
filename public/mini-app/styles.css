@@ -141,34 +141,123 @@ body.keyboard-open .app-shell {
   padding: 2px 0 10px;
 }
 
-.topbar-web-actions {
+.web-top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 150;
+  width: 100%;
+  border-bottom: 1px solid var(--line);
+  background: rgb(255 255 255 / 0.92);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 6px 18px rgb(15 23 42 / 0.06);
+}
+
+.web-top-nav-inner {
+  max-width: 1220px;
+  margin: 0 auto;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.web-top-nav-brand {
+  display: flex;
+  align-items: baseline;
   gap: 10px;
+  min-width: 0;
+}
+
+.web-top-nav-badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.web-top-nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  justify-content: center;
+  min-width: 0;
+}
+
+.web-top-nav-link {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 650;
+  font-size: 13px;
+  padding: 7px 11px;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.web-top-nav-link:hover {
+  background: var(--fill-subtle);
+  color: var(--text);
+}
+
+.web-top-nav-link.is-active {
+  background: var(--nav-active-bg);
+  color: var(--nav-active-fg);
+  border-color: rgb(13 159 110 / 0.22);
+}
+
+.web-top-nav-link-accent {
+  border-color: rgb(13 159 110 / 0.35);
+  background: rgb(13 159 110 / 0.1);
+  color: #047857;
+}
+
+.web-top-nav-aside {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.web-top-nav-ghost {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  cursor: pointer;
 }
 
 .web-profile-menu {
   position: relative;
 }
 
-.web-profile-toggle {
+.web-profile-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
   border: 1px solid var(--line);
   background: var(--card);
   color: var(--text);
-  border-radius: 999px;
-  min-height: 34px;
-  padding: 0 12px;
+  display: grid;
+  place-items: center;
   cursor: pointer;
-  font-weight: 600;
-  max-width: 260px;
+  padding: 0;
 }
 
-.web-profile-name {
-  display: inline-block;
-  max-width: 220px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.web-profile-icon:hover {
+  background: var(--fill-subtle);
+}
+
+.web-profile-icon-svg {
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 
 .web-profile-dropdown {
@@ -181,7 +270,7 @@ body.keyboard-open .app-shell {
   background: #fff;
   box-shadow: var(--shadow);
   padding: 10px;
-  z-index: 120;
+  z-index: 160;
   display: grid;
   gap: 8px;
 }
@@ -192,25 +281,19 @@ body.keyboard-open .app-shell {
   overflow-wrap: anywhere;
 }
 
-.web-profile-link,
 .web-profile-logout {
-  border: 1px solid var(--line);
+  border: 1px solid rgb(220 38 38 / 0.25);
   border-radius: 10px;
-  min-height: 36px;
+  min-height: 40px;
   padding: 0 10px;
   display: flex;
   align-items: center;
+  justify-content: center;
   text-decoration: none;
-  color: var(--text);
-  font-weight: 600;
-  background: var(--card-2);
-}
-
-.web-profile-logout {
-  cursor: pointer;
   color: #991b1b;
-  border-color: rgb(220 38 38 / 0.25);
+  font-weight: 700;
   background: rgb(220 38 38 / 0.07);
+  cursor: pointer;
 }
 
 .brand-lockup {
@@ -2333,48 +2416,31 @@ details.fx-reference-collapsible[open] .fx-reference-collapsible-chevron {
   }
 }
 
-@media (min-width: 980px) {
-  body.web-mode .app-shell {
-    max-width: 1220px;
-    padding: 18px 18px 18px;
-  }
+body.web-mode .app-shell {
+  max-width: 1220px;
+  padding: 16px 16px 24px;
+}
 
-  body.web-mode::before {
-    display: none;
-  }
+body.web-mode::before {
+  display: none;
+}
 
-  body.web-mode .bottom-nav {
-    left: auto;
-    right: 16px;
-    top: 50%;
-    bottom: auto;
-    transform: translateY(-50%);
-    width: 74px;
-    max-width: none;
-    padding: 8px 6px;
-    border-radius: 18px;
-    flex-direction: column;
-    gap: 6px;
-  }
+body.web-mode .content {
+  margin-right: 0;
+}
 
-  body.web-mode .bottom-nav-button {
-    min-height: 52px;
-  }
+body.web-mode .screen {
+  gap: 14px;
+}
 
-  body.web-mode .nav-label {
-    font-size: 9px;
-  }
+body.web-mode .bottom-nav {
+  display: none !important;
+}
 
-  body.web-mode .nav-plus {
-    width: 36px;
-    height: 36px;
-  }
+body.web-mode #miniTopbar {
+  display: none;
+}
 
-  body.web-mode .content {
-    margin-right: 84px;
-  }
-
-  body.web-mode .screen {
-    gap: 14px;
-  }
+body.web-mode #webTopNav {
+  display: block;
 }

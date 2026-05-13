@@ -34,7 +34,7 @@ import {
   resolveReportRange
 } from "../services/reports.js";
 import { createTransfer } from "../services/transfers.js";
-import { registerTelegramUser } from "../services/users.js";
+import { getAppUserById, registerTelegramUser } from "../services/users.js";
 import {
   toTelegramBotUser,
   validateTelegramLoginData,
@@ -224,7 +224,13 @@ async function authenticateMiniAppUser(req: express.Request) {
       throw new Error("Unauthorized: Telegram session is missing");
     }
 
-    return { id: sessionUserId };
+    const user = await getAppUserById(sessionUserId);
+
+    if (!user) {
+      throw new Error("Unauthorized: user session is invalid");
+    }
+
+    return user;
   }
 }
 

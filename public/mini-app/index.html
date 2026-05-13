@@ -31,33 +31,65 @@
       </div>
     </div>
 
-    <div class="app-shell">
-      <header class="topbar topbar-compact">
-        <div class="brand-lockup" aria-label="Balancy">
+    <header id="webTopNav" class="web-top-nav" hidden>
+      <div class="web-top-nav-inner">
+        <div class="web-top-nav-brand" aria-label="Balancy">
           <span class="brand-wordmark">Balancy</span>
+          <span class="web-top-nav-badge muted">браузер</span>
         </div>
-        <div class="topbar-web-actions">
-          <button id="refreshButton" class="refresh-text-btn" type="button">Обновить</button>
-          <div id="webProfileMenu" class="web-profile-menu" hidden>
+        <nav class="web-top-nav-links" aria-label="Разделы">
+          <button type="button" class="web-top-nav-link" data-web-nav="home">Главная</button>
+          <button type="button" class="web-top-nav-link" data-web-nav="activity">Операции</button>
+          <button type="button" class="web-top-nav-link" data-web-nav="reports">Отчёты</button>
+          <button type="button" class="web-top-nav-link" data-web-nav="categories">Категории</button>
+          <button type="button" class="web-top-nav-link" data-web-nav="accounts">Счета</button>
+          <button type="button" class="web-top-nav-link web-top-nav-link-accent" id="webTopNavAddButton">
+            Новая запись
+          </button>
+        </nav>
+        <div class="web-top-nav-aside">
+          <button type="button" class="web-top-nav-ghost" id="webRefreshButton">Обновить</button>
+          <div id="webProfileMenu" class="web-profile-menu">
             <button
-              id="webProfileToggleButton"
-              class="web-profile-toggle"
               type="button"
+              id="webProfileToggleButton"
+              class="web-profile-icon"
+              aria-label="Аккаунт"
               aria-expanded="false"
             >
-              <span id="webProfileName" class="web-profile-name">Аккаунт</span>
+              <svg class="web-profile-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M5 20.5c1.8-3.2 5.2-5 7-5s5.2 1.8 7 5"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                />
+              </svg>
             </button>
             <div id="webProfileDropdown" class="web-profile-dropdown" hidden>
               <p id="webProfileMeta" class="web-profile-meta muted"></p>
-              <a id="openTelegramMiniAppLink" class="web-profile-link" href="/mini-app/" target="_blank" rel="noreferrer">
-                Открыть Telegram Mini App
-              </a>
-              <button id="webLogoutButton" class="web-profile-logout" type="button">
-                Сменить аккаунт
+              <button type="button" id="webSwitchUserButton" class="web-profile-logout">
+                Сменить пользователя
               </button>
             </div>
           </div>
         </div>
+      </div>
+    </header>
+
+    <div class="app-shell">
+      <header id="miniTopbar" class="topbar topbar-compact">
+        <div class="brand-lockup" aria-label="Balancy">
+          <span class="brand-wordmark">Balancy</span>
+        </div>
+        <button id="refreshButton" class="refresh-text-btn" type="button">Обновить</button>
       </header>
 
       <main class="content tabbed-content">

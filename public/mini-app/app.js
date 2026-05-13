@@ -22,13 +22,14 @@ const recentEntriesListElement = document.getElementById("recentEntriesList");
 const recentTransfersListElement = document.getElementById("recentTransfersList");
 const homeRecentActivityListElement = document.getElementById("homeRecentActivityList");
 const refreshButton = document.getElementById("refreshButton");
+const webTopNav = document.getElementById("webTopNav");
+const webRefreshButton = document.getElementById("webRefreshButton");
+const webTopNavAddButton = document.getElementById("webTopNavAddButton");
 const webProfileMenu = document.getElementById("webProfileMenu");
 const webProfileToggleButton = document.getElementById("webProfileToggleButton");
 const webProfileDropdown = document.getElementById("webProfileDropdown");
-const webProfileName = document.getElementById("webProfileName");
 const webProfileMeta = document.getElementById("webProfileMeta");
-const webLogoutButton = document.getElementById("webLogoutButton");
-const openTelegramMiniAppLink = document.getElementById("openTelegramMiniAppLink");
+const webSwitchUserButton = document.getElementById("webSwitchUserButton");
 const syncRatesButton = document.getElementById("syncRatesButton");
 const fxBoardBaseInput = document.getElementById("fxBoardBaseInput");
 const fxBoardRowsElement = document.getElementById("fxBoardRows");
@@ -648,6 +649,10 @@ function openScreen(screenName) {
 
   navButtons.forEach((button) => {
     button.classList.toggle("is-active", button.dataset.openScreen === nextScreen);
+  });
+
+  document.querySelectorAll("[data-web-nav]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.webNav === nextScreen);
   });
 }
 
@@ -1955,25 +1960,27 @@ function renderAll() {
 }
 
 function syncWebProfile() {
-  if (!isWebMode || !webProfileName || !webProfileMeta) {
+  if (!isWebMode || !webProfileMeta) {
     return;
   }
 
   const user = state.user;
   if (!user) {
-    webProfileName.textContent = "Аккаунт";
-    webProfileMeta.textContent = "Веб-сессия";
+    webProfileMeta.textContent = "Сессия не загружена.";
     return;
   }
 
   const displayName =
     [user.first_name, user.last_name].filter(Boolean).join(" ") ||
-    user.username ||
-    "Пользователь";
-  webProfileName.textContent = displayName;
+    (user.username ? `@${user.username}` : "") ||
+    "Telegram";
 
-  const usernameLine = user.username ? `@${user.username}` : "без username";
-  webProfileMeta.textContent = `Telegram ID: ${user.telegram_user_id ?? "—"} · ${usernameLine}`;
+  const telegramId =
+    typeof user.telegram_user_id === "number" && Number.isFinite(user.telegram_user_id)
+      ? String(user.telegram_user_id)
+      : "—";
+
+  webProfileMeta.textContent = `${displayName} · Telegram ID ${telegramId}`;
 }
 
 function closeWebProfileDropdown() {
@@ -2054,12 +2061,14 @@ async function authenticatedFetchRaw(url, options = {}) {
   const method = String(options.method ?? "GET").toUpperCase();
   const optionHeaders = { ...(options.headers ?? {}) };
 
+  const initData = getInitData();
+
   return fetch(resolveFetchUrl(url), {
     ...options,
     method,
     headers: {
       ...optionHeaders,
-      "x-telegram-init-data": getInitData(),
+      ...(initData ? { "x-telegram-init-data": initData } : {}),
       "ngrok-skip-browser-warning": "true",
       "bypass-tunnel-reminder": "true"
     }
@@ -2842,29 +2851,35 @@ if (refreshButton) {
 
 if (isWebMode) {
   document.body.classList.add("web-mode");
+  webTopNav?.removeAttribute("hidden");
 
-  if (webProfileMenu) {
-    webProfileMenu.hidden = false;
-  }
-
-  if (openTelegramMiniAppLink) {
-    openTelegramMiniAppLink.href = "/mini-app/";
-  }
-
-  if (webProfileToggleButton) {
-    webProfileToggleButton.addEventListener("click", () => {
-      toggleWebProfileDropdown();
+  if (webRefreshButton) {
+    webRefreshButton.addEventListener("click", () => {
+      void loadApp();
     });
   }
 
-  if (webLogoutButton) {
-    webLogoutButton.addEventListener("click", () => {
-      void handleWebLogout();
+  webTopNavAddButton?.addEventListener("click", () => {
+    openEntryTypeModal();
+  });
+
+  document.querySelectorAll("[data-web-nav]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openScreen(button.dataset.webNav ?? "home");
+      closeWebProfileDropdown();
     });
-  }
+  });
+
+  webProfileToggleButton?.addEventListener("click", () => {
+    toggleWebProfileDropdown();
+  });
+
+  webSwitchUserButton?.addEventListener("click", () => {
+    void handleWebLogout();
+  });
 
   document.addEventListener("click", (event) => {
-    if (!webProfileMenu || webProfileMenu.hidden) {
+    if (!webProfileDropdown || webProfileDropdown.hidden) {
       return;
     }
 

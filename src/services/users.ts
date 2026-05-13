@@ -10,6 +10,20 @@ export interface TelegramAppUserRow {
   created_at: string;
 }
 
+export async function getAppUserById(userId: string): Promise<TelegramAppUserRow | null> {
+  const { data, error } = await supabase
+    .from("app_users")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? null) as TelegramAppUserRow | null;
+}
+
 export async function registerTelegramUser(
   telegramUser: TelegramUser
 ): Promise<TelegramAppUserRow> {
