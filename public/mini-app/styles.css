@@ -1395,7 +1395,8 @@ details.currency-breakdown[open] .currency-breakdown-hint::before {
 }
 
 .stacked-form input,
-.stacked-form select {
+.stacked-form select,
+.stacked-form textarea {
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
@@ -1408,6 +1409,12 @@ details.currency-breakdown[open] .currency-breakdown-hint::before {
   color: var(--text);
   font-size: 16px;
   line-height: 1.25;
+}
+
+.stacked-form textarea {
+  min-height: 96px;
+  resize: vertical;
+  font-family: inherit;
 }
 
 .stacked-form .native-datetime-shell {
@@ -4016,10 +4023,6 @@ body:not(.web-mode) .web-activity-tip {
   display: none !important;
 }
 
-body:not(.web-mode) #entryFormResetWeb {
-  display: none !important;
-}
-
 body.web-mode .web-activity-compose {
   margin-bottom: 14px;
 }
@@ -4107,6 +4110,11 @@ body.web-mode .web-op-entry-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px 16px;
+}
+
+body.web-mode .tg-entry-select-shell,
+body.web-mode .tg-entry-amount-shell {
+  display: contents;
 }
 
 body.web-mode .web-op-field-span-2 {
@@ -6246,6 +6254,10 @@ body:not(.web-mode) .web-only-inline {
   display: none !important;
 }
 
+body:not(.web-mode) .web-only-block {
+  display: none !important;
+}
+
 body:not(.web-mode) .web-only-home-eyebrow {
   display: none !important;
 }
@@ -6788,4 +6800,294 @@ body:not(.web-mode) #screen-more .tg-more-screen-actions .primary-button,
 body:not(.web-mode) #screen-more .tg-more-screen-actions .ghost-button {
   width: 100%;
   box-sizing: border-box;
+}
+
+/* --- Telegram: экран «Операции» / новая запись (макет) --- */
+body:not(.web-mode) #screen-activity .web-op-native-kind-field {
+  display: none !important;
+}
+
+body:not(.web-mode) #screen-activity > .web-transfer-sheet {
+  display: none !important;
+}
+
+body:not(.web-mode) #screen-activity {
+  gap: 14px;
+}
+
+body:not(.web-mode) #screen-activity .section-header--telegram-only.tg-entry-screen-head {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 2px;
+  padding: 2px 0 6px;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-screen-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 780;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  color: #1a1c1e;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-screen-sub {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #757575;
+  font-weight: 500;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-kind-segment {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 4px;
+  width: 100%;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-kind-btn {
+  border-radius: 12px;
+  padding: 12px 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+  border: 1.5px solid #e0e0e0;
+  background: #fff;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-kind-btn--income {
+  color: #00a86b;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-kind-btn--expense {
+  color: #ef4444;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-kind-btn--income.is-selected {
+  border-color: #00a86b;
+  background: rgb(0 168 107 / 0.09);
+  box-shadow: 0 0 0 1px rgb(0 168 107 / 0.16);
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-kind-btn--expense.is-selected {
+  border-color: rgb(239 68 68 / 0.85);
+  background: rgb(239 68 68 / 0.07);
+  box-shadow: 0 0 0 1px rgb(239 68 68 / 0.18);
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-kind-btn:focus-visible {
+  outline: 2px solid rgb(0 168 107 / 0.45);
+  outline-offset: 2px;
+}
+
+body:not(.web-mode) #screen-activity .activity-form-card.web-op-entry-sheet {
+  border-radius: 18px;
+  padding: 16px 16px 18px;
+  box-shadow: 0 2px 12px rgb(15 23 42 / 0.06);
+  border: 1px solid rgb(15 23 42 / 0.08);
+}
+
+body:not(.web-mode) #screen-activity .web-op-entry-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+body:not(.web-mode) #screen-activity .web-op-entry-form > label > span:first-of-type,
+body:not(.web-mode) #screen-activity .web-op-entry-form label > span:first-of-type {
+  font-size: 13px;
+  font-weight: 650;
+  color: #757575;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-select-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-select-shell::after {
+  content: "";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid #94a3b8;
+  border-bottom: 2px solid #94a3b8;
+  transform: translateY(-60%) rotate(45deg);
+  pointer-events: none;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-select-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  color: #00a86b;
+  display: grid;
+  place-items: center;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-select-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-select-shell select {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+  border: none;
+  background: transparent;
+  padding: 10px 30px 10px 0;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  font-weight: 650;
+  color: #1a1c1e;
+  min-height: 0;
+  box-shadow: none;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-amount-shell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 0 4px 0 12px;
+  background: #fff;
+  min-height: 48px;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-amount-shell input[type="number"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: 10px 0;
+  margin: 0;
+  min-height: 0;
+  box-shadow: none;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-amount-badge {
+  flex-shrink: 0;
+  padding: 7px 10px;
+  border-radius: 9px;
+  background: #f1f5f9;
+  font-size: 12px;
+  font-weight: 750;
+  color: #475569;
+  line-height: 1;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-datetime-shell {
+  border-radius: 12px;
+  border-color: #e0e0e0;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-note-input {
+  border-radius: 12px;
+  border-color: #e0e0e0;
+  min-height: 88px;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-hint {
+  position: relative;
+  padding: 12px 40px 12px 14px;
+  border-radius: 12px;
+  background: rgb(236 253 245 / 0.55);
+  border: 1px solid rgb(34 197 94 / 0.2);
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-hint-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-hint-close:active {
+  background: rgb(15 23 42 / 0.06);
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-hint-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-hint-bulb {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-hint-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 750;
+  color: #00a86b;
+  margin-bottom: 4px;
+}
+
+body:not(.web-mode) #screen-activity .tg-entry-hint-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+body:not(.web-mode) #screen-activity .web-op-form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+body:not(.web-mode) #screen-activity .web-op-form-actions .primary-button {
+  width: 100%;
+  min-height: 50px;
+  border-radius: 12px;
+  font-weight: 750;
+  background: #00a86b;
+  border: none;
+}
+
+body:not(.web-mode) #screen-activity .web-op-form-actions .ghost-button {
+  width: 100%;
+  min-height: 50px;
+  border-radius: 12px;
+  font-weight: 700;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  color: #1a1c1e;
 }

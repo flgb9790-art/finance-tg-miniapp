@@ -73,6 +73,7 @@ const entryKindInput = document.getElementById("entryKindInput");
 const entryAccountInput = document.getElementById("entryAccountInput");
 const entryCategoryInput = document.getElementById("entryCategoryInput");
 const entryDateInput = document.getElementById("entryDateInput");
+const entryAmountInput = document.getElementById("entryAmountInput");
 const transferForm = document.getElementById("transferForm");
 const transferSubmitButton = document.getElementById("transferSubmitButton");
 const transferFromAccountInput = document.getElementById("transferFromAccountInput");
@@ -786,6 +787,11 @@ function openScreen(screenName, options = {}) {
     webReportsBodyEl.hidden = true;
     destroyReportCharts();
   }
+
+  if (!isWebMode && nextScreen === "activity") {
+    syncTgEntryKindSegmentFromSelect();
+    syncEntryAmountCurrencyBadgeTg();
+  }
 }
 
 function initWebOperationsChrome() {
@@ -1081,6 +1087,8 @@ function openEntryScreenForKind(kind) {
   entryKindInput.value = kind;
   populateCategoryOptions();
   syncWebEntryKindCardsFromSelect();
+  syncTgEntryKindSegmentFromSelect();
+  syncEntryAmountCurrencyBadgeTg();
   document.getElementById("entryForm")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -1181,6 +1189,50 @@ function syncWebEntryKindCardsFromSelect() {
     button.classList.toggle("is-selected", selected);
     button.setAttribute("aria-pressed", selected ? "true" : "false");
   });
+}
+
+function syncTgEntryKindSegmentFromSelect() {
+  if (isWebMode || !entryKindInput) {
+    return;
+  }
+
+  const kind = entryKindInput.value === "income" ? "income" : "expense";
+
+  document.querySelectorAll("[data-tg-set-entry-kind]").forEach((button) => {
+    const cardKind = button.dataset.tgSetEntryKind;
+    const selected = cardKind === kind;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", selected ? "true" : "false");
+  });
+}
+
+function syncEntryAmountCurrencyBadgeTg() {
+  if (isWebMode) {
+    return;
+  }
+
+  const badge = document.getElementById("entryAmountCurrencyBadge");
+  if (!badge || !entryAccountInput) {
+    return;
+  }
+
+  const opt = entryAccountInput.selectedOptions[0];
+  const code = (opt?.dataset?.currency ?? "").trim().toUpperCase();
+  badge.textContent = code || "—";
+}
+
+function resetEntryFormToDefaults() {
+  if (!entryForm || !entryKindInput || !entryDateInput) {
+    return;
+  }
+
+  entryForm.reset();
+  entryKindInput.value = "expense";
+  entryDateInput.value = getCurrentLocalDateTimeValue();
+  populateCategoryOptions();
+  syncWebEntryKindCardsFromSelect();
+  syncTgEntryKindSegmentFromSelect();
+  syncEntryAmountCurrencyBadgeTg();
 }
 
 function renderWebDesktopDashboard(summary) {
@@ -3074,6 +3126,7 @@ function populateAccountOptions() {
     transferFromAccountInput.innerHTML = `<option value="">Сначала создайте счет</option>`;
     transferToAccountInput.innerHTML = `<option value="">Сначала создайте счет</option>`;
     syncWebTransferAmountCurrencyUi();
+    syncEntryAmountCurrencyBadgeTg();
     return;
   }
 
@@ -3086,6 +3139,7 @@ function populateAccountOptions() {
   }
 
   syncWebTransferAmountCurrencyUi();
+  syncEntryAmountCurrencyBadgeTg();
 }
 
 function populateCurrencyOptions() {
@@ -4571,11 +4625,7 @@ async function handleCreateEntry(event) {
       body: JSON.stringify(payload)
     });
 
-    entryForm.reset();
-    entryKindInput.value = "expense";
-    entryDateInput.value = getCurrentLocalDateTimeValue();
-    populateCategoryOptions();
-    syncWebEntryKindCardsFromSelect();
+    resetEntryFormToDefaults();
     setStatus("Операция сохранена.", "success");
     await loadApp();
   } catch (error) {
@@ -4747,7 +4797,10 @@ function handleOpenScreenButtonClick(button) {
   if (label?.includes("Новая операция")) {
     entryKindInput.value = "expense";
     populateCategoryOptions();
-    document.getElementById("entryAmountInput")?.focus();
+    syncWebEntryKindCardsFromSelect();
+    syncTgEntryKindSegmentFromSelect();
+    syncEntryAmountCurrencyBadgeTg();
+    (entryAmountInput ?? document.getElementById("entryAmountInput"))?.focus();
   } else if (label?.includes("Перевод")) {
     document.getElementById("transferFromAmountInput")?.focus();
   }
@@ -4819,7 +4872,7 @@ document.querySelector("#screen-home .tg-home-quick-actions")?.addEventListener(
   if (action === "transfer") {
     openScreen("activity");
     window.setTimeout(() => {
-      transferForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+      (entryAmountInput ?? document.getElementById("entryAmountInput"))?.focus({ preventScroll: true });
     }, 120);
     return;
   }
@@ -4911,15 +4964,6 @@ if (isWebMode) {
     });
   });
 
-  document.getElementById("entryFormResetWeb")?.addEventListener("click", () => {
-    entryForm.reset();
-    entryKindInput.value = "expense";
-    entryDateInput.value = getCurrentLocalDateTimeValue();
-    populateCategoryOptions();
-    syncWebEntryKindCardsFromSelect();
-  });
-
-  document.querySelectorAll("[data-web-nav]").forEach((button) => {
     button.addEventListener("click", () => {
       openScreen(button.dataset.webNav ?? "home");
       closeWebProfileDropdown();
@@ -5009,7 +5053,7 @@ document.querySelectorAll("[data-web-new-entry]").forEach((button) => {
       } else {
         openScreen("activity");
         window.setTimeout(() => {
-          transferForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+          (entryAmountInput ?? document.getElementById("entryAmountInput"))?.focus({ preventScroll: true });
         }, 120);
       }
     } else if (kind === "income" || kind === "expense") {
@@ -5113,7 +5157,7 @@ document.getElementById("entryTypeOpenTransferButton")?.addEventListener("click"
   } else {
     openScreen("activity");
     window.setTimeout(() => {
-      transferForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+      (entryAmountInput ?? document.getElementById("entryAmountInput"))?.focus({ preventScroll: true });
     }, 120);
   }
 });
@@ -5233,7 +5277,55 @@ reportCsvStatementButton?.addEventListener("click", () => {
 entryKindInput.addEventListener("change", () => {
   populateCategoryOptions();
   syncWebEntryKindCardsFromSelect();
+  syncTgEntryKindSegmentFromSelect();
 });
+
+document.getElementById("entryFormResetWeb")?.addEventListener("click", () => {
+  resetEntryFormToDefaults();
+});
+
+document.querySelectorAll("[data-tg-set-entry-kind]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const nextKind = button.dataset.tgSetEntryKind;
+    if (!nextKind || !entryKindInput || isWebMode) {
+      return;
+    }
+
+    entryKindInput.value = nextKind;
+    populateCategoryOptions();
+    syncWebEntryKindCardsFromSelect();
+    syncTgEntryKindSegmentFromSelect();
+  });
+});
+
+entryAccountInput?.addEventListener("change", () => {
+  syncEntryAmountCurrencyBadgeTg();
+});
+
+(function initTgEntryOperationHint() {
+  const hint = document.getElementById("tgEntryHint");
+  const closeBtn = document.getElementById("tgEntryHintClose");
+  if (!hint || !closeBtn || isWebMode) {
+    return;
+  }
+
+  try {
+    if (window.sessionStorage.getItem("balancyHideTgEntryHint") === "1") {
+      hint.hidden = true;
+    }
+  } catch {
+    //
+  }
+
+  closeBtn.addEventListener("click", () => {
+    hint.hidden = true;
+    try {
+      window.sessionStorage.setItem("balancyHideTgEntryHint", "1");
+    } catch {
+      //
+    }
+  });
+})();
 
 reportPeriodInput.addEventListener("change", () => {
   toggleReportDateInputs();
