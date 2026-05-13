@@ -101,8 +101,9 @@ MVP-проект для учета личных финансов через Tele
 2. Во вкладке **Variables** задайте как минимум: `TELEGRAM_BOT_TOKEN`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `APP_URL`.
    - **APP_URL**: `https://${{RAILWAY_PUBLIC_DOMAIN}}` — подставится публичный URL сервиса (без финального `/`).
    - Рекомендуется **TELEGRAM_WEBHOOK_SECRET** (случайная строка): тот же секрет укажите в Telegram при настройке webhook, если используете проверку заголовка.
-3. **PORT** и **RAILWAY_ENVIRONMENT** Railway задаёт сама. Слушание в контейнере идёт на `0.0.0.0`, если задан `RAILWAY_ENVIRONMENT` (см. `src/config/env.ts`).
-4. После первого успешного деплоя откройте домен сервиса, убедитесь что `GET /health` отвечает `{"ok":true}`.
-5. В Telegram бот должен принимать webhook на `https://<ваш-домен>/api/telegram/webhook` — это настраивается автоматически при старте, если задан `APP_URL`.
+3. **PORT** задаёт Railway сама. При наличии переменной **`PORT`** сервер по умолчанию слушает **`0.0.0.0`**, чтобы healthcheck по IPv4 доходил (см. `src/config/env.ts`).
+4. Если деплой падает на **Healthcheck**: откройте **Deploy Logs**. Частые причины: не заданы секреты; в Variables указан **`HOST=::`** — удалите `HOST` или задайте **`HOST=0.0.0.0`** (healthcheck Railway ходит по IPv4). В `railway.json` старт уже с **`HOST=0.0.0.0`**, но явная переменная в UI переопределяет её.
+5. После первого успешного деплоя откройте домен сервиса, убедитесь что `GET /health` отвечает `{"ok":true}`.
+6. В Telegram бот должен принимать webhook на `https://<ваш-домен>/api/telegram/webhook` — это настраивается автоматически при старте, если задан `APP_URL`.
 
-В репозитории лежит `railway.json`: сборка `npm run build`, старт `npm run start`, healthcheck `/health`.
+В репозитории лежит `railway.json`: сборка `npm run build`, старт `npm run start`, healthcheck `/health`. Версия Node для Railpack: **`engines.node`** и файл **`.nvmrc`** (22) — на Node 22+ у runtime есть встроенный WebSocket для Supabase; для Node 20 в коде остаётся полифилл `ws`.

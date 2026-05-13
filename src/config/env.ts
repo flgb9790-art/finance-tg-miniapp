@@ -18,11 +18,11 @@ function optionalEnv(name: string): string | undefined {
 }
 
 /**
- * Railway и другие контейнеры надёжнее слушают на 0.0.0.0.
- * Локально по умолчанию :: (dual-stack, удобно с ngrok на Windows).
+ * PaaS (Railway, Render, Fly) задаёт PORT. Слушать 0.0.0.0 — надёжнее для IPv4 healthcheck.
+ * Локально без PORT в окружении — :: (dual-stack, удобно с ngrok на Windows).
  */
 const defaultListenHost =
-  process.env.RAILWAY_ENVIRONMENT !== undefined ? "0.0.0.0" : "::";
+  process.env.PORT !== undefined && process.env.PORT !== "" ? "0.0.0.0" : "::";
 
 export const env = {
   telegramBotToken: requireEnv("TELEGRAM_BOT_TOKEN"),

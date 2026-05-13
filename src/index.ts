@@ -33,7 +33,7 @@ function main(): void {
   const httpApp = createHttpApp();
   const telegramBot = attachTelegramBotRoutes(httpApp);
 
-  httpApp.listen(env.port, env.host, () => {
+  const server = httpApp.listen(env.port, env.host, () => {
     console.log(`HTTP server is running on ${env.host}:${env.port}.`);
 
     void (async () => {
@@ -43,15 +43,20 @@ function main(): void {
         console.error("Не удалось настроить webhook Telegram:", error);
       }
     })();
+
+    console.log(
+      useWebhook
+        ? "Telegram: после старта будет webhook (без long polling)."
+        : "Telegram: long polling. Оставьте одну копию процесса или задайте APP_URL."
+    );
+    console.log("Bot is ready. Use /start in Telegram.");
+    startExchangeRateSyncLoop();
   });
 
-  console.log(
-    useWebhook
-      ? "Telegram: после старта будет webhook (без long polling)."
-      : "Telegram: long polling. Оставьте одну копию процесса или задайте APP_URL."
-  );
-  console.log("Bot is ready. Use /start in Telegram.");
-  startExchangeRateSyncLoop();
+  server.on("error", (error: NodeJS.ErrnoException) => {
+    console.error("HTTP server failed to start:", error);
+    process.exitCode = 1;
+  });
 }
 
 main();

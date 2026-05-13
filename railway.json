@@ -4,9 +4,9 @@
     "buildCommand": "npm run build"
   },
   "deploy": {
-    "startCommand": "npm run start",
+    "startCommand": "HOST=0.0.0.0 node dist/index.js",
     "healthcheckPath": "/health",
-    "healthcheckTimeout": 45,
+    "healthcheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE"
   }
 }

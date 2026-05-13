@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -17,12 +17,14 @@
     "@supabase/supabase-js": "^2.49.1",
     "dotenv": "^16.4.7",
     "express": "^5.2.1",
-    "node-telegram-bot-api": "^0.66.0"
+    "node-telegram-bot-api": "^0.66.0",
+    "ws": "^8.20.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^24.0.0",
     "@types/node-telegram-bot-api": "^0.64.8",
+    "@types/ws": "^8.18.1",
     "sharp": "^0.34.1",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0"
