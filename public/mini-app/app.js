@@ -2028,7 +2028,7 @@ function renderReportCategoryMatrix(report) {
   const rows = Array.isArray(report?.categoryMatrix) ? report.categoryMatrix : [];
   const c = report?.reportingCurrency ?? "";
   if (rows.length === 0) {
-    reportCategoryMatrixBody.innerHTML = `<tr><td colspan="5" class="muted">Нет данных по категориям за период.</td></tr>`;
+    reportCategoryMatrixBody.innerHTML = `<tr><td colspan="4" class="muted">Нет данных по категориям за период.</td></tr>`;
     return;
   }
   reportCategoryMatrixBody.innerHTML = rows
@@ -2036,7 +2036,6 @@ function renderReportCategoryMatrix(report) {
       const exp = Number(row.expense ?? 0);
       const inc = Number(row.income ?? 0);
       const net = Number(row.net ?? 0);
-      const share = Math.min(100, Math.max(0, Number(row.expenseShare ?? 0) * 100));
       const col = categoryColorAt(idx);
       const netClass = net >= 0 ? "report-matrix-pos" : "report-matrix-neg";
       return `<tr>
@@ -2044,7 +2043,6 @@ function renderReportCategoryMatrix(report) {
         <td class="report-matrix-num report-matrix-neg">${exp > 0 ? `−${escapeHtml(formatMoneyAmount(exp))}` : "—"}</td>
         <td class="report-matrix-num report-matrix-pos">${inc > 0 ? `+${escapeHtml(formatMoneyAmount(inc))}` : "—"}</td>
         <td class="report-matrix-num ${netClass}">${net >= 0 ? "+" : "−"}${escapeHtml(formatMoneyAmount(Math.abs(net)))} ${escapeHtml(c)}</td>
-        <td class="report-matrix-bar-col"><div class="report-matrix-bar" style="width:${share.toFixed(0)}%;background:${escapeHtml(col)}"></div></td>
       </tr>`;
     })
     .join("");

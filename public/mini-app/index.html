@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513reports-wide-charts";
+        var BALANCY_CLIENT_ASSET_REV = "20260513reports-toolbar-matrix";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -909,61 +909,62 @@
 
                 <form id="reportForm" class="report-main-form">
                   <div class="report-period-row">
-                    <div id="reportPeriodSegmented" class="report-segmented" role="tablist" aria-label="Период">
-                      <button type="button" class="report-segment" data-report-period="week">Неделя</button>
-                      <button type="button" class="report-segment is-active" data-report-period="month">Месяц</button>
-                      <button type="button" class="report-segment" data-report-period="quarter">3 месяца</button>
-                      <button type="button" class="report-segment" data-report-period="year">Год</button>
-                      <button type="button" class="report-segment" data-report-period="custom">Произвольный</button>
+                    <div class="report-period-controls">
+                      <div id="reportPeriodSegmented" class="report-segmented" role="tablist" aria-label="Период">
+                        <button type="button" class="report-segment" data-report-period="week">Неделя</button>
+                        <button type="button" class="report-segment is-active" data-report-period="month">Месяц</button>
+                        <button type="button" class="report-segment" data-report-period="quarter">3 месяца</button>
+                        <button type="button" class="report-segment" data-report-period="year">Год</button>
+                        <button type="button" class="report-segment" data-report-period="custom">Произвольный</button>
+                      </div>
+                      <label class="report-inline-field report-period-native-wrap">
+                        <span class="report-filter-label">Период</span>
+                        <select id="reportPeriodInput" name="period" class="report-filter-select">
+                          <option value="week">Неделя</option>
+                          <option value="month" selected>Месяц</option>
+                          <option value="quarter">3 месяца</option>
+                          <option value="year">Год</option>
+                          <option value="custom">Произвольный период</option>
+                        </select>
+                      </label>
+
+                      <label class="report-inline-field report-filter-web-only">
+                        <span class="report-filter-label">Счета</span>
+                        <select id="reportAccountFilterInput" name="reportAccountFilter" class="report-filter-select">
+                          <option value="">Все счета</option>
+                        </select>
+                      </label>
+
+                      <label class="report-inline-field">
+                        <span class="report-filter-label">Валюта отчёта</span>
+                        <select id="reportingCurrencyInput" name="reportingCurrency" class="report-filter-select"></select>
+                      </label>
+
+                      <label class="report-inline-field">
+                        <span class="report-filter-label">Категория</span>
+                        <select id="reportCategoryFilterInput" name="reportCategoryFilter" class="report-filter-select">
+                          <option value="">Все статьи</option>
+                        </select>
+                      </label>
+
+                      <label class="report-inline-field report-filter-web-only">
+                        <span class="report-filter-label">Тип</span>
+                        <select id="reportKindFilterInput" name="reportKindFilter" class="report-filter-select">
+                          <option value="">Все</option>
+                          <option value="income">Доход</option>
+                          <option value="expense">Расход</option>
+                        </select>
+                      </label>
+
+                      <label class="report-inline-field report-filter-date-start">
+                        <span class="report-filter-label">С</span>
+                        <input id="reportStartDateInput" name="startDate" type="date" class="report-filter-date" />
+                      </label>
+                      <label class="report-inline-field report-filter-date-end">
+                        <span class="report-filter-label">По</span>
+                        <input id="reportEndDateInput" name="endDate" type="date" class="report-filter-date" />
+                      </label>
                     </div>
-                    <label class="report-inline-field report-period-native-wrap">
-                      <span class="report-filter-label">Период</span>
-                      <select id="reportPeriodInput" name="period" class="report-filter-select">
-                        <option value="week">Неделя</option>
-                        <option value="month" selected>Месяц</option>
-                        <option value="quarter">3 месяца</option>
-                        <option value="year">Год</option>
-                        <option value="custom">Произвольный период</option>
-                      </select>
-                    </label>
-
-                    <label class="report-inline-field report-filter-web-only">
-                      <span class="report-filter-label">Счета</span>
-                      <select id="reportAccountFilterInput" name="reportAccountFilter" class="report-filter-select">
-                        <option value="">Все счета</option>
-                      </select>
-                    </label>
-
-                    <label class="report-inline-field">
-                      <span class="report-filter-label">Валюта отчёта</span>
-                      <select id="reportingCurrencyInput" name="reportingCurrency" class="report-filter-select"></select>
-                    </label>
-
-                    <label class="report-inline-field">
-                      <span class="report-filter-label">Категория</span>
-                      <select id="reportCategoryFilterInput" name="reportCategoryFilter" class="report-filter-select">
-                        <option value="">Все статьи</option>
-                      </select>
-                    </label>
-
-                    <label class="report-inline-field report-filter-web-only">
-                      <span class="report-filter-label">Тип</span>
-                      <select id="reportKindFilterInput" name="reportKindFilter" class="report-filter-select">
-                        <option value="">Все</option>
-                        <option value="income">Доход</option>
-                        <option value="expense">Расход</option>
-                      </select>
-                    </label>
-
-                    <label class="report-inline-field report-filter-date-start">
-                      <span class="report-filter-label">С</span>
-                      <input id="reportStartDateInput" name="startDate" type="date" class="report-filter-date" />
-                    </label>
-                    <label class="report-inline-field report-filter-date-end">
-                      <span class="report-filter-label">По</span>
-                      <input id="reportEndDateInput" name="endDate" type="date" class="report-filter-date" />
-                    </label>
-
                     <button id="reportSubmitButton" class="primary-button report-apply-btn" type="button">
                       Показать
                     </button>
@@ -1052,7 +1053,6 @@
                             <th class="report-matrix-num">Расходы</th>
                             <th class="report-matrix-num">Доходы</th>
                             <th class="report-matrix-num">Чистый поток</th>
-                            <th class="report-matrix-bar-col"></th>
                           </tr>
                         </thead>
                         <tbody id="reportCategoryMatrixBody"></tbody>

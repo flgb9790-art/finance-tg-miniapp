@@ -4565,11 +4565,19 @@ body.web-mode #screen-reports.screen-active {
 }
 
 body.web-mode #screen-reports .report-layout-card {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+body.web-mode .report-web-toolbar {
   background: #fff;
   border: 1px solid rgb(15 23 42 / 0.08);
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgb(15 23 42 / 0.06);
-  padding: 18px 20px 20px;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+  padding: 16px 18px 18px;
 }
 
 body.web-mode #screen-reports {
@@ -4682,9 +4690,29 @@ body.web-mode[data-app-active-screen="reports"] .app-shell {
 
 .report-period-row {
   display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: 12px 14px;
+}
+
+.report-period-controls {
+  display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 12px 14px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .report-period-row {
+    flex-wrap: wrap;
+  }
+
+  .report-apply-btn {
+    width: 100%;
+    margin-left: 0;
+  }
 }
 
 .report-segmented {
@@ -4745,15 +4773,12 @@ body.web-mode[data-app-active-screen="reports"] .app-shell {
 }
 
 .report-apply-btn {
+  flex: 0 0 auto;
   align-self: flex-end;
   min-height: 40px;
   padding-left: 18px;
   padding-right: 18px;
   border-radius: 10px;
-}
-
-body.web-mode .report-apply-btn {
-  margin-left: auto;
 }
 
 .report-web-body {
@@ -4861,12 +4886,16 @@ body.web-mode .report-apply-btn {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.85fr);
   gap: 12px;
-  align-items: start;
+  align-items: stretch;
 }
 
 @media (max-width: 960px) {
   .report-charts-row {
     grid-template-columns: 1fr;
+  }
+
+  .report-chart-panel {
+    min-height: 280px;
   }
 }
 
@@ -4877,6 +4906,9 @@ body.web-mode .report-apply-btn {
   box-shadow: 0 1px 2px rgb(15 23 42 / 0.05) !important;
   background: #fff !important;
   min-width: 0;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
 }
 
 .report-chart-panel .section-label {
@@ -4886,17 +4918,20 @@ body.web-mode .report-apply-btn {
   letter-spacing: 0.06em;
   color: rgb(100 116 139);
   margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .report-chart-canvas-wrap {
   position: relative;
   width: 100%;
   min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .report-chart-canvas-wrap--trend {
-  min-height: 200px;
-  max-height: 280px;
+  min-height: 220px;
 }
 
 .report-chart-canvas-wrap canvas {
@@ -4909,21 +4944,25 @@ body.web-mode .report-apply-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   gap: 8px;
   min-height: 0;
+  flex: 1 1 auto;
 }
 
 .report-donut-stack {
   position: relative;
   width: 100%;
-  max-width: 240px;
-  height: 200px;
-  min-height: 0;
-  flex-shrink: 0;
+  max-width: 260px;
+  flex: 1 1 auto;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .report-donut-stack canvas {
-  max-height: 200px;
+  max-height: 100%;
 }
 
 .report-donut-total {
@@ -4959,6 +4998,9 @@ body.web-mode .report-apply-btn {
 .report-summary-aside {
   padding: 16px 18px !important;
   border-radius: 14px !important;
+  background: #fff !important;
+  border: 1px solid rgb(15 23 42 / 0.08) !important;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05) !important;
 }
 
 .report-matrix-scroll {
@@ -5021,18 +5063,6 @@ body.web-mode .report-apply-btn {
   height: 10px;
   border-radius: 999px;
   flex-shrink: 0;
-}
-
-.report-matrix-bar-col {
-  width: 120px;
-  min-width: 96px;
-}
-
-.report-matrix-bar {
-  height: 8px;
-  border-radius: 999px;
-  background: rgb(226 232 240);
-  max-width: 100%;
 }
 
 .report-summary-aside .section-label {
