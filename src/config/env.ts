@@ -26,6 +26,7 @@ const defaultListenHost =
 
 export const env = {
   telegramBotToken: requireEnv("TELEGRAM_BOT_TOKEN"),
+  telegramBotUsername: optionalEnv("TELEGRAM_BOT_USERNAME"),
   supabaseUrl: requireEnv("SUPABASE_URL"),
   supabaseServiceRoleKey: requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
   appUrl: optionalEnv("APP_URL"),

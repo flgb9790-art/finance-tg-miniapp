@@ -1,4 +1,5 @@
 const tg = window.Telegram?.WebApp;
+const isWebMode = new URLSearchParams(window.location.search).get("web") === "1";
 
 const userNameElement = document.getElementById("userName");
 const statusTextElement = document.getElementById("statusText");
@@ -2012,6 +2013,7 @@ async function apiFetch(url, options = {}) {
   const method = String(options.method ?? "GET").toUpperCase();
   const optionHeaders = { ...(options.headers ?? {}) };
   const rawBody = options.body;
+  const initData = getInitData();
   const hasBody =
     rawBody !== undefined &&
     rawBody !== null &&
@@ -2024,10 +2026,13 @@ async function apiFetch(url, options = {}) {
       (method === "GET" || method === "HEAD" || !hasBody
         ? undefined
         : "application/json"),
-    "x-telegram-init-data": getInitData(),
     "ngrok-skip-browser-warning": "true",
     "bypass-tunnel-reminder": "true"
   };
+
+  if (initData) {
+    headers["x-telegram-init-data"] = initData;
+  }
 
   if (headers["Content-Type"] === undefined) {
     delete headers["Content-Type"];
@@ -2293,14 +2298,14 @@ async function loadApp() {
 
     syncViewportMetrics();
 
-    if (!getInitData()) {
+    if (!getInitData() && !isWebMode) {
       userNameElement.textContent = "Подключение...";
       setStatus("Ожидаем данные сессии от Telegram...");
     }
 
-    const initDataReady = await waitForTelegramInitData(12000);
+    const initDataReady = isWebMode ? "web-session" : await waitForTelegramInitData(12000);
 
-    if (!initDataReady) {
+    if (!initDataReady && !isWebMode) {
       userNameElement.textContent = "Ожидаем Telegram";
       setStatus(
         "Telegram WebApp еще не передал данные сессии. Закройте mini app и откройте снова из бота.",

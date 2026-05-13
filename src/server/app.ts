@@ -1,4 +1,5 @@
 import path from "node:path";
+import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import { env } from "../config/env.js";
@@ -36,6 +37,7 @@ import { createTransfer } from "../services/transfers.js";
 import { registerTelegramUser } from "../services/users.js";
 import {
   toTelegramBotUser,
+  validateTelegramLoginData,
   validateTelegramWebAppInitData
 } from "../lib/telegram-webapp.js";
 import type { OperationKind } from "../shared/domain.js";
@@ -92,6 +94,91 @@ const currentDirPath = path.dirname(currentFilePath);
 const projectRootPath = path.resolve(currentDirPath, "../../");
 const publicPath = path.join(projectRootPath, "public");
 const miniAppHtmlPath = path.join(publicPath, "mini-app", "index.html");
+const maxTelegramLoginAgeSeconds = 24 * 60 * 60;
+const sessionCookieName = "balancy_session";
+const sessionTtlSeconds = 60 * 60 * 24 * 30;
+const webAppPath = "/mini-app/?web=1";
+
+function parseCookies(req: express.Request): Record<string, string> {
+  const raw = req.header("cookie");
+  if (!raw) {
+    return {};
+  }
+
+  return raw.split(";").reduce<Record<string, string>>((acc, part) => {
+    const [namePart, ...valueParts] = part.trim().split("=");
+    if (!namePart) {
+      return acc;
+    }
+    acc[namePart] = decodeURIComponent(valueParts.join("=") ?? "");
+    return acc;
+  }, {});
+}
+
+function getSessionSigningSecret(): string {
+  return env.telegramBotToken;
+}
+
+function signSessionPayload(payload: string): string {
+  return crypto
+    .createHmac("sha256", getSessionSigningSecret())
+    .update(payload)
+    .digest("hex");
+}
+
+function createSessionToken(userId: string): string {
+  const expiresAt = Math.floor(Date.now() / 1000) + sessionTtlSeconds;
+  const payload = `${userId}.${expiresAt}`;
+  const signature = signSessionPayload(payload);
+  return `${payload}.${signature}`;
+}
+
+function verifySessionToken(token: string): string | null {
+  const [userId, expiresAtRaw, signature] = token.split(".");
+  if (!userId || !expiresAtRaw || !signature) {
+    return null;
+  }
+
+  const payload = `${userId}.${expiresAtRaw}`;
+  const expected = signSessionPayload(payload);
+  const expiresAt = Number(expiresAtRaw);
+
+  if (!Number.isFinite(expiresAt) || expiresAt < Math.floor(Date.now() / 1000)) {
+    return null;
+  }
+
+  const expectedBuffer = Buffer.from(expected, "utf8");
+  const signatureBuffer = Buffer.from(signature, "utf8");
+  if (expectedBuffer.length !== signatureBuffer.length) {
+    return null;
+  }
+
+  if (!crypto.timingSafeEqual(expectedBuffer, signatureBuffer)) {
+    return null;
+  }
+
+  return userId;
+}
+
+function readSessionUserId(req: express.Request): string | null {
+  const cookies = parseCookies(req);
+  const token = cookies[sessionCookieName];
+  if (!token) {
+    return null;
+  }
+
+  return verifySessionToken(token);
+}
+
+function clearSessionCookie(res: express.Response): void {
+  res.cookie(sessionCookieName, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: true,
+    path: "/",
+    expires: new Date(0)
+  });
+}
 
 function getTelegramInitData(req: express.Request): string {
   const headerValue = req.header("x-telegram-init-data");
@@ -122,13 +209,23 @@ function getTelegramInitDataForCsvDownload(req: express.Request): string {
 }
 
 async function authenticateMiniAppUser(req: express.Request) {
-  const initData = getTelegramInitData(req);
-  const webAppUser = validateTelegramWebAppInitData(
-    initData,
-    env.telegramBotToken
-  );
+  try {
+    const initData = getTelegramInitData(req);
+    const webAppUser = validateTelegramWebAppInitData(
+      initData,
+      env.telegramBotToken
+    );
 
-  return registerTelegramUser(toTelegramBotUser(webAppUser));
+    return registerTelegramUser(toTelegramBotUser(webAppUser));
+  } catch {
+    const sessionUserId = readSessionUserId(req);
+
+    if (!sessionUserId) {
+      throw new Error("Unauthorized: Telegram session is missing");
+    }
+
+    return { id: sessionUserId };
+  }
 }
 
 async function authenticateCsvExportMiniAppUser(req: express.Request) {
@@ -156,8 +253,48 @@ async function resolveReportingCurrency(req: express.Request): Promise<string> {
   return currency.code;
 }
 
+function renderWebLoginHtml(errorMessage?: string): string {
+  const botUsername = env.telegramBotUsername?.trim();
+  const escapedError = errorMessage
+    ? `<p style="color:#ef4444;margin-top:12px;">${errorMessage}</p>`
+    : "";
+
+  if (!botUsername) {
+    return `<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Balancy Web</title></head>
+<body style="font-family:system-ui,Segoe UI,Arial,sans-serif;background:#f4f7fb;color:#111827;display:flex;justify-content:center;padding:40px;">
+  <main style="max-width:720px;background:#fff;border-radius:16px;padding:24px;box-shadow:0 12px 30px rgba(15,23,42,.08);">
+    <h1 style="margin-top:0;">Balancy Web</h1>
+    <p>Для входа на сайт нужен username бота в переменной <code>TELEGRAM_BOT_USERNAME</code>.</p>
+    ${escapedError}
+  </main>
+</body>
+</html>`;
+  }
+
+  return `<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Balancy Web</title></head>
+<body style="font-family:system-ui,Segoe UI,Arial,sans-serif;background:#f4f7fb;color:#111827;display:flex;justify-content:center;padding:40px;">
+  <main style="max-width:720px;background:#fff;border-radius:16px;padding:24px;box-shadow:0 12px 30px rgba(15,23,42,.08);">
+    <h1 style="margin-top:0;">Balancy Web</h1>
+    <p>Войдите через Telegram, чтобы открыть desktop-версию.</p>
+    <script async src="https://telegram.org/js/telegram-widget.js?22"
+      data-telegram-login="${botUsername}"
+      data-size="large"
+      data-lang="ru"
+      data-auth-url="/auth/telegram/callback"
+      data-request-access="write"></script>
+    ${escapedError}
+  </main>
+</body>
+</html>`;
+}
+
 export function createHttpApp(): express.Express {
   const app = express();
+  app.set("trust proxy", 1);
 
   app.use(express.json());
   app.use(
@@ -180,6 +317,55 @@ export function createHttpApp(): express.Express {
 
   app.get("/", (_req, res) => {
     res.redirect(302, "/mini-app/");
+  });
+
+  app.get("/web", (req, res) => {
+    if (readSessionUserId(req)) {
+      res.redirect(302, webAppPath);
+      return;
+    }
+
+    res
+      .status(200)
+      .setHeader("Cache-Control", "no-store")
+      .send(renderWebLoginHtml());
+  });
+
+  app.get("/auth/telegram/callback", async (req, res) => {
+    try {
+      const payload = validateTelegramLoginData(
+        Object.fromEntries(
+          Object.entries(req.query).map(([key, value]) => [key, String(value ?? "")])
+        ),
+        env.telegramBotToken
+      );
+
+      const nowSec = Math.floor(Date.now() / 1000);
+      if (nowSec - payload.auth_date > maxTelegramLoginAgeSeconds) {
+        throw new Error("Telegram login expired, try again.");
+      }
+
+      const user = await registerTelegramUser(toTelegramBotUser(payload));
+      const secureCookie = Boolean((env.appUrl ?? "").trim().startsWith("https://"));
+      res.cookie(sessionCookieName, createSessionToken(user.id), {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: secureCookie,
+        path: "/",
+        maxAge: sessionTtlSeconds * 1000
+      });
+
+      res.redirect(302, webAppPath);
+    } catch (error) {
+      clearSessionCookie(res);
+      const message = getThrownErrorMessage(error) || "Telegram login failed";
+      res.status(401).setHeader("Cache-Control", "no-store").send(renderWebLoginHtml(message));
+    }
+  });
+
+  app.post("/auth/logout", (_req, res) => {
+    clearSessionCookie(res);
+    res.status(204).send();
   });
 
   app.get("/mini-app", (_req, res) => {
