@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513report-date-picker-custom";
+        var BALANCY_CLIENT_ASSET_REV = "20260513web-categories-layout";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -881,51 +881,191 @@
         </section>
 
         <section id="screen-categories" class="screen" data-screen="categories">
-          <section class="card">
-            <div class="section-header">
-              <div>
-                <p class="section-label">Категории</p>
-                <h2>Справочник категорий</h2>
+          <div class="web-categories-page">
+            <div class="web-categories-layout">
+              <div class="web-categories-main">
+                <p class="web-categories-lede muted">
+                  Создавайте, редактируйте и управляйте категориями доходов и расходов.
+                </p>
+
+                <div class="web-categories-toolbar web-categories-toolbar--web">
+                  <div class="web-categories-tabs" role="tablist" aria-label="Вид списка категорий">
+                    <button
+                      type="button"
+                      class="web-categories-tab is-active"
+                      role="tab"
+                      aria-selected="true"
+                      data-web-categories-tab="income"
+                    >
+                      Категории доходов
+                      <span id="webCategoriesIncomeBadge" class="web-categories-badge web-categories-badge--income">0</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="web-categories-tab"
+                      role="tab"
+                      aria-selected="false"
+                      data-web-categories-tab="expense"
+                    >
+                      Категории расходов
+                      <span id="webCategoriesExpenseBadge" class="web-categories-badge web-categories-badge--expense">0</span>
+                    </button>
+                  </div>
+                  <button type="button" id="webCategoriesOpenFormButton" class="web-categories-add-outline">
+                    + Добавить категорию
+                  </button>
+                </div>
+
+                <div class="web-categories-table-shell web-categories-toolbar--web card">
+                  <table class="web-categories-table" aria-label="Список категорий">
+                    <thead>
+                      <tr>
+                        <th scope="col">Название</th>
+                        <th scope="col">Тип категории</th>
+                        <th scope="col" class="web-categories-col-actions">
+                          <span class="visually-hidden">Действия</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody id="webCategoriesTableBody"></tbody>
+                  </table>
+                  <div id="webCategoriesEmptyState" class="web-categories-empty" hidden>
+                    <p class="muted">Пока нет категорий этого типа.</p>
+                  </div>
+                </div>
+
+                <p id="webCategoriesFooterCount" class="web-categories-footer muted web-categories-toolbar--web"></p>
+
+                <div class="web-categories-legacy-wrap">
+                  <div class="category-columns">
+                    <div>
+                      <p class="section-label">Доходы</p>
+                      <div id="incomeCategoriesList" class="category-list"></div>
+                    </div>
+                    <div>
+                      <p class="section-label">Расходы</p>
+                      <div id="expenseCategoriesList" class="category-list"></div>
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              <aside class="web-categories-panel card" id="webCategoriesSidePanel">
+                <div class="web-categories-panel-head">
+                  <h2 id="categoryFormTitle" class="web-categories-panel-title">Добавить категорию</h2>
+                  <button type="button" id="webCategoriesPanelClose" class="web-categories-panel-close" aria-label="Закрыть">
+                    ×
+                  </button>
+                </div>
+                <form id="categoryForm" class="web-categories-form stacked-form stacked-form--dense">
+                  <label class="category-kind-native-wrap">
+                    <span>Тип категории</span>
+                    <select id="categoryKindInput" name="kind">
+                      <option value="expense">Расход</option>
+                      <option value="income">Доход</option>
+                    </select>
+                  </label>
+
+                  <div class="web-cat-kind-picks" role="group" aria-label="Тип категории">
+                    <button type="button" class="web-cat-kind-pick is-selected" data-set-category-kind="income">
+                      <span class="web-cat-kind-pick-icon web-cat-kind-pick-icon--up" aria-hidden="true">↑</span>
+                      <span class="web-cat-kind-pick-title">Доход</span>
+                      <span class="web-cat-kind-pick-desc muted">Категория для доходов</span>
+                    </button>
+                    <button type="button" class="web-cat-kind-pick" data-set-category-kind="expense">
+                      <span class="web-cat-kind-pick-icon web-cat-kind-pick-icon--down" aria-hidden="true">↓</span>
+                      <span class="web-cat-kind-pick-title">Расход</span>
+                      <span class="web-cat-kind-pick-desc muted">Категория для расходов</span>
+                    </button>
+                  </div>
+
+                  <label>
+                    <span class="web-categories-field-label">Название категории</span>
+                    <input
+                      id="categoryNameInput"
+                      name="name"
+                      placeholder="Введите название категории"
+                      required
+                      type="text"
+                    />
+                  </label>
+                  <p class="web-categories-name-hint muted">Например: Зарплата, Фриланс, Еда, Транспорт</p>
+
+                  <div class="web-categories-color-block">
+                    <span class="web-categories-field-label">Цвет (необязательно)</span>
+                    <div id="webCategoryColorSwatches" class="web-cat-swatches" role="radiogroup" aria-label="Цвет">
+                      <button
+                        type="button"
+                        class="web-cat-swatch"
+                        data-accent-hex="#28b473"
+                        style="--swatch: #28b473"
+                        aria-label="Зелёный"
+                        title="Зелёный"
+                      ></button>
+                      <button
+                        type="button"
+                        class="web-cat-swatch"
+                        data-accent-hex="#3b82f6"
+                        style="--swatch: #3b82f6"
+                        aria-label="Синий"
+                        title="Синий"
+                      ></button>
+                      <button
+                        type="button"
+                        class="web-cat-swatch"
+                        data-accent-hex="#a855f7"
+                        style="--swatch: #a855f7"
+                        aria-label="Фиолетовый"
+                        title="Фиолетовый"
+                      ></button>
+                      <button
+                        type="button"
+                        class="web-cat-swatch"
+                        data-accent-hex="#f97316"
+                        style="--swatch: #f97316"
+                        aria-label="Оранжевый"
+                        title="Оранжевый"
+                      ></button>
+                      <button
+                        type="button"
+                        class="web-cat-swatch"
+                        data-accent-hex="#ef4444"
+                        style="--swatch: #ef4444"
+                        aria-label="Красный"
+                        title="Красный"
+                      ></button>
+                      <button
+                        type="button"
+                        class="web-cat-swatch"
+                        data-accent-hex="#14b8a6"
+                        style="--swatch: #14b8a6"
+                        aria-label="Бирюзовый"
+                        title="Бирюзовый"
+                      ></button>
+                      <button
+                        type="button"
+                        class="web-cat-swatch"
+                        data-accent-hex="#94a3b8"
+                        style="--swatch: #94a3b8"
+                        aria-label="Серый"
+                        title="Серый"
+                      ></button>
+                    </div>
+                    <input type="hidden" id="categoryAccentInput" value="" autocomplete="off" />
+                  </div>
+
+                  <div class="web-categories-form-actions">
+                    <button id="categorySubmitButton" class="primary-button web-categories-save-btn" type="button">
+                      Сохранить
+                    </button>
+                    <button id="cancelCategoryEditButton" class="ghost-button web-categories-cancel-btn" type="button">
+                      Отмена
+                    </button>
+                  </div>
+                </form>
+              </aside>
             </div>
-            <div class="category-columns">
-              <div>
-                <p class="section-label">Доходы</p>
-                <div id="incomeCategoriesList" class="category-list"></div>
-              </div>
-              <div>
-                <p class="section-label">Расходы</p>
-                <div id="expenseCategoriesList" class="category-list"></div>
-              </div>
-            </div>
-          </section>
-
-          <section class="card">
-            <p id="categoryFormTitle" class="section-label">Новая категория</p>
-            <form id="categoryForm" class="stacked-form stacked-form--dense">
-              <label>
-                <span>Тип категории</span>
-                <select id="categoryKindInput" name="kind">
-                  <option value="expense">Расход</option>
-                  <option value="income">Доход</option>
-                </select>
-              </label>
-
-              <label>
-                <span>Название категории</span>
-                <input id="categoryNameInput" name="name" placeholder="Например: Продукты" required type="text" />
-              </label>
-
-              <div class="form-actions">
-                <button id="categorySubmitButton" class="primary-button" type="button">
-                  Создать категорию
-                </button>
-                <button id="cancelCategoryEditButton" class="ghost-button hidden-button" type="button">
-                  Отмена
-                </button>
-              </div>
-            </form>
-          </section>
+          </div>
         </section>
 
         <section id="screen-reports" class="screen" data-screen="reports">

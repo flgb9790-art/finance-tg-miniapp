@@ -10,6 +10,10 @@ const WEB_PAGE_TITLES = {
   accounts: "Счета"
 };
 
+const ACCOUNT_EDIT_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true"><path d="M4 16.5V20h3.5L17.5 10.5 14 7 4 16.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M13 6l5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
+
+const ACCOUNT_DELETE_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true"><path d="M6 7h12M10 7V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2m-7 4v9m4-9v9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M5 7l1 14a1 1 0 0 0 1 .9h10a1 1 0 0 0 1-.9L19 7" stroke="currentColor" stroke-width="1.7"/></svg>`;
+
 const userNameElement = document.getElementById("userName");
 const statusTextElement = document.getElementById("statusText");
 const accountsTitleElement = document.getElementById("accountsTitle");
@@ -162,6 +166,10 @@ const state = {
 
 let webOpsOffset = 0;
 let webOpsDatesInitialized = false;
+
+/** Активная вкладка списка категорий в веб-режиме */
+let webCategoriesActiveKind = "income";
+let webCategoriesChromeAttached = false;
 
 /** @type {{ trend?: object, category?: object }} */
 let reportChartInstances = { trend: null, category: null };
@@ -1603,6 +1611,240 @@ function renderAccounts(accounts) {
   );
 }
 
+const CATEGORY_ACCENT_STORAGE_KEY = "balancyCategoryAccentsV1";
+
+const CATEGORY_UI_PALETTE = ["#28b473", "#3b82f6", "#a855f7", "#f97316", "#ef4444", "#14b8a6", "#94a3b8"];
+
+function readCategoryAccentMap() {
+  try {
+    const raw = window.localStorage.getItem(CATEGORY_ACCENT_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return typeof parsed === "object" && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeCategoryAccentMap(map) {
+  try {
+    window.localStorage.setItem(CATEGORY_ACCENT_STORAGE_KEY, JSON.stringify(map));
+  } catch {
+    //
+  }
+}
+
+function readCategoryAccent(categoryId) {
+  const m = readCategoryAccentMap();
+  const v = m[categoryId];
+  return typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v.trim()) ? v.trim().toLowerCase() : "";
+}
+
+function writeCategoryAccent(categoryId, hex) {
+  const m = readCategoryAccentMap();
+  m[categoryId] = hex.trim().toLowerCase();
+  writeCategoryAccentMap(m);
+}
+
+function removeCategoryAccent(categoryId) {
+  const m = readCategoryAccentMap();
+  delete m[categoryId];
+  writeCategoryAccentMap(m);
+}
+
+function fallbackAccentFromCategoryId(categoryId) {
+  let h = 0;
+  for (let i = 0; i < categoryId.length; i++) {
+    h = (h * 31 + categoryId.charCodeAt(i)) | 0;
+  }
+  return CATEGORY_UI_PALETTE[Math.abs(h) % CATEGORY_UI_PALETTE.length];
+}
+
+function resolveCategoryDotColor(category) {
+  const stored = readCategoryAccent(category.id);
+  return stored || fallbackAccentFromCategoryId(category.id);
+}
+
+function formatCategoryCountRu(n) {
+  const abs = Math.abs(Number(n)) || 0;
+  const mod10 = abs % 10;
+  const mod100 = abs % 100;
+  if (mod10 === 1 && mod100 !== 11) {
+    return `${abs} категория`;
+  }
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
+    return `${abs} категории`;
+  }
+  return `${abs} категорий`;
+}
+
+function syncWebCategoryKindPicksFromSelect() {
+  const sel = document.getElementById("categoryKindInput");
+  const v = sel?.value === "income" ? "income" : "expense";
+  document.querySelectorAll("[data-set-category-kind]").forEach((btn) => {
+    btn.classList.toggle("is-selected", btn.dataset.setCategoryKind === v);
+  });
+}
+
+function clearWebCategoryAccentSelection() {
+  const hidden = document.getElementById("categoryAccentInput");
+  if (hidden) {
+    hidden.value = "";
+  }
+  document.querySelectorAll("#webCategoryColorSwatches .web-cat-swatch").forEach((b) => {
+    b.classList.remove("is-selected");
+  });
+}
+
+function applyAccentSwatchesForCategoryId(categoryId) {
+  clearWebCategoryAccentSelection();
+  const hex = readCategoryAccent(categoryId);
+  const hidden = document.getElementById("categoryAccentInput");
+  if (!hidden) {
+    return;
+  }
+  if (!hex) {
+    return;
+  }
+  hidden.value = hex;
+  document.querySelectorAll("#webCategoryColorSwatches .web-cat-swatch").forEach((b) => {
+    if ((b.dataset.accentHex || "").toLowerCase() === hex.toLowerCase()) {
+      b.classList.add("is-selected");
+    }
+  });
+}
+
+function renderWebCategoriesTable(categories) {
+  const tbody = document.getElementById("webCategoriesTableBody");
+  if (!tbody || !isWebMode) {
+    return;
+  }
+
+  const kind = webCategoriesActiveKind === "expense" ? "expense" : "income";
+  const items = categories.filter((c) => c.kind === kind);
+
+  document.querySelectorAll("[data-web-categories-tab]").forEach((btn) => {
+    const active = btn.dataset.webCategoriesTab === kind;
+    btn.classList.toggle("is-active", active);
+    btn.setAttribute("aria-selected", active ? "true" : "false");
+  });
+
+  const emptyEl = document.getElementById("webCategoriesEmptyState");
+  const footer = document.getElementById("webCategoriesFooterCount");
+
+  if (items.length === 0) {
+    tbody.innerHTML = "";
+    if (emptyEl) {
+      emptyEl.hidden = false;
+    }
+    if (footer) {
+      footer.textContent = formatCategoryCountRu(0);
+    }
+    return;
+  }
+
+  if (emptyEl) {
+    emptyEl.hidden = true;
+  }
+
+  tbody.innerHTML = items
+    .map((category) => {
+      const dot = resolveCategoryDotColor(category);
+      const kindSlug = category.kind === "income" ? "income" : "expense";
+      return `<tr>
+        <td>
+          <div class="web-categories-name-cell">
+            <span class="web-categories-dot" style="background:${escapeHtml(dot)}"></span>
+            <span class="web-categories-name-text">${escapeHtml(category.name)}</span>
+          </div>
+        </td>
+        <td><span class="web-categories-type web-categories-type--${escapeHtml(kindSlug)}">${escapeHtml(
+          formatKind(category.kind)
+        )}</span></td>
+        <td class="web-categories-actions">
+          <button class="web-categories-icon-btn" type="button" data-category-edit-id="${escapeHtml(category.id)}" title="Редактировать" aria-label="Редактировать категорию">${ACCOUNT_EDIT_ICON_SVG}</button>
+          <button class="web-categories-icon-btn web-categories-icon-btn--danger" type="button" data-category-delete-id="${escapeHtml(category.id)}" title="Удалить" aria-label="Удалить категорию">${ACCOUNT_DELETE_ICON_SVG}</button>
+        </td>
+      </tr>`;
+    })
+    .join("");
+
+  if (footer) {
+    footer.textContent = formatCategoryCountRu(items.length);
+  }
+}
+
+function attachWebCategoriesChrome() {
+  if (!isWebMode || webCategoriesChromeAttached) {
+    return;
+  }
+  webCategoriesChromeAttached = true;
+
+  document.querySelectorAll("[data-web-categories-tab]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const next = btn.dataset.webCategoriesTab;
+      if (next !== "income" && next !== "expense") {
+        return;
+      }
+      webCategoriesActiveKind = next;
+      renderWebCategoriesTable(state.categories);
+    });
+  });
+
+  document.getElementById("webCategoriesOpenFormButton")?.addEventListener("click", () => {
+    state.editingCategoryId = null;
+    categoryForm.reset();
+    const sel = document.getElementById("categoryKindInput");
+    if (sel) {
+      sel.value = webCategoriesActiveKind === "expense" ? "expense" : "income";
+    }
+    syncWebCategoryKindPicksFromSelect();
+    clearWebCategoryAccentSelection();
+    syncCategoryFormChrome();
+    document.getElementById("categoryNameInput")?.focus();
+  });
+
+  document.getElementById("webCategoriesPanelClose")?.addEventListener("click", () => {
+    resetCategoryForm();
+    renderCategories(state.categories);
+  });
+
+  document.getElementById("categoryKindInput")?.addEventListener("change", () => {
+    syncWebCategoryKindPicksFromSelect();
+  });
+
+  document.querySelectorAll("[data-set-category-kind]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const k = btn.dataset.setCategoryKind;
+      if (k !== "income" && k !== "expense") {
+        return;
+      }
+      const sel = document.getElementById("categoryKindInput");
+      if (sel) {
+        sel.value = k;
+      }
+      syncWebCategoryKindPicksFromSelect();
+    });
+  });
+
+  const sw = document.getElementById("webCategoryColorSwatches");
+  sw?.addEventListener("click", (event) => {
+    const t = event.target instanceof Element ? event.target.closest(".web-cat-swatch") : null;
+    if (!t) {
+      return;
+    }
+    const hex = t.dataset.accentHex?.trim();
+    if (!hex) {
+      return;
+    }
+    sw.querySelectorAll(".web-cat-swatch").forEach((b) => b.classList.remove("is-selected"));
+    t.classList.add("is-selected");
+    const hidden = document.getElementById("categoryAccentInput");
+    if (hidden) {
+      hidden.value = hex.toLowerCase();
+    }
+  });
+}
+
 function syncCategoryFormChrome() {
   if (!categoryFormTitleElement || !categorySubmitButton) {
     return;
@@ -1610,16 +1852,32 @@ function syncCategoryFormChrome() {
 
   const editing = Boolean(state.editingCategoryId);
 
-  categoryFormTitleElement.textContent = editing ? "Редактировать категорию" : "Новая категория";
-  categorySubmitButton.textContent = editing ? "Сохранить изменения" : "Создать категорию";
+  if (isWebMode) {
+    categoryFormTitleElement.textContent = editing ? "Редактировать категорию" : "Добавить категорию";
+    categorySubmitButton.textContent = "Сохранить";
+  } else {
+    categoryFormTitleElement.textContent = editing ? "Редактировать категорию" : "Новая категория";
+    categorySubmitButton.textContent = editing ? "Сохранить изменения" : "Создать категорию";
+  }
 
-  cancelCategoryEditButton?.classList.toggle("hidden-button", !editing);
+  if (cancelCategoryEditButton) {
+    if (isWebMode) {
+      cancelCategoryEditButton.classList.remove("hidden-button");
+    } else {
+      cancelCategoryEditButton.classList.toggle("hidden-button", !editing);
+    }
+  }
 }
 
 function resetCategoryForm() {
   state.editingCategoryId = null;
   categoryForm.reset();
-  document.getElementById("categoryKindInput").value = "expense";
+  const kindInput = document.getElementById("categoryKindInput");
+  if (kindInput) {
+    kindInput.value = isWebMode ? "income" : "expense";
+  }
+  syncWebCategoryKindPicksFromSelect();
+  clearWebCategoryAccentSelection();
   syncCategoryFormChrome();
 }
 
@@ -1636,9 +1894,20 @@ function startCategoryEdit(categoryId) {
   state.editingCategoryId = category.id;
   document.getElementById("categoryKindInput").value = category.kind;
   document.getElementById("categoryNameInput").value = category.name;
+  syncWebCategoryKindPicksFromSelect();
+  applyAccentSwatchesForCategoryId(category.id);
   syncCategoryFormChrome();
-  setStatus("Отредактируйте поля ниже и нажмите «Сохранить изменения».", "success");
+  setStatus("Отредактируйте поля и нажмите «Сохранить».", "success");
   openScreen("categories");
+
+  if (isWebMode) {
+    webCategoriesActiveKind = category.kind;
+    renderWebCategoriesTable(state.categories);
+    window.requestAnimationFrame(() => {
+      document.getElementById("categoryNameInput")?.focus({ preventScroll: true });
+    });
+    return;
+  }
 
   window.requestAnimationFrame(() => {
     window.requestAnimationFrame(() => {
@@ -1653,6 +1922,19 @@ function startCategoryEdit(categoryId) {
 function renderCategories(categories) {
   const incomeCategories = categories.filter((category) => category.kind === "income");
   const expenseCategories = categories.filter((category) => category.kind === "expense");
+
+  if (categoriesCountElement) {
+    categoriesCountElement.textContent = String(categories.length);
+  }
+
+  const incBadge = document.getElementById("webCategoriesIncomeBadge");
+  const expBadge = document.getElementById("webCategoriesExpenseBadge");
+  if (incBadge) {
+    incBadge.textContent = String(incomeCategories.length);
+  }
+  if (expBadge) {
+    expBadge.textContent = String(expenseCategories.length);
+  }
 
   const renderList = (targetElement, items) => {
     if (items.length === 0) {
@@ -1695,6 +1977,11 @@ function renderCategories(categories) {
 
   renderList(incomeCategoriesListElement, incomeCategories);
   renderList(expenseCategoriesListElement, expenseCategories);
+
+  if (isWebMode) {
+    renderWebCategoriesTable(categories);
+  }
+
   syncCategoryFormChrome();
 }
 
@@ -3917,16 +4204,28 @@ async function handleCategorySubmit(event) {
   setStatus(isEditing ? "Сохраняем категорию..." : "Создаем категорию...");
 
   try {
+    /** @type {{ category?: { id: string } }} */
+    let result = {};
     if (isEditing) {
-      await apiFetch(`/api/categories/${encodeURIComponent(state.editingCategoryId)}`, {
+      result = await apiFetch(`/api/categories/${encodeURIComponent(state.editingCategoryId)}`, {
         method: "PATCH",
         body: JSON.stringify(payload)
       });
     } else {
-      await apiFetch("/api/categories", {
+      result = await apiFetch("/api/categories", {
         method: "POST",
         body: JSON.stringify(payload)
       });
+    }
+
+    const accentHex = document.getElementById("categoryAccentInput")?.value?.trim() ?? "";
+    const catId = result?.category?.id ?? (isEditing ? state.editingCategoryId : "");
+    if (catId) {
+      if (accentHex && /^#[0-9a-fA-F]{6}$/.test(accentHex)) {
+        writeCategoryAccent(catId, accentHex);
+      } else {
+        removeCategoryAccent(catId);
+      }
     }
 
     resetCategoryForm();
@@ -3956,6 +4255,8 @@ async function handleDeleteCategory(categoryId) {
     if (state.editingCategoryId === categoryId) {
       resetCategoryForm();
     }
+
+    removeCategoryAccent(categoryId);
 
     setStatus(
       "Категория удалена. Старые операции сохранены, но у них больше не будет этой статьи.",
@@ -4203,6 +4504,7 @@ function attachCategoryListsListener() {
 
   incomeCategoriesListElement.addEventListener("click", onCategoryListClick);
   expenseCategoriesListElement.addEventListener("click", onCategoryListClick);
+  document.getElementById("webCategoriesTableBody")?.addEventListener("click", onCategoryListClick);
 }
 
 if (refreshButton) {
@@ -4487,6 +4789,7 @@ document.getElementById("entryTypeOpenTransferButton")?.addEventListener("click"
 attachAccountsListListener();
 attachSwipeRowHandlers();
 attachCategoryListsListener();
+attachWebCategoriesChrome();
 attachFxReferencePanelListeners();
 
 window.addEventListener("focus", () => {
