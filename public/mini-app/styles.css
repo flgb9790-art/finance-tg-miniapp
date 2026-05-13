@@ -3424,55 +3424,163 @@ body.web-mode #screen-activity .activity-form-card {
   margin: 0 0 14px;
 }
 
-.web-ops-toolbar-row {
+/* Панель фильтров операций (веб) */
+.web-ops-filter-shell {
+  box-sizing: border-box;
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid rgb(15 23 42 / 0.08);
+  box-shadow: 0 4px 22px rgb(15 23 42 / 0.06);
+  padding: 16px 18px 18px;
+  margin: 0 0 14px;
+}
+
+body.web-mode #screen-activity .web-ops-filter-shell {
+  margin-bottom: 14px;
+}
+
+.web-ops-filter-row {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 10px 12px;
+  gap: 12px 14px;
 }
 
-.web-ops-field {
+.web-ops-filter-cell {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
 }
 
-.web-ops-field-grow {
-  flex: 1 1 140px;
+.web-ops-filter-cell--date {
+  flex: 0 1 148px;
 }
 
-.web-ops-field-search {
+.web-ops-filter-cell--grow {
+  flex: 1 1 120px;
+}
+
+.web-ops-filter-cell--search {
   flex: 2 1 220px;
 }
 
-.web-ops-field-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted);
+.web-ops-filter-cell--action {
+  flex: 0 0 auto;
+  padding-top: 22px;
 }
 
-.web-ops-input,
-.web-ops-select {
+.web-ops-filter-cell-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgb(100 116 139);
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  line-height: 1.1;
+}
+
+.web-ops-filter-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  border-radius: 14px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
   box-sizing: border-box;
-  min-height: 38px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--line);
-  background: var(--card);
-  font: inherit;
-  font-size: 13px;
+}
+
+.web-ops-filter-date,
+.web-ops-filter-select,
+.web-ops-filter-search {
+  box-sizing: border-box;
   width: 100%;
   min-width: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(15 23 42);
+  padding: 10px 36px 10px 12px;
+  border-radius: 14px;
 }
 
-.web-ops-apply {
-  flex: 0 0 auto;
-  align-self: flex-end;
-  min-height: 38px;
-  padding-left: 18px;
-  padding-right: 18px;
+.web-ops-filter-search {
+  font-weight: 500;
+  padding-right: 12px;
+}
+
+.web-ops-filter-select {
+  appearance: none;
+  cursor: pointer;
+}
+
+.web-ops-filter-control--date::after {
+  content: "";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0.72;
+  background: no-repeat center / 16px 16px
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2394a3b8' stroke-width='1.6' viewBox='0 0 24 24'%3E%3Crect x='3.5' y='5' width='17' height='15' rx='2'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E");
+}
+
+.web-ops-filter-control--select::after {
+  content: "";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid rgb(148 163 184);
+  border-bottom: 2px solid rgb(148 163 184);
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.web-ops-filter-apply {
+  min-height: 42px;
+  padding-left: 20px;
+  padding-right: 20px;
+  border-radius: 14px;
+  white-space: nowrap;
+}
+
+.web-ops-page-size .web-ops-select {
+  box-sizing: border-box;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(15 23 42);
+}
+
+.web-ops-table td.web-ops-idle-msg {
+  padding: 20px 16px 24px;
+  text-align: center;
+  font-size: 13px;
+}
+
+body.web-mode .web-home-list-fill .home-activity-row .account-item-header {
+  align-items: center;
+}
+
+body.web-mode .web-home-list-fill .home-activity-row .item-leading {
+  align-items: center;
+}
+
+body.web-mode .web-home-list-fill .home-activity-row .account-name {
+  font-weight: 650;
 }
 
 body.web-mode .web-ops-summary-grid {

@@ -140,7 +140,9 @@ const state = {
   /** Query string параметров, с которыми последний раз получен `report` */
   reportExportQuery: null,
   editingAccountId: null,
-  editingCategoryId: null
+  editingCategoryId: null,
+  /** Последний ответ GET /api/operations (веб), чтобы не перезагружать при смене вкладки */
+  webOperationsLastPayload: null
 };
 
 let webOpsOffset = 0;
@@ -694,7 +696,11 @@ function openScreen(screenName) {
     closeWebNewEntryMenu();
     if (nextScreen === "activity") {
       initWebOperationsChrome();
-      void refreshWebOperationsBoard();
+      if (state.webOperationsLastPayload) {
+        renderWebOperationsFromPayload(state.webOperationsLastPayload);
+      } else {
+        syncWebOperationsIdleChrome();
+      }
     }
   }
 }
@@ -714,7 +720,6 @@ function initWebOperationsChrome() {
   }
 
   populateWebOperationsFilterSelects();
-  webOpsOffset = 0;
 }
 
 function populateWebOperationsFilterSelects() {
@@ -927,12 +932,53 @@ async function refreshWebOperationsBoard() {
 
   try {
     const payload = await apiFetch(buildWebOperationsApiUrl());
+    state.webOperationsLastPayload = payload;
     renderWebOperationsFromPayload(payload);
   } catch (error) {
     console.error(error);
     webOpsTableBody.innerHTML = `<tr><td colspan="6" class="inline-error">${escapeHtml(
       error instanceof Error ? error.message : "Не удалось загрузить операции"
     )}</td></tr>`;
+  }
+}
+
+function syncWebOperationsIdleChrome() {
+  if (!isWebMode || !webOpsTableBody) {
+    return;
+  }
+
+  if (webOpsStatCount) {
+    webOpsStatCount.textContent = "—";
+  }
+
+  if (webOpsStatIncome) {
+    webOpsStatIncome.textContent = "—";
+  }
+
+  if (webOpsStatExpense) {
+    webOpsStatExpense.textContent = "—";
+  }
+
+  if (webOpsStatNet) {
+    webOpsStatNet.textContent = "—";
+  }
+
+  webOpsTableBody.innerHTML = `<tr><td colspan="6" class="muted web-ops-idle-msg">Нажмите «Показать», чтобы загрузить операции по выбранным фильтрам.</td></tr>`;
+
+  if (webOpsEmptyHint) {
+    webOpsEmptyHint.hidden = true;
+  }
+
+  if (webOpsPageInfo) {
+    webOpsPageInfo.textContent = "";
+  }
+
+  if (webOpsPagePrev) {
+    webOpsPagePrev.disabled = true;
+  }
+
+  if (webOpsPageNext) {
+    webOpsPageNext.disabled = true;
   }
 }
 
@@ -1473,7 +1519,7 @@ function renderAccounts(accounts) {
   );
   renderAccountsList(
     homeAccountsListElement,
-    accounts.slice(0, 4),
+    accounts.slice(0, 5),
     "Создайте первый счет, и он появится здесь."
   );
 }
@@ -1655,19 +1701,19 @@ function renderRecentTransfers(transfers) {
 
 function renderHomeRecentActivity(entries, transfers) {
   const combined = [
-    ...entries.slice(0, 3).map((entry) => ({
+    ...entries.map((entry) => ({
       type: "entry",
       occurredAt: entry.occurred_at,
       payload: entry
     })),
-    ...transfers.slice(0, 2).map((transfer) => ({
+    ...transfers.map((transfer) => ({
       type: "transfer",
       occurredAt: transfer.occurred_at,
       payload: transfer
     }))
   ]
     .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
-    .slice(0, 4);
+    .slice(0, 5);
 
   if (combined.length === 0) {
     homeRecentActivityListElement.innerHTML = `
@@ -1688,19 +1734,19 @@ function renderHomeRecentActivity(entries, transfers) {
           entry.kind === "income" ? "entry-amount-income" : "entry-amount-expense";
 
         return `
-          <article class="entry-item">
-            <div class="item-leading">
-              <div class="entry-icon entry-icon-${escapeHtml(entry.kind)}">${getEntryIcon(entry.kind)}</div>
-              <div class="entry-main">
-                <div class="entry-title-row">
-                  <strong>${escapeHtml(entry.category?.name ?? "Без категории")}</strong>
-                </div>
-                <div class="account-meta">
-                  ${escapeHtml(entry.account?.name ?? "Счет")} · ${escapeHtml(formatDateTime(entry.occurred_at))}
+          <article class="account-item home-activity-row">
+            <div class="account-item-header">
+              <div class="item-leading">
+                <div class="entry-icon entry-icon-${escapeHtml(entry.kind)}">${getEntryIcon(entry.kind)}</div>
+                <div class="item-copy">
+                  <div class="account-name">${escapeHtml(entry.category?.name ?? "Без категории")}</div>
+                  <div class="account-meta">
+                    ${escapeHtml(entry.account?.name ?? "Счет")} · ${escapeHtml(formatDateTime(entry.occurred_at))}
+                  </div>
                 </div>
               </div>
+              ${formatEntryAmountStackHtml(amountPrefix, entry.amount, entry.currency_code, amountClass)}
             </div>
-            ${formatEntryAmountStackHtml(amountPrefix, entry.amount, entry.currency_code, amountClass)}
           </article>
         `;
       }
@@ -1708,19 +1754,19 @@ function renderHomeRecentActivity(entries, transfers) {
       const transfer = item.payload;
 
       return `
-        <article class="entry-item">
-          <div class="item-leading">
-            <div class="entry-icon entry-icon-transfer">${getEntryIcon("transfer")}</div>
-            <div class="entry-main">
-              <div class="entry-title-row">
-                <strong>${escapeHtml(transfer.from_account?.name ?? "Счет")} → ${escapeHtml(
+        <article class="account-item home-activity-row">
+          <div class="account-item-header">
+            <div class="item-leading">
+              <div class="entry-icon entry-icon-transfer">${getEntryIcon("transfer")}</div>
+              <div class="item-copy">
+                <div class="account-name">${escapeHtml(transfer.from_account?.name ?? "Счет")} → ${escapeHtml(
                   transfer.to_account?.name ?? "Счет"
-                )}</strong>
+                )}</div>
+                <div class="account-meta">${escapeHtml(formatDateTime(transfer.occurred_at))}</div>
               </div>
-              <div class="transfer-meta">${escapeHtml(formatDateTime(transfer.occurred_at))}</div>
             </div>
+            ${formatTransferAmountStackHtml(transfer)}
           </div>
-          ${formatTransferAmountStackHtml(transfer)}
         </article>
       `;
     })
@@ -2909,7 +2955,6 @@ async function loadApp() {
       document.getElementById("screen-activity")?.classList.contains("screen-active")
     ) {
       populateWebOperationsFilterSelects();
-      void refreshWebOperationsBoard();
     }
     setStatus(
       "Все готово. Интерфейс разбит по вкладкам и стал проще для ежедневного использования.",
@@ -3193,6 +3238,13 @@ async function handleCreateEntry(event) {
     populateCategoryOptions();
     setStatus("Операция сохранена.", "success");
     await loadApp();
+    if (
+      isWebMode &&
+      document.getElementById("screen-activity")?.classList.contains("screen-active")
+    ) {
+      state.webOperationsLastPayload = null;
+      syncWebOperationsIdleChrome();
+    }
   } catch (error) {
     console.error(error);
     setStatus(error instanceof Error ? error.message : "Не удалось сохранить операцию", "error");
@@ -3229,6 +3281,13 @@ async function handleCreateTransfer(event) {
     transferDateInput.value = getCurrentLocalDateTimeValue();
     setStatus("Перевод сохранен.", "success");
     await loadApp();
+    if (
+      isWebMode &&
+      document.getElementById("screen-activity")?.classList.contains("screen-active")
+    ) {
+      state.webOperationsLastPayload = null;
+      syncWebOperationsIdleChrome();
+    }
   } catch (error) {
     console.error(error);
     setStatus(error instanceof Error ? error.message : "Не удалось сохранить перевод", "error");

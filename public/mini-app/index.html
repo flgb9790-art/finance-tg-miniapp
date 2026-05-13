@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260514web-ops-home-cards";
+        var BALANCY_CLIENT_ASSET_REV = "20260514web-ops-filters-home5";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -334,7 +334,7 @@
                 </button>
               </div>
               <div class="web-home-card-main">
-                <div id="homeRecentActivityList" class="entries-list web-home-list-fill"></div>
+                <div id="homeRecentActivityList" class="accounts-list web-home-list-fill"></div>
               </div>
               <button type="button" class="web-home-foot-cta" data-web-new-entry="expense">
                 + Новая операция
@@ -538,50 +538,64 @@
 
         <section id="screen-activity" class="screen" data-screen="activity">
           <div id="webOperationsRoot" class="web-operations-root">
-            <div class="web-ops-toolbar card">
-              <div class="web-ops-toolbar-row">
-                <label class="web-ops-field">
-                  <span class="web-ops-field-label">С</span>
-                  <input id="webOpsDateFrom" class="web-ops-input" type="date" />
-                </label>
-                <label class="web-ops-field">
-                  <span class="web-ops-field-label">По</span>
-                  <input id="webOpsDateTo" class="web-ops-input" type="date" />
-                </label>
-                <label class="web-ops-field web-ops-field-grow">
-                  <span class="web-ops-field-label">Тип</span>
-                  <select id="webOpsKindFilter" class="web-ops-select">
-                    <option value="all">Все</option>
-                    <option value="income">Доход</option>
-                    <option value="expense">Расход</option>
-                    <option value="transfer">Перевод</option>
-                  </select>
-                </label>
-                <label class="web-ops-field web-ops-field-grow">
-                  <span class="web-ops-field-label">Счёт</span>
-                  <select id="webOpsAccountFilter" class="web-ops-select">
-                    <option value="">Все счета</option>
-                  </select>
-                </label>
-                <label class="web-ops-field web-ops-field-grow">
-                  <span class="web-ops-field-label">Категория</span>
-                  <select id="webOpsCategoryFilter" class="web-ops-select">
-                    <option value="">Все категории</option>
-                  </select>
-                </label>
-                <label class="web-ops-field web-ops-field-search">
-                  <span class="web-ops-field-label">Поиск</span>
-                  <input
-                    id="webOpsSearchInput"
-                    class="web-ops-input"
-                    type="search"
-                    placeholder="Поиск операций…"
-                    autocomplete="off"
-                  />
-                </label>
-                <button id="webOpsApplyButton" class="primary-button web-ops-apply" type="button">
-                  Показать
-                </button>
+            <div class="web-ops-filter-shell">
+              <div class="web-ops-filter-row">
+                <div class="web-ops-filter-cell web-ops-filter-cell--date">
+                  <span class="web-ops-filter-cell-label">с</span>
+                  <div class="web-ops-filter-control web-ops-filter-control--date">
+                    <input id="webOpsDateFrom" class="web-ops-filter-date" type="date" />
+                  </div>
+                </div>
+                <div class="web-ops-filter-cell web-ops-filter-cell--date">
+                  <span class="web-ops-filter-cell-label">по</span>
+                  <div class="web-ops-filter-control web-ops-filter-control--date">
+                    <input id="webOpsDateTo" class="web-ops-filter-date" type="date" />
+                  </div>
+                </div>
+                <div class="web-ops-filter-cell web-ops-filter-cell--grow">
+                  <span class="web-ops-filter-cell-label">тип</span>
+                  <div class="web-ops-filter-control web-ops-filter-control--select">
+                    <select id="webOpsKindFilter" class="web-ops-filter-select">
+                      <option value="all">Все</option>
+                      <option value="income">Доход</option>
+                      <option value="expense">Расход</option>
+                      <option value="transfer">Перевод</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="web-ops-filter-cell web-ops-filter-cell--grow">
+                  <span class="web-ops-filter-cell-label">счёт</span>
+                  <div class="web-ops-filter-control web-ops-filter-control--select">
+                    <select id="webOpsAccountFilter" class="web-ops-filter-select">
+                      <option value="">Все счета</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="web-ops-filter-cell web-ops-filter-cell--grow">
+                  <span class="web-ops-filter-cell-label">категория</span>
+                  <div class="web-ops-filter-control web-ops-filter-control--select">
+                    <select id="webOpsCategoryFilter" class="web-ops-filter-select">
+                      <option value="">Все категории</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="web-ops-filter-cell web-ops-filter-cell--search">
+                  <span class="web-ops-filter-cell-label">поиск</span>
+                  <div class="web-ops-filter-control web-ops-filter-control--search">
+                    <input
+                      id="webOpsSearchInput"
+                      class="web-ops-filter-search"
+                      type="search"
+                      placeholder="Поиск операций…"
+                      autocomplete="off"
+                    />
+                  </div>
+                </div>
+                <div class="web-ops-filter-cell web-ops-filter-cell--action">
+                  <button id="webOpsApplyButton" class="primary-button web-ops-filter-apply" type="button">
+                    Показать
+                  </button>
+                </div>
               </div>
             </div>
             <div class="web-ops-summary-grid">
