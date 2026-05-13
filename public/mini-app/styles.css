@@ -4020,6 +4020,496 @@ body:not(.web-mode) #entryFormResetWeb {
   display: none !important;
 }
 
+/* --- Telegram: экран «Операции» (макет ленты + сводка) --- */
+body.web-mode .tg-ops-activity-root {
+  display: none !important;
+}
+
+body:not(.web-mode) #screen-activity > .activity-ledger-card {
+  display: none !important;
+}
+
+.tg-ops-activity-root {
+  padding: 4px 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tg-ops-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px;
+}
+
+.tg-ops-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text, #0f172a);
+}
+
+.tg-ops-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tg-ops-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.tg-ops-btn:focus-visible {
+  outline: 2px solid rgb(36 173 124 / 0.45);
+  outline-offset: 2px;
+}
+
+.tg-ops-btn--plus {
+  background: #24ad7c;
+  border-color: #1f9a6f;
+  color: #fff;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgb(36 173 124 / 0.35);
+}
+
+.tg-ops-btn--plus span {
+  transform: translateY(-1px);
+}
+
+.tg-ops-btn--filter {
+  color: rgb(30 41 59);
+}
+
+.tg-ops-btn--filter svg {
+  width: 22px;
+  height: 22px;
+}
+
+.tg-ops-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tg-ops-stat {
+  border-radius: 14px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  padding: 10px 10px 12px;
+  min-width: 0;
+}
+
+.tg-ops-stat-label {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgb(100 116 139);
+}
+
+.tg-ops-stat-value {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.tg-ops-stat-value--income {
+  color: #24ad7c;
+}
+
+.tg-ops-stat-value--expense {
+  color: #e74c3c;
+}
+
+.tg-ops-stat-value--net {
+  color: rgb(15 23 42);
+}
+
+.tg-ops-stat-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.tg-ops-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.tg-ops-search-icon {
+  display: flex;
+  color: rgb(148 163 184);
+  flex-shrink: 0;
+}
+
+.tg-ops-search-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.tg-ops-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  color: var(--text, #0f172a);
+}
+
+.tg-ops-search-input::placeholder {
+  color: rgb(148 163 184);
+}
+
+.tg-ops-search-input:focus {
+  outline: none;
+}
+
+.tg-ops-filters-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tg-ops-date-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.tg-ops-date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tg-ops-date-label {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tg-ops-date-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text, #0f172a);
+}
+
+.tg-ops-filters-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tg-ops-filter-select {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 8px;
+  border-radius: 10px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text, #0f172a);
+}
+
+.tg-ops-sort-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tg-ops-sort-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgb(71 85 105);
+  padding: 0;
+}
+
+.tg-ops-sort-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.tg-ops-list-card {
+  padding: 0 0 4px !important;
+  overflow: hidden;
+}
+
+.tg-ops-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.tg-ops-day-group {
+  padding: 12px 16px 6px;
+}
+
+.tg-ops-day-label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgb(51 65 85);
+}
+
+.tg-ops-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px 12px;
+  align-items: center;
+  padding: 12px 16px;
+  border-top: 1px solid rgb(241 245 249);
+}
+
+.tg-ops-row:first-of-type {
+  border-top: none;
+}
+
+.tg-ops-row-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tg-ops-row-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.tg-ops-row-icon--income {
+  background: rgb(36 173 124 / 0.15);
+  color: #24ad7c;
+}
+
+.tg-ops-row-icon--expense {
+  background: rgb(231 76 60 / 0.12);
+  color: #e74c3c;
+}
+
+.tg-ops-row-icon--transfer {
+  background: rgb(99 102 241 / 0.14);
+  color: #6366f1;
+}
+
+.tg-ops-row-main {
+  min-width: 0;
+}
+
+.tg-ops-row-title {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text, #0f172a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tg-ops-row-meta {
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgb(100 116 139);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tg-ops-row-mid {
+  display: none;
+}
+
+@media (min-width: 360px) {
+  .tg-ops-row {
+    grid-template-columns: auto 1fr auto auto;
+  }
+
+  .tg-ops-row-mid {
+    display: flex;
+    justify-content: center;
+  }
+}
+
+.tg-ops-pill {
+  display: inline-block;
+  max-width: 100px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tg-ops-amount-stack {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.tg-ops-amount-val {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.tg-ops-amount-val--income {
+  color: #24ad7c;
+}
+
+.tg-ops-amount-val--expense {
+  color: #e74c3c;
+}
+
+.tg-ops-amount-val--transfer {
+  color: rgb(51 65 85);
+}
+
+.tg-ops-amount-ccy {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgb(100 116 139);
+  margin-top: 2px;
+}
+
+.tg-ops-show-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: calc(100% - 32px);
+  margin: 8px 16px 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px dashed rgb(203 213 225);
+  background: rgb(248 250 252);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(71 85 105);
+  cursor: pointer;
+}
+
+.tg-ops-show-more-chevron {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.tg-ops-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgb(187 247 208);
+  background: rgb(240 253 244);
+}
+
+.tg-ops-tip[hidden] {
+  display: none !important;
+}
+
+.tg-ops-tip-icon {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tg-ops-tip-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tg-ops-tip-title {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 2px;
+  color: rgb(21 128 61);
+}
+
+.tg-ops-tip-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.tg-ops-tip-close {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 20px;
+  line-height: 1;
+  color: rgb(100 116 139);
+  cursor: pointer;
+}
+
+.tg-ops-tip-close:hover {
+  background: rgb(255 255 255 / 0.7);
+}
+
+@media (max-width: 360px) {
+  .tg-ops-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .tg-ops-filters-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 body.web-mode .web-activity-compose {
   margin-bottom: 14px;
 }

@@ -167,6 +167,12 @@ const state = {
 let webOpsOffset = 0;
 let webOpsDatesInitialized = false;
 
+/** Лента «Операции» в Telegram: сортировка и сколько строк показывать до «Показать ещё» */
+let tgOpsSortDesc = true;
+let tgOpsFeedVisibleCount = 14;
+let tgActivityOpsChromeAttached = false;
+let tgOpsDefaultDatesInitialized = false;
+
 /** Активная вкладка списка категорий в веб-режиме */
 let webCategoriesActiveKind = "income";
 let webCategoriesChromeAttached = false;
@@ -792,6 +798,11 @@ function openScreen(screenName, options = {}) {
     destroyReportCharts();
   }
 
+  if (!isWebMode && nextScreen === "activity") {
+    populateTgActivityFilterSelects();
+    tgOpsFeedVisibleCount = 14;
+    renderTgActivityOpsFeed(state.recentEntries, state.recentTransfers);
+  }
 }
 
 function initWebOperationsChrome() {
@@ -1356,6 +1367,8 @@ function renderSummary(summary) {
       homeBalancesByCurrencyListTgElement.innerHTML = balancesMarkup;
     }
   }
+
+  syncTgOpsStatsFromSummary(summary);
 }
 
 function renderAccountsList(targetElement, accounts, emptyDescription) {
@@ -2238,6 +2251,11 @@ function renderCategories(categories) {
 }
 
 function renderRecentEntries(entries) {
+  if (!isWebMode && document.getElementById("tgActivityCombinedList")) {
+    renderTgActivityOpsFeed(entries, state.recentTransfers);
+    return;
+  }
+
   if (!recentEntriesListElement) {
     return;
   }
@@ -2284,6 +2302,10 @@ function renderRecentEntries(entries) {
 }
 
 function renderRecentTransfers(transfers) {
+  if (!isWebMode && document.getElementById("tgActivityCombinedList")) {
+    return;
+  }
+
   if (!recentTransfersListElement) {
     return;
   }
@@ -2323,6 +2345,456 @@ function renderRecentTransfers(transfers) {
       `
     )
     .join("");
+}
+
+function hexToRgbParts(hex) {
+  const raw = String(hex ?? "").trim();
+  if (!/^#[0-9a-fA-F]{6}$/.test(raw)) {
+    return null;
+  }
+  const h = raw.slice(1);
+  return {
+    r: Number.parseInt(h.slice(0, 2), 16),
+    g: Number.parseInt(h.slice(2, 4), 16),
+    b: Number.parseInt(h.slice(4, 6), 16)
+  };
+}
+
+function rgbaFromHex(hex, alpha) {
+  const p = hexToRgbParts(hex);
+  if (!p) {
+    return null;
+  }
+  return `rgba(${p.r}, ${p.g}, ${p.b}, ${alpha})`;
+}
+
+function toLocalYmdFromIso(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) {
+    return "";
+  }
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function formatTgOpsDayHeading(ymd) {
+  const parts = ymd.split("-").map(Number);
+  if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) {
+    return ymd;
+  }
+  const [y, m, d] = parts;
+  const day = new Date(y, m - 1, d);
+  const today = new Date();
+  const ymdKey = (dt) => {
+    const x = dt instanceof Date ? dt : new Date(dt);
+    if (Number.isNaN(x.getTime())) {
+      return "";
+    }
+    const yy = x.getFullYear();
+    const mm = String(x.getMonth() + 1).padStart(2, "0");
+    const dd = String(x.getDate()).padStart(2, "0");
+    return `${yy}-${mm}-${dd}`;
+  };
+
+  if (ymdKey(day) === ymdKey(today)) {
+    return `Сегодня, ${day.toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}`;
+  }
+  const yest = new Date(today);
+  yest.setDate(yest.getDate() - 1);
+  if (ymdKey(day) === ymdKey(yest)) {
+    return `Вчера, ${day.toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}`;
+  }
+  const cap = day.toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" });
+  return cap.charAt(0).toUpperCase() + cap.slice(1);
+}
+
+function getMonthlyNetFromSummary(summary) {
+  const monthlyIncome = Number(summary?.monthlyIncome ?? 0);
+  const monthlyExpense = Number(summary?.monthlyExpense ?? 0);
+  if (summary?.monthlyNet !== undefined && summary?.monthlyNet !== null) {
+    return Number(summary.monthlyNet);
+  }
+  return monthlyIncome - monthlyExpense;
+}
+
+function syncTgOpsStatsFromSummary(summary) {
+  const incEl = document.getElementById("tgOpsStatIncome");
+  const expEl = document.getElementById("tgOpsStatExpense");
+  const netEl = document.getElementById("tgOpsStatNet");
+  if (!incEl || !expEl || !netEl) {
+    return;
+  }
+
+  const ccy = summary?.reportingCurrency ?? "";
+  const monthlyIncome = Number(summary?.monthlyIncome ?? 0);
+  const monthlyExpense = Number(summary?.monthlyExpense ?? 0);
+  const net = getMonthlyNetFromSummary(summary);
+
+  incEl.textContent = `+${formatMoney(monthlyIncome, ccy)}`;
+  expEl.textContent = `−${formatMoney(monthlyExpense, ccy)}`;
+  const sign = net >= 0 ? "+" : "−";
+  netEl.textContent = `${sign}${formatMoney(Math.abs(net), ccy)}`;
+}
+
+function toLocalYmdFromDateValue(d) {
+  const x = d instanceof Date ? d : new Date(d);
+  if (Number.isNaN(x.getTime())) {
+    return "";
+  }
+  const y = x.getFullYear();
+  const m = String(x.getMonth() + 1).padStart(2, "0");
+  const day = String(x.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function ensureTgOpsDefaultDates() {
+  if (isWebMode || tgOpsDefaultDatesInitialized) {
+    return;
+  }
+  const fromEl = document.getElementById("tgOpsDateFrom");
+  const toEl = document.getElementById("tgOpsDateTo");
+  if (!fromEl || !toEl) {
+    return;
+  }
+  tgOpsDefaultDatesInitialized = true;
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - 30);
+  fromEl.value = toLocalYmdFromDateValue(start);
+  toEl.value = toLocalYmdFromDateValue(end);
+}
+
+function populateTgActivityFilterSelects() {
+  if (isWebMode) {
+    return;
+  }
+
+  const accSel = document.getElementById("tgOpsFilterAccount");
+  const catSel = document.getElementById("tgOpsFilterCategory");
+  if (!accSel || !catSel) {
+    return;
+  }
+
+  const prevAcc = accSel.value;
+  const prevCat = catSel.value;
+
+  accSel.innerHTML = `<option value="">${escapeHtml("Все счета")}</option>${state.accounts
+    .map(
+      (a) =>
+        `<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)} · ${escapeHtml(a.currency_code)}</option>`
+    )
+    .join("")}`;
+
+  if (prevAcc && Array.from(accSel.options).some((o) => o.value === prevAcc)) {
+    accSel.value = prevAcc;
+  }
+
+  catSel.innerHTML = `<option value="">${escapeHtml("Все категории")}</option>${state.categories
+    .map(
+      (c) =>
+        `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)} (${escapeHtml(formatKind(c.kind))})</option>`
+    )
+    .join("")}`;
+
+  if (prevCat && Array.from(catSel.options).some((o) => o.value === prevCat)) {
+    catSel.value = prevCat;
+  }
+}
+
+function buildTgOpsCombinedItems(entries, transfers) {
+  const items = [
+    ...(Array.isArray(entries) ? entries : []).map((entry) => ({
+      type: "entry",
+      occurredAt: entry.occurred_at,
+      payload: entry
+    })),
+    ...(Array.isArray(transfers) ? transfers : []).map((transfer) => ({
+      type: "transfer",
+      occurredAt: transfer.occurred_at,
+      payload: transfer
+    }))
+  ];
+
+  items.sort((a, b) => {
+    const ta = new Date(a.occurredAt).getTime();
+    const tb = new Date(b.occurredAt).getTime();
+    return tgOpsSortDesc ? tb - ta : ta - tb;
+  });
+
+  return items;
+}
+
+function filterTgOpsCombinedItems(items) {
+  const searchEl = document.getElementById("tgOpsSearchInput");
+  const accEl = document.getElementById("tgOpsFilterAccount");
+  const kindEl = document.getElementById("tgOpsFilterKind");
+  const catEl = document.getElementById("tgOpsFilterCategory");
+  const fromEl = document.getElementById("tgOpsDateFrom");
+  const toEl = document.getElementById("tgOpsDateTo");
+
+  const q = (searchEl?.value ?? "").trim().toLowerCase();
+  const accId = (accEl?.value ?? "").trim();
+  const kind = (kindEl?.value ?? "all").trim();
+  const catId = (catEl?.value ?? "").trim();
+  const fromY = (fromEl?.value ?? "").trim();
+  const toY = (toEl?.value ?? "").trim();
+
+  return items.filter((item) => {
+    const ymd = toLocalYmdFromIso(item.occurredAt);
+    if (fromY && ymd && ymd < fromY) {
+      return false;
+    }
+    if (toY && ymd && ymd > toY) {
+      return false;
+    }
+
+    if (kind !== "all" && item.type !== kind) {
+      return false;
+    }
+
+    if (item.type === "entry") {
+      const entry = item.payload;
+      if (accId && entry.account_id !== accId && entry.account?.id !== accId) {
+        return false;
+      }
+      if (catId && entry.category_id !== catId && entry.category?.id !== catId) {
+        return false;
+      }
+    } else if (item.type === "transfer") {
+      const t = item.payload;
+      if (catId) {
+        return false;
+      }
+      if (accId && t.from_account_id !== accId && t.to_account_id !== accId) {
+        return false;
+      }
+    }
+
+    if (!q) {
+      return true;
+    }
+
+    if (item.type === "entry") {
+      const entry = item.payload;
+      const hay = [
+        entry.category?.name,
+        entry.account?.name,
+        entry.note,
+        entry.kind,
+        String(entry.amount)
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    }
+
+    const t = item.payload;
+    const hay = [
+      t.from_account?.name,
+      t.to_account?.name,
+      t.note,
+      String(t.from_amount),
+      String(t.to_amount)
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return hay.includes(q);
+  });
+}
+
+function formatTgOpsTransferAmountCell(transfer) {
+  const fromAmt = formatMoneyAmount(transfer.from_amount);
+  const fromCcy = escapeHtml(transfer.from_currency_code || "");
+  const toAmt = formatMoneyAmount(transfer.to_amount);
+  const toCcy = escapeHtml(transfer.to_currency_code || "");
+
+  return `<div class="tg-ops-amount-stack">
+    <span class="tg-ops-amount-val tg-ops-amount-val--transfer">${escapeHtml(fromAmt)} → ${escapeHtml(toAmt)}</span>
+    <span class="tg-ops-amount-ccy">${fromCcy} → ${toCcy}</span>
+  </div>`;
+}
+
+function renderTgActivityOpsFeed(entries, transfers) {
+  const root = document.getElementById("tgActivityCombinedList");
+  if (!root || isWebMode) {
+    return;
+  }
+
+  ensureTgOpsDefaultDates();
+
+  const items = filterTgOpsCombinedItems(buildTgOpsCombinedItems(entries, transfers));
+  const showMoreBtn = document.getElementById("tgActivityShowMore");
+
+  if (items.length === 0) {
+    root.innerHTML = `
+      <div class="empty-state" style="padding: 20px 16px 24px;">
+        <strong>Нет операций</strong>
+        <p class="account-meta">Измените фильтры или добавьте операцию кнопкой «+».</p>
+      </div>
+    `;
+    if (showMoreBtn) {
+      showMoreBtn.hidden = true;
+    }
+    return;
+  }
+
+  const slice = items.slice(0, tgOpsFeedVisibleCount);
+  const hasMore = items.length > slice.length;
+
+  const groups = new Map();
+  for (const item of slice) {
+    const key = toLocalYmdFromIso(item.occurredAt) || "—";
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key).push(item);
+  }
+
+  const parts = [];
+  for (const [ymd, groupItems] of groups) {
+    parts.push(`<div class="tg-ops-day-group"><p class="tg-ops-day-label">${escapeHtml(
+      formatTgOpsDayHeading(ymd)
+    )}</p></div>`);
+
+    for (const item of groupItems) {
+      if (item.type === "entry") {
+        const entry = item.payload;
+        const cat = entry.category;
+        const catName = cat?.name ?? "Без категории";
+        const cid = cat?.id ?? entry.category_id;
+        const resolvedCat =
+          state.categories.find((c) => c.id === cid) ??
+          (cid ? { id: cid, name: catName, kind: entry.kind || "expense" } : null);
+        const accent = resolvedCat ? resolveCategoryDotColor(resolvedCat) : "#94a3b8";
+        const bg = rgbaFromHex(accent, 0.16) ?? "rgb(241 245 249)";
+        const border = rgbaFromHex(accent, 0.35) ?? "rgb(226 232 240)";
+        const iconClass = entry.kind === "income" ? "tg-ops-row-icon--income" : "tg-ops-row-icon--expense";
+        const amountClass = entry.kind === "income" ? "tg-ops-amount-val--income" : "tg-ops-amount-val--expense";
+        const prefix = entry.kind === "income" ? "+" : "−";
+        const amt = escapeHtml(`${prefix}${formatMoneyAmount(entry.amount)}`);
+        const ccy = escapeHtml(entry.currency_code || "");
+
+        parts.push(`<div class="tg-ops-row" role="listitem">
+          <div class="tg-ops-row-icon ${iconClass}" aria-hidden="true">${getEntryIcon(entry.kind)}</div>
+          <div class="tg-ops-row-main">
+            <span class="tg-ops-row-title">${escapeHtml(catName)}</span>
+            <span class="tg-ops-row-meta">${escapeHtml(entry.account?.name ?? "Счёт")} · ${escapeHtml(
+              formatDateTime(entry.occurred_at)
+            )}</span>
+          </div>
+          <div class="tg-ops-row-mid">
+            <span class="tg-ops-pill" style="background:${escapeHtml(bg)};color:${escapeHtml(accent)};border:1px solid ${escapeHtml(
+              border
+            )}">${escapeHtml(catName)}</span>
+          </div>
+          <div class="tg-ops-amount-stack">
+            <span class="tg-ops-amount-val ${amountClass}">${amt}</span>
+            <span class="tg-ops-amount-ccy">${ccy}</span>
+          </div>
+        </div>`);
+      } else {
+        const transfer = item.payload;
+        const title = `${transfer.from_account?.name ?? "Счёт"} → ${transfer.to_account?.name ?? "Счёт"}`;
+        const accent = "#6366f1";
+        const bg = rgbaFromHex(accent, 0.14) ?? "rgb(238 242 255)";
+        const border = rgbaFromHex(accent, 0.35) ?? "rgb(199 210 254)";
+
+        parts.push(`<div class="tg-ops-row" role="listitem">
+          <div class="tg-ops-row-icon tg-ops-row-icon--transfer" aria-hidden="true">${getEntryIcon("transfer")}</div>
+          <div class="tg-ops-row-main">
+            <span class="tg-ops-row-title">${escapeHtml(title)}</span>
+            <span class="tg-ops-row-meta">${escapeHtml(formatDateTime(transfer.occurred_at))}</span>
+          </div>
+          <div class="tg-ops-row-mid">
+            <span class="tg-ops-pill" style="background:${escapeHtml(bg)};color:${escapeHtml(accent)};border:1px solid ${escapeHtml(
+              border
+            )}">Перевод</span>
+          </div>
+          ${formatTgOpsTransferAmountCell(transfer)}
+        </div>`);
+      }
+    }
+  }
+
+  root.innerHTML = parts.join("");
+
+  if (showMoreBtn) {
+    showMoreBtn.hidden = !hasMore;
+  }
+}
+
+function scheduleTgOpsFeedRefresh() {
+  if (isWebMode) {
+    return;
+  }
+  window.requestAnimationFrame(() => {
+    renderTgActivityOpsFeed(state.recentEntries, state.recentTransfers);
+  });
+}
+
+function attachTgActivityOpsChrome() {
+  if (isWebMode || tgActivityOpsChromeAttached) {
+    return;
+  }
+  tgActivityOpsChromeAttached = true;
+
+  document.getElementById("tgActivityNewEntryButton")?.addEventListener("click", () => {
+    openEntryTypeModal();
+  });
+
+  const filterToggle = document.getElementById("tgActivityFilterToggle");
+  const filterPanel = document.getElementById("tgOpsFiltersPanel");
+  filterToggle?.addEventListener("click", () => {
+    if (!filterPanel) {
+      return;
+    }
+    filterPanel.hidden = !filterPanel.hidden;
+    filterToggle.setAttribute("aria-expanded", String(!filterPanel.hidden));
+  });
+
+  document.getElementById("tgOpsSortToggle")?.addEventListener("click", () => {
+    tgOpsSortDesc = !tgOpsSortDesc;
+    scheduleTgOpsFeedRefresh();
+  });
+
+  let searchTimer = null;
+  document.getElementById("tgOpsSearchInput")?.addEventListener("input", () => {
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(() => scheduleTgOpsFeedRefresh(), 220);
+  });
+
+  ["tgOpsFilterAccount", "tgOpsFilterKind", "tgOpsFilterCategory", "tgOpsDateFrom", "tgOpsDateTo"].forEach((id) => {
+    document.getElementById(id)?.addEventListener("change", () => scheduleTgOpsFeedRefresh());
+  });
+
+  document.getElementById("tgActivityShowMore")?.addEventListener("click", () => {
+    tgOpsFeedVisibleCount += 14;
+    scheduleTgOpsFeedRefresh();
+  });
+
+  const tip = document.getElementById("tgActivityOpsTip");
+  const tipClose = document.getElementById("tgActivityOpsTipClose");
+  if (tip && tipClose) {
+    try {
+      if (window.sessionStorage.getItem("balancyHideTgOpsTip") === "1") {
+        tip.hidden = true;
+      }
+    } catch {
+      //
+    }
+    tipClose.addEventListener("click", () => {
+      tip.hidden = true;
+      try {
+        window.sessionStorage.setItem("balancyHideTgOpsTip", "1");
+      } catch {
+        //
+      }
+    });
+  }
 }
 
 function renderHomeRecentActivity(entries, transfers) {
@@ -3612,6 +4084,7 @@ function renderAll() {
   safeRenderStep("categoryOptions", () => populateCategoryOptions());
   safeRenderStep("fxReferencePanel", () => syncFxReferencePanel());
   safeRenderStep("webProfile", () => syncWebProfile());
+  safeRenderStep("tgActivityFilters", () => populateTgActivityFilterSelects());
 }
 
 function syncWebProfile() {
@@ -5387,6 +5860,8 @@ try {
     reportSubmitButton.textContent = "Построить отчёт";
   }
   syncReportPeriodSegmented();
+
+  attachTgActivityOpsChrome();
 
   void loadApp();
 } catch (error) {

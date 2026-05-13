@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513tg-activity-revert";
+        var BALANCY_CLIENT_ASSET_REV = "20260514tg-ops-mock";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -697,6 +697,128 @@
         </section>
 
         <section id="screen-activity" class="screen" data-screen="activity">
+          <div id="tgOpsActivityRoot" class="tg-ops-activity-root">
+            <header class="tg-ops-head">
+              <h1 class="tg-ops-title">Операции</h1>
+              <div class="tg-ops-head-actions">
+                <button
+                  type="button"
+                  id="tgActivityNewEntryButton"
+                  class="tg-ops-btn tg-ops-btn--plus"
+                  aria-label="Новая операция"
+                >
+                  <span aria-hidden="true">+</span>
+                </button>
+                <button
+                  type="button"
+                  id="tgActivityFilterToggle"
+                  class="tg-ops-btn tg-ops-btn--filter"
+                  aria-label="Фильтры"
+                  aria-expanded="true"
+                  aria-controls="tgOpsFiltersPanel"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M4 6h16M7 12h10M10 18h4"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </header>
+
+            <div class="tg-ops-stats" role="region" aria-label="Сводка за месяц">
+              <div class="tg-ops-stat tg-ops-stat--income">
+                <p class="tg-ops-stat-label">Доходы</p>
+                <strong id="tgOpsStatIncome" class="tg-ops-stat-value tg-ops-stat-value--income">+0</strong>
+                <span class="tg-ops-stat-sub muted">в этом месяце</span>
+              </div>
+              <div class="tg-ops-stat tg-ops-stat--expense">
+                <p class="tg-ops-stat-label">Расходы</p>
+                <strong id="tgOpsStatExpense" class="tg-ops-stat-value tg-ops-stat-value--expense">−0</strong>
+                <span class="tg-ops-stat-sub muted">в этом месяце</span>
+              </div>
+              <div class="tg-ops-stat tg-ops-stat--net">
+                <p class="tg-ops-stat-label">Чистый поток</p>
+                <strong id="tgOpsStatNet" class="tg-ops-stat-value tg-ops-stat-value--net">+0</strong>
+                <span class="tg-ops-stat-sub muted">за этот месяц</span>
+              </div>
+            </div>
+
+            <div class="tg-ops-search-wrap">
+              <span class="tg-ops-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.7" />
+                  <path d="M16 16l5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                </svg>
+              </span>
+              <input
+                id="tgOpsSearchInput"
+                class="tg-ops-search-input"
+                type="search"
+                placeholder="Поиск операций…"
+                autocomplete="off"
+                aria-label="Поиск по операциям"
+              />
+            </div>
+
+            <div id="tgOpsFiltersPanel" class="tg-ops-filters-panel">
+              <div class="tg-ops-date-row">
+                <label class="tg-ops-date-field">
+                  <span class="tg-ops-date-label muted">Период с</span>
+                  <input id="tgOpsDateFrom" class="tg-ops-date-input" type="date" aria-label="Дата с" />
+                </label>
+                <label class="tg-ops-date-field">
+                  <span class="tg-ops-date-label muted">по</span>
+                  <input id="tgOpsDateTo" class="tg-ops-date-input" type="date" aria-label="Дата по" />
+                </label>
+              </div>
+              <div class="tg-ops-filters-row">
+                <select id="tgOpsFilterAccount" class="tg-ops-filter-select" aria-label="Счёт">
+                  <option value="">Все счета</option>
+                </select>
+                <select id="tgOpsFilterKind" class="tg-ops-filter-select" aria-label="Тип операции">
+                  <option value="all">Все</option>
+                  <option value="income">Доход</option>
+                  <option value="expense">Расход</option>
+                  <option value="transfer">Перевод</option>
+                </select>
+                <select id="tgOpsFilterCategory" class="tg-ops-filter-select" aria-label="Категория">
+                  <option value="">Все категории</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="tg-ops-sort-row">
+              <button type="button" id="tgOpsSortToggle" class="tg-ops-sort-btn" aria-label="Порядок сортировки по дате">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M8 6l4-4 4 4M8 18l4 4 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+            </div>
+
+            <section class="card tg-ops-list-card">
+              <div id="tgActivityCombinedList" class="tg-ops-feed" aria-live="polite"></div>
+              <button type="button" id="tgActivityShowMore" class="tg-ops-show-more" hidden>
+                Показать ещё
+                <span class="tg-ops-show-more-chevron" aria-hidden="true">⌄</span>
+              </button>
+            </section>
+
+            <div id="tgActivityOpsTip" class="tg-ops-tip" role="status">
+              <span class="tg-ops-tip-icon" aria-hidden="true">💡</span>
+              <div class="tg-ops-tip-copy">
+                <strong class="tg-ops-tip-title">Подсказка</strong>
+                <p class="tg-ops-tip-text muted">Используйте фильтры и поиск, чтобы быстро находить нужные операции.</p>
+              </div>
+              <button type="button" id="tgActivityOpsTipClose" class="tg-ops-tip-close" aria-label="Закрыть подсказку">
+                ×
+              </button>
+            </div>
+          </div>
+
           <div class="web-activity-compose">
             <div class="web-op-kind-cards" role="group" aria-label="Тип операции">
               <button
