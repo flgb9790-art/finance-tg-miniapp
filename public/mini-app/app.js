@@ -1529,7 +1529,7 @@ function renderAccounts(accounts) {
   );
   renderAccountsList(
     homeAccountsListElement,
-    accounts.slice(0, 5),
+    accounts.slice(0, 4),
     "Создайте первый счет, и он появится здесь."
   );
 }
