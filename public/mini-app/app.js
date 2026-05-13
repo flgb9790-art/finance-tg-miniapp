@@ -1723,7 +1723,7 @@ function renderHomeRecentActivity(entries, transfers) {
     }))
   ]
     .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
-    .slice(0, 5);
+    .slice(0, 4);
 
   if (combined.length === 0) {
     homeRecentActivityListElement.innerHTML = `

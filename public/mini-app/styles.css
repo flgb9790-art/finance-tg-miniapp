@@ -3119,7 +3119,7 @@ body.web-mode .web-dash-hero .currency-breakdown-title {
 
 body.web-mode .web-home-mid-grid {
   display: grid;
-  grid-template-columns: minmax(0, 2.35fr) minmax(200px, 0.58fr);
+  grid-template-columns: minmax(0, 1.82fr) minmax(260px, 0.82fr);
   gap: 16px;
   align-items: stretch;
   width: 100%;
@@ -3303,6 +3303,17 @@ body.web-mode .web-home-foot-cta:hover {
   body.web-mode .web-home-mid-grid {
     grid-template-columns: 1fr;
   }
+
+  body.web-mode[data-app-active-screen="home"] .web-home-rail {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: unset;
+    grid-template-rows: unset;
+  }
+
+  body.web-mode[data-app-active-screen="home"] .web-dash-plan-card {
+    max-height: min(38vh, 280px);
+  }
 }
 
 /* Web: calmer main content strips */
@@ -3326,7 +3337,7 @@ body.web-mode .web-home-mid-grid > .web-home-columns {
 
 body.web-mode .web-home-columns {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 0.48fr) minmax(0, 0.52fr);
   gap: 16px;
   align-items: stretch;
   padding: 0;
@@ -4005,9 +4016,13 @@ body.web-mode[data-app-active-screen="home"] .web-home-columns {
 }
 
 body.web-mode[data-app-active-screen="home"] .web-home-rail {
-  gap: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(112px, 152px);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 12px;
   height: 100%;
   min-height: 0;
+  align-items: stretch;
 }
 
 body.web-mode[data-app-active-screen="home"] .section-footer-note:has(#syncRatesButton) {
@@ -4022,6 +4037,11 @@ body.web-mode[data-app-active-screen="home"] .web-home-columns > .web-home-col-c
   min-height: 0;
 }
 
+body.web-mode[data-app-active-screen="home"] .web-home-columns > .web-home-col-card:nth-child(2) .web-home-card-main {
+  flex: 0 1 auto;
+  min-height: 0;
+}
+
 body.web-mode[data-app-active-screen="home"] .web-home-columns > .web-home-col-card .web-home-list-fill {
   margin-top: 8px;
   flex: 1 1 auto;
@@ -4031,14 +4051,26 @@ body.web-mode[data-app-active-screen="home"] .web-home-columns > .web-home-col-c
   -webkit-overflow-scrolling: touch;
 }
 
+body.web-mode[data-app-active-screen="home"] .web-home-columns > .web-home-col-card:nth-child(2) .web-home-list-fill {
+  flex: 0 1 auto;
+  max-height: calc(4 * 4.25rem + 3 * 10px);
+  align-content: start;
+}
+
+body.web-mode[data-app-active-screen="home"] #homeRecentActivityList > .home-activity-row {
+  align-self: start;
+}
+
 body.web-mode[data-app-active-screen="home"] .web-home-columns > .web-home-col-card .web-home-list-fill .empty-state {
   min-height: 72px;
 }
 
 body.web-mode[data-app-active-screen="home"] .web-dash-donut-card,
 body.web-mode[data-app-active-screen="home"] .web-dash-plan-card {
-  flex: 1 1 0;
+  flex: unset;
+  height: 100%;
   min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -4052,10 +4084,10 @@ body.web-mode[data-app-active-screen="home"] .web-dash-donut-card .section-heade
 body.web-mode[data-app-active-screen="home"] .web-dash-donut-card .web-donut-layout {
   flex: 1 1 auto;
   min-height: 0;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 12px;
   margin-top: 8px;
 }
 
@@ -4063,28 +4095,48 @@ body.web-mode[data-app-active-screen="home"] .web-dash-plan-card .web-dash-plan-
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 14px;
-  margin-top: 10px;
+  justify-content: flex-start;
+  gap: 12px;
+  margin-top: 8px;
   min-height: 0;
 }
 
 body.web-mode[data-app-active-screen="home"] .web-donut-visual {
-  width: 88px;
-  height: 88px;
-  box-shadow: inset 0 0 0 7px #fff;
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 8px #fff;
 }
 
 body.web-mode[data-app-active-screen="home"] .web-donut-legend {
-  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  align-content: start;
+  gap: 5px;
   font-size: 11px;
-  width: 100%;
-  max-width: 100%;
+  width: auto;
+  max-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 body.web-mode[data-app-active-screen="home"] .web-dash-plan-card > .section-label,
 body.web-mode[data-app-active-screen="home"] .web-dash-plan-card > h2 {
   flex-shrink: 0;
+}
+
+body.web-mode[data-app-active-screen="home"] .web-dash-plan-card {
+  padding: 8px 8px 10px;
+}
+
+body.web-mode[data-app-active-screen="home"] .web-dash-plan-card h2 {
+  font-size: 14px;
+}
+
+body.web-mode[data-app-active-screen="home"] .web-dash-plan-card .section-label {
+  font-size: 10px;
 }
 
 body.web-mode[data-app-active-screen="home"] .web-dash-plan-track {
