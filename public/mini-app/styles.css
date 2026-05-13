@@ -2569,8 +2569,26 @@ body.web-mode #miniTopbar {
 }
 
 /* --- Desktop shell (sidebar + main) --- */
+/* Десктоп-оболочка: в Telegram (без body.web-mode) не скрываем весь #webTopNav — внутри лежит .app-shell */
 .web-desktop-shell {
-  display: none;
+  box-sizing: border-box;
+}
+
+body:not(.web-mode) #webTopNav.web-desktop-shell {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+body:not(.web-mode) #webTopNav .web-sidebar,
+body:not(.web-mode) #webTopNav .web-page-header {
+  display: none !important;
+}
+
+body:not(.web-mode) #webTopNav .web-main-column {
+  overflow: visible;
 }
 
 body.web-mode #webTopNav.web-desktop-shell {
