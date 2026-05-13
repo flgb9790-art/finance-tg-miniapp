@@ -468,6 +468,10 @@ function stripHtmlToSnippet(html) {
 }
 
 function setStatus(text, type = "muted") {
+  if (!statusTextElement) {
+    return;
+  }
+
   statusTextElement.textContent = text;
   statusTextElement.className =
     type === "error" ? "inline-error" : type === "success" ? "inline-success" : "muted";
@@ -1250,6 +1254,16 @@ function renderWebDesktopDashboard(summary) {
 }
 
 function renderSummary(summary) {
+  if (
+    !categoriesCountElement ||
+    !monthlyIncomeElement ||
+    !monthlyExpenseElement ||
+    !monthlyIncomeInlineElement ||
+    !totalBalanceConvertedElement
+  ) {
+    return;
+  }
+
   categoriesCountElement.textContent = String(summary?.categoriesCount ?? 0);
   monthlyIncomeElement.textContent = formatMoney(summary?.monthlyIncome ?? 0, summary?.reportingCurrency ?? "");
   monthlyExpenseElement.textContent = formatMoney(summary?.monthlyExpense ?? 0, summary?.reportingCurrency ?? "");
@@ -1262,9 +1276,11 @@ function renderSummary(summary) {
     summary?.reportingCurrency ?? ""
   );
   syncReportingCurrencyInputs(summary?.reportingCurrency ?? "");
-  ratesStatusTextElement.textContent = summary?.ratesUpdatedAt
-    ? `Курсы обновлены: ${formatDateTime(summary.ratesUpdatedAt)}`
-    : "Курсы валют еще не синхронизированы";
+  if (ratesStatusTextElement) {
+    ratesStatusTextElement.textContent = summary?.ratesUpdatedAt
+      ? `Курсы обновлены: ${formatDateTime(summary.ratesUpdatedAt)}`
+      : "Курсы валют еще не синхронизированы";
+  }
 
   renderWebDesktopDashboard(summary);
 
@@ -1644,10 +1660,14 @@ function attachSwipeRowHandlers() {
 }
 
 function renderAccounts(accounts) {
-  accountsCountElement.textContent = String(accounts.length);
-  accountsTitleElement.textContent = accounts.length > 0 ? "Ваши счета" : "Счета пока пусты";
+  if (accountsCountElement) {
+    accountsCountElement.textContent = String(accounts.length);
+  }
+  if (accountsTitleElement) {
+    accountsTitleElement.textContent = accounts.length > 0 ? "Ваши счета" : "Счета пока пусты";
+  }
   syncAccountFormTitles();
-  cancelAccountEditButton.classList.toggle("hidden-button", !state.editingAccountId);
+  cancelAccountEditButton?.classList.toggle("hidden-button", !state.editingAccountId);
 
   const headCount = document.getElementById("webAccountsHeadCount");
   if (headCount) {
@@ -2113,6 +2133,10 @@ function renderCategories(categories) {
   }
 
   const renderList = (targetElement, items) => {
+    if (!targetElement) {
+      return;
+    }
+
     if (items.length === 0) {
       targetElement.innerHTML = `
         <div class="empty-state">
@@ -2162,6 +2186,10 @@ function renderCategories(categories) {
 }
 
 function renderRecentEntries(entries) {
+  if (!recentEntriesListElement) {
+    return;
+  }
+
   if (entries.length === 0) {
     recentEntriesListElement.innerHTML = `
       <div class="empty-state">
@@ -2204,6 +2232,10 @@ function renderRecentEntries(entries) {
 }
 
 function renderRecentTransfers(transfers) {
+  if (!recentTransfersListElement) {
+    return;
+  }
+
   if (transfers.length === 0) {
     recentTransfersListElement.innerHTML = `
       <div class="empty-state">
@@ -2242,6 +2274,10 @@ function renderRecentTransfers(transfers) {
 }
 
 function renderHomeRecentActivity(entries, transfers) {
+  if (!homeRecentActivityListElement) {
+    return;
+  }
+
   const combined = [
     ...entries.map((entry) => ({
       type: "entry",
@@ -2990,6 +3026,10 @@ function exitWebTransferView() {
 }
 
 function populateAccountOptions() {
+  if (!entryAccountInput || !transferFromAccountInput || !transferToAccountInput) {
+    return;
+  }
+
   const accountOptions = state.accounts
     .map(
       (account) =>
@@ -3683,10 +3723,11 @@ function resolveFetchUrl(url) {
 
 function buildReportQueryString() {
   const params = new URLSearchParams();
-  params.set("period", reportPeriodInput.value);
+  const period = reportPeriodInput?.value ?? "month";
+  params.set("period", period);
   params.set("reportingCurrency", currentReportingCurrencySelection());
 
-  if (reportPeriodInput.value === "custom") {
+  if (period === "custom" && reportStartDateInput && reportEndDateInput) {
     params.set("startDate", toIsoDate(toDateRangeStart(reportStartDateInput.value)));
     params.set("endDate", toIsoDate(toDateRangeEnd(reportEndDateInput.value)));
   }
@@ -4065,7 +4106,9 @@ async function openReportCsvInNewTab() {
 
 async function loadApp(options = {}) {
   if (!tg) {
-    userNameElement.textContent = "Откройте приложение из Telegram";
+    if (userNameElement) {
+      userNameElement.textContent = "Откройте приложение из Telegram";
+    }
     setStatus("Mini app должен открываться из Telegram, чтобы получить данные пользователя.", "error");
     dismissAppSplash({ fast: true });
     return;
@@ -4111,14 +4154,18 @@ async function loadApp(options = {}) {
     syncViewportMetrics();
 
     if (!getInitData() && !isWebMode) {
-      userNameElement.textContent = "Подключение...";
+      if (userNameElement) {
+        userNameElement.textContent = "Подключение...";
+      }
       setStatus("Ожидаем данные сессии от Telegram...");
     }
 
     const initDataReady = isWebMode ? "web-session" : await waitForTelegramInitData(12000);
 
     if (!initDataReady && !isWebMode) {
-      userNameElement.textContent = "Ожидаем Telegram";
+      if (userNameElement) {
+        userNameElement.textContent = "Ожидаем Telegram";
+      }
       setStatus(
         "Telegram WebApp еще не передал данные сессии. Закройте mini app и откройте снова из бота.",
         "error"
@@ -4167,10 +4214,12 @@ async function loadApp(options = {}) {
     setStoredReportingCurrency(resolvedReportingCurrency);
     syncReportingCurrencyInputs(resolvedReportingCurrency);
 
-    userNameElement.textContent =
-      [user.first_name, user.last_name].filter(Boolean).join(" ") ||
-      user.username ||
-      "Пользователь";
+    if (userNameElement) {
+      userNameElement.textContent =
+        [user.first_name, user.last_name].filter(Boolean).join(" ") ||
+        user.username ||
+        "Пользователь";
+    }
 
     renderAll();
     if (document.body.dataset.appActiveScreen === "history") {
@@ -4189,7 +4238,9 @@ async function loadApp(options = {}) {
     await dismissAppSplashAfterSuccess();
   } catch (error) {
     console.error(error);
-    userNameElement.textContent = "Не удалось загрузить приложение";
+    if (userNameElement) {
+      userNameElement.textContent = "Не удалось загрузить приложение";
+    }
     let message = error instanceof Error ? error.message : "Unknown error";
 
     const aborted =
@@ -4344,6 +4395,10 @@ function attachFxReferencePanelListeners() {
 }
 
 function attachAccountsListListener() {
+  if (!accountsListElement) {
+    return;
+  }
+
   accountsListElement.addEventListener("click", (event) => {
     const target = event.target;
 
@@ -4667,6 +4722,10 @@ function handleOpenScreenButtonClick(button) {
 }
 
 function attachCategoryListsListener() {
+  if (!incomeCategoriesListElement || !expenseCategoriesListElement) {
+    return;
+  }
+
   const onCategoryListClick = (event) => {
     const target = event.target;
 
@@ -5189,8 +5248,12 @@ try {
   void loadApp();
 } catch (error) {
   console.error("Mini app boot failed before loadApp", error);
-  userNameElement.textContent = "Ошибка запуска";
-  statusTextElement.textContent =
-    "Не удалось инициализировать интерфейс. Обновите экран («Обновить») или откройте приложение из бота снова.";
-  statusTextElement.className = "inline-error";
+  if (userNameElement) {
+    userNameElement.textContent = "Ошибка запуска";
+  }
+  if (statusTextElement) {
+    statusTextElement.textContent =
+      "Не удалось инициализировать интерфейс. Обновите экран («Обновить») или откройте приложение из бота снова.";
+    statusTextElement.className = "inline-error";
+  }
 }

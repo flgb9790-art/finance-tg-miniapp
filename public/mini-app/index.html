@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513accounts-cards-minimal";
+        var BALANCY_CLIENT_ASSET_REV = "20260513tg-boot-hardening";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -1773,7 +1773,7 @@
             : "20260513web-minimal";
 
         var scriptEl = document.createElement("script");
-        scriptEl.type = "module";
+        /* Обычный скрипт: в app.js нет import/export; type=module на части WebView Telegram даёт пустой экран после сплэша. */
         scriptEl.src = "/mini-app/app.js?v=" + CLIENT_ASSET_REV;
         scriptEl.onerror = showScriptLoadFailure;
         document.body.appendChild(scriptEl);
