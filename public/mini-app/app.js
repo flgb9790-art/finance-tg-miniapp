@@ -3265,6 +3265,7 @@ async function authenticatedFetchRaw(url, options = {}) {
 
   return fetch(resolveFetchUrl(url), {
     ...options,
+    credentials: "include",
     method,
     headers: {
       ...optionHeaders,
@@ -3306,6 +3307,7 @@ async function apiFetch(url, options = {}) {
 
   const response = await fetch(resolveFetchUrl(url), {
     ...options,
+    credentials: "include",
     headers
   });
 

@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513reports-layout2";
+        var BALANCY_CLIENT_ASSET_REV = "20260513reports-wide-charts";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -1027,16 +1027,16 @@
                   <div class="card report-chart-panel report-chart-panel--main">
                     <p class="section-label">Динамика доходов и расходов</p>
                     <div class="report-chart-canvas-wrap report-chart-canvas-wrap--trend">
-                      <canvas id="reportTrendChart" height="260" aria-label="График доходов, расходов и чистого потока"></canvas>
+                      <canvas id="reportTrendChart" height="180" aria-label="График доходов, расходов и чистого потока"></canvas>
                     </div>
                   </div>
                   <div class="card report-chart-panel report-chart-panel--side">
                     <p class="section-label">Расходы по категориям</p>
                     <div class="report-chart-canvas-wrap report-chart-canvas-wrap--donut">
                       <div class="report-donut-stack">
-                        <canvas id="reportCategoryChart" height="280" aria-label="Диаграмма расходов по категориям"></canvas>
-                        <p id="reportDonutTotal" class="report-donut-total" aria-live="polite"></p>
+                        <canvas id="reportCategoryChart" height="200" aria-label="Диаграмма расходов по категориям"></canvas>
                       </div>
+                      <p id="reportDonutTotal" class="report-donut-total report-donut-total--footer" aria-live="polite"></p>
                     </div>
                   </div>
                 </div>

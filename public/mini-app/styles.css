@@ -4573,10 +4573,14 @@ body.web-mode #screen-reports .report-layout-card {
 }
 
 body.web-mode #screen-reports {
-  max-width: 1120px;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: none;
   width: 100%;
+  margin: 0;
+}
+
+body.web-mode[data-app-active-screen="reports"] .app-shell {
+  padding-left: max(10px, env(safe-area-inset-left, 0px));
+  padding-right: max(10px, env(safe-area-inset-right, 0px));
 }
 
 .report-web-toolbar {
@@ -4855,9 +4859,9 @@ body.web-mode .report-apply-btn {
 
 .report-charts-row {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
-  gap: 14px;
-  align-items: stretch;
+  grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.85fr);
+  gap: 12px;
+  align-items: start;
 }
 
 @media (max-width: 960px) {
@@ -4887,11 +4891,12 @@ body.web-mode .report-apply-btn {
 .report-chart-canvas-wrap {
   position: relative;
   width: 100%;
-  min-height: 240px;
+  min-height: 0;
 }
 
 .report-chart-canvas-wrap--trend {
-  min-height: 280px;
+  min-height: 200px;
+  max-height: 280px;
 }
 
 .report-chart-canvas-wrap canvas {
@@ -4901,33 +4906,40 @@ body.web-mode .report-apply-btn {
 }
 
 .report-chart-canvas-wrap--donut {
-  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 0;
 }
 
 .report-donut-stack {
   position: relative;
   width: 100%;
-  height: 100%;
-  min-height: 280px;
+  max-width: 240px;
+  height: 200px;
+  min-height: 0;
+  flex-shrink: 0;
 }
 
 .report-donut-stack canvas {
-  max-height: 320px;
+  max-height: 200px;
 }
 
 .report-donut-total {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   margin: 0;
+  width: 100%;
+  max-width: 280px;
   text-align: center;
   font-size: 13px;
   font-weight: 650;
   color: rgb(51 65 85);
-  line-height: 1.35;
-  max-width: 46%;
-  pointer-events: none;
+  line-height: 1.4;
+}
+
+.report-donut-total--footer {
+  flex-shrink: 0;
+  padding-top: 2px;
 }
 
 .report-bottom-row {

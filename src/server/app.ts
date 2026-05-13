@@ -239,13 +239,29 @@ async function authenticateMiniAppUser(req: express.Request) {
 }
 
 async function authenticateCsvExportMiniAppUser(req: express.Request) {
-  const initData = getTelegramInitDataForCsvDownload(req);
-  const webAppUser = validateTelegramWebAppInitData(
-    initData,
-    env.telegramBotToken
-  );
+  try {
+    const initData = getTelegramInitDataForCsvDownload(req);
+    const webAppUser = validateTelegramWebAppInitData(
+      initData,
+      env.telegramBotToken
+    );
 
-  return registerTelegramUser(toTelegramBotUser(webAppUser));
+    return registerTelegramUser(toTelegramBotUser(webAppUser));
+  } catch {
+    const sessionUserId = readSessionUserId(req);
+
+    if (!sessionUserId) {
+      throw new Error("Unauthorized: Telegram session is missing");
+    }
+
+    const user = await getAppUserById(sessionUserId);
+
+    if (!user) {
+      throw new Error("Unauthorized: user session is invalid");
+    }
+
+    return user;
+  }
 }
 
 async function resolveReportingCurrency(req: express.Request): Promise<string> {
