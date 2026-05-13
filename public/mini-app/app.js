@@ -425,7 +425,7 @@ function currentReportingCurrencySelection() {
     return fromHome;
   }
 
-  const fromReport = reportingCurrencyInput.value?.trim();
+  const fromReport = reportingCurrencyInput?.value?.trim();
   if (fromReport) {
     return fromReport;
   }
@@ -715,6 +715,10 @@ function toDateRangeEnd(dateValue) {
 }
 
 function toggleReportDateInputs() {
+  if (!reportPeriodInput || !reportStartDateInput || !reportEndDateInput) {
+    return;
+  }
+
   const isCustom = reportPeriodInput.value === "custom";
   reportStartDateInput.disabled = !isCustom;
   reportEndDateInput.disabled = !isCustom;
@@ -1084,6 +1088,10 @@ function closeHelpDocumentationModal() {
 function openEntryScreenForKind(kind) {
   closeEntryTypeModal();
   openScreen("activity");
+  if (!entryKindInput) {
+    return;
+  }
+
   entryKindInput.value = kind;
   populateCategoryOptions();
   syncWebEntryKindCardsFromSelect();
@@ -3604,6 +3612,10 @@ function syncFxReferencePanel() {
 }
 
 function populateCategoryOptions() {
+  if (!entryKindInput || !entryCategoryInput) {
+    return;
+  }
+
   const selectedKind = entryKindInput.value;
   const filteredCategories = state.categories.filter(
     (category) => category.kind === selectedKind
@@ -4605,6 +4617,10 @@ async function handleDeleteCategory(categoryId) {
 async function handleCreateEntry(event) {
   event.preventDefault();
 
+  if (!entryForm) {
+    return;
+  }
+
   const formData = new FormData(entryForm);
   const rawDate = String(formData.get("occurredAt") ?? "");
   const payload = {
@@ -4616,7 +4632,7 @@ async function handleCreateEntry(event) {
     occurredAt: rawDate ? toIsoDate(rawDate) : new Date().toISOString()
   };
 
-  entrySubmitButton.disabled = true;
+  entrySubmitButton?.disabled = true;
   setStatus("Сохраняем операцию...");
 
   try {
@@ -4632,7 +4648,7 @@ async function handleCreateEntry(event) {
     console.error(error);
     setStatus(error instanceof Error ? error.message : "Не удалось сохранить операцию", "error");
   } finally {
-    entrySubmitButton.disabled = false;
+    entrySubmitButton?.disabled = false;
   }
 }
 
@@ -4795,11 +4811,13 @@ function handleOpenScreenButtonClick(button) {
   const label = button.textContent?.trim();
 
   if (label?.includes("Новая операция")) {
-    entryKindInput.value = "expense";
-    populateCategoryOptions();
-    syncWebEntryKindCardsFromSelect();
-    syncTgEntryKindSegmentFromSelect();
-    syncEntryAmountCurrencyBadgeTg();
+    if (entryKindInput) {
+      entryKindInput.value = "expense";
+      populateCategoryOptions();
+      syncWebEntryKindCardsFromSelect();
+      syncTgEntryKindSegmentFromSelect();
+      syncEntryAmountCurrencyBadgeTg();
+    }
     (entryAmountInput ?? document.getElementById("entryAmountInput"))?.focus();
   } else if (label?.includes("Перевод")) {
     document.getElementById("transferFromAmountInput")?.focus();
@@ -5200,11 +5218,11 @@ document.addEventListener("focusout", () => {
   }, 100);
 });
 
-accountForm.addEventListener("submit", (event) => {
+accountForm?.addEventListener("submit", (event) => {
   void handleCreateAccount(event);
 });
 
-submitButton.addEventListener("click", () => {
+submitButton?.addEventListener("click", () => {
   submitFormSafely(accountForm);
 });
 
@@ -5213,7 +5231,7 @@ cancelAccountEditButton?.addEventListener("click", () => {
   renderAccounts(state.accounts);
 });
 
-reportingCurrencyInput.addEventListener("change", () => {
+reportingCurrencyInput?.addEventListener("change", () => {
   setStoredReportingCurrency(reportingCurrencyInput.value);
   syncReportingCurrencyInputs(reportingCurrencyInput.value);
   void loadApp({ syncWebOperationsHistory: true });
@@ -5225,11 +5243,11 @@ homeReportingCurrencyInput?.addEventListener("change", () => {
   void loadApp({ syncWebOperationsHistory: true });
 });
 
-categoryForm.addEventListener("submit", (event) => {
+categoryForm?.addEventListener("submit", (event) => {
   void handleCategorySubmit(event);
 });
 
-categorySubmitButton.addEventListener("click", () => {
+categorySubmitButton?.addEventListener("click", () => {
   submitFormSafely(categoryForm);
 });
 
@@ -5238,27 +5256,27 @@ cancelCategoryEditButton?.addEventListener("click", () => {
   renderCategories(state.categories);
 });
 
-entryForm.addEventListener("submit", (event) => {
+entryForm?.addEventListener("submit", (event) => {
   void handleCreateEntry(event);
 });
 
-entrySubmitButton.addEventListener("click", () => {
+entrySubmitButton?.addEventListener("click", () => {
   submitFormSafely(entryForm);
 });
 
-transferForm.addEventListener("submit", (event) => {
+transferForm?.addEventListener("submit", (event) => {
   void handleCreateTransfer(event);
 });
 
-transferSubmitButton.addEventListener("click", () => {
+transferSubmitButton?.addEventListener("click", () => {
   submitFormSafely(transferForm);
 });
 
-reportForm.addEventListener("submit", (event) => {
+reportForm?.addEventListener("submit", (event) => {
   void handleBuildReport(event);
 });
 
-reportSubmitButton.addEventListener("click", () => {
+reportSubmitButton?.addEventListener("click", () => {
   submitFormSafely(reportForm);
 });
 
@@ -5274,7 +5292,7 @@ reportCsvStatementButton?.addEventListener("click", () => {
   void openReportCsvInNewTab();
 });
 
-entryKindInput.addEventListener("change", () => {
+entryKindInput?.addEventListener("change", () => {
   populateCategoryOptions();
   syncWebEntryKindCardsFromSelect();
   syncTgEntryKindSegmentFromSelect();
@@ -5327,7 +5345,7 @@ entryAccountInput?.addEventListener("change", () => {
   });
 })();
 
-reportPeriodInput.addEventListener("change", () => {
+reportPeriodInput?.addEventListener("change", () => {
   toggleReportDateInputs();
   syncReportPeriodSegmented();
 });
