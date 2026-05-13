@@ -4634,6 +4634,22 @@ document.addEventListener("click", (event) => {
   if (!(input instanceof HTMLInputElement)) {
     return;
   }
+
+  /* В отчётах даты отключены, пока период не «Произвольный» — showPicker() тогда не сработает */
+  if (
+    reportPeriodInput &&
+    (input === reportStartDateInput || input === reportEndDateInput) &&
+    reportPeriodInput.value !== "custom"
+  ) {
+    reportPeriodInput.value = "custom";
+    toggleReportDateInputs();
+    syncReportPeriodSegmented();
+  }
+
+  if (input.disabled) {
+    return;
+  }
+
   try {
     if (typeof input.showPicker === "function") {
       input.showPicker();
