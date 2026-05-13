@@ -3017,10 +3017,37 @@ body.web-mode .web-home-dash-top {
   max-width: none;
 }
 
-body.web-mode .web-home-dash-top-main {
+.web-home-dash-top-columns {
+  display: block;
+  width: 100%;
+}
+
+.web-home-dash-top-balance-slot {
+  display: block;
+  width: 100%;
+}
+
+.web-home-dash-top-align-slot {
+  display: none;
+}
+
+body.web-mode .web-home-dash-top-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  min-width: 0;
+}
+
+body.web-mode .web-home-dash-top-balance-slot {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
+}
+
+body.web-mode .web-home-dash-top-align-slot {
+  display: block;
   min-width: 0;
 }
 
@@ -3327,6 +3354,14 @@ body.web-mode .web-home-foot-cta:hover {
   body.web-mode .web-home-columns {
     grid-template-columns: 1fr;
   }
+
+  body.web-mode .web-home-dash-top-columns {
+    grid-template-columns: 1fr;
+  }
+
+  body.web-mode .web-home-dash-top-align-slot {
+    display: none;
+  }
 }
 
 @media (max-width: 1100px) {
@@ -3335,6 +3370,14 @@ body.web-mode .web-home-foot-cta:hover {
   }
 
   body.web-mode .web-home-dash-top-spacer {
+    display: none;
+  }
+
+  body.web-mode .web-home-dash-top-columns {
+    grid-template-columns: 1fr;
+  }
+
+  body.web-mode .web-home-dash-top-align-slot {
     display: none;
   }
 
@@ -3366,7 +3409,7 @@ body.web-mode .screen > .web-home-dash-top {
   padding: 0;
 }
 
-body.web-mode .web-home-dash-top-main .web-dash-summary-grid {
+body.web-mode .web-home-dash-top-balance-slot .web-dash-summary-grid {
   border: none;
   margin: 0;
   padding: 0;
@@ -4449,11 +4492,15 @@ body.web-mode[data-app-active-screen="home"] .web-dash-summary-grid {
   gap: 10px;
 }
 
-body.web-mode[data-app-active-screen="home"] .web-home-dash-top-main {
+body.web-mode[data-app-active-screen="home"] .web-home-dash-top-balance-slot {
   gap: 10px;
 }
 
 body.web-mode[data-app-active-screen="home"] .web-home-dash-top {
+  gap: 10px;
+}
+
+body.web-mode[data-app-active-screen="home"] .web-home-dash-top-columns {
   gap: 10px;
 }
 

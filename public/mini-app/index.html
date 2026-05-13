@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513home-hero-width-op-cards";
+        var BALANCY_CLIENT_ASSET_REV = "20260513hero-accounts-col-only";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -232,8 +232,9 @@
       <main class="content tabbed-content">
         <section id="screen-home" class="screen screen-active" data-screen="home">
           <div class="web-home-dash-top">
-            <div class="web-home-dash-top-main">
-              <section class="card hero-card hero-balance-card web-dash-hero">
+            <div class="web-home-dash-top-columns">
+              <div class="web-home-dash-top-balance-slot">
+                <section class="card hero-card hero-balance-card web-dash-hero">
                 <div class="hero-balance-top">
                   <div>
                     <p class="section-label">Общий баланс</p>
@@ -288,6 +289,8 @@
                   <span class="muted web-dash-stat-sub">доходы минус расходы</span>
                 </article>
               </div>
+              </div>
+              <div class="web-home-dash-top-align-slot" aria-hidden="true"></div>
             </div>
             <div class="web-home-dash-top-spacer" aria-hidden="true"></div>
           </div>
