@@ -10,10 +10,6 @@ const WEB_PAGE_TITLES = {
   accounts: "Счета"
 };
 
-const ACCOUNT_EDIT_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true"><path d="M4 16.5V20h3.5L17.5 10.5 14 7 4 16.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M13 6l5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
-
-const ACCOUNT_DELETE_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true"><path d="M6 7h12M10 7V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2m-7 4v9m4-9v9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M5 7l1 14a1 1 0 0 0 1 .9h10a1 1 0 0 0 1-.9L19 7" stroke="currentColor" stroke-width="1.7"/></svg>`;
-
 const userNameElement = document.getElementById("userName");
 const statusTextElement = document.getElementById("statusText");
 const accountsTitleElement = document.getElementById("accountsTitle");
