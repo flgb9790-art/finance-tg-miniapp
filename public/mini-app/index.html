@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260514desktop-mockup";
+        var BALANCY_CLIENT_ASSET_REV = "20260514sidebar-fixed";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -35,10 +35,10 @@
       <aside class="web-sidebar" aria-label="Меню Balancy">
         <div class="web-sidebar-top">
           <button type="button" class="web-sidebar-brand" data-web-nav="home" aria-label="Balancy — на главную">
-            <span class="web-sidebar-brand-mark" aria-hidden="true"></span>
             <span class="brand-wordmark">Balancy</span>
           </button>
         </div>
+        <div class="web-sidebar-nav-scroll">
         <nav class="web-sidebar-nav" aria-label="Разделы">
           <button type="button" class="web-sidebar-link is-active" data-web-nav="home">
             <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -94,7 +94,7 @@
             <span>Переводы</span>
           </button>
         </nav>
-        <div class="web-sidebar-spacer" aria-hidden="true"></div>
+        </div>
         <div class="web-sidebar-upsell">
           <div class="web-sidebar-upsell-icon" aria-hidden="true">◇</div>
           <div class="web-sidebar-upsell-copy">

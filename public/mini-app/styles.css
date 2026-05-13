@@ -2524,10 +2524,14 @@ details.fx-reference-collapsible[open] .fx-reference-collapsible-chevron {
 body.web-mode .app-shell {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   max-width: none;
   width: 100%;
   margin: 0;
   padding: 20px 24px 32px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 body.web-mode::before {
@@ -2560,28 +2564,45 @@ body.web-mode #miniTopbar {
 body.web-mode #webTopNav.web-desktop-shell {
   display: flex;
   align-items: stretch;
-  min-height: 100dvh;
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
   width: 100%;
+  overflow: hidden;
 }
 
 .web-sidebar {
   width: 248px;
-  flex-shrink: 0;
+  flex: 0 0 248px;
   display: flex;
   flex-direction: column;
   padding: 20px 14px 16px;
   background: #fff;
   border-right: 1px solid var(--line);
+  min-height: 0;
+  overflow: hidden;
+  align-self: stretch;
 }
 
 .web-sidebar-top {
   margin-bottom: 18px;
+  flex-shrink: 0;
+}
+
+.web-sidebar-nav-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-right: -2px;
+  padding-right: 2px;
 }
 
 .web-sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0;
   width: 100%;
   border: none;
   background: transparent;
@@ -2596,15 +2617,6 @@ body.web-mode #webTopNav.web-desktop-shell {
 
 .web-sidebar-brand:hover {
   background: var(--fill-subtle);
-}
-
-.web-sidebar-brand-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #059669, #10b981);
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgb(13 159 110 / 0.35);
 }
 
 .web-sidebar-nav {
@@ -2646,19 +2658,15 @@ body.web-mode #webTopNav.web-desktop-shell {
   flex-shrink: 0;
 }
 
-.web-sidebar-spacer {
-  flex: 1;
-  min-height: 16px;
-}
-
 .web-sidebar-upsell {
-  margin: 8px 0 16px;
+  margin: 8px 0 12px;
   padding: 12px;
   border-radius: 14px;
   border: 1px solid rgb(13 159 110 / 0.2);
   background: linear-gradient(180deg, rgb(13 159 110 / 0.08), rgb(13 159 110 / 0.02));
   display: grid;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .web-sidebar-upsell-icon {
@@ -2690,8 +2698,8 @@ body.web-mode #webTopNav.web-desktop-shell {
 }
 
 .web-sidebar-footer {
-  margin-top: auto;
-  padding-top: 8px;
+  flex-shrink: 0;
+  padding-top: 4px;
 }
 
 .web-sidebar-user {
@@ -2764,9 +2772,11 @@ body.web-mode #webTopNav.web-desktop-shell {
 .web-main-column {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: #f0f2f5;
+  overflow: hidden;
 }
 
 .web-page-header {
@@ -2777,9 +2787,9 @@ body.web-mode #webTopNav.web-desktop-shell {
   flex-wrap: wrap;
   padding: 16px 24px 12px;
   background: #f0f2f5;
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 40;
+  flex-shrink: 0;
 }
 
 .web-page-title {
@@ -2860,28 +2870,43 @@ body.web-mode #webTopNav.web-desktop-shell {
 }
 
 @media (max-width: 900px) {
+  body.web-mode {
+    overflow: auto;
+    height: auto;
+  }
+
   body.web-mode #webTopNav.web-desktop-shell {
     flex-direction: column;
-    min-height: auto;
+    height: auto;
+    max-height: none;
+    min-height: 100dvh;
+    overflow: visible;
   }
 
   .web-sidebar {
     width: 100%;
+    flex: 0 0 auto;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
     border-right: none;
     border-bottom: 1px solid var(--line);
+    overflow: visible;
+    align-self: stretch;
+    height: auto;
+  }
+
+  .web-sidebar-nav-scroll {
+    flex: 1 1 220px;
+    min-height: 0;
+    max-height: 200px;
+    overflow-y: auto;
   }
 
   .web-sidebar-nav {
     flex-direction: row;
     flex-wrap: wrap;
     width: 100%;
-  }
-
-  .web-sidebar-spacer {
-    display: none;
   }
 
   .web-sidebar-upsell {
@@ -2891,6 +2916,17 @@ body.web-mode #webTopNav.web-desktop-shell {
   .web-sidebar-footer {
     margin-top: 0;
     width: auto;
+  }
+
+  .web-main-column {
+    overflow: visible;
+    min-height: 0;
+  }
+
+  body.web-mode .app-shell {
+    overflow: visible;
+    flex: 1 1 auto;
+    min-height: 0;
   }
 }
 
