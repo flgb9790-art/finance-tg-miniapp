@@ -3004,54 +3004,25 @@ body.web-mode .web-dash-summary-grid {
   width: 100%;
 }
 
-.web-home-dash-top-spacer {
-  display: none;
-}
-
 body.web-mode .web-home-dash-top {
   display: grid;
-  grid-template-columns: minmax(0, 1.72fr) minmax(240px, 0.92fr);
+  /* Те же доли, что у mid-grid (1.72fr = 0.86+0.86 и рельс 0.92fr), в одной строке */
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 0.86fr) minmax(240px, 0.92fr);
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
   width: 100%;
   max-width: none;
 }
 
-.web-home-dash-top-left {
-  display: block;
-  width: 100%;
+body.web-mode .web-home-dash-top > .web-dash-hero {
+  grid-column: 1;
   min-width: 0;
 }
 
-.web-home-dash-hero-stats-row {
-  display: block;
-  width: 100%;
-  min-width: 0;
-}
-
-body.web-mode .web-home-dash-top-left {
-  min-width: 0;
-}
-
-body.web-mode .web-home-dash-hero-stats-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
-  align-items: stretch;
-}
-
-body.web-mode .web-home-dash-hero-stats-row .web-dash-hero {
-  min-width: 0;
-}
-
-body.web-mode .web-home-dash-hero-stats-row .web-dash-summary-grid {
+body.web-mode .web-home-dash-top > .web-dash-summary-grid {
+  grid-column: 2 / -1;
   min-width: 0;
   align-self: stretch;
-}
-
-body.web-mode .web-home-dash-top-spacer {
-  display: block;
-  min-height: 1px;
 }
 
 body.web-mode .web-dash-hero {
@@ -3352,10 +3323,6 @@ body.web-mode .web-home-foot-cta:hover {
   body.web-mode .web-home-columns {
     grid-template-columns: 1fr;
   }
-
-  body.web-mode .web-home-dash-hero-stats-row {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 1100px) {
@@ -3363,8 +3330,12 @@ body.web-mode .web-home-foot-cta:hover {
     grid-template-columns: 1fr;
   }
 
-  body.web-mode .web-home-dash-top-spacer {
-    display: none;
+  body.web-mode .web-home-dash-top > .web-dash-hero {
+    grid-column: auto;
+  }
+
+  body.web-mode .web-home-dash-top > .web-dash-summary-grid {
+    grid-column: auto;
   }
 
   body.web-mode .web-dash-summary-grid {
@@ -3395,7 +3366,7 @@ body.web-mode .screen > .web-home-dash-top {
   padding: 0;
 }
 
-body.web-mode .web-home-dash-hero-stats-row .web-dash-summary-grid {
+body.web-mode .web-home-dash-top > .web-dash-summary-grid {
   border: none;
   margin: 0;
   padding: 0;
@@ -4475,10 +4446,6 @@ body.web-mode[data-app-active-screen="home"] .web-page-title {
 }
 
 body.web-mode[data-app-active-screen="home"] .web-dash-summary-grid {
-  gap: 10px;
-}
-
-body.web-mode[data-app-active-screen="home"] .web-home-dash-hero-stats-row {
   gap: 10px;
 }
 
