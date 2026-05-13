@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513hero-accounts-col-only";
+        var BALANCY_CLIENT_ASSET_REV = "20260513hero-stats-beside-balance";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -232,65 +232,64 @@
       <main class="content tabbed-content">
         <section id="screen-home" class="screen screen-active" data-screen="home">
           <div class="web-home-dash-top">
-            <div class="web-home-dash-top-columns">
-              <div class="web-home-dash-top-balance-slot">
+            <div class="web-home-dash-top-left">
+              <div class="web-home-dash-hero-stats-row">
                 <section class="card hero-card hero-balance-card web-dash-hero">
-                <div class="hero-balance-top">
-                  <div>
-                    <p class="section-label">Общий баланс</p>
-                    <h2 id="userName">Загрузка...</h2>
+                  <div class="hero-balance-top">
+                    <div>
+                      <p class="section-label">Общий баланс</p>
+                      <h2 id="userName">Загрузка...</h2>
+                    </div>
+                    <label class="hero-currency-field">
+                      <span class="hero-currency-label">Валюта</span>
+                      <select
+                        id="homeReportingCurrencyInput"
+                        class="hero-currency-select fx-board-base-select fx-board-base-select--toolbar"
+                        aria-label="Валюта отображения баланса"
+                      ></select>
+                    </label>
                   </div>
-                  <label class="hero-currency-field">
-                    <span class="hero-currency-label">Валюта</span>
-                    <select
-                      id="homeReportingCurrencyInput"
-                      class="hero-currency-select fx-board-base-select fx-board-base-select--toolbar"
-                      aria-label="Валюта отображения баланса"
-                    ></select>
-                  </label>
-                </div>
-                <div class="hero-balance-main">
-                  <div class="hero-balance-copy">
-                    <strong id="totalBalanceConverted">0</strong>
-                    <p id="statusText" class="muted">Подключаем приложение...</p>
-                    <div class="balance-trend">
-                      <span class="balance-trend-positive" id="monthlyIncomeInline">+0.00 USD</span>
-                      <span class="muted">за этот месяц</span>
+                  <div class="hero-balance-main">
+                    <div class="hero-balance-copy">
+                      <strong id="totalBalanceConverted">0</strong>
+                      <p id="statusText" class="muted">Подключаем приложение...</p>
+                      <div class="balance-trend">
+                        <span class="balance-trend-positive" id="monthlyIncomeInline">+0.00 USD</span>
+                        <span class="muted">за этот месяц</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <details class="currency-breakdown">
-                  <summary class="currency-breakdown-summary">
-                    <span class="currency-breakdown-title">Остатки по валютам</span>
-                    <span class="currency-breakdown-hint muted"></span>
-                  </summary>
-                  <div class="currency-breakdown-inner">
-                    <div id="homeBalancesByCurrencyList" class="currency-breakdown-strip"></div>
-                  </div>
-                </details>
-              </section>
+                  <details class="currency-breakdown">
+                    <summary class="currency-breakdown-summary">
+                      <span class="currency-breakdown-title">Остатки по валютам</span>
+                      <span class="currency-breakdown-hint muted"></span>
+                    </summary>
+                    <div class="currency-breakdown-inner">
+                      <div id="homeBalancesByCurrencyList" class="currency-breakdown-strip"></div>
+                    </div>
+                  </details>
+                </section>
 
-              <div class="web-dash-summary-grid">
-                <article class="web-dash-stat-card web-dash-stat-card-income">
-                  <p class="section-label">Доходы за месяц</p>
-                  <strong id="webDashIncomeValue" class="web-dash-stat-value">+0</strong>
-                  <span class="muted web-dash-stat-sub">в валюте отчёта</span>
-                  <div class="web-dash-spark web-dash-spark-income" aria-hidden="true"></div>
-                </article>
-                <article class="web-dash-stat-card web-dash-stat-card-expense">
-                  <p class="section-label">Расходы за месяц</p>
-                  <strong id="webDashExpenseValue" class="web-dash-stat-value">−0</strong>
-                  <span class="muted web-dash-stat-sub">в валюте отчёта</span>
-                  <div class="web-dash-spark web-dash-spark-expense" aria-hidden="true"></div>
-                </article>
-                <article class="web-dash-stat-card web-dash-stat-card-net">
-                  <p class="section-label">Чистый поток</p>
-                  <strong id="webDashNetValue" class="web-dash-stat-value">+0</strong>
-                  <span class="muted web-dash-stat-sub">доходы минус расходы</span>
-                </article>
+                <div class="web-dash-summary-grid">
+                  <article class="web-dash-stat-card web-dash-stat-card-income">
+                    <p class="section-label">Доходы за месяц</p>
+                    <strong id="webDashIncomeValue" class="web-dash-stat-value">+0</strong>
+                    <span class="muted web-dash-stat-sub">в валюте отчёта</span>
+                    <div class="web-dash-spark web-dash-spark-income" aria-hidden="true"></div>
+                  </article>
+                  <article class="web-dash-stat-card web-dash-stat-card-expense">
+                    <p class="section-label">Расходы за месяц</p>
+                    <strong id="webDashExpenseValue" class="web-dash-stat-value">−0</strong>
+                    <span class="muted web-dash-stat-sub">в валюте отчёта</span>
+                    <div class="web-dash-spark web-dash-spark-expense" aria-hidden="true"></div>
+                  </article>
+                  <article class="web-dash-stat-card web-dash-stat-card-net">
+                    <p class="section-label">Чистый поток</p>
+                    <strong id="webDashNetValue" class="web-dash-stat-value">+0</strong>
+                    <span class="muted web-dash-stat-sub">доходы минус расходы</span>
+                  </article>
+                </div>
               </div>
-              </div>
-              <div class="web-home-dash-top-align-slot" aria-hidden="true"></div>
             </div>
             <div class="web-home-dash-top-spacer" aria-hidden="true"></div>
           </div>

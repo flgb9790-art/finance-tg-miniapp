@@ -3017,38 +3017,36 @@ body.web-mode .web-home-dash-top {
   max-width: none;
 }
 
-.web-home-dash-top-columns {
+.web-home-dash-top-left {
   display: block;
   width: 100%;
+  min-width: 0;
 }
 
-.web-home-dash-top-balance-slot {
+.web-home-dash-hero-stats-row {
   display: block;
   width: 100%;
+  min-width: 0;
 }
 
-.web-home-dash-top-align-slot {
-  display: none;
+body.web-mode .web-home-dash-top-left {
+  min-width: 0;
 }
 
-body.web-mode .web-home-dash-top-columns {
+body.web-mode .web-home-dash-hero-stats-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
+}
+
+body.web-mode .web-home-dash-hero-stats-row .web-dash-hero {
   min-width: 0;
 }
 
-body.web-mode .web-home-dash-top-balance-slot {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+body.web-mode .web-home-dash-hero-stats-row .web-dash-summary-grid {
   min-width: 0;
-}
-
-body.web-mode .web-home-dash-top-align-slot {
-  display: block;
-  min-width: 0;
+  align-self: stretch;
 }
 
 body.web-mode .web-home-dash-top-spacer {
@@ -3355,12 +3353,8 @@ body.web-mode .web-home-foot-cta:hover {
     grid-template-columns: 1fr;
   }
 
-  body.web-mode .web-home-dash-top-columns {
+  body.web-mode .web-home-dash-hero-stats-row {
     grid-template-columns: 1fr;
-  }
-
-  body.web-mode .web-home-dash-top-align-slot {
-    display: none;
   }
 }
 
@@ -3370,14 +3364,6 @@ body.web-mode .web-home-foot-cta:hover {
   }
 
   body.web-mode .web-home-dash-top-spacer {
-    display: none;
-  }
-
-  body.web-mode .web-home-dash-top-columns {
-    grid-template-columns: 1fr;
-  }
-
-  body.web-mode .web-home-dash-top-align-slot {
     display: none;
   }
 
@@ -3409,7 +3395,7 @@ body.web-mode .screen > .web-home-dash-top {
   padding: 0;
 }
 
-body.web-mode .web-home-dash-top-balance-slot .web-dash-summary-grid {
+body.web-mode .web-home-dash-hero-stats-row .web-dash-summary-grid {
   border: none;
   margin: 0;
   padding: 0;
@@ -4492,15 +4478,11 @@ body.web-mode[data-app-active-screen="home"] .web-dash-summary-grid {
   gap: 10px;
 }
 
-body.web-mode[data-app-active-screen="home"] .web-home-dash-top-balance-slot {
+body.web-mode[data-app-active-screen="home"] .web-home-dash-hero-stats-row {
   gap: 10px;
 }
 
 body.web-mode[data-app-active-screen="home"] .web-home-dash-top {
-  gap: 10px;
-}
-
-body.web-mode[data-app-active-screen="home"] .web-home-dash-top-columns {
   gap: 10px;
 }
 
