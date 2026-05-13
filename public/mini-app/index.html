@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513history-ops-app-js";
+        var BALANCY_CLIENT_ASSET_REV = "20260513home-compact";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -412,66 +412,6 @@
                 </div>
               </div>
             </section>
-            <details class="card fx-reference-card fx-reference-collapsible web-home-rail-fx">
-              <summary class="fx-reference-collapsible-summary">
-                <div class="fx-reference-summary-main">
-                  <p class="section-label">Справочно</p>
-                  <h2 class="fx-reference-summary-heading">Курсы валют</h2>
-                  <p id="fxReferenceSummaryMeta" class="fx-reference-summary-line muted"></p>
-                </div>
-                <div class="fx-reference-summary-aside muted">
-                  <div class="fx-reference-hint-row">
-                    <span class="fx-reference-collapsible-hint" aria-hidden="true"></span>
-                    <span class="fx-reference-collapsible-chevron" aria-hidden="true"></span>
-                  </div>
-                </div>
-              </summary>
-              <div class="fx-reference-collapsible-body">
-                <div class="section-header fx-ref-body-toolbar">
-                  <p class="section-label fx-ref-base-toolbar-label">Базовая валюта</p>
-                  <select
-                    id="fxBoardBaseInput"
-                    class="fx-board-base-select fx-board-base-select--toolbar"
-                    aria-label="Базовая валюта для справочных курсов"
-                  ></select>
-                </div>
-                <div id="fxBoardRows" class="fx-quote-rows"></div>
-                <div class="fx-calculator-intro">
-                  <p class="section-label">Калькулятор</p>
-                  <p class="muted secondary-status fx-calculator-hint">
-                    Расчёт по курсам приложения — счета и балансы не меняются.
-                  </p>
-                </div>
-                <div class="fx-calculator-layout">
-                  <input
-                    id="fxCalcAmountInput"
-                    class="fx-calc-input"
-                    type="text"
-                    inputmode="decimal"
-                    enterkeyhint="done"
-                    autocomplete="off"
-                    spellcheck="false"
-                    aria-label="Сумма для конвертации"
-                    placeholder="Сумма"
-                  />
-                  <div class="fx-calc-fromto">
-                    <select id="fxCalcFromInput" class="fx-calc-select"></select>
-                    <button
-                      type="button"
-                      class="fx-swap-btn"
-                      id="fxCalcSwapButton"
-                      aria-label="Поменять исходную и целевую валюту"
-                    >
-                      ⇄
-                    </button>
-                    <select id="fxCalcToInput" class="fx-calc-select"></select>
-                  </div>
-                  <div id="fxCalcResult" class="fx-calc-result muted">
-                    Конвертация появится здесь.
-                  </div>
-                </div>
-              </div>
-            </details>
           </aside>
           </div>
 
@@ -1237,21 +1177,13 @@
               <li>Блок <strong>Остатки по валютам</strong> — раскройте строку или пролистайте «чипсы» с суммами по каждому коду без пересчёта.</li>
               <li>
                 По необходимости нажмите <strong>Курсы</strong> под списком счетов на главной, чтобы синхронизировать
-                котировки перед отчётами и блоком справочных курсов.
+                котировки для отчётов и пересчёта баланса.
               </li>
             </ul>
           </article>
 
           <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">8. Справочные курсы и калькулятор</h3>
-            <p class="muted">
-              Карточка <strong>Курсы валют</strong> свёрнута по умолчанию. Внутри — таблица к выбранной базовой валюте и
-              простой калькулятор перевода между двумя валютами <em>справочно</em>: он не меняет суммы по счетам.
-            </p>
-          </article>
-
-          <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">9. Отчёты и выгрузка</h3>
+            <h3 class="help-doc-h3">8. Отчёты и выгрузка</h3>
             <ul class="help-doc-list">
               <li>Вкладка <strong>Отчеты</strong>: выберите период (неделя, месяц, квартал или свои даты) и фильтры.</li>
               <li>Сначала <strong>Построить отчёт</strong>, затем при необходимости <strong>Скачать CSV</strong>.</li>
