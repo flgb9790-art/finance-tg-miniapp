@@ -43,9 +43,28 @@
           <button type="button" class="web-top-nav-link" data-web-nav="reports">Отчёты</button>
           <button type="button" class="web-top-nav-link" data-web-nav="categories">Категории</button>
           <button type="button" class="web-top-nav-link" data-web-nav="accounts">Счета</button>
-          <button type="button" class="web-top-nav-link web-top-nav-link-accent" id="webTopNavAddButton">
-            Новая запись
-          </button>
+          <div class="web-new-entry-wrap">
+            <button
+              type="button"
+              class="web-top-nav-link web-top-nav-link-accent"
+              id="webTopNavAddButton"
+              aria-expanded="false"
+              aria-haspopup="true"
+            >
+              Новая запись
+            </button>
+            <div id="webNewEntryMenu" class="web-new-entry-menu" role="menu" hidden>
+              <button type="button" class="web-new-entry-option web-new-entry-income" data-web-new-entry="income" role="menuitem">
+                Доход
+              </button>
+              <button type="button" class="web-new-entry-option web-new-entry-expense" data-web-new-entry="expense" role="menuitem">
+                Расход
+              </button>
+              <button type="button" class="web-new-entry-option web-new-entry-transfer" data-web-new-entry="transfer" role="menuitem">
+                Обмен между счетами
+              </button>
+            </div>
+          </div>
         </nav>
         <div class="web-top-nav-aside">
           <button type="button" class="web-top-nav-ghost" id="webRefreshButton">Обновить</button>
@@ -867,7 +886,7 @@
         var CLIENT_ASSET_REV =
           typeof window.__BALANCY_CLIENT_ASSET_REV === "string"
             ? window.__BALANCY_CLIENT_ASSET_REV
-            : "20260513b";
+            : "20260513c";
 
         var scriptEl = document.createElement("script");
         scriptEl.type = "module";

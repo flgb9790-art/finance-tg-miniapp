@@ -215,6 +215,59 @@ body.keyboard-open .app-shell {
   color: #047857;
 }
 
+.web-new-entry-wrap {
+  position: relative;
+}
+
+.web-new-entry-menu {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 8px);
+  min-width: min(260px, calc(100vw - 32px));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--shadow);
+  padding: 8px;
+  z-index: 155;
+  display: grid;
+  gap: 6px;
+}
+
+.web-new-entry-menu[hidden] {
+  display: none !important;
+}
+
+.web-new-entry-option {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.web-new-entry-income {
+  background: rgb(13 159 110 / 0.1);
+  border-color: rgb(13 159 110 / 0.26);
+  color: var(--text);
+}
+
+.web-new-entry-expense {
+  background: rgb(251 146 60 / 0.12);
+  border-color: rgb(251 146 60 / 0.35);
+  color: var(--text);
+}
+
+.web-new-entry-transfer {
+  background: rgba(100, 184, 255, 0.1);
+  border-color: rgba(100, 184, 255, 0.28);
+  color: var(--text);
+  font-weight: 650;
+}
+
 .web-top-nav-aside {
   display: flex;
   align-items: center;
@@ -273,6 +326,10 @@ body.keyboard-open .app-shell {
   z-index: 160;
   display: grid;
   gap: 8px;
+}
+
+.web-profile-dropdown[hidden] {
+  display: none !important;
 }
 
 .web-profile-meta {

@@ -30,6 +30,7 @@ const webProfileToggleButton = document.getElementById("webProfileToggleButton")
 const webProfileDropdown = document.getElementById("webProfileDropdown");
 const webProfileMeta = document.getElementById("webProfileMeta");
 const webSwitchUserButton = document.getElementById("webSwitchUserButton");
+const webNewEntryMenu = document.getElementById("webNewEntryMenu");
 const syncRatesButton = document.getElementById("syncRatesButton");
 const fxBoardBaseInput = document.getElementById("fxBoardBaseInput");
 const fxBoardRowsElement = document.getElementById("fxBoardRows");
@@ -654,6 +655,10 @@ function openScreen(screenName) {
   document.querySelectorAll("[data-web-nav]").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.webNav === nextScreen);
   });
+
+  if (isWebMode) {
+    closeWebNewEntryMenu();
+  }
 }
 
 function openEntryTypeModal() {
@@ -1992,10 +1997,32 @@ function closeWebProfileDropdown() {
   webProfileToggleButton.setAttribute("aria-expanded", "false");
 }
 
+function closeWebNewEntryMenu() {
+  if (!webNewEntryMenu || !webTopNavAddButton) {
+    return;
+  }
+
+  webNewEntryMenu.hidden = true;
+  webTopNavAddButton.setAttribute("aria-expanded", "false");
+}
+
+function toggleWebNewEntryMenu() {
+  if (!webNewEntryMenu || !webTopNavAddButton) {
+    return;
+  }
+
+  const opening = webNewEntryMenu.hidden;
+  closeWebProfileDropdown();
+  webNewEntryMenu.hidden = !opening;
+  webTopNavAddButton.setAttribute("aria-expanded", String(opening));
+}
+
 function toggleWebProfileDropdown() {
   if (!webProfileDropdown || !webProfileToggleButton) {
     return;
   }
+
+  closeWebNewEntryMenu();
 
   const nextHidden = !webProfileDropdown.hidden;
   webProfileDropdown.hidden = nextHidden;
@@ -2859,8 +2886,25 @@ if (isWebMode) {
     });
   }
 
-  webTopNavAddButton?.addEventListener("click", () => {
-    openEntryTypeModal();
+  webTopNavAddButton?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    toggleWebNewEntryMenu();
+  });
+
+  document.querySelectorAll("[data-web-new-entry]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const kind = button.dataset.webNewEntry;
+      closeWebNewEntryMenu();
+      if (kind === "transfer") {
+        closeEntryTypeModal();
+        openScreen("activity");
+        window.setTimeout(() => {
+          transferForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 120);
+      } else if (kind === "income" || kind === "expense") {
+        openEntryScreenForKind(kind);
+      }
+    });
   });
 
   document.querySelectorAll("[data-web-nav]").forEach((button) => {
@@ -2870,7 +2914,8 @@ if (isWebMode) {
     });
   });
 
-  webProfileToggleButton?.addEventListener("click", () => {
+  webProfileToggleButton?.addEventListener("click", (event) => {
+    event.stopPropagation();
     toggleWebProfileDropdown();
   });
 
@@ -2879,19 +2924,21 @@ if (isWebMode) {
   });
 
   document.addEventListener("click", (event) => {
-    if (!webProfileDropdown || webProfileDropdown.hidden) {
-      return;
-    }
-
     if (!(event.target instanceof Element)) {
       return;
     }
 
-    if (event.target.closest("#webProfileMenu")) {
-      return;
+    if (webProfileDropdown && !webProfileDropdown.hidden) {
+      if (!event.target.closest("#webProfileMenu")) {
+        closeWebProfileDropdown();
+      }
     }
 
-    closeWebProfileDropdown();
+    if (webNewEntryMenu && !webNewEntryMenu.hidden) {
+      if (!event.target.closest(".web-new-entry-wrap")) {
+        closeWebNewEntryMenu();
+      }
+    }
   });
 }
 
