@@ -2763,10 +2763,8 @@ body.web-mode #webTopNav.web-desktop-shell {
 }
 
 .web-profile-menu--sidebar .web-profile-dropdown {
-  right: auto;
-  left: 0;
-  bottom: calc(100% + 8px);
-  top: auto;
+  position: fixed;
+  z-index: 400;
 }
 
 .web-main-column {
@@ -2930,12 +2928,23 @@ body.web-mode #webTopNav.web-desktop-shell {
   }
 }
 
-/* Web-only dashboard widgets (hidden in Telegram mini-app) */
+/* Web-only dashboard widgets (Telegram: rail shows only FX + columns) */
 .web-dash-stat-card,
-.web-home-rail,
 .web-day-tip,
 .web-home-foot-cta {
   display: none;
+}
+
+.web-home-rail {
+  display: block;
+}
+
+.web-home-rail .web-rail-web-only {
+  display: none !important;
+}
+
+body.web-mode .web-home-rail .web-rail-web-only {
+  display: block !important;
 }
 
 body.web-mode .web-dash-stat-card {
@@ -3080,12 +3089,14 @@ body.web-mode .web-dash-hero .currency-breakdown-title {
 }
 
 .web-home-mid-grid {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 body.web-mode .web-home-mid-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
   gap: 20px;
   align-items: start;
 }
@@ -3097,7 +3108,8 @@ body.web-mode .web-home-rail {
 }
 
 body.web-mode .web-dash-donut-card,
-body.web-mode .web-dash-plan-card {
+body.web-mode .web-dash-plan-card,
+body.web-mode .web-home-rail details.web-home-rail-fx {
   background: #fff;
   border-radius: 18px;
   border: 1px solid rgb(15 23 42 / 0.08);
@@ -3106,7 +3118,8 @@ body.web-mode .web-dash-plan-card {
 }
 
 body.web-mode .web-dash-donut-card .section-header h2,
-body.web-mode .web-dash-plan-card h2 {
+body.web-mode .web-dash-plan-card h2,
+body.web-mode .web-home-rail details.web-home-rail-fx .fx-reference-summary-heading {
   font-size: 16px;
 }
 
@@ -3250,6 +3263,12 @@ body.web-mode .web-home-foot-cta:hover {
   border-color: rgb(13 159 110 / 0.35);
 }
 
+@media (max-width: 820px) {
+  body.web-mode .web-home-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1100px) {
   body.web-mode .web-dash-summary-grid {
     grid-template-columns: 1fr;
@@ -3280,9 +3299,10 @@ body.web-mode .web-home-mid-grid > .web-home-columns {
 }
 
 body.web-mode .web-home-columns {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
   padding: 0;
   border: none;
 }
@@ -3296,7 +3316,7 @@ body.web-mode .web-home-columns > .card {
   padding-right: 0;
   padding-top: 0;
   padding-bottom: 0;
-  margin-bottom: 16px;
+  margin-bottom: 0;
   border-bottom: none;
 }
 
@@ -3314,25 +3334,8 @@ body.web-mode .web-home-columns > .card {
 
 body.web-mode .web-home-columns > .card + .card {
   margin-top: 0;
-  padding-top: 16px;
+  padding-top: 0;
   border-top: none;
-}
-
-body.web-mode .screen > details.card,
-body.web-mode .screen > .home-help-footer {
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  background: transparent;
-}
-
-body.web-mode .screen > details.card {
-  background: #fff;
-  border-radius: 18px;
-  border: 1px solid rgb(15 23 42 / 0.08);
-  box-shadow: 0 4px 22px rgb(15 23 42 / 0.06);
-  padding: 16px;
-  margin-top: 4px;
 }
 
 body.web-mode .screen > .home-help-footer {
@@ -3359,12 +3362,4 @@ body.web-mode #screen-categories .card:last-child,
 body.web-mode #screen-reports .card:last-child {
   border-bottom: none;
   padding-bottom: 8px;
-}
-
-@media (min-width: 900px) {
-  body.web-mode .web-home-columns {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
 }

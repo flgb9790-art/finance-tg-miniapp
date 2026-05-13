@@ -2121,6 +2121,58 @@ function syncWebProfile() {
   }
 }
 
+function clearWebSidebarProfileDropdownPosition() {
+  if (!webProfileDropdown || !webProfileToggleButton?.closest(".web-profile-menu--sidebar")) {
+    return;
+  }
+
+  webProfileDropdown.style.position = "";
+  webProfileDropdown.style.top = "";
+  webProfileDropdown.style.left = "";
+  webProfileDropdown.style.right = "";
+  webProfileDropdown.style.bottom = "";
+  webProfileDropdown.style.width = "";
+  webProfileDropdown.style.zIndex = "";
+}
+
+function positionWebSidebarProfileDropdown() {
+  if (!isWebMode || !webProfileDropdown || !webProfileToggleButton) {
+    return;
+  }
+
+  if (!webProfileToggleButton.closest(".web-profile-menu--sidebar")) {
+    return;
+  }
+
+  if (webProfileDropdown.hidden) {
+    clearWebSidebarProfileDropdownPosition();
+    return;
+  }
+
+  const margin = 8;
+  const toggleRect = webProfileToggleButton.getBoundingClientRect();
+  webProfileDropdown.style.position = "fixed";
+  webProfileDropdown.style.zIndex = "400";
+  webProfileDropdown.style.left = `${Math.max(margin, toggleRect.left)}px`;
+  webProfileDropdown.style.width = `${Math.min(300, Math.max(240, toggleRect.width))}px`;
+  webProfileDropdown.style.right = "auto";
+
+  const dropdownHeight = webProfileDropdown.offsetHeight;
+  let top = toggleRect.top - dropdownHeight - margin;
+
+  if (top < margin) {
+    top = toggleRect.bottom + margin;
+  }
+
+  const maxTop = window.innerHeight - dropdownHeight - margin;
+  if (top > maxTop) {
+    top = Math.max(margin, maxTop);
+  }
+
+  webProfileDropdown.style.top = `${top}px`;
+  webProfileDropdown.style.bottom = "auto";
+}
+
 function closeWebProfileDropdown() {
   if (!webProfileDropdown || !webProfileToggleButton) {
     return;
@@ -2128,6 +2180,7 @@ function closeWebProfileDropdown() {
 
   webProfileDropdown.hidden = true;
   webProfileToggleButton.setAttribute("aria-expanded", "false");
+  clearWebSidebarProfileDropdownPosition();
 }
 
 function closeWebNewEntryMenu() {
@@ -2160,6 +2213,14 @@ function toggleWebProfileDropdown() {
   const nextHidden = !webProfileDropdown.hidden;
   webProfileDropdown.hidden = nextHidden;
   webProfileToggleButton.setAttribute("aria-expanded", String(!nextHidden));
+
+  if (!nextHidden) {
+    window.requestAnimationFrame(() => {
+      positionWebSidebarProfileDropdown();
+    });
+  } else {
+    clearWebSidebarProfileDropdownPosition();
+  }
 }
 
 async function handleWebLogout() {
@@ -3097,6 +3158,12 @@ if (isWebMode) {
       sessionStorage.setItem(WEB_TIP_DISMISS_KEY, "1");
     });
   }
+
+  window.addEventListener("resize", () => {
+    if (!webProfileDropdown?.hidden) {
+      positionWebSidebarProfileDropdown();
+    }
+  });
 
   document.addEventListener("click", (event) => {
     if (!(event.target instanceof Element)) {
