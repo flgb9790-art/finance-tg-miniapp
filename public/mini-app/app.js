@@ -2903,6 +2903,19 @@ if (isWebMode) {
         }, 120);
       } else if (kind === "income" || kind === "expense") {
         openEntryScreenForKind(kind);
+      } else if (kind === "account") {
+        closeEntryTypeModal();
+        openScreen("accounts");
+        window.setTimeout(() => {
+          accountForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+          document.getElementById("nameInput")?.focus({ preventScroll: true });
+        }, 120);
+      } else if (kind === "category") {
+        closeEntryTypeModal();
+        openScreen("categories");
+        window.setTimeout(() => {
+          categoryForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 120);
       }
     });
   });

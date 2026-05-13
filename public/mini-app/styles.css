@@ -170,6 +170,31 @@ body.keyboard-open .app-shell {
   min-width: 0;
 }
 
+.web-top-nav-brand-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  padding: 6px 8px;
+  margin: -6px -8px;
+  border-radius: 12px;
+}
+
+.web-top-nav-brand-btn:hover {
+  background: var(--fill-subtle);
+}
+
+.web-top-nav-brand-btn:focus-visible {
+  outline: 2px solid rgb(13 159 110 / 0.4);
+  outline-offset: 2px;
+}
+
+.web-top-nav-brand-btn.is-active {
+  background: rgb(13 159 110 / 0.1);
+}
+
 .web-top-nav-badge {
   font-size: 11px;
   font-weight: 600;
@@ -223,15 +248,38 @@ body.keyboard-open .app-shell {
   position: absolute;
   left: 0;
   top: calc(100% + 8px);
-  min-width: min(260px, calc(100vw - 32px));
+  min-width: min(280px, calc(100vw - 32px));
+  max-height: min(72vh, 440px);
+  overflow-y: auto;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: #fff;
   box-shadow: var(--shadow);
-  padding: 8px;
+  padding: 10px 8px 12px;
   z-index: 155;
   display: grid;
-  gap: 6px;
+  gap: 5px;
+}
+
+.web-new-entry-group-label {
+  margin: 10px 6px 2px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.web-new-entry-group-label:first-child {
+  margin-top: 2px;
+}
+
+.web-new-entry-setup {
+  background: var(--card-2);
+  border-color: var(--line);
+  color: var(--text);
+  font-weight: 650;
+  font-size: 13px;
 }
 
 .web-new-entry-menu[hidden] {
@@ -2500,4 +2548,133 @@ body.web-mode #miniTopbar {
 
 body.web-mode #webTopNav {
   display: block;
+}
+
+/* Web: calmer layout — less “stacked mobile cards”, more editorial surface */
+body.web-mode {
+  background: #f0f2f5;
+}
+
+body.web-mode .web-top-nav {
+  box-shadow: 0 1px 0 rgb(15 23 42 / 0.06);
+  background: rgb(255 255 255 / 0.97);
+}
+
+body.web-mode .content {
+  gap: 0;
+  margin-top: 4px;
+}
+
+body.web-mode .screen {
+  gap: 0;
+}
+
+body.web-mode .screen > .hero-balance-card {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 20px 0 22px;
+  margin: 0;
+  border-bottom: 1px solid rgb(15 23 42 / 0.08);
+}
+
+body.web-mode .hero-card {
+  background: transparent;
+}
+
+body.web-mode .hero-balance-main strong {
+  font-size: clamp(28px, 4vw, 34px);
+}
+
+body.web-mode .screen > .web-home-columns {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+body.web-mode .web-home-columns {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 4px 0 8px;
+  border-bottom: 1px solid rgb(15 23 42 / 0.08);
+}
+
+body.web-mode .web-home-columns > .card {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+body.web-mode .web-home-columns > .card + .card {
+  margin-top: 4px;
+  padding-top: 18px;
+  border-top: 1px solid rgb(15 23 42 / 0.07);
+}
+
+body.web-mode .screen > details.card,
+body.web-mode .screen > .home-help-footer {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+body.web-mode .screen > details.card {
+  padding: 18px 0 22px;
+  margin: 0;
+  border-bottom: 1px solid rgb(15 23 42 / 0.08);
+}
+
+body.web-mode .screen > .home-help-footer {
+  padding: 16px 0 8px;
+  border-bottom: none;
+}
+
+body.web-mode #screen-accounts .card,
+body.web-mode #screen-activity .card,
+body.web-mode #screen-categories .card,
+body.web-mode #screen-reports .card {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 20px 0;
+  margin: 0;
+  border-bottom: 1px solid rgb(15 23 42 / 0.08);
+}
+
+body.web-mode #screen-accounts .card:last-child,
+body.web-mode #screen-activity .card:last-child,
+body.web-mode #screen-categories .card:last-child,
+body.web-mode #screen-reports .card:last-child {
+  border-bottom: none;
+  padding-bottom: 8px;
+}
+
+@media (min-width: 900px) {
+  body.web-mode .app-shell {
+    max-width: 1120px;
+    padding: 24px 32px 48px;
+  }
+
+  body.web-mode .web-home-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0 32px;
+    padding: 12px 0 24px;
+    align-items: start;
+  }
+
+  body.web-mode .web-home-columns > .card + .card {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
 }

@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260512logo-gradient-dark";
+        var BALANCY_CLIENT_ASSET_REV = "20260513web-minimal";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -33,10 +33,15 @@
 
     <header id="webTopNav" class="web-top-nav" hidden>
       <div class="web-top-nav-inner">
-        <div class="web-top-nav-brand" aria-label="Balancy">
+        <button
+          type="button"
+          class="web-top-nav-brand web-top-nav-brand-btn"
+          data-web-nav="home"
+          aria-label="Balancy — на главную"
+        >
           <span class="brand-wordmark">Balancy</span>
           <span class="web-top-nav-badge muted">браузер</span>
-        </div>
+        </button>
         <nav class="web-top-nav-links" aria-label="Разделы">
           <button type="button" class="web-top-nav-link" data-web-nav="home">Главная</button>
           <button type="button" class="web-top-nav-link" data-web-nav="activity">Операции</button>
@@ -54,6 +59,7 @@
               Новая запись
             </button>
             <div id="webNewEntryMenu" class="web-new-entry-menu" role="menu" hidden>
+              <p class="web-new-entry-group-label">Операции</p>
               <button type="button" class="web-new-entry-option web-new-entry-income" data-web-new-entry="income" role="menuitem">
                 Доход
               </button>
@@ -62,6 +68,13 @@
               </button>
               <button type="button" class="web-new-entry-option web-new-entry-transfer" data-web-new-entry="transfer" role="menuitem">
                 Обмен между счетами
+              </button>
+              <p class="web-new-entry-group-label">Сначала настройте</p>
+              <button type="button" class="web-new-entry-option web-new-entry-setup" data-web-new-entry="account" role="menuitem">
+                Новый счёт
+              </button>
+              <button type="button" class="web-new-entry-option web-new-entry-setup" data-web-new-entry="category" role="menuitem">
+                Новая категория
               </button>
             </div>
           </div>
@@ -149,61 +162,63 @@
             </details>
           </section>
 
-          <section class="card compact-section-card">
-            <div class="section-header">
-              <div>
-                <p class="section-label">Счета</p>
-                <h2>Все счета</h2>
+          <div class="web-home-columns">
+            <section class="card compact-section-card">
+              <div class="section-header">
+                <div>
+                  <p class="section-label">Счета</p>
+                  <h2>Все счета</h2>
+                </div>
+                <button
+                  class="text-link-button"
+                  data-open-screen="accounts"
+                  data-scroll-screen-top="true"
+                  type="button"
+                >
+                  Все счета
+                </button>
               </div>
-              <button
-                class="text-link-button"
-                data-open-screen="accounts"
-                data-scroll-screen-top="true"
-                type="button"
-              >
-                Все счета
-              </button>
-            </div>
-            <div id="homeAccountsList" class="accounts-list"></div>
-            <div class="section-footer-note">
-              <div class="section-footer-actions">
-                <p id="ratesStatusText" class="muted secondary-status">
-                  Курсы валют еще не синхронизированы
-                </p>
-                <div class="toolbar-actions-row">
-                  <button
-                    id="syncRatesButton"
-                    class="toolbar-text-btn"
-                    type="button"
-                    title="Загрузить курсы валют"
-                  >
-                    Курсы
-                  </button>
-                  <button
-                    class="toolbar-text-btn"
-                    data-refresh-action="true"
-                    type="button"
-                    title="Обновить данные приложения"
-                  >
-                    Обновить
-                  </button>
+              <div id="homeAccountsList" class="accounts-list"></div>
+              <div class="section-footer-note">
+                <div class="section-footer-actions">
+                  <p id="ratesStatusText" class="muted secondary-status">
+                    Курсы валют еще не синхронизированы
+                  </p>
+                  <div class="toolbar-actions-row">
+                    <button
+                      id="syncRatesButton"
+                      class="toolbar-text-btn"
+                      type="button"
+                      title="Загрузить курсы валют"
+                    >
+                      Курсы
+                    </button>
+                    <button
+                      class="toolbar-text-btn"
+                      data-refresh-action="true"
+                      type="button"
+                      title="Обновить данные приложения"
+                    >
+                      Обновить
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
 
-          <section class="card compact-section-card">
-            <div class="section-header">
-              <div>
-                <p class="section-label">Последние операции</p>
-                <h2>История</h2>
+            <section class="card compact-section-card">
+              <div class="section-header">
+                <div>
+                  <p class="section-label">Последние операции</p>
+                  <h2>История</h2>
+                </div>
+                <button class="text-link-button" data-open-screen="activity" type="button">
+                  Все
+                </button>
               </div>
-              <button class="text-link-button" data-open-screen="activity" type="button">
-                Все
-              </button>
-            </div>
-            <div id="homeRecentActivityList" class="entries-list"></div>
-          </section>
+              <div id="homeRecentActivityList" class="entries-list"></div>
+            </section>
+          </div>
 
           <details class="card fx-reference-card fx-reference-collapsible">
             <summary class="fx-reference-collapsible-summary">
@@ -886,7 +901,7 @@
         var CLIENT_ASSET_REV =
           typeof window.__BALANCY_CLIENT_ASSET_REV === "string"
             ? window.__BALANCY_CLIENT_ASSET_REV
-            : "20260513c";
+            : "20260513web-minimal";
 
         var scriptEl = document.createElement("script");
         scriptEl.type = "module";
