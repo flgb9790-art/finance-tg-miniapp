@@ -7,7 +7,24 @@ import { listRecentTransfers } from "./transfers.js";
 import { supabase } from "../lib/supabase.js";
 import type { OperationKind } from "../shared/domain.js";
 
-export type ReportPeriod = "week" | "month" | "quarter" | "custom";
+export type ReportPeriod = "week" | "month" | "quarter" | "year" | "custom";
+
+export interface ReportCategoryMatrixRow {
+  categoryName: string;
+  income: number;
+  expense: number;
+  net: number;
+  /** Доля расхода категории от всех расходов периода (0..1) */
+  expenseShare: number;
+}
+
+export interface ReportCompareToPrevious {
+  incomePct: number | null;
+  expensePct: number | null;
+  netPct: number | null;
+  operationsPct: number | null;
+  operationsDelta: number;
+}
 
 export interface ReportCategoryItem {
   categoryName: string;
@@ -47,6 +64,16 @@ export interface ReportResult {
   dailySeries: ReportDailyPoint[];
   /** Агрегаты по календарным месяцам (UTC) в валюте отчёта */
   monthlySeries: ReportMonthlyPoint[];
+  incomeEntryCount: number;
+  expenseEntryCount: number;
+  /** Сумма списаний по переводам (from_amount) в валюте отчёта */
+  transfersVolumeReporting: number;
+  /** Оценка баланса всех счетов на конец периода (в валюте отчёта), null если недостаточно данных */
+  balanceAtPeriodEndReporting: number | null;
+  /** Оценка баланса на начало периода */
+  balanceAtPeriodStartReporting: number | null;
+  compareToPrevious: ReportCompareToPrevious | null;
+  categoryMatrix: ReportCategoryMatrixRow[];
   ratesUpdatedAt: string | null;
   appliedCategory?: {
     id: string;
@@ -109,13 +136,21 @@ function endOfDay(date: Date): Date {
   return result;
 }
 
+function startOfWeekMonday(d: Date): Date {
+  const s = startOfDay(new Date(d));
+  const day = s.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  s.setDate(s.getDate() + diff);
+  return s;
+}
+
 export function resolveReportRange(
   period: ReportPeriod,
   customStartDate?: string,
   customEndDate?: string
 ): { startDate: string; endDate: string } {
   const now = new Date();
-  const end = endOfDay(now);
+  const endToday = endOfDay(now);
 
   if (period === "custom") {
     if (!customStartDate || !customEndDate) {
@@ -128,20 +163,54 @@ export function resolveReportRange(
     };
   }
 
-  const start = new Date(now);
-
   if (period === "week") {
-    start.setDate(now.getDate() - 6);
-  } else if (period === "month") {
-    start.setDate(now.getDate() - 29);
-  } else {
-    start.setDate(now.getDate() - 89);
+    const start = startOfWeekMonday(now);
+    return {
+      startDate: start.toISOString(),
+      endDate: endToday.toISOString()
+    };
   }
 
-  return {
-    startDate: startOfDay(start).toISOString(),
-    endDate: end.toISOString()
-  };
+  if (period === "month") {
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const monthStart = startOfDay(new Date(y, m, 1));
+    const lastDayOfMonth = new Date(y, m + 1, 0);
+    const monthEndDate =
+      endToday.getTime() < endOfDay(lastDayOfMonth).getTime() ? now : lastDayOfMonth;
+
+    return {
+      startDate: monthStart.toISOString(),
+      endDate: endOfDay(monthEndDate).toISOString()
+    };
+  }
+
+  if (period === "quarter") {
+    const y = now.getFullYear();
+    const quarterIndex = Math.floor(now.getMonth() / 3);
+    const startMonth = quarterIndex * 3;
+    const quarterStart = startOfDay(new Date(y, startMonth, 1));
+    const quarterLastDay = new Date(y, startMonth + 3, 0);
+    const quarterEndDate =
+      endToday.getTime() < endOfDay(quarterLastDay).getTime() ? now : quarterLastDay;
+
+    return {
+      startDate: quarterStart.toISOString(),
+      endDate: endOfDay(quarterEndDate).toISOString()
+    };
+  }
+
+  if (period === "year") {
+    const y = now.getFullYear();
+    const yearStart = startOfDay(new Date(y, 0, 1));
+    return {
+      startDate: yearStart.toISOString(),
+      endDate: endToday.toISOString()
+    };
+  }
+
+  const _exhaustive: never = period;
+  throw new Error(`Unsupported report period: ${String(_exhaustive)}`);
 }
 
 async function listEntriesByRange(
@@ -184,10 +253,10 @@ async function listTransfersByRange(
   userId: string,
   startDate: string,
   endDate: string
-) {
+): Promise<{ id: string; from_amount: string; from_currency_code: string }[]> {
   const { data, error } = await supabase
     .from("transfers")
-    .select("id")
+    .select("id, from_amount, from_currency_code")
     .eq("user_id", userId)
     .gte("occurred_at", startDate)
     .lte("occurred_at", endDate);
@@ -196,7 +265,31 @@ async function listTransfersByRange(
     throw error;
   }
 
-  return data ?? [];
+  return (data ?? []) as { id: string; from_amount: string; from_currency_code: string }[];
+}
+
+async function listEntriesStrictlyAfter(
+  userId: string,
+  afterOccurredAt: string
+): Promise<{ amount: number; currency_code: string; kind: string }[]> {
+  const { data, error } = await supabase
+    .from("entries")
+    .select("amount, currency_code, kind")
+    .eq("user_id", userId)
+    .gt("occurred_at", afterOccurredAt)
+    .order("occurred_at", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return (
+    data?.map((row) => ({
+      amount: Number(row.amount),
+      currency_code: String(row.currency_code ?? ""),
+      kind: String(row.kind ?? "")
+    })) ?? []
+  );
 }
 
 type ReportEntriesBundle = {
@@ -205,6 +298,8 @@ type ReportEntriesBundle = {
   reportingCurrency: string;
   entries: Awaited<ReturnType<typeof listEntriesByRange>>;
   appliedCategory?: ReportResult["appliedCategory"];
+  accountId?: string;
+  kind?: OperationKind;
 };
 
 async function resolveReportEntriesBundle(input: {
@@ -263,7 +358,15 @@ async function resolveReportEntriesBundle(input: {
     );
   }
 
-  return { startDate, endDate, reportingCurrency, entries, appliedCategory };
+  return {
+    startDate,
+    endDate,
+    reportingCurrency,
+    entries,
+    appliedCategory,
+    accountId: input.accountId,
+    kind: input.kind
+  };
 }
 
 export interface ReportOperationCsvRow {
@@ -370,13 +473,17 @@ export async function getDashboardSummary(
   }
 
   const monthRange = resolveReportRange("month");
-  const monthReport = await getReport({
+  const monthBundle = await resolveReportEntriesBundle({
     userId,
     period: "month",
     startDate: monthRange.startDate,
     endDate: monthRange.endDate,
     reportingCurrency
   });
+  const monthReport = await aggregateReportFromBundle(
+    { userId, period: "month" },
+    monthBundle
+  );
 
   const balancesByCurrency = accounts.reduce<Record<string, number>>(
     (result, account) => {
@@ -443,6 +550,8 @@ async function aggregateReportFromBundle(
 
   let incomes = 0;
   let expenses = 0;
+  let incomeEntryCount = 0;
+  let expenseEntryCount = 0;
   const expenseByCategoryMap = new Map<string, number>();
   const incomeByCategoryMap = new Map<string, number>();
   const dailyMap = new Map<string, { income: number; expense: number }>();
@@ -461,6 +570,7 @@ async function aggregateReportFromBundle(
 
     if (entry.kind === "income") {
       incomes += convertedAmount;
+      incomeEntryCount += 1;
       const categoryName = entry.category?.name ?? "Без категории";
       incomeByCategoryMap.set(
         categoryName,
@@ -474,6 +584,7 @@ async function aggregateReportFromBundle(
       monthlyMap.set(monthKey, m);
     } else {
       expenses += convertedAmount;
+      expenseEntryCount += 1;
       const categoryName = entry.category?.name ?? "Без категории";
       expenseByCategoryMap.set(
         categoryName,
@@ -537,6 +648,65 @@ async function aggregateReportFromBundle(
   const operationsCount =
     entries.length + (appliedCategory ? 0 : transfers.length);
 
+  let transfersVolumeReporting = 0;
+  for (const transfer of transfers) {
+    transfersVolumeReporting += await convert(
+      Number(transfer.from_amount),
+      transfer.from_currency_code,
+      reportingCurrency
+    );
+  }
+
+  const unfilteredPeriodEntries = await listEntriesByRange(
+    input.userId,
+    startDate,
+    endDate,
+    undefined
+  );
+  let netUnfilteredPeriod = 0;
+  for (const entry of unfilteredPeriodEntries) {
+    const convertedAmount = await convert(
+      Number(entry.amount),
+      entry.currency_code,
+      reportingCurrency
+    );
+    netUnfilteredPeriod += entry.kind === "income" ? convertedAmount : -convertedAmount;
+  }
+
+  const entriesAfterPeriod = await listEntriesStrictlyAfter(input.userId, endDate);
+  let netAfterPeriod = 0;
+  for (const row of entriesAfterPeriod) {
+    const convertedAmount = await convert(
+      row.amount,
+      row.currency_code,
+      reportingCurrency
+    );
+    netAfterPeriod += row.kind === "income" ? convertedAmount : -convertedAmount;
+  }
+
+  const balanceAtPeriodEndReporting = Number(
+    (currentTotalBalance - netAfterPeriod).toFixed(2)
+  );
+  const balanceAtPeriodStartReporting = Number(
+    (balanceAtPeriodEndReporting - netUnfilteredPeriod).toFixed(2)
+  );
+
+  const categoryNames = new Set<string>([
+    ...incomeByCategoryMap.keys(),
+    ...expenseByCategoryMap.keys()
+  ]);
+  const totalExpenseForShare = expenses > 0 ? expenses : 0;
+  const categoryMatrix: ReportCategoryMatrixRow[] = Array.from(categoryNames)
+    .map((categoryName) => {
+      const inc = Number((incomeByCategoryMap.get(categoryName) ?? 0).toFixed(2));
+      const exp = Number((expenseByCategoryMap.get(categoryName) ?? 0).toFixed(2));
+      const net = Number((inc - exp).toFixed(2));
+      const expenseShare =
+        totalExpenseForShare > 0 ? Number((exp / totalExpenseForShare).toFixed(4)) : 0;
+      return { categoryName, income: inc, expense: exp, net, expenseShare };
+    })
+    .sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
+
   return {
     period: input.period,
     startDate,
@@ -552,8 +722,79 @@ async function aggregateReportFromBundle(
     operationsCount,
     dailySeries,
     monthlySeries,
+    incomeEntryCount,
+    expenseEntryCount,
+    transfersVolumeReporting: Number(transfersVolumeReporting.toFixed(2)),
+    balanceAtPeriodEndReporting,
+    balanceAtPeriodStartReporting,
+    compareToPrevious: null,
+    categoryMatrix,
     ratesUpdatedAt: await getLatestExchangeRateUpdate(),
     appliedCategory
+  };
+}
+
+function pctChange(current: number, previous: number): number | null {
+  if (previous === 0) {
+    return current === 0 ? 0 : null;
+  }
+
+  return Number((((current - previous) / previous) * 100).toFixed(1));
+}
+
+async function buildReportFromInput(input: {
+  userId: string;
+  period: ReportPeriod;
+  startDate?: string;
+  endDate?: string;
+  reportingCurrency?: string;
+  categoryId?: string;
+  accountId?: string;
+  kind?: OperationKind;
+}): Promise<ReportResult> {
+  const bundle = await resolveReportEntriesBundle(input);
+
+  return aggregateReportFromBundle(input, bundle);
+}
+
+async function computeCompareToPrevious(
+  input: {
+    userId: string;
+    period: ReportPeriod;
+    startDate?: string;
+    endDate?: string;
+    reportingCurrency?: string;
+    categoryId?: string;
+    accountId?: string;
+    kind?: OperationKind;
+  },
+  main: ReportResult
+): Promise<ReportCompareToPrevious | null> {
+  const mainStartMs = new Date(main.startDate).getTime();
+  const mainEndMs = new Date(main.endDate).getTime();
+  const spanMs = mainEndMs - mainStartMs;
+  if (spanMs <= 0) {
+    return null;
+  }
+
+  const prevEndMs = mainStartMs - 1;
+  const prevStartMs = mainStartMs - spanMs;
+  const prevStartDay = startOfDay(new Date(prevStartMs));
+  const prevEndDay = endOfDay(new Date(prevEndMs));
+
+  const prev = await buildReportFromInput({
+    ...input,
+    period: "custom",
+    startDate: prevStartDay.toISOString().slice(0, 10),
+    endDate: prevEndDay.toISOString().slice(0, 10)
+  });
+
+  return {
+    incomePct: pctChange(main.incomes, prev.incomes),
+    expensePct: pctChange(main.expenses, prev.expenses),
+    netPct: pctChange(main.net, prev.net),
+    operationsPct: pctChange(main.operationsCount, prev.operationsCount),
+    operationsDelta: main.operationsCount - prev.operationsCount
   };
 }
 
@@ -567,9 +808,9 @@ export async function getReport(input: {
   accountId?: string;
   kind?: OperationKind;
 }): Promise<ReportResult> {
-  const bundle = await resolveReportEntriesBundle(input);
-
-  return aggregateReportFromBundle(input, bundle);
+  const report = await buildReportFromInput(input);
+  report.compareToPrevious = await computeCompareToPrevious(input, report);
+  return report;
 }
 
 function csvCell(value: unknown): string {
@@ -592,9 +833,10 @@ export function formatReportResultAsCsv(
   operations: ReportOperationCsvRow[]
 ): string {
   const periodLabel: Record<ReportPeriod, string> = {
-    week: "Неделя (7 дней)",
-    month: "Месяц (30 дней)",
-    quarter: "Квартал (90 дней)",
+    week: "Неделя (текущая)",
+    month: "Месяц (календарный)",
+    quarter: "Квартал (календарный)",
+    year: "Год (с 1 января)",
     custom: "Произвольный период"
   };
 

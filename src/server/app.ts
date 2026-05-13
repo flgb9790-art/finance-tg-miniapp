@@ -867,14 +867,14 @@ export function createHttpApp(): express.Express {
         return;
       }
 
-      if (!["week", "month", "quarter", "custom"].includes(period)) {
+      if (!["week", "month", "quarter", "year", "custom"].includes(period)) {
         res.status(400).json({ error: "Report period is invalid" });
         return;
       }
 
       const report = await getReport({
         userId: appUser.id,
-        period: period as "week" | "month" | "quarter" | "custom",
+        period: period as "week" | "month" | "quarter" | "year" | "custom",
         startDate,
         endDate,
         reportingCurrency,
@@ -929,14 +929,14 @@ export function createHttpApp(): express.Express {
         return;
       }
 
-      if (!["week", "month", "quarter", "custom"].includes(period)) {
+      if (!["week", "month", "quarter", "year", "custom"].includes(period)) {
         res.status(400).json({ error: "Report period is invalid" });
         return;
       }
 
       const exportInput = {
         userId: appUser.id,
-        period: period as "week" | "month" | "quarter" | "custom",
+        period: period as "week" | "month" | "quarter" | "year" | "custom",
         startDate,
         endDate,
         reportingCurrency,

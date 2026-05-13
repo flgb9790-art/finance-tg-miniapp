@@ -83,12 +83,14 @@ const reportCategoryFilterInput = document.getElementById("reportCategoryFilterI
 const reportStartDateInput = document.getElementById("reportStartDateInput");
 const reportEndDateInput = document.getElementById("reportEndDateInput");
 const reportTitleElement = document.getElementById("reportTitle");
+const reportRangeLabelElement = document.getElementById("reportRangeLabel");
 const reportIncomeValueElement = document.getElementById("reportIncomeValue");
-const reportIncomeCurrencyElement = document.getElementById("reportIncomeCurrency");
 const reportExpenseValueElement = document.getElementById("reportExpenseValue");
-const reportExpenseCurrencyElement = document.getElementById("reportExpenseCurrency");
 const reportNetValueElement = document.getElementById("reportNetValue");
-const reportNetCurrencyElement = document.getElementById("reportNetCurrency");
+const reportStatIncomeSub = document.getElementById("reportStatIncomeSub");
+const reportStatExpenseSub = document.getElementById("reportStatExpenseSub");
+const reportStatNetSub = document.getElementById("reportStatNetSub");
+const reportStatOpsSub = document.getElementById("reportStatOpsSub");
 const reportTransfersCountValueElement = document.getElementById("reportTransfersCountValue");
 const reportCurrentBalanceValueElement = document.getElementById("reportCurrentBalanceValue");
 const reportCurrentBalanceCurrencyElement = document.getElementById("reportCurrentBalanceCurrency");
@@ -96,12 +98,18 @@ const reportIncomeCategoriesListElement = document.getElementById("reportIncomeC
 const reportExpenseCategoriesListElement = document.getElementById("reportExpenseCategoriesList");
 const reportTransfersStatBox = document.getElementById("reportTransfersStatBox");
 const reportDownloadCsvButton = document.getElementById("reportDownloadCsvButton");
+const reportDownloadCsvLabel = document.getElementById("reportDownloadCsvLabel");
 const reportCsvStatementButton = document.getElementById("reportCsvStatementButton");
 const reportKindFilterInput = document.getElementById("reportKindFilterInput");
 const reportAccountFilterInput = document.getElementById("reportAccountFilterInput");
 const reportOperationsCountValueElement = document.getElementById("reportOperationsCountValue");
-const reportTransfersHintElement = document.getElementById("reportTransfersHint");
-const webReportsChartsEl = document.getElementById("webReportsCharts");
+const reportCategoryMatrixBody = document.getElementById("reportCategoryMatrixBody");
+const reportPeriodSummaryDl = document.getElementById("reportPeriodSummaryDl");
+const reportDonutTotalElement = document.getElementById("reportDonutTotal");
+const reportDayTipBar = document.getElementById("reportDayTipBar");
+const reportDayTipText = document.getElementById("reportDayTipText");
+const reportDayTipClose = document.getElementById("reportDayTipClose");
+const webReportsBodyEl = document.getElementById("webReportsBody");
 const addOperationButton = document.getElementById("addOperationButton");
 const webOperationsRoot = document.getElementById("webOperationsRoot");
 const webOpsDateFrom = document.getElementById("webOpsDateFrom");
@@ -154,8 +162,8 @@ const state = {
 let webOpsOffset = 0;
 let webOpsDatesInitialized = false;
 
-/** @type {{ trend?: object, category?: object, monthly?: object }} */
-let reportChartInstances = { trend: null, category: null, monthly: null };
+/** @type {{ trend?: object, category?: object }} */
+let reportChartInstances = { trend: null, category: null };
 
 const balancySplashStartedAt = Date.now();
 
@@ -642,6 +650,7 @@ function formatReportPeriod(period) {
     week: "неделю",
     month: "месяц",
     quarter: "3 месяца",
+    year: "год",
     custom: "выбранный период"
   };
 
@@ -734,12 +743,12 @@ function openScreen(screenName, options = {}) {
 
   if (nextScreen === "reports") {
     populateReportFilterAccounts();
-    if (isWebMode && webReportsChartsEl) {
-      webReportsChartsEl.hidden = false;
+    if (isWebMode && webReportsBodyEl) {
+      webReportsBodyEl.hidden = false;
     }
     void loadReport();
-  } else if (isWebMode && webReportsChartsEl) {
-    webReportsChartsEl.hidden = true;
+  } else if (isWebMode && webReportsBodyEl) {
+    webReportsBodyEl.hidden = true;
   }
 }
 
@@ -1875,8 +1884,313 @@ function renderCategoryBreakdownList(targetElement, items, emptyTitle, emptyHint
     .join("");
 }
 
+const REPORT_MONTH_SHORT_GEN = [
+  "янв",
+  "фев",
+  "мар",
+  "апр",
+  "мая",
+  "июн",
+  "июл",
+  "авг",
+  "сен",
+  "окт",
+  "ноя",
+  "дек"
+];
+
+function formatReportDayLabelRu(isoDate) {
+  const parts = String(isoDate).split("-");
+  if (parts.length < 3) {
+    return String(isoDate);
+  }
+  const d = Number(parts[2]);
+  const m = Number(parts[1]);
+  return `${d} ${REPORT_MONTH_SHORT_GEN[m - 1] ?? ""}`.trim();
+}
+
+function formatHumanReportRange(startIso, endIso) {
+  try {
+    const a = new Date(startIso);
+    const b = new Date(endIso);
+    const da = `${a.getDate()} ${REPORT_MONTH_SHORT_GEN[a.getMonth()] ?? ""}`;
+    const db = `${b.getDate()} ${REPORT_MONTH_SHORT_GEN[b.getMonth()] ?? ""} ${b.getFullYear()}`;
+    if (a.getFullYear() !== b.getFullYear()) {
+      return `${da} ${a.getFullYear()} — ${db}`;
+    }
+    return `${da} — ${db}`;
+  } catch {
+    return "";
+  }
+}
+
+const REPORT_MONTH_LOCATIVE = [
+  "январе",
+  "феврале",
+  "марте",
+  "апреле",
+  "мае",
+  "июне",
+  "июле",
+  "августе",
+  "сентябре",
+  "октябре",
+  "ноябре",
+  "декабре"
+];
+
+function previousPeriodPhrase(period, startIso) {
+  if (!startIso || typeof startIso !== "string") {
+    return "в прошлом периоде";
+  }
+  const d = new Date(startIso);
+  if (Number.isNaN(d.getTime())) {
+    return "в прошлом периоде";
+  }
+  if (period === "month") {
+    const prev = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 15));
+    return `в ${REPORT_MONTH_LOCATIVE[prev.getUTCMonth()] ?? "прошлом месяце"}`;
+  }
+  if (period === "quarter") {
+    return "в прошлом квартале";
+  }
+  if (period === "year") {
+    return "в прошлом году";
+  }
+  if (period === "week") {
+    return "на прошлой неделе";
+  }
+  return "в прошлом периоде";
+}
+
+function formatPctCompareVsPrevious(pct, period, startIso) {
+  if (pct === null || pct === undefined || Number.isNaN(Number(pct))) {
+    return "Нет сравнения с прошлым периодом";
+  }
+  const n = Number(pct);
+  const ref = previousPeriodPhrase(period, startIso);
+  if (Math.abs(n) < 0.05) {
+    return `Почти как ${ref}`;
+  }
+  const sign = n > 0 ? "+" : "";
+  const adj = n > 0 ? "больше" : "меньше";
+  return `${sign}${n.toFixed(1)}% ${adj}, чем ${ref}`;
+}
+
+function formatOperationsCompare(cmp, period, startIso) {
+  if (!cmp) {
+    return "";
+  }
+  const ref = previousPeriodPhrase(period, startIso);
+  const d = Number(cmp.operationsDelta ?? 0);
+  if (d !== 0) {
+    const sign = d > 0 ? "+" : "";
+    const abs = Math.abs(d);
+    let word = "операций";
+    if (abs % 10 === 1 && abs % 100 !== 11) {
+      word = "операция";
+    } else if ([2, 3, 4].includes(abs % 10) && ![12, 13, 14].includes(abs % 100)) {
+      word = "операции";
+    }
+    return `${sign}${d} ${word}, чем ${ref}`;
+  }
+  if (cmp.operationsPct !== null && cmp.operationsPct !== undefined && !Number.isNaN(Number(cmp.operationsPct))) {
+    return formatPctCompareVsPrevious(cmp.operationsPct, period, startIso);
+  }
+  return "";
+}
+
+function formatMoneyWithCode(amount, code) {
+  const c = (code ?? "").trim();
+  return c ? `${formatMoneyAmount(amount)} ${c}` : formatMoneyAmount(amount);
+}
+
+function syncReportPeriodSegmented() {
+  const wrap = document.getElementById("reportPeriodSegmented");
+  if (!wrap || !reportPeriodInput) {
+    return;
+  }
+  const v = reportPeriodInput.value;
+  wrap.querySelectorAll("[data-report-period]").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.reportPeriod === v);
+  });
+}
+
+function categoryColorAt(index) {
+  const palette = ["#f97316", "#a855f7", "#3b82f6", "#eab308", "#14b8a6", "#ec4899", "#64748b", "#22c55e"];
+  return palette[index % palette.length];
+}
+
+function renderReportCategoryMatrix(report) {
+  if (!reportCategoryMatrixBody) {
+    return;
+  }
+  const rows = Array.isArray(report?.categoryMatrix) ? report.categoryMatrix : [];
+  const c = report?.reportingCurrency ?? "";
+  if (rows.length === 0) {
+    reportCategoryMatrixBody.innerHTML = `<tr><td colspan="5" class="muted">Нет данных по категориям за период.</td></tr>`;
+    return;
+  }
+  reportCategoryMatrixBody.innerHTML = rows
+    .map((row, idx) => {
+      const exp = Number(row.expense ?? 0);
+      const inc = Number(row.income ?? 0);
+      const net = Number(row.net ?? 0);
+      const share = Math.min(100, Math.max(0, Number(row.expenseShare ?? 0) * 100));
+      const col = categoryColorAt(idx);
+      const netClass = net >= 0 ? "report-matrix-pos" : "report-matrix-neg";
+      return `<tr>
+        <td><span class="report-matrix-cat"><span class="report-matrix-dot" style="background:${escapeHtml(col)}"></span>${escapeHtml(row.categoryName)}</span></td>
+        <td class="report-matrix-num report-matrix-neg">${exp > 0 ? `−${escapeHtml(formatMoneyAmount(exp))}` : "—"}</td>
+        <td class="report-matrix-num report-matrix-pos">${inc > 0 ? `+${escapeHtml(formatMoneyAmount(inc))}` : "—"}</td>
+        <td class="report-matrix-num ${netClass}">${net >= 0 ? "+" : "−"}${escapeHtml(formatMoneyAmount(Math.abs(net)))} ${escapeHtml(c)}</td>
+        <td class="report-matrix-bar-col"><div class="report-matrix-bar" style="width:${share.toFixed(0)}%;background:${escapeHtml(col)}"></div></td>
+      </tr>`;
+    })
+    .join("");
+}
+
+function renderReportPeriodSummary(report) {
+  if (!reportPeriodSummaryDl || !report) {
+    return;
+  }
+  const c = report.reportingCurrency ?? "";
+  const e = Number(report.expenseEntryCount ?? 0);
+  const i = Number(report.incomeEntryCount ?? 0);
+  const avgExp = e > 0 ? report.expenses / e : 0;
+  const avgInc = i > 0 ? report.incomes / i : 0;
+  const openB = report.balanceAtPeriodStartReporting;
+  const closeB =
+    report.balanceAtPeriodEndReporting !== undefined && report.balanceAtPeriodEndReporting !== null
+      ? report.balanceAtPeriodEndReporting
+      : report.currentTotalBalance;
+  const transVol = Number(report.transfersVolumeReporting ?? 0);
+  const ops = report.operationsCount ?? 0;
+
+  const blocks = [
+    { dt: "Начальный баланс", dd: openB != null ? formatMoneyWithCode(openB, c) : "—", ddClass: "" },
+    {
+      dt: "Доходы",
+      dd: `+${formatMoneyWithCode(report.incomes, c)}`,
+      ddClass: "report-summary-pos"
+    },
+    {
+      dt: "Расходы",
+      dd: `−${formatMoneyWithCode(report.expenses, c)}`,
+      ddClass: "report-summary-neg"
+    },
+    {
+      dt: "Переводы между счетами",
+      dd: `−${formatMoneyWithCode(transVol, c)}`,
+      ddClass: ""
+    },
+    { hr: true },
+    {
+      dt: "Конечный баланс",
+      dd: closeB != null ? formatMoneyWithCode(closeB, c) : "—",
+      ddClass: "report-summary-end"
+    },
+    { hr: true },
+    { dt: "Операции", dd: String(ops), ddClass: "" },
+    {
+      dt: "Средний чек расходов",
+      dd: e ? `−${formatMoneyWithCode(avgExp, c)}` : "—",
+      ddClass: ""
+    },
+    {
+      dt: "Средний чек доходов",
+      dd: i ? `+${formatMoneyWithCode(avgInc, c)}` : "—",
+      ddClass: "report-summary-pos"
+    }
+  ];
+
+  reportPeriodSummaryDl.innerHTML = blocks
+    .map((row) => {
+      if (row.hr) {
+        return '<div class="report-summary-hr" role="presentation"></div>';
+      }
+      return `<div class="report-summary-row"><dt>${escapeHtml(row.dt)}</dt><dd class="${escapeHtml(row.ddClass ?? "")}">${escapeHtml(row.dd)}</dd></div>`;
+    })
+    .join("");
+}
+
+function drawReportSparkline(canvas, values, color) {
+  if (!canvas || !values?.length) {
+    return;
+  }
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return;
+  }
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  const data = values.map((v) => Number(v) || 0);
+  const min = Math.min(...data, 0);
+  const max = Math.max(...data, 0.0001);
+  const range = max - min || 1;
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  data.forEach((v, i) => {
+    const x = (i / Math.max(1, data.length - 1)) * (w - 4) + 2;
+    const y = h - 4 - ((v - min) / range) * (h - 8);
+    if (i === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  });
+  ctx.stroke();
+}
+
+function drawAllReportSparks(report) {
+  const daily = Array.isArray(report?.dailySeries) ? report.dailySeries : [];
+  const inc = daily.map((d) => d.income);
+  const exp = daily.map((d) => d.expense);
+  let cum = 0;
+  const netCum = daily.map((d) => {
+    cum += Number(d.net ?? 0);
+    return cum;
+  });
+  const opsTotal = Number(report?.operationsCount ?? 0);
+  const n = Math.max(1, daily.length);
+  const opsSpark = daily.map((_, i) => (opsTotal * (i + 1)) / n);
+  drawReportSparkline(document.getElementById("reportSparkIncome"), inc, "#2ECC71");
+  drawReportSparkline(document.getElementById("reportSparkExpense"), exp, "#E74C3C");
+  drawReportSparkline(document.getElementById("reportSparkNet"), netCum, "#3498DB");
+  drawReportSparkline(document.getElementById("reportSparkOps"), opsSpark, "#3498DB");
+}
+
+function updateReportDayTip(report) {
+  if (!reportDayTipText || !report) {
+    return;
+  }
+  const cmp = report.compareToPrevious;
+  const expCats = report.expenseByCategory ?? [];
+  const top = expCats[0];
+  if (top && top.total > 0 && cmp && typeof cmp.expensePct === "number" && Number.isFinite(cmp.expensePct)) {
+    const pct = cmp.expensePct;
+    const cat = top.categoryName ?? "крупнейшей статье";
+    if (pct <= -0.5) {
+      reportDayTipText.textContent = `Расходы по «${cat}» ниже на ${Math.abs(pct).toFixed(0)}%, чем в прошлом периоде. Отличная динамика.`;
+      return;
+    }
+    if (pct >= 0.5) {
+      reportDayTipText.textContent = `Расходы по «${cat}» выше на ${pct.toFixed(0)}%, чем в прошлом периоде — присмотритесь к этой статье.`;
+      return;
+    }
+  }
+  if (top && top.total > 0) {
+    reportDayTipText.textContent = `Крупнейшая статья расходов: «${top.categoryName}» — ${formatMoneyAmount(top.total)} ${report.reportingCurrency ?? ""}.`;
+    return;
+  }
+  reportDayTipText.textContent =
+    "Добавьте категории расходов и операции — отчёт станет нагляднее, а подсказки точнее.";
+}
+
 function destroyReportCharts() {
-  ["trend", "category", "monthly"].forEach((key) => {
+  ["trend", "category"].forEach((key) => {
     const chart = reportChartInstances[key];
     if (chart && typeof chart.destroy === "function") {
       try {
@@ -1901,9 +2215,8 @@ function renderReportChartsFromReport(report) {
 
   const trendCanvas = document.getElementById("reportTrendChart");
   const categoryCanvas = document.getElementById("reportCategoryChart");
-  const monthlyCanvas = document.getElementById("reportMonthlyChart");
 
-  if (!trendCanvas || !categoryCanvas || !monthlyCanvas) {
+  if (!trendCanvas || !categoryCanvas) {
     return;
   }
 
@@ -1911,15 +2224,17 @@ function renderReportChartsFromReport(report) {
 
   const ChartCtor = window.Chart;
   const reportingCode = report?.reportingCurrency ?? "";
-  const green = "#27C281";
-  const expenseRed = "#ef4444";
+  const green = "#2ECC71";
+  const expenseRed = "#E74C3C";
+  const netBlue = "#3498DB";
   const daily = Array.isArray(report?.dailySeries) ? report.dailySeries : [];
-  const monthly = Array.isArray(report?.monthlySeries) ? report.monthlySeries : [];
   const expenseCats = Array.isArray(report?.expenseByCategory) ? report.expenseByCategory : [];
 
-  const dayLabels = daily.map((d) => {
-    const [y, m, day] = String(d.date).split("-");
-    return `${day}.${m}`;
+  const dayLabels = daily.map((d) => formatReportDayLabelRu(d.date));
+  let cumulativeNet = 0;
+  const netSeries = daily.map((d) => {
+    cumulativeNet += Number(d.net ?? 0);
+    return Number(cumulativeNet.toFixed(2));
   });
 
   reportChartInstances.trend = new ChartCtor(trendCanvas, {
@@ -1931,7 +2246,7 @@ function renderReportChartsFromReport(report) {
           label: "Доходы",
           data: daily.map((d) => d.income),
           borderColor: green,
-          backgroundColor: "rgba(39, 194, 129, 0.12)",
+          backgroundColor: "rgba(46, 204, 113, 0.14)",
           fill: true,
           tension: 0.35,
           pointRadius: 0
@@ -1940,10 +2255,20 @@ function renderReportChartsFromReport(report) {
           label: "Расходы",
           data: daily.map((d) => d.expense),
           borderColor: expenseRed,
-          backgroundColor: "rgba(239, 68, 68, 0.08)",
+          backgroundColor: "rgba(231, 76, 60, 0.1)",
           fill: true,
           tension: 0.35,
           pointRadius: 0
+        },
+        {
+          label: "Чистый поток",
+          data: netSeries,
+          borderColor: netBlue,
+          backgroundColor: "rgba(52, 152, 219, 0.06)",
+          fill: true,
+          tension: 0.35,
+          pointRadius: 0,
+          borderWidth: 2
         }
       ]
     },
@@ -1963,7 +2288,7 @@ function renderReportChartsFromReport(report) {
         }
       },
       scales: {
-        x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+        x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } },
         y: { ticks: { callback: (v) => formatMoneyAmount(Number(v)) } }
       }
     }
@@ -2008,7 +2333,7 @@ function renderReportChartsFromReport(report) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: "58%",
+      cutout: "62%",
       plugins: {
         legend: { position: "right", labels: { boxWidth: 10, font: { size: 11 } } },
         tooltip: {
@@ -2025,57 +2350,33 @@ function renderReportChartsFromReport(report) {
     }
   });
 
-  const monthLabels = monthly.map((m) => {
-    const [y, mo] = m.monthKey.split("-");
-    return `${mo}.${y.slice(2)}`;
-  });
-
-  reportChartInstances.monthly = new ChartCtor(monthlyCanvas, {
-    type: "bar",
-    data: {
-      labels: monthLabels,
-      datasets: [
-        {
-          label: `Сальдо, ${reportingCode}`,
-          data: monthly.map((m) => m.net),
-          backgroundColor: monthly.map((m) =>
-            Number(m.net) >= 0 ? "rgba(39, 194, 129, 0.85)" : "rgba(239, 68, 68, 0.75)"
-          ),
-          borderRadius: 8
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label(ctx) {
-              return `Сальдо: ${formatMoneyAmount(Number(ctx.parsed.y))} ${reportingCode}`;
-            }
-          }
-        }
-      },
-      scales: {
-        x: { ticks: { maxRotation: 0 } },
-        y: { ticks: { callback: (v) => formatMoneyAmount(Number(v)) } }
-      }
-    }
-  });
+  if (reportDonutTotalElement) {
+    const totalExp = Number(report.expenses ?? 0);
+    reportDonutTotalElement.textContent = `Всего ${formatMoneyAmount(totalExp)} ${reportingCode}`.trim();
+  }
 }
 
 function renderReport(report) {
   const periodPhrase = formatReportPeriod(report?.period ?? "month");
   const applied = report?.appliedCategory;
+  const cmp = report?.compareToPrevious ?? null;
 
-  if (applied) {
-    const kindLabel = applied.kind === "income" ? "доходы" : "расходы";
-    reportTitleElement.textContent = `«${applied.name}» (${kindLabel}), ${periodPhrase}`;
-  } else {
-    reportTitleElement.textContent = `Отчет за ${periodPhrase}`;
+  if (reportTitleElement) {
+    if (applied) {
+      const kindLabel = applied.kind === "income" ? "доходы" : "расходы";
+      reportTitleElement.textContent = `«${applied.name}» (${kindLabel})`;
+    } else {
+      reportTitleElement.textContent = "Отчёты";
+    }
   }
+
+  if (reportRangeLabelElement && report?.startDate && report?.endDate) {
+    reportRangeLabelElement.textContent = formatHumanReportRange(report.startDate, report.endDate);
+  } else if (reportRangeLabelElement) {
+    reportRangeLabelElement.textContent = periodPhrase;
+  }
+
+  syncReportPeriodSegmented();
 
   const reportingCode = report?.reportingCurrency ?? "";
   const incomes = Number(report?.incomes ?? 0);
@@ -2092,46 +2393,50 @@ function renderReport(report) {
   }
 
   if (reportIncomeValueElement) {
-    reportIncomeValueElement.textContent = `+${formatMoneyAmount(incomes)}`;
-  }
-  if (reportIncomeCurrencyElement) {
-    reportIncomeCurrencyElement.textContent = reportingCode ? `в ${reportingCode}` : "в валюте отчёта";
+    reportIncomeValueElement.textContent = `+${formatMoneyAmount(incomes)} ${reportingCode}`.trim();
   }
 
   if (reportExpenseValueElement) {
-    reportExpenseValueElement.textContent = `−${formatMoneyAmount(expenses)}`;
-  }
-  if (reportExpenseCurrencyElement) {
-    reportExpenseCurrencyElement.textContent = reportingCode ? `в ${reportingCode}` : "в валюте отчёта";
+    reportExpenseValueElement.textContent = `−${formatMoneyAmount(expenses)} ${reportingCode}`.trim();
   }
 
   if (reportNetValueElement) {
     const sign = net >= 0 ? "+" : "−";
-    reportNetValueElement.textContent = `${sign}${formatMoneyAmount(Math.abs(net))}`;
+    reportNetValueElement.textContent = `${sign}${formatMoneyAmount(Math.abs(net))} ${reportingCode}`.trim();
   }
-  if (reportNetCurrencyElement) {
-    reportNetCurrencyElement.textContent = reportingCode ? `в ${reportingCode}` : "доходы минус расходы";
+
+  const netStatCard = document.querySelector(".report-stat-card--net");
+  if (netStatCard) {
+    netStatCard.classList.toggle("report-stat-card--net-negative", net < 0);
+  }
+
+  const periodKey = report?.period ?? reportPeriodInput?.value ?? "month";
+  const startIso = report?.startDate ?? "";
+
+  if (reportStatIncomeSub) {
+    reportStatIncomeSub.textContent = cmp ? formatPctCompareVsPrevious(cmp.incomePct, periodKey, startIso) : "";
+  }
+  if (reportStatExpenseSub) {
+    reportStatExpenseSub.textContent = cmp ? formatPctCompareVsPrevious(cmp.expensePct, periodKey, startIso) : "";
+  }
+  if (reportStatNetSub) {
+    reportStatNetSub.textContent = cmp ? formatPctCompareVsPrevious(cmp.netPct, periodKey, startIso) : "";
+  }
+  if (reportStatOpsSub) {
+    reportStatOpsSub.textContent = cmp ? formatOperationsCompare(cmp, periodKey, startIso) : "";
   }
 
   if (reportTransfersCountValueElement) {
     reportTransfersCountValueElement.textContent = String(transfers);
   }
 
-  if (reportTransfersHintElement) {
-    if (applied) {
-      reportTransfersHintElement.textContent = "";
-    } else if (transfers > 0) {
-      reportTransfersHintElement.textContent = `включая ${transfers} переводов`;
-    } else {
-      reportTransfersHintElement.textContent = "за выбранный период";
-    }
-  }
-
   if (reportTransfersStatBox) {
     reportTransfersStatBox.hidden = Boolean(applied);
   }
 
-  reportCurrentBalanceValueElement.textContent = formatMoneyAmount(report?.currentTotalBalance ?? 0);
+  if (reportCurrentBalanceValueElement) {
+    reportCurrentBalanceValueElement.textContent = formatMoneyAmount(report?.currentTotalBalance ?? 0);
+  }
   if (reportCurrentBalanceCurrencyElement) {
     reportCurrentBalanceCurrencyElement.textContent = reportingCode;
   }
@@ -2154,11 +2459,17 @@ function renderReport(report) {
       : "Когда появятся расходы, здесь будет разбивка по статьям."
   );
 
-  const canExport = Boolean(report && getInitData());
+  if (isWebMode) {
+    renderReportCategoryMatrix(report);
+    renderReportPeriodSummary(report);
+    drawAllReportSparks(report);
+    updateReportDayTip(report);
+  }
+
+  const canExport = Boolean(report && (isWebMode || getInitData()));
 
   if (reportDownloadCsvButton) {
     reportDownloadCsvButton.disabled = !canExport;
-    reportDownloadCsvButton.textContent = isWebMode ? "Скачать отчёт" : "Скачать CSV";
   }
 
   if (reportCsvStatementButton) {
@@ -3061,7 +3372,10 @@ async function downloadReportCsv() {
     state.reportExportQuery &&
     currentQuery !== state.reportExportQuery
   ) {
-    setStatus("Параметры отчёта изменились — нажмите «Построить отчёт», затем скачайте CSV.", "error");
+    const rebuildHint = isWebMode
+      ? "Параметры отчёта изменились — нажмите «Показать», затем скачайте CSV."
+      : "Параметры отчёта изменились — нажмите «Построить отчёт», затем скачайте CSV.";
+    setStatus(rebuildHint, "error");
     return;
   }
 
@@ -3218,7 +3532,10 @@ async function openReportCsvInNewTab() {
     state.reportExportQuery &&
     currentQuery !== state.reportExportQuery
   ) {
-    setStatus("Параметры отчёта изменились — нажмите «Построить отчёт», затем откройте выписку.", "error");
+    const rebuildHint = isWebMode
+      ? "Параметры отчёта изменились — нажмите «Показать», затем откройте выписку."
+      : "Параметры отчёта изменились — нажмите «Построить отчёт», затем откройте выписку.";
+    setStatus(rebuildHint, "error");
     return;
   }
 
@@ -4201,6 +4518,31 @@ entryKindInput.addEventListener("change", () => {
 
 reportPeriodInput.addEventListener("change", () => {
   toggleReportDateInputs();
+  syncReportPeriodSegmented();
+  if (document.body.dataset.appActiveScreen === "reports") {
+    void loadReport();
+  }
+});
+
+document.querySelectorAll("[data-report-period]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const next = button.dataset.reportPeriod;
+    if (!next || !reportPeriodInput) {
+      return;
+    }
+    reportPeriodInput.value = next;
+    toggleReportDateInputs();
+    syncReportPeriodSegmented();
+    if (document.body.dataset.appActiveScreen === "reports") {
+      void loadReport();
+    }
+  });
+});
+
+reportDayTipClose?.addEventListener("click", () => {
+  if (reportDayTipBar) {
+    reportDayTipBar.hidden = true;
+  }
 });
 
 openScreenButtons.forEach((button) => {
@@ -4222,6 +4564,14 @@ try {
   populateCurrencyOptions();
   populateReportingCurrencyOptions();
   populateReportCategoryFilterOptions();
+
+  if (reportDownloadCsvLabel) {
+    reportDownloadCsvLabel.textContent = isWebMode ? "Скачать отчёт" : "Скачать CSV";
+  }
+  if (!isWebMode && reportSubmitButton) {
+    reportSubmitButton.textContent = "Построить отчёт";
+  }
+  syncReportPeriodSegmented();
 
   void loadApp();
 } catch (error) {
