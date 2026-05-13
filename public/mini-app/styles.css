@@ -3979,6 +3979,319 @@ body.web-mode .web-activity-tip-text {
   }
 }
 
+/* --- Web: страница перевода --- */
+body.web-mode .web-page-title-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+body.web-mode[data-web-transfer-view="1"] .web-page-title-block {
+  flex-direction: row;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.web-transfer-page-back {
+  display: none;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(15 23 42 / 0.1);
+  border-radius: 12px;
+  background: #fff;
+  color: rgb(71 85 105);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+body.web-mode[data-web-transfer-view="1"] .web-transfer-page-back {
+  display: inline-flex;
+}
+
+.web-transfer-page-back:hover {
+  border-color: rgb(13 159 110 / 0.35);
+  color: rgb(13 110 75);
+  background: rgb(13 159 110 / 0.06);
+}
+
+.web-transfer-page-back-icon {
+  width: 22px;
+  height: 22px;
+}
+
+body.web-mode #screen-activity.screen-active > .web-transfer-sheet {
+  display: none;
+}
+
+body.web-mode[data-web-transfer-view="1"] #screen-activity.screen-active > .web-transfer-sheet {
+  display: block;
+}
+
+body.web-mode[data-web-transfer-view="1"] #screen-activity.screen-active > :not(.web-transfer-sheet) {
+  display: none !important;
+}
+
+body.web-mode .web-transfer-sheet {
+  max-width: 720px;
+}
+
+body.web-mode .web-transfer-card {
+  padding: 22px 22px 24px !important;
+  border-radius: 20px !important;
+  background: #fff !important;
+  border: 1px solid rgb(15 23 42 / 0.08) !important;
+  box-shadow: 0 4px 22px rgb(15 23 42 / 0.06) !important;
+}
+
+body.web-mode .web-transfer-card-head {
+  margin-bottom: 4px;
+}
+
+body.web-mode .web-transfer-form {
+  gap: 18px;
+  margin-top: 8px;
+}
+
+body.web-mode .web-transfer-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+body.web-mode .web-transfer-field > span:first-child {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgb(71 85 105);
+}
+
+body.web-mode .web-transfer-accounts-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px 12px;
+  align-items: end;
+}
+
+@media (max-width: 720px) {
+  body.web-mode .web-transfer-accounts-row {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  body.web-mode .web-transfer-swap-btn {
+    justify-self: center;
+  }
+}
+
+body.web-mode .web-transfer-select-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 4px 4px 12px;
+  border-radius: 14px;
+  border: 1px solid rgb(15 23 42 / 0.1);
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+body.web-mode .web-transfer-select-icon {
+  display: flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+body.web-mode .web-transfer-select-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+body.web-mode .web-transfer-select-icon--from {
+  background: rgb(13 159 110 / 0.14);
+  color: rgb(13 110 75);
+}
+
+body.web-mode .web-transfer-select-icon--to {
+  background: rgb(59 130 246 / 0.14);
+  color: rgb(29 78 216);
+}
+
+body.web-mode .web-transfer-select {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(15 23 42);
+  padding: 10px 28px 10px 0;
+  appearance: none;
+  cursor: pointer;
+}
+
+body.web-mode .web-transfer-select-shell::after {
+  content: "";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid rgb(148 163 184);
+  border-bottom: 2px solid rgb(148 163 184);
+  transform: translateY(-60%) rotate(45deg);
+  pointer-events: none;
+}
+
+body.web-mode .web-transfer-swap-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgb(13 159 110 / 0.28);
+  background: rgb(13 159 110 / 0.1);
+  color: rgb(13 110 75);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+body.web-mode .web-transfer-swap-btn:hover {
+  background: rgb(13 159 110 / 0.18);
+}
+
+body.web-mode .web-transfer-swap-btn:active {
+  transform: scale(0.96);
+}
+
+body.web-mode .web-transfer-swap-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+body.web-mode .web-transfer-amount-row {
+  display: flex;
+  align-items: stretch;
+  border-radius: 14px;
+  border: 1px solid rgb(15 23 42 / 0.1);
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+body.web-mode .web-transfer-amount-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+body.web-mode .web-transfer-amount-input:focus {
+  outline: none;
+}
+
+body.web-mode .web-transfer-currency-badge {
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgb(51 65 85);
+  background: rgb(248 250 252);
+  border-left: 1px solid rgb(15 23 42 / 0.08);
+}
+
+body.web-mode .web-transfer-datetime input,
+body.web-mode .web-transfer-field input[type="text"]:not(.web-transfer-amount-input),
+body.web-mode .web-transfer-secondary-amount input {
+  border-radius: 14px;
+}
+
+body.web-mode .web-transfer-secondary-amount {
+  display: none;
+}
+
+body.web-mode .web-transfer-form.web-transfer-is-cross-currency .web-transfer-secondary-amount {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+body.web-mode .web-transfer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+body.web-mode .web-transfer-submit,
+body.web-mode .web-transfer-cancel-btn {
+  width: 100%;
+  justify-content: center;
+  min-height: 48px;
+  border-radius: 14px;
+}
+
+body.web-mode .web-transfer-cancel-btn {
+  background: #fff;
+  border: 1px solid rgb(15 23 42 / 0.14);
+  color: rgb(51 65 85);
+}
+
+body.web-mode .web-transfer-foot-tip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: rgb(248 250 252);
+  border: 1px solid rgb(15 23 42 / 0.07);
+}
+
+body.web-mode .web-transfer-foot-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+body.web-mode .web-transfer-foot-text {
+  margin: 0;
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgb(51 65 85);
+  min-width: min(100%, 200px);
+}
+
+body.web-mode .web-transfer-foot-more {
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
 /* --- Web: компактная главная (без вертикального скролла по возможности) --- */
 body.web-mode[data-app-active-screen="home"] .app-shell > main.content.tabbed-content {
   flex: 1 1 auto;

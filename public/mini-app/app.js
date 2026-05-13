@@ -675,10 +675,18 @@ function formatCurrencyOption(currency) {
   return `${currency.code} — ${currency.name}`;
 }
 
-function openScreen(screenName) {
+function openScreen(screenName, options = {}) {
   const nextScreen = screenName || "home";
 
   document.body.dataset.appActiveScreen = nextScreen;
+
+  if (isWebMode) {
+    if (nextScreen !== "activity") {
+      document.body.dataset.webTransferView = "";
+    } else {
+      document.body.dataset.webTransferView = options.transferView ? "1" : "";
+    }
+  }
 
   screenElements.forEach((screenElement) => {
     const isActive = screenElement.dataset.screen === nextScreen;
@@ -690,7 +698,15 @@ function openScreen(screenName) {
   });
 
   document.querySelectorAll("[data-web-nav]").forEach((button) => {
-    button.classList.toggle("is-active", button.dataset.webNav === nextScreen);
+    const nav = button.dataset.webNav ?? "";
+    const transferView = document.body.dataset.webTransferView === "1";
+    const isActivityOps = nav === "activity" && nextScreen === "activity" && !transferView;
+    const isOtherNav = nav !== "activity" && nav === nextScreen;
+    button.classList.toggle("is-active", isActivityOps || isOtherNav);
+  });
+
+  document.querySelectorAll('[data-web-sidebar-action="transfer"]').forEach((button) => {
+    button.classList.toggle("is-active", nextScreen === "activity" && document.body.dataset.webTransferView === "1");
   });
 
   if (isWebMode) {
@@ -1030,6 +1046,16 @@ function syncWebPageTitle(screenName) {
   }
 
   const key = screenName || "home";
+
+  if (key === "activity" && document.body.dataset.webTransferView === "1") {
+    webPageTitleElement.textContent = "Перевод между счетами";
+    if (webPageSubtitleElement) {
+      webPageSubtitleElement.textContent = "Переведите средства с одного счета на другой.";
+      webPageSubtitleElement.hidden = false;
+    }
+    return;
+  }
+
   webPageTitleElement.textContent = WEB_PAGE_TITLES[key] ?? "Balancy";
 
   if (!webPageSubtitleElement) {
@@ -1871,11 +1897,54 @@ function renderReport(report) {
   }
 }
 
+function syncWebTransferAmountCurrencyUi() {
+  const badge = document.getElementById("webTransferAmountCurrencyBadge");
+  if (!badge || !transferFromAccountInput || !transferToAccountInput || !transferForm) {
+    return;
+  }
+
+  const fromOpt = transferFromAccountInput.selectedOptions[0];
+  const toOpt = transferToAccountInput.selectedOptions[0];
+  const fromCur = (fromOpt?.dataset?.currency ?? "").trim();
+  const toCur = (toOpt?.dataset?.currency ?? "").trim();
+
+  badge.textContent = fromCur || "—";
+
+  transferForm.classList.toggle("web-transfer-is-cross-currency", Boolean(fromCur && toCur && fromCur !== toCur));
+}
+
+function swapWebTransferAccounts() {
+  if (!transferFromAccountInput || !transferToAccountInput) {
+    return;
+  }
+
+  const fromValue = transferFromAccountInput.value;
+  const toValue = transferToAccountInput.value;
+  transferFromAccountInput.value = toValue;
+  transferToAccountInput.value = fromValue;
+  syncWebTransferAmountCurrencyUi();
+}
+
+function exitWebTransferView() {
+  if (transferForm) {
+    transferForm.reset();
+  }
+
+  if (transferDateInput) {
+    transferDateInput.value = getCurrentLocalDateTimeValue();
+  }
+
+  openScreen("activity", { transferView: false });
+  populateAccountOptions();
+}
+
 function populateAccountOptions() {
   const accountOptions = state.accounts
     .map(
       (account) =>
-        `<option value="${escapeHtml(account.id)}">${escapeHtml(account.name)} · ${escapeHtml(account.currency_code)}</option>`
+        `<option value="${escapeHtml(account.id)}" data-currency="${escapeHtml(account.currency_code)}">${escapeHtml(
+          account.name
+        )} · ${escapeHtml(account.currency_code)}</option>`
     )
     .join("");
 
@@ -1883,6 +1952,7 @@ function populateAccountOptions() {
     entryAccountInput.innerHTML = `<option value="">Сначала создайте счет</option>`;
     transferFromAccountInput.innerHTML = `<option value="">Сначала создайте счет</option>`;
     transferToAccountInput.innerHTML = `<option value="">Сначала создайте счет</option>`;
+    syncWebTransferAmountCurrencyUi();
     return;
   }
 
@@ -1893,6 +1963,8 @@ function populateAccountOptions() {
   if (state.accounts.length > 1) {
     transferToAccountInput.selectedIndex = 1;
   }
+
+  syncWebTransferAmountCurrencyUi();
 }
 
 function populateCurrencyOptions() {
@@ -3409,10 +3481,17 @@ if (refreshButton) {
       closeWebNewEntryMenu();
       if (kind === "transfer") {
         closeEntryTypeModal();
-        openScreen("activity");
-        window.setTimeout(() => {
-          transferForm?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 120);
+        if (isWebMode) {
+          openScreen("activity", { transferView: true });
+          window.requestAnimationFrame(() => {
+            window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+          });
+        } else {
+          openScreen("activity");
+          window.setTimeout(() => {
+            transferForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 120);
+        }
       } else if (kind === "income" || kind === "expense") {
         openEntryScreenForKind(kind);
       } else if (kind === "account") {
@@ -3503,11 +3582,33 @@ if (refreshButton) {
         closeWebNewEntryMenu();
         closeWebProfileDropdown();
         closeEntryTypeModal();
-        openScreen("activity");
-        window.setTimeout(() => {
-          transferForm?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 120);
+        openScreen("activity", { transferView: true });
+        window.requestAnimationFrame(() => {
+          window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        });
       }
+    });
+  });
+
+  document.getElementById("webTransferHeaderBack")?.addEventListener("click", () => {
+    exitWebTransferView();
+  });
+
+  document.getElementById("webTransferCancelButton")?.addEventListener("click", () => {
+    exitWebTransferView();
+  });
+
+  document.getElementById("webTransferSwapAccounts")?.addEventListener("click", () => {
+    swapWebTransferAccounts();
+  });
+
+  transferFromAccountInput?.addEventListener("change", syncWebTransferAmountCurrencyUi);
+  transferToAccountInput?.addEventListener("change", syncWebTransferAmountCurrencyUi);
+
+  document.getElementById("webTransferTipMore")?.addEventListener("click", () => {
+    openHelpDocumentationModal();
+    window.requestAnimationFrame(() => {
+      document.getElementById("helpDocTransferSection")?.scrollIntoView({ block: "start", behavior: "smooth" });
     });
   });
 
@@ -3618,10 +3719,17 @@ entryTypeActionButtons.forEach((button) => {
 
 document.getElementById("entryTypeOpenTransferButton")?.addEventListener("click", () => {
   closeEntryTypeModal();
-  openScreen("activity");
-  window.setTimeout(() => {
-    transferForm?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, 120);
+  if (isWebMode) {
+    openScreen("activity", { transferView: true });
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
+  } else {
+    openScreen("activity");
+    window.setTimeout(() => {
+      transferForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+  }
 });
 
 attachAccountsListListener();
