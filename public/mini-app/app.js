@@ -749,6 +749,7 @@ function openScreen(screenName, options = {}) {
     void loadReport();
   } else if (isWebMode && webReportsBodyEl) {
     webReportsBodyEl.hidden = true;
+    destroyReportCharts();
   }
 }
 
@@ -2354,6 +2355,17 @@ function renderReportChartsFromReport(report) {
   }
 }
 
+function renderReportWebVisuals(report) {
+  if (!isWebMode) {
+    return;
+  }
+  renderReportCategoryMatrix(report);
+  renderReportPeriodSummary(report);
+  drawAllReportSparks(report);
+  updateReportDayTip(report);
+  renderReportChartsFromReport(report);
+}
+
 function renderReport(report) {
   const periodPhrase = formatReportPeriod(report?.period ?? "month");
   const applied = report?.appliedCategory;
@@ -2457,13 +2469,6 @@ function renderReport(report) {
       : "Когда появятся расходы, здесь будет разбивка по статьям."
   );
 
-  if (isWebMode) {
-    renderReportCategoryMatrix(report);
-    renderReportPeriodSummary(report);
-    drawAllReportSparks(report);
-    updateReportDayTip(report);
-  }
-
   const canExport = Boolean(report && (isWebMode || getInitData()));
 
   if (reportDownloadCsvButton) {
@@ -2474,9 +2479,7 @@ function renderReport(report) {
     reportCsvStatementButton.disabled = !canExport;
   }
 
-  if (isWebMode) {
-    renderReportChartsFromReport(report);
-  } else {
+  if (!isWebMode) {
     destroyReportCharts();
   }
 }
@@ -3358,6 +3361,7 @@ async function loadReport() {
   state.report = payload.report;
   state.reportExportQuery = query;
   renderReport(state.report);
+  renderReportWebVisuals(state.report);
 }
 
 async function downloadReportCsv() {
@@ -3681,8 +3685,14 @@ async function loadApp(options = {}) {
     state.recentEntries = payload.recentEntries ?? [];
     state.recentTransfers = payload.recentTransfers ?? [];
     state.summary = payload.summary ?? null;
-    state.report = payload.report ?? null;
-    state.reportExportQuery = buildReportQueryString();
+
+    const activeScreen = document.body.dataset.appActiveScreen ?? "home";
+    const onReportsScreen = activeScreen === "reports";
+
+    if (!onReportsScreen) {
+      state.report = payload.report ?? null;
+      state.reportExportQuery = buildReportQueryString();
+    }
 
     const resolvedReportingCurrency = payload.summary?.reportingCurrency ?? reportingCurrency;
     setStoredReportingCurrency(resolvedReportingCurrency);
@@ -4519,9 +4529,6 @@ entryKindInput.addEventListener("change", () => {
 reportPeriodInput.addEventListener("change", () => {
   toggleReportDateInputs();
   syncReportPeriodSegmented();
-  if (document.body.dataset.appActiveScreen === "reports") {
-    void loadReport();
-  }
 });
 
 document.querySelectorAll("[data-report-period]").forEach((button) => {
@@ -4533,9 +4540,6 @@ document.querySelectorAll("[data-report-period]").forEach((button) => {
     reportPeriodInput.value = next;
     toggleReportDateInputs();
     syncReportPeriodSegmented();
-    if (document.body.dataset.appActiveScreen === "reports") {
-      void loadReport();
-    }
   });
 });
 
