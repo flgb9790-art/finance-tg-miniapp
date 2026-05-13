@@ -4512,14 +4512,6 @@ body.web-mode[data-app-active-screen="home"] .currency-breakdown {
 }
 
 /* ——— Отчёты (веб + Telegram) ——— */
-.report-filter-label {
-  font-size: 11px;
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: rgb(100 116 139);
-}
-
 .report-filter-web-only {
   display: none;
 }
@@ -4765,24 +4757,88 @@ body.web-mode #screen-reports {
 .report-inline-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
   min-width: 0;
 }
 
 .report-inline-field.report-filter-date-start,
 .report-inline-field.report-filter-date-end {
-  flex: 0 1 150px;
+  flex: 0 1 168px;
 }
 
-.report-filter-select,
-.report-filter-date {
+.report-filter-composite {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
   min-height: 40px;
+  padding: 0 10px 0 12px;
   border-radius: 10px;
   border: 1px solid rgb(15 23 42 / 0.12);
-  padding: 8px 11px;
-  font-size: 13px;
   background: #fff;
   color: rgb(15 23 42);
+  box-sizing: border-box;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.report-filter-composite:focus-within {
+  border-color: rgb(36 173 124 / 0.45);
+  box-shadow: 0 0 0 3px rgb(36 173 124 / 0.12);
+}
+
+.report-filter-composite-prefix {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgb(100 116 139);
+  line-height: 1.2;
+  max-width: 38%;
+}
+
+.report-filter-composite-prefix--wide {
+  max-width: 44%;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.report-filter-composite-prefix--letter {
+  max-width: none;
+  min-width: 1.1em;
+  text-align: center;
+  text-transform: none;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: rgb(71 85 105);
+}
+
+.report-filter-composite .report-filter-select,
+.report-filter-composite .report-filter-date {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 36px;
+  padding: 6px 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 13px;
+  color: rgb(15 23 42);
+  box-shadow: none;
+  outline: none;
+}
+
+.report-filter-composite--date .report-filter-date {
+  padding-right: 2px;
+}
+
+.report-filter-composite .report-filter-select:focus,
+.report-filter-composite .report-filter-date:focus {
+  outline: none;
 }
 
 .report-apply-btn {

@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513reports-segment-row-inline-csv";
+        var BALANCY_CLIENT_ASSET_REV = "20260513report-filters-composite";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -918,51 +918,111 @@
                         <button type="button" class="report-segment" data-report-period="custom">Произвольный</button>
                       </div>
                       <label class="report-inline-field report-period-native-wrap">
-                        <span class="report-filter-label">Период</span>
-                        <select id="reportPeriodInput" name="period" class="report-filter-select">
-                          <option value="week">Неделя</option>
-                          <option value="month" selected>Месяц</option>
-                          <option value="quarter">3 месяца</option>
-                          <option value="year">Год</option>
-                          <option value="custom">Произвольный период</option>
-                        </select>
+                        <div class="report-filter-composite" title="Период">
+                          <span class="report-filter-composite-prefix" aria-hidden="true">Период</span>
+                          <select
+                            id="reportPeriodInput"
+                            name="period"
+                            class="report-filter-select"
+                            aria-label="Период"
+                          >
+                            <option value="week">Неделя</option>
+                            <option value="month" selected>Месяц</option>
+                            <option value="quarter">3 месяца</option>
+                            <option value="year">Год</option>
+                            <option value="custom">Произвольный период</option>
+                          </select>
+                        </div>
                       </label>
 
                       <label class="report-inline-field report-filter-web-only">
-                        <span class="report-filter-label">Счета</span>
-                        <select id="reportAccountFilterInput" name="reportAccountFilter" class="report-filter-select">
-                          <option value="">Все счета</option>
-                        </select>
+                        <div class="report-filter-composite" title="Счета">
+                          <span class="report-filter-composite-prefix" aria-hidden="true">Счета</span>
+                          <select
+                            id="reportAccountFilterInput"
+                            name="reportAccountFilter"
+                            class="report-filter-select"
+                            aria-label="Счета"
+                          >
+                            <option value="">Все счета</option>
+                          </select>
+                        </div>
                       </label>
 
                       <label class="report-inline-field">
-                        <span class="report-filter-label">Валюта отчёта</span>
-                        <select id="reportingCurrencyInput" name="reportingCurrency" class="report-filter-select"></select>
+                        <div class="report-filter-composite" title="Валюта отчёта">
+                          <span
+                            class="report-filter-composite-prefix report-filter-composite-prefix--wide"
+                            aria-hidden="true"
+                            >Валюта отчёта</span>
+                          <select
+                            id="reportingCurrencyInput"
+                            name="reportingCurrency"
+                            class="report-filter-select"
+                            aria-label="Валюта отчёта"
+                          ></select>
+                        </div>
                       </label>
 
                       <label class="report-inline-field">
-                        <span class="report-filter-label">Категория</span>
-                        <select id="reportCategoryFilterInput" name="reportCategoryFilter" class="report-filter-select">
-                          <option value="">Все статьи</option>
-                        </select>
+                        <div class="report-filter-composite" title="Категория">
+                          <span class="report-filter-composite-prefix" aria-hidden="true">Категория</span>
+                          <select
+                            id="reportCategoryFilterInput"
+                            name="reportCategoryFilter"
+                            class="report-filter-select"
+                            aria-label="Категория"
+                          >
+                            <option value="">Все статьи</option>
+                          </select>
+                        </div>
                       </label>
 
                       <label class="report-inline-field report-filter-web-only">
-                        <span class="report-filter-label">Тип</span>
-                        <select id="reportKindFilterInput" name="reportKindFilter" class="report-filter-select">
-                          <option value="">Все</option>
-                          <option value="income">Доход</option>
-                          <option value="expense">Расход</option>
-                        </select>
+                        <div class="report-filter-composite" title="Тип">
+                          <span class="report-filter-composite-prefix" aria-hidden="true">Тип</span>
+                          <select
+                            id="reportKindFilterInput"
+                            name="reportKindFilter"
+                            class="report-filter-select"
+                            aria-label="Тип"
+                          >
+                            <option value="">Все</option>
+                            <option value="income">Доход</option>
+                            <option value="expense">Расход</option>
+                          </select>
+                        </div>
                       </label>
 
                       <label class="report-inline-field report-filter-date-start">
-                        <span class="report-filter-label">С</span>
-                        <input id="reportStartDateInput" name="startDate" type="date" class="report-filter-date" />
+                        <div class="report-filter-composite report-filter-composite--date">
+                          <span
+                            class="report-filter-composite-prefix report-filter-composite-prefix--letter"
+                            aria-hidden="true"
+                            >С</span>
+                          <input
+                            id="reportStartDateInput"
+                            name="startDate"
+                            type="date"
+                            class="report-filter-date"
+                            aria-label="С (дата начала произвольного периода)"
+                          />
+                        </div>
                       </label>
                       <label class="report-inline-field report-filter-date-end">
-                        <span class="report-filter-label">По</span>
-                        <input id="reportEndDateInput" name="endDate" type="date" class="report-filter-date" />
+                        <div class="report-filter-composite report-filter-composite--date">
+                          <span
+                            class="report-filter-composite-prefix report-filter-composite-prefix--letter"
+                            aria-hidden="true"
+                            >По</span>
+                          <input
+                            id="reportEndDateInput"
+                            name="endDate"
+                            type="date"
+                            class="report-filter-date"
+                            aria-label="По (дата окончания произвольного периода)"
+                          />
+                        </div>
                       </label>
                     </div>
                     <div class="report-period-actions">
