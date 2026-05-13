@@ -1777,6 +1777,9 @@ function attachWebCategoriesChrome() {
   webCategoriesChromeAttached = true;
 
   document.querySelectorAll("[data-web-categories-tab]").forEach((btn) => {
+    btn.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+    });
     btn.addEventListener("click", () => {
       const next = btn.dataset.webCategoriesTab;
       if (next !== "income" && next !== "expense") {

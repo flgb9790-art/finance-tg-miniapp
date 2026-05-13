@@ -5661,8 +5661,8 @@ body.web-mode .web-categories-footer {
 
 .web-categories-panel {
   padding: 20px 20px 22px;
-  position: sticky;
-  top: 12px;
+  position: relative;
+  top: auto;
   align-self: start;
   border-radius: 16px;
   border: 1px solid rgb(15 23 42 / 0.08);
