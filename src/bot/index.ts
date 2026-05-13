@@ -36,60 +36,39 @@ const welcomeBannerPngPath = path.join(
   "../../public/mini-app/assets/balancy-welcome-16x9.png"
 );
 
+/** URL для кнопки Web App в приветствии (стабильный продакшен). */
+const WELCOME_WEB_APP_OPEN_URL =
+  "https://finance-tg-miniapp-production.up.railway.app/mini-app/";
+
 const WELCOME_PHOTO_CAPTION_HTML = [
-  "<b>Balancy</b> — личные финансы в Telegram.",
+  "<b>Balancy</b> — личные финансы в одном месте.",
   "",
-  "В приложении: дашборд, доходы и расходы, категории, переводы между счетами, отчёты за период и курсы валют.",
-  "Вход в аккаунт: кнопка <b>«Открыть приложение»</b> ниже или <b>меню</b> слева от поля ввода — один и тот же адрес.",
-  "В этом чате — быстро завести счёт и посмотреть список (кнопки под полем ввода)."
+  "Следите за балансами и курсами, ведите доходы и расходы по категориям, переводите между счетами и выгружайте отчёты.",
+  "Нажмите <b>«Открыть приложение»</b> под этим постером."
 ].join("\n");
-
-function publicMiniAppUrl(): string | null {
-  const base = (env.appUrl ?? "").trim().replace(/\/+$/, "");
-
-  return base.length > 0 ? `${base}/mini-app/` : null;
-}
-
-function buildWelcomeDetailHtml(): string {
-  return [
-    "<b>Что где делать</b>",
-    "",
-    "<b>Приложение</b> — полный сценарий: общий баланс с пересчётом в выбранную валюту, последние операции, настройка категорий, экспорт отчётов.",
-    "",
-    "<b>Этот бот</b> — пошаговое создание счёта (название → тип → валюта → стартовый баланс) и просмотр счетов без открытия приложения.",
-    "",
-    "<b>Вход в аккаунт</b> — кнопка <b>«Открыть приложение»</b> под постером в чате или кнопка <b>меню</b> слева от поля ввода (рядом с именем бота). Это один и тот же адрес приложения.",
-    "",
-    "<i>Кнопка Mini App на нижней клавиатуре в Telegram не передаёт сессию в приложение — поэтому мы её не показываем.</i>"
-  ].join("\n");
-}
 
 function buildHelpHtml(): string {
   return [
-    "<b>Справка Balancy</b>",
+    "<b>Balancy</b> — учёт финансов в мини-приложении.",
     "",
-    buildWelcomeDetailHtml(),
-    "",
-    "<b>Команды</b>",
-    "/start — приветствие",
+    "<b>Команды в этом чате</b>",
+    "/start — приветствие с постером",
+    "/add — добавить счёт по шагам",
     "/accounts — список счетов",
     "/help — эта справка"
   ].join("\n");
 }
 
+const welcomeOpenAppMarkup: TelegramBot.InlineKeyboardMarkup = {
+  inline_keyboard: [
+    [{ text: "Открыть приложение", web_app: { url: WELCOME_WEB_APP_OPEN_URL } }]
+  ]
+};
+
 async function sendWelcomeBannerPhoto(
   bot: TelegramBot,
   chatId: number
 ): Promise<void> {
-  const miniUrl = publicMiniAppUrl();
-  const photoMarkup: TelegramBot.InlineKeyboardMarkup | undefined = miniUrl
-    ? {
-        inline_keyboard: [
-          [{ text: "Открыть приложение", web_app: { url: miniUrl } }]
-        ]
-      }
-    : undefined;
-
   if (!fs.existsSync(welcomeBannerPngPath)) {
     console.warn(
       "[telegram] Welcome banner PNG missing at %s. Run: npm run welcome:png",
@@ -98,7 +77,7 @@ async function sendWelcomeBannerPhoto(
 
     await bot.sendMessage(chatId, WELCOME_PHOTO_CAPTION_HTML, {
       parse_mode: "HTML",
-      ...(photoMarkup ? { reply_markup: photoMarkup } : {})
+      reply_markup: welcomeOpenAppMarkup
     });
 
     return;
@@ -107,31 +86,32 @@ async function sendWelcomeBannerPhoto(
   await bot.sendPhoto(chatId, welcomeBannerPngPath, {
     caption: WELCOME_PHOTO_CAPTION_HTML,
     parse_mode: "HTML",
-    ...(photoMarkup ? { reply_markup: photoMarkup } : {})
+    reply_markup: welcomeOpenAppMarkup
   });
 }
 
-async function sendWelcomeFollowUp(
+/** Снимает reply-клавиатуру, не добавляя длинного текста к приветствию. */
+async function sendWelcomeKeyboardCleanup(
   bot: TelegramBot,
   chatId: number
 ): Promise<void> {
-  await bot.sendMessage(chatId, `${buildWelcomeDetailHtml()}\n\nПрофиль сохранён.`, {
-    parse_mode: "HTML",
-    reply_markup: createMainKeyboard()
+  await bot.sendMessage(chatId, "Профиль сохранён.", {
+    reply_markup: { remove_keyboard: true }
   });
 }
 
 async function sendHelpMessage(bot: TelegramBot, chatId: number): Promise<void> {
   await bot.sendMessage(chatId, buildHelpHtml(), {
     parse_mode: "HTML",
-    reply_markup: createMainKeyboard()
+    reply_markup: { remove_keyboard: true }
   });
 }
 
 function scheduleBotCommandMenu(bot: TelegramBot): void {
   void bot
     .setMyCommands([
-      { command: "start", description: "Приветствие и меню" },
+      { command: "start", description: "Приветствие" },
+      { command: "add", description: "Добавить счёт (мастер в чате)" },
       { command: "accounts", description: "Список счетов" },
       { command: "help", description: "Возможности Balancy" }
     ])
@@ -140,44 +120,28 @@ function scheduleBotCommandMenu(bot: TelegramBot): void {
     });
 }
 
-/**
- * Кнопка меню (слева от поля ввода) с тем же URL, что и inline web_app под постером.
- * Без этого в @BotFather мог остаться другой URL.
- */
-function syncDefaultMiniAppMenuButton(bot: TelegramBot): void {
-  const miniUrl = publicMiniAppUrl();
+function scheduleBotProfile(bot: TelegramBot): void {
+  const shortDescription =
+    "Balancy — балансы, операции, категории и отчёты. Откройте приложение кнопкой под постером после /start.";
 
-  if (!miniUrl) {
-    return;
-  }
-
-  const menuButton = {
-    type: "web_app" as const,
-    text: "Открыть приложение",
-    web_app: { url: miniUrl }
-  };
+  const description = [
+    "Balancy помогает вести личные финансы: счета и балансы, доходы и расходы по категориям, переводы, курсы валют и отчёты.",
+    "",
+    "Отправьте /start — пришлём постер и кнопку «Открыть приложение».",
+    "В чате также: /add — новый счёт, /accounts — список счетов, /help — краткая справка."
+  ].join("\n");
 
   void bot
-    .setChatMenuButton({
-      menu_button: menuButton
-    })
-    .then(() => {
-      console.log("[telegram] Меню чата: Mini App → %s", miniUrl);
-    })
+    .setMyShortDescription({ short_description: shortDescription, language_code: "ru" })
     .catch((error) => {
-      console.warn("[telegram] setChatMenuButton:", error);
+      console.warn("[telegram] setMyShortDescription failed:", error);
     });
-}
 
-function createMainKeyboard(): TelegramBot.ReplyKeyboardMarkup {
-  return {
-    keyboard: [
-      [{ text: "Добавить счет" }],
-      [{ text: "Мои счета" }],
-      [{ text: "Помощь" }]
-    ],
-    resize_keyboard: true
-  };
+  void bot
+    .setMyDescription({ description, language_code: "ru" })
+    .catch((error) => {
+      console.warn("[telegram] setMyDescription failed:", error);
+    });
 }
 
 function createTypeKeyboard(): TelegramBot.InlineKeyboardMarkup {
@@ -214,7 +178,7 @@ function formatAccountsMessage(
     return [
       "У вас пока нет счетов.",
       "",
-      "Нажмите «Добавить счет», чтобы создать первый счет."
+      "Отправьте /add или напишите в чат: Добавить счет — чтобы создать первый счет."
     ].join("\n");
   }
 
@@ -233,7 +197,7 @@ async function showAccounts(bot: TelegramBot, chatId: number, userId: string) {
   const accounts = await listAccounts(userId);
 
   await bot.sendMessage(chatId, formatAccountsMessage(accounts), {
-    reply_markup: createMainKeyboard()
+    reply_markup: { remove_keyboard: true }
   });
 }
 
@@ -248,14 +212,15 @@ async function startAccountCreation(
   });
 
   await bot.sendMessage(chatId, "Введите название счета. Например: TBC card", {
-    reply_markup: createMainKeyboard()
+    reply_markup: { remove_keyboard: true }
   });
 }
 
 export const TELEGRAM_WEBHOOK_PATH = "/api/telegram/webhook";
 
 function registerTelegramHandlers(bot: TelegramBot): void {
-  bot.onText(/^\/start$/, async (message) => {
+  // /start, /start@bot, /start payload (deep links) — иначе приветствие не срабатывает
+  bot.onText(/^\/start(?:@\S+)?(?:\s+[\s\S]*)?$/, async (message) => {
     if (!message.from || !message.chat.id) {
       return;
     }
@@ -264,7 +229,7 @@ function registerTelegramHandlers(bot: TelegramBot): void {
       await registerTelegramUser(message.from);
 
       await sendWelcomeBannerPhoto(bot, message.chat.id);
-      await sendWelcomeFollowUp(bot, message.chat.id);
+      await sendWelcomeKeyboardCleanup(bot, message.chat.id);
     } catch (error) {
       console.error("Failed to register Telegram user", error);
 
@@ -275,7 +240,7 @@ function registerTelegramHandlers(bot: TelegramBot): void {
     }
   });
 
-  bot.onText(/^\/help$/, async (message) => {
+  bot.onText(/^\/help(?:@\S+)?$/, async (message) => {
     if (!message.chat.id) {
       return;
     }
@@ -292,7 +257,7 @@ function registerTelegramHandlers(bot: TelegramBot): void {
     }
   });
 
-  bot.onText(/^\/accounts$/, async (message) => {
+  bot.onText(/^\/accounts(?:@\S+)?$/, async (message) => {
     if (!message.from) {
       return;
     }
@@ -305,6 +270,23 @@ function registerTelegramHandlers(bot: TelegramBot): void {
       await bot.sendMessage(
         message.chat.id,
         "Не удалось получить список счетов."
+      );
+    }
+  });
+
+  bot.onText(/^\/add(?:@\S+)?$/, async (message) => {
+    if (!message.from || !message.chat.id) {
+      return;
+    }
+
+    try {
+      const user = await registerTelegramUser(message.from);
+      await startAccountCreation(bot, message.chat.id, user.id);
+    } catch (error) {
+      console.error("Failed to start account creation", error);
+      await bot.sendMessage(
+        message.chat.id,
+        "Не удалось начать создание счета. Попробуйте ещё раз."
       );
     }
   });
@@ -400,7 +382,7 @@ function registerTelegramHandlers(bot: TelegramBot): void {
             `Баланс: ${account.balance}`
           ].join("\n"),
           {
-            reply_markup: createMainKeyboard()
+            reply_markup: { remove_keyboard: true }
           }
         );
 
@@ -479,7 +461,7 @@ export function attachTelegramBotRoutes(app: Express): TelegramBot {
 
   registerTelegramHandlers(bot);
   scheduleBotCommandMenu(bot);
-  syncDefaultMiniAppMenuButton(bot);
+  scheduleBotProfile(bot);
 
   if (useWebhook) {
     app.post(TELEGRAM_WEBHOOK_PATH, (req, res) => {

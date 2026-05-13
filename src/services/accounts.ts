@@ -144,6 +144,44 @@ export async function deleteAccount(
   accountId: string,
   userId: string
 ): Promise<void> {
+  const existing = await getAccountById(accountId, userId);
+
+  if (!existing) {
+    throw new Error("Счёт не найден или уже удалён.");
+  }
+
+  // Схема: entries / transfers → accounts ON DELETE RESTRICT.
+  // Сначала убираем зависимости, иначе delete на accounts не пройдёт.
+  const { error: entriesError } = await supabase
+    .from("entries")
+    .delete()
+    .eq("account_id", accountId)
+    .eq("user_id", userId);
+
+  if (entriesError) {
+    throw entriesError;
+  }
+
+  const { error: transfersFromError } = await supabase
+    .from("transfers")
+    .delete()
+    .eq("from_account_id", accountId)
+    .eq("user_id", userId);
+
+  if (transfersFromError) {
+    throw transfersFromError;
+  }
+
+  const { error: transfersToError } = await supabase
+    .from("transfers")
+    .delete()
+    .eq("to_account_id", accountId)
+    .eq("user_id", userId);
+
+  if (transfersToError) {
+    throw transfersToError;
+  }
+
   const { error } = await supabase
     .from("accounts")
     .delete()

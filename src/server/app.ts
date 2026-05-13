@@ -40,6 +40,53 @@ import {
 } from "../lib/telegram-webapp.js";
 import type { OperationKind } from "../shared/domain.js";
 
+function getThrownErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  if (typeof error === "object" && error !== null) {
+    const record = error as Record<string, unknown>;
+
+    if (typeof record.message === "string" && record.message.trim()) {
+      return record.message;
+    }
+
+    if (typeof record.details === "string" && record.details.trim()) {
+      return record.details;
+    }
+
+    if (typeof record.hint === "string" && record.hint.trim()) {
+      return record.hint;
+    }
+  }
+
+  if (typeof error === "string" && error.trim()) {
+    return error;
+  }
+
+  return "";
+}
+
+function isForeignKeyViolation(error: unknown, message: string): boolean {
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("foreign key") ||
+    normalized.includes("still referenced") ||
+    normalized.includes("on delete restrict") ||
+    normalized.includes("violates foreign key")
+  ) {
+    return true;
+  }
+
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as { code?: string }).code === "23503"
+  );
+}
+
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirPath = path.dirname(currentFilePath);
 const projectRootPath = path.resolve(currentDirPath, "../../");
@@ -129,6 +176,10 @@ export function createHttpApp(): express.Express {
 
   app.get("/health", (_req, res) => {
     res.json({ ok: true });
+  });
+
+  app.get("/", (_req, res) => {
+    res.redirect(302, "/mini-app/");
   });
 
   app.get("/mini-app", (_req, res) => {
@@ -332,15 +383,12 @@ export function createHttpApp(): express.Express {
       console.error("Failed to delete account from mini app", error);
 
       const message =
-        error instanceof Error ? error.message : "Failed to delete account";
-      const normalizedMessage = message.toLowerCase();
+        getThrownErrorMessage(error) || "Не удалось удалить счёт.";
 
       res.status(400).json({
-        error:
-          normalizedMessage.includes("foreign key") ||
-          normalizedMessage.includes("on delete restrict")
-            ? "Нельзя удалить счет, пока он используется в операциях или переводах."
-            : message
+        error: isForeignKeyViolation(error, message)
+          ? "Нельзя удалить счет, пока он используется в операциях или переводах."
+          : message
       });
     }
   });

@@ -2011,12 +2011,19 @@ async function authenticatedFetchRaw(url, options = {}) {
 async function apiFetch(url, options = {}) {
   const method = String(options.method ?? "GET").toUpperCase();
   const optionHeaders = { ...(options.headers ?? {}) };
+  const rawBody = options.body;
+  const hasBody =
+    rawBody !== undefined &&
+    rawBody !== null &&
+    !(typeof rawBody === "string" && rawBody.length === 0);
 
   const headers = {
     ...optionHeaders,
     "Content-Type":
       optionHeaders["Content-Type"] ??
-      (method === "GET" || method === "HEAD" ? undefined : "application/json"),
+      (method === "GET" || method === "HEAD" || !hasBody
+        ? undefined
+        : "application/json"),
     "x-telegram-init-data": getInitData(),
     "ngrok-skip-browser-warning": "true",
     "bypass-tunnel-reminder": "true"
@@ -2066,7 +2073,7 @@ async function apiFetch(url, options = {}) {
   if (!usableJson && trimmed.length > 0) {
     const hint =
       /ngrok|loca\.lt|tunnel/i.test(trimmed)
-        ? " Похоже на страницу туннеля (ngrok/localtunnel): проверьте URL и BOT_APP_URL."
+        ? " Похоже на страницу туннеля (ngrok/localtunnel): проверьте URL и переменную APP_URL на сервере."
         : "";
     throw new Error(`Сервер вернул HTML или не-JSON при успешном ответе.${hint}`);
   }
