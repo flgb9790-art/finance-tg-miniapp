@@ -852,6 +852,21 @@ export function createHttpApp(): express.Express {
         typeof req.query.categoryId === "string" ? req.query.categoryId.trim() : "";
       const categoryId = categoryIdRaw.length > 0 ? categoryIdRaw : undefined;
 
+      const accountIdRaw =
+        typeof req.query.accountId === "string" ? req.query.accountId.trim() : "";
+      const accountId = accountIdRaw.length > 0 ? accountIdRaw : undefined;
+
+      const kindRaw = typeof req.query.kind === "string" ? req.query.kind.trim() : "";
+      const kind =
+        kindRaw === "income" || kindRaw === "expense"
+          ? (kindRaw as "income" | "expense")
+          : undefined;
+
+      if (kindRaw.length > 0 && kind === undefined) {
+        res.status(400).json({ error: "Invalid kind filter" });
+        return;
+      }
+
       if (!["week", "month", "quarter", "custom"].includes(period)) {
         res.status(400).json({ error: "Report period is invalid" });
         return;
@@ -863,7 +878,9 @@ export function createHttpApp(): express.Express {
         startDate,
         endDate,
         reportingCurrency,
-        categoryId
+        categoryId,
+        accountId,
+        kind
       });
 
       res.json({ report });
@@ -897,6 +914,21 @@ export function createHttpApp(): express.Express {
         typeof req.query.categoryId === "string" ? req.query.categoryId.trim() : "";
       const categoryId = categoryIdRaw.length > 0 ? categoryIdRaw : undefined;
 
+      const accountIdRaw =
+        typeof req.query.accountId === "string" ? req.query.accountId.trim() : "";
+      const accountId = accountIdRaw.length > 0 ? accountIdRaw : undefined;
+
+      const kindRaw = typeof req.query.kind === "string" ? req.query.kind.trim() : "";
+      const kind =
+        kindRaw === "income" || kindRaw === "expense"
+          ? (kindRaw as "income" | "expense")
+          : undefined;
+
+      if (kindRaw.length > 0 && kind === undefined) {
+        res.status(400).json({ error: "Invalid kind filter" });
+        return;
+      }
+
       if (!["week", "month", "quarter", "custom"].includes(period)) {
         res.status(400).json({ error: "Report period is invalid" });
         return;
@@ -908,7 +940,9 @@ export function createHttpApp(): express.Express {
         startDate,
         endDate,
         reportingCurrency,
-        categoryId
+        categoryId,
+        accountId,
+        kind
       };
 
       const { report, operations } = await buildReportExportPayload(exportInput);

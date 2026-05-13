@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513transfer-fullwidth";
+        var BALANCY_CLIENT_ASSET_REV = "20260513reports-charts";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -872,110 +872,175 @@
         </section>
 
         <section id="screen-reports" class="screen" data-screen="reports">
-          <section class="card">
-            <p class="section-label">Отчет</p>
-            <form id="reportForm" class="stacked-form">
-              <label>
-                <span>Период</span>
-                <select id="reportPeriodInput" name="period">
-                  <option value="week">Неделя</option>
-                  <option value="month" selected>Месяц</option>
-                  <option value="quarter">3 месяца</option>
-                  <option value="custom">Произвольный период</option>
-                </select>
-              </label>
+          <div id="webReportsRoot" class="web-reports-root">
+            <section class="card report-filters-card">
+              <p class="section-label report-filters-telegram-title">Отчет</p>
+              <form id="reportForm" class="stacked-form report-filter-form">
+                <div class="report-filter-fields">
+                  <label class="report-filter-field report-filter-field--period">
+                    <span class="report-filter-label">Период</span>
+                    <div class="native-datetime-shell report-filter-control-shell">
+                      <select id="reportPeriodInput" name="period" class="report-filter-select">
+                        <option value="week">Неделя</option>
+                        <option value="month" selected>Месяц</option>
+                        <option value="quarter">3 месяца</option>
+                        <option value="custom">Произвольный период</option>
+                      </select>
+                    </div>
+                  </label>
 
-              <label>
-                <span>Валюта отчета</span>
-                <select id="reportingCurrencyInput" name="reportingCurrency"></select>
-              </label>
+                  <label class="report-filter-field report-filter-field--currency">
+                    <span class="report-filter-label">Валюта отчета</span>
+                    <div class="native-datetime-shell report-filter-control-shell">
+                      <select id="reportingCurrencyInput" name="reportingCurrency" class="report-filter-select"></select>
+                    </div>
+                  </label>
 
-              <label>
-                <span>Статья (опционально)</span>
-                <select id="reportCategoryFilterInput" name="reportCategoryFilter">
-                  <option value="">Все статьи</option>
-                </select>
-              </label>
+                  <label class="report-filter-field report-filter-field--category">
+                    <span class="report-filter-label">Категория</span>
+                    <div class="native-datetime-shell report-filter-control-shell">
+                      <select id="reportCategoryFilterInput" name="reportCategoryFilter" class="report-filter-select">
+                        <option value="">Все статьи</option>
+                      </select>
+                    </div>
+                  </label>
 
-              <label>
-                <span>Дата начала</span>
-                <div class="native-datetime-shell">
-                  <input id="reportStartDateInput" name="startDate" type="date" />
+                  <label class="report-filter-field report-filter-field--kind report-filter-web-only">
+                    <span class="report-filter-label">Тип операции</span>
+                    <div class="native-datetime-shell report-filter-control-shell">
+                      <select id="reportKindFilterInput" name="reportKindFilter" class="report-filter-select">
+                        <option value="">Все</option>
+                        <option value="income">Доход</option>
+                        <option value="expense">Расход</option>
+                      </select>
+                    </div>
+                  </label>
+
+                  <label class="report-filter-field report-filter-field--account report-filter-web-only">
+                    <span class="report-filter-label">Счёт</span>
+                    <div class="native-datetime-shell report-filter-control-shell">
+                      <select id="reportAccountFilterInput" name="reportAccountFilter" class="report-filter-select">
+                        <option value="">Все счета</option>
+                      </select>
+                    </div>
+                  </label>
+
+                  <label class="report-filter-field report-filter-field--date report-filter-date-start">
+                    <span class="report-filter-label">Дата начала</span>
+                    <div class="native-datetime-shell report-filter-control-shell">
+                      <input id="reportStartDateInput" name="startDate" type="date" class="report-filter-date" />
+                    </div>
+                  </label>
+
+                  <label class="report-filter-field report-filter-field--date report-filter-date-end">
+                    <span class="report-filter-label">Дата конца</span>
+                    <div class="native-datetime-shell report-filter-control-shell">
+                      <input id="reportEndDateInput" name="endDate" type="date" class="report-filter-date" />
+                    </div>
+                  </label>
+
+                  <div class="report-filter-field report-filter-field--submit">
+                    <span class="report-filter-label report-filter-label--phantom" aria-hidden="true"> </span>
+                    <button id="reportSubmitButton" class="primary-button report-filter-submit" type="button">
+                      Построить отчет
+                    </button>
+                  </div>
                 </div>
-              </label>
+              </form>
+            </section>
 
-              <label>
-                <span>Дата конца</span>
-                <div class="native-datetime-shell">
-                  <input id="reportEndDateInput" name="endDate" type="date" />
+            <section class="card report-results-card">
+              <div class="section-header report-results-header">
+                <div>
+                  <p class="section-label">Результат</p>
+                  <h2 id="reportTitle">Отчет за месяц</h2>
                 </div>
-              </label>
-
-              <button id="reportSubmitButton" class="primary-button" type="button">
-                Построить отчет
-              </button>
-            </form>
-          </section>
-
-          <section class="card">
-            <div class="section-header">
-              <div>
-                <p class="section-label">Результат</p>
-                <h2 id="reportTitle">Отчет за месяц</h2>
+                <div class="report-export-actions">
+                  <button id="reportDownloadCsvButton" class="primary-button report-download-csv-btn" type="button" disabled>
+                    Скачать CSV
+                  </button>
+                  <button
+                    id="reportCsvStatementButton"
+                    class="ghost-button report-csv-statement-btn"
+                    type="button"
+                    disabled
+                  >
+                    Выписка CSV
+                  </button>
+                </div>
               </div>
-              <button id="reportDownloadCsvButton" class="report-download-csv-btn" type="button" disabled>
-                Скачать CSV
-              </button>
-            </div>
-            <div class="stats-grid compact-stats-grid">
-              <article class="stat-box stat-income">
-                <span class="summary-label">Доходы</span>
-                <div class="report-value-stack">
-                  <strong class="report-value-amount" id="reportIncomeValue">0</strong>
-                  <span class="report-value-currency" id="reportIncomeCurrency"></span>
-                </div>
-              </article>
-              <article class="stat-box stat-expense">
-                <span class="summary-label">Расходы</span>
-                <div class="report-value-stack">
-                  <strong class="report-value-amount" id="reportExpenseValue">0</strong>
-                  <span class="report-value-currency" id="reportExpenseCurrency"></span>
-                </div>
-              </article>
-              <article class="stat-box">
-                <span class="summary-label">Итог периода</span>
-                <div class="report-value-stack">
-                  <strong class="report-value-amount" id="reportNetValue">0</strong>
-                  <span class="report-value-currency" id="reportNetCurrency"></span>
-                </div>
-              </article>
-              <article class="stat-box" id="reportTransfersStatBox">
+
+              <div class="web-ops-summary-grid web-reports-summary-grid">
+                <article class="web-dash-stat-card">
+                  <p class="section-label">Операций</p>
+                  <strong class="web-dash-stat-value" id="reportOperationsCountValue">0</strong>
+                  <span class="muted web-dash-stat-sub" id="reportTransfersHint"></span>
+                </article>
+                <article class="web-dash-stat-card web-dash-stat-card-income">
+                  <p class="section-label">Доходы</p>
+                  <strong class="web-dash-stat-value" id="reportIncomeValue">+0</strong>
+                  <span class="muted web-dash-stat-sub" id="reportIncomeCurrency"></span>
+                </article>
+                <article class="web-dash-stat-card web-dash-stat-card-expense">
+                  <p class="section-label">Расходы</p>
+                  <strong class="web-dash-stat-value" id="reportExpenseValue">−0</strong>
+                  <span class="muted web-dash-stat-sub" id="reportExpenseCurrency"></span>
+                </article>
+                <article class="web-dash-stat-card web-dash-stat-card-net">
+                  <p class="section-label">Сальдо периода</p>
+                  <strong class="web-dash-stat-value" id="reportNetValue">+0</strong>
+                  <span class="muted web-dash-stat-sub" id="reportNetCurrency"></span>
+                </article>
+              </div>
+
+              <div id="reportTransfersStatBox" class="report-transfers-fallback muted" hidden>
                 <span class="summary-label">Переводов</span>
-                <div class="report-value-stack report-value-stack-plain">
-                  <strong class="report-value-amount" id="reportTransfersCountValue">0</strong>
+                <strong id="reportTransfersCountValue">0</strong>
+              </div>
+
+              <div class="report-balance-box">
+                <span class="summary-label">Текущий общий баланс</span>
+                <div class="report-value-stack">
+                  <strong class="report-value-amount" id="reportCurrentBalanceValue">0</strong>
+                  <span class="report-value-currency" id="reportCurrentBalanceCurrency"></span>
                 </div>
-              </article>
-            </div>
+              </div>
 
-            <div class="report-balance-box">
-              <span class="summary-label">Текущий общий баланс</span>
-              <div class="report-value-stack">
-                <strong class="report-value-amount" id="reportCurrentBalanceValue">0</strong>
-                <span class="report-value-currency" id="reportCurrentBalanceCurrency"></span>
+              <div id="webReportsCharts" class="web-reports-charts" hidden>
+                <div class="web-reports-chart-grid">
+                  <div class="card web-report-chart-card">
+                    <p class="section-label">Доходы и расходы по дням</p>
+                    <div class="web-report-chart-canvas-wrap">
+                      <canvas id="reportTrendChart" height="220" aria-label="График доходов и расходов"></canvas>
+                    </div>
+                  </div>
+                  <div class="card web-report-chart-card">
+                    <p class="section-label">Расходы по категориям</p>
+                    <div class="web-report-chart-canvas-wrap web-report-chart-canvas-wrap--donut">
+                      <canvas id="reportCategoryChart" height="240" aria-label="Диаграмма категорий"></canvas>
+                    </div>
+                  </div>
+                  <div class="card web-report-chart-card">
+                    <p class="section-label">Сальдо по месяцам</p>
+                    <div class="web-report-chart-canvas-wrap">
+                      <canvas id="reportMonthlyChart" height="220" aria-label="Столбчатая диаграмма по месяцам"></canvas>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div class="report-categories-blocks">
-              <div>
-                <p class="section-label balance-label">Доходы по статьям</p>
-                <div id="reportIncomeCategoriesList" class="category-list"></div>
+              <div class="report-categories-blocks">
+                <div>
+                  <p class="section-label balance-label">Доходы по статьям</p>
+                  <div id="reportIncomeCategoriesList" class="category-list"></div>
+                </div>
+                <div>
+                  <p class="section-label balance-label">Расходы по статьям</p>
+                  <div id="reportExpenseCategoriesList" class="category-list"></div>
+                </div>
               </div>
-              <div>
-                <p class="section-label balance-label">Расходы по статьям</p>
-                <div id="reportExpenseCategoriesList" class="category-list"></div>
-              </div>
-            </div>
-          </section>
+            </section>
+          </div>
         </section>
       </main>
 
@@ -1258,6 +1323,7 @@
       </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
     <script>
       (function () {
         function showScriptLoadFailure() {

@@ -96,6 +96,12 @@ const reportIncomeCategoriesListElement = document.getElementById("reportIncomeC
 const reportExpenseCategoriesListElement = document.getElementById("reportExpenseCategoriesList");
 const reportTransfersStatBox = document.getElementById("reportTransfersStatBox");
 const reportDownloadCsvButton = document.getElementById("reportDownloadCsvButton");
+const reportCsvStatementButton = document.getElementById("reportCsvStatementButton");
+const reportKindFilterInput = document.getElementById("reportKindFilterInput");
+const reportAccountFilterInput = document.getElementById("reportAccountFilterInput");
+const reportOperationsCountValueElement = document.getElementById("reportOperationsCountValue");
+const reportTransfersHintElement = document.getElementById("reportTransfersHint");
+const webReportsChartsEl = document.getElementById("webReportsCharts");
 const addOperationButton = document.getElementById("addOperationButton");
 const webOperationsRoot = document.getElementById("webOperationsRoot");
 const webOpsDateFrom = document.getElementById("webOpsDateFrom");
@@ -147,6 +153,9 @@ const state = {
 
 let webOpsOffset = 0;
 let webOpsDatesInitialized = false;
+
+/** @type {{ trend?: object, category?: object, monthly?: object }} */
+let reportChartInstances = { trend: null, category: null, monthly: null };
 
 const balancySplashStartedAt = Date.now();
 
@@ -722,6 +731,16 @@ function openScreen(screenName, options = {}) {
     webOpsOffset = 0;
     void refreshWebOperationsBoard();
   }
+
+  if (nextScreen === "reports") {
+    populateReportFilterAccounts();
+    if (isWebMode && webReportsChartsEl) {
+      webReportsChartsEl.hidden = false;
+    }
+    void loadReport();
+  } else if (isWebMode && webReportsChartsEl) {
+    webReportsChartsEl.hidden = true;
+  }
 }
 
 function initWebOperationsChrome() {
@@ -739,6 +758,26 @@ function initWebOperationsChrome() {
   }
 
   populateWebOperationsFilterSelects();
+}
+
+function populateReportFilterAccounts() {
+  if (!reportAccountFilterInput) {
+    return;
+  }
+
+  const previous = reportAccountFilterInput.value;
+  const optionsHtml = (state.accounts ?? [])
+    .map(
+      (account) =>
+        `<option value="${escapeHtml(String(account.id))}">${escapeHtml(account.name ?? "")}</option>`
+    )
+    .join("");
+
+  reportAccountFilterInput.innerHTML = `<option value="">Все счета</option>${optionsHtml}`;
+
+  if (previous && (state.accounts ?? []).some((a) => String(a.id) === previous)) {
+    reportAccountFilterInput.value = previous;
+  }
 }
 
 function populateWebOperationsFilterSelects() {
@@ -1064,7 +1103,8 @@ function syncWebPageTitle(screenName) {
 
   const subtitleByScreen = {
     activity: "Создайте новую операцию дохода или расхода.",
-    history: "Лента операций: фильтры по датам, типу, счёту и категории, затем «Показать»."
+    history: "Лента операций: фильтры по датам, типу, счёту и категории, затем «Показать».",
+    reports: "Сводка за период, графики и выгрузка CSV в валюте отчёта."
   };
   const subtitle = subtitleByScreen[key];
 
@@ -1835,6 +1875,197 @@ function renderCategoryBreakdownList(targetElement, items, emptyTitle, emptyHint
     .join("");
 }
 
+function destroyReportCharts() {
+  ["trend", "category", "monthly"].forEach((key) => {
+    const chart = reportChartInstances[key];
+    if (chart && typeof chart.destroy === "function") {
+      try {
+        chart.destroy();
+      } catch {
+        /* ignore */
+      }
+    }
+    reportChartInstances[key] = null;
+  });
+}
+
+function renderReportChartsFromReport(report) {
+  if (!isWebMode || typeof window.Chart === "undefined") {
+    return;
+  }
+
+  if (!report) {
+    destroyReportCharts();
+    return;
+  }
+
+  const trendCanvas = document.getElementById("reportTrendChart");
+  const categoryCanvas = document.getElementById("reportCategoryChart");
+  const monthlyCanvas = document.getElementById("reportMonthlyChart");
+
+  if (!trendCanvas || !categoryCanvas || !monthlyCanvas) {
+    return;
+  }
+
+  destroyReportCharts();
+
+  const ChartCtor = window.Chart;
+  const reportingCode = report?.reportingCurrency ?? "";
+  const green = "#27C281";
+  const expenseRed = "#ef4444";
+  const daily = Array.isArray(report?.dailySeries) ? report.dailySeries : [];
+  const monthly = Array.isArray(report?.monthlySeries) ? report.monthlySeries : [];
+  const expenseCats = Array.isArray(report?.expenseByCategory) ? report.expenseByCategory : [];
+
+  const dayLabels = daily.map((d) => {
+    const [y, m, day] = String(d.date).split("-");
+    return `${day}.${m}`;
+  });
+
+  reportChartInstances.trend = new ChartCtor(trendCanvas, {
+    type: "line",
+    data: {
+      labels: dayLabels,
+      datasets: [
+        {
+          label: "Доходы",
+          data: daily.map((d) => d.income),
+          borderColor: green,
+          backgroundColor: "rgba(39, 194, 129, 0.12)",
+          fill: true,
+          tension: 0.35,
+          pointRadius: 0
+        },
+        {
+          label: "Расходы",
+          data: daily.map((d) => d.expense),
+          borderColor: expenseRed,
+          backgroundColor: "rgba(239, 68, 68, 0.08)",
+          fill: true,
+          tension: 0.35,
+          pointRadius: 0
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label(ctx) {
+              const v = ctx.parsed.y;
+              return `${ctx.dataset.label}: ${formatMoneyAmount(v)} ${reportingCode}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+        y: { ticks: { callback: (v) => formatMoneyAmount(Number(v)) } }
+      }
+    }
+  });
+
+  const palette = [
+    "#f97316",
+    "#a855f7",
+    "#3b82f6",
+    "#eab308",
+    "#14b8a6",
+    "#ec4899",
+    "#64748b",
+    "#22c55e"
+  ];
+  const topExp = expenseCats.slice(0, 8);
+  const otherSum = expenseCats.slice(8).reduce((s, row) => s + Number(row.total ?? 0), 0);
+  const donutLabels = topExp.map((r) => r.categoryName);
+  const donutData = topExp.map((r) => Number(r.total ?? 0));
+  if (otherSum > 0.009) {
+    donutLabels.push("Прочее");
+    donutData.push(Number(otherSum.toFixed(2)));
+  }
+  if (donutLabels.length === 0 || donutData.every((n) => !n || n === 0)) {
+    donutLabels.splice(0, donutLabels.length, "Нет расходов");
+    donutData.splice(0, donutData.length, 1);
+  }
+
+  reportChartInstances.category = new ChartCtor(categoryCanvas, {
+    type: "doughnut",
+    data: {
+      labels: donutLabels,
+      datasets: [
+        {
+          data: donutData,
+          backgroundColor: donutLabels.map((_, i) => palette[i % palette.length]),
+          borderWidth: 2,
+          borderColor: "#fff"
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "58%",
+      plugins: {
+        legend: { position: "right", labels: { boxWidth: 10, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label(ctx) {
+              const total = donutData.reduce((a, b) => a + b, 0) || 1;
+              const val = Number(ctx.dataset?.data?.[ctx.dataIndex] ?? 0);
+              const pct = ((val / total) * 100).toFixed(0);
+              return `${ctx.label}: ${formatMoneyAmount(val)} ${reportingCode} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  const monthLabels = monthly.map((m) => {
+    const [y, mo] = m.monthKey.split("-");
+    return `${mo}.${y.slice(2)}`;
+  });
+
+  reportChartInstances.monthly = new ChartCtor(monthlyCanvas, {
+    type: "bar",
+    data: {
+      labels: monthLabels,
+      datasets: [
+        {
+          label: `Сальдо, ${reportingCode}`,
+          data: monthly.map((m) => m.net),
+          backgroundColor: monthly.map((m) =>
+            Number(m.net) >= 0 ? "rgba(39, 194, 129, 0.85)" : "rgba(239, 68, 68, 0.75)"
+          ),
+          borderRadius: 8
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label(ctx) {
+              return `Сальдо: ${formatMoneyAmount(Number(ctx.parsed.y))} ${reportingCode}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { maxRotation: 0 } },
+        y: { ticks: { callback: (v) => formatMoneyAmount(Number(v)) } }
+      }
+    }
+  });
+}
+
 function renderReport(report) {
   const periodPhrase = formatReportPeriod(report?.period ?? "month");
   const applied = report?.appliedCategory;
@@ -1847,23 +2078,54 @@ function renderReport(report) {
   }
 
   const reportingCode = report?.reportingCurrency ?? "";
+  const incomes = Number(report?.incomes ?? 0);
+  const expenses = Number(report?.expenses ?? 0);
+  const net = Number(report?.net ?? 0);
+  const transfers = Number(report?.transfersCount ?? 0);
+  const opsCount =
+    report && typeof report.operationsCount === "number"
+      ? report.operationsCount
+      : transfers;
 
-  reportIncomeValueElement.textContent = formatMoneyAmount(report?.incomes ?? 0);
+  if (reportOperationsCountValueElement) {
+    reportOperationsCountValueElement.textContent = String(opsCount);
+  }
+
+  if (reportIncomeValueElement) {
+    reportIncomeValueElement.textContent = `+${formatMoneyAmount(incomes)}`;
+  }
   if (reportIncomeCurrencyElement) {
-    reportIncomeCurrencyElement.textContent = reportingCode;
+    reportIncomeCurrencyElement.textContent = reportingCode ? `в ${reportingCode}` : "в валюте отчёта";
   }
 
-  reportExpenseValueElement.textContent = formatMoneyAmount(report?.expenses ?? 0);
+  if (reportExpenseValueElement) {
+    reportExpenseValueElement.textContent = `−${formatMoneyAmount(expenses)}`;
+  }
   if (reportExpenseCurrencyElement) {
-    reportExpenseCurrencyElement.textContent = reportingCode;
+    reportExpenseCurrencyElement.textContent = reportingCode ? `в ${reportingCode}` : "в валюте отчёта";
   }
 
-  reportNetValueElement.textContent = formatMoneyAmount(report?.net ?? 0);
+  if (reportNetValueElement) {
+    const sign = net >= 0 ? "+" : "−";
+    reportNetValueElement.textContent = `${sign}${formatMoneyAmount(Math.abs(net))}`;
+  }
   if (reportNetCurrencyElement) {
-    reportNetCurrencyElement.textContent = reportingCode;
+    reportNetCurrencyElement.textContent = reportingCode ? `в ${reportingCode}` : "доходы минус расходы";
   }
 
-  reportTransfersCountValueElement.textContent = String(report?.transfersCount ?? 0);
+  if (reportTransfersCountValueElement) {
+    reportTransfersCountValueElement.textContent = String(transfers);
+  }
+
+  if (reportTransfersHintElement) {
+    if (applied) {
+      reportTransfersHintElement.textContent = "";
+    } else if (transfers > 0) {
+      reportTransfersHintElement.textContent = `включая ${transfers} переводов`;
+    } else {
+      reportTransfersHintElement.textContent = "за выбранный период";
+    }
+  }
 
   if (reportTransfersStatBox) {
     reportTransfersStatBox.hidden = Boolean(applied);
@@ -1892,8 +2154,21 @@ function renderReport(report) {
       : "Когда появятся расходы, здесь будет разбивка по статьям."
   );
 
+  const canExport = Boolean(report && getInitData());
+
   if (reportDownloadCsvButton) {
-    reportDownloadCsvButton.disabled = !report || !getInitData();
+    reportDownloadCsvButton.disabled = !canExport;
+    reportDownloadCsvButton.textContent = isWebMode ? "Скачать отчёт" : "Скачать CSV";
+  }
+
+  if (reportCsvStatementButton) {
+    reportCsvStatementButton.disabled = !canExport;
+  }
+
+  if (isWebMode) {
+    renderReportChartsFromReport(report);
+  } else {
+    destroyReportCharts();
   }
 }
 
@@ -2461,6 +2736,7 @@ function renderAll() {
   safeRenderStep("currencyOptions", () => populateCurrencyOptions());
   safeRenderStep("reportingCurrencyOptions", () => populateReportingCurrencyOptions());
   safeRenderStep("reportCategoryFilterOptions", () => populateReportCategoryFilterOptions());
+  safeRenderStep("reportAccountFilterOptions", () => populateReportFilterAccounts());
   safeRenderStep("categoryOptions", () => populateCategoryOptions());
   safeRenderStep("fxReferencePanel", () => syncFxReferencePanel());
   safeRenderStep("webProfile", () => syncWebProfile());
@@ -2642,6 +2918,16 @@ function buildReportQueryString() {
   const filterCategoryId = reportCategoryFilterInput?.value?.trim();
   if (filterCategoryId) {
     params.set("categoryId", filterCategoryId);
+  }
+
+  const filterAccountId = reportAccountFilterInput?.value?.trim();
+  if (filterAccountId) {
+    params.set("accountId", filterAccountId);
+  }
+
+  const filterKind = reportKindFilterInput?.value?.trim();
+  if (filterKind === "income" || filterKind === "expense") {
+    params.set("kind", filterKind);
   }
 
   return params.toString();
@@ -2920,6 +3206,73 @@ async function downloadReportCsv() {
   }
 }
 
+async function openReportCsvInNewTab() {
+  if (!reportCsvStatementButton || reportCsvStatementButton.disabled) {
+    return;
+  }
+
+  const currentQuery = buildReportQueryString();
+
+  if (
+    state.report &&
+    state.reportExportQuery &&
+    currentQuery !== state.reportExportQuery
+  ) {
+    setStatus("Параметры отчёта изменились — нажмите «Построить отчёт», затем откройте выписку.", "error");
+    return;
+  }
+
+  const exportQuery = state.reportExportQuery ?? currentQuery;
+
+  setStatus("Открываем CSV…");
+
+  try {
+    const response = await authenticatedFetchRaw(`/api/reports/export.csv?${exportQuery}`);
+
+    const errProbe = async () => {
+      const errText = await response.text();
+      let message = `HTTP ${response.status}`;
+      try {
+        const json = JSON.parse(errText);
+        if (typeof json?.error === "string" && json.error) {
+          message = json.error;
+        }
+      } catch {
+        if (errText.trim()) {
+          message = stripHtmlToSnippet(errText.slice(0, 240));
+        }
+      }
+      return message;
+    };
+
+    if (!response.ok) {
+      throw new Error(await errProbe());
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const tab = window.open(url, "_blank", "noopener,noreferrer");
+
+    if (!tab) {
+      URL.revokeObjectURL(url);
+      setStatus("Браузер заблокировал новую вкладку. Разрешите всплывающие окна для этого сайта.", "error");
+      return;
+    }
+
+    window.setTimeout(() => {
+      try {
+        URL.revokeObjectURL(url);
+      } catch {
+        /* ignore */
+      }
+    }, 120000);
+    setStatus("Выписка открыта в новой вкладке.", "success");
+  } catch (error) {
+    console.error(error);
+    setStatus(error instanceof Error ? error.message : "Не удалось открыть выписку", "error");
+  }
+}
+
 async function loadApp(options = {}) {
   if (!tg) {
     userNameElement.textContent = "Откройте приложение из Telegram";
@@ -3029,6 +3382,9 @@ async function loadApp(options = {}) {
       if (options.syncWebOperationsHistory) {
         void refreshWebOperationsBoard();
       }
+    }
+    if (document.body.dataset.appActiveScreen === "reports" && options.syncWebOperationsHistory) {
+      void loadReport();
     }
     setStatus(
       "Все готово. Интерфейс разбит по вкладкам и стал проще для ежедневного использования.",
@@ -3464,6 +3820,10 @@ if (refreshButton) {
     webTopNav?.removeAttribute("hidden");
     syncWebPageTitle("home");
 
+    if (reportSubmitButton) {
+      reportSubmitButton.textContent = "Показать";
+    }
+
   if (webRefreshButton) {
     webRefreshButton.addEventListener("click", () => {
       void loadApp({ syncWebOperationsHistory: true });
@@ -3828,6 +4188,10 @@ reportSubmitButton.addEventListener("click", () => {
 
 reportDownloadCsvButton?.addEventListener("click", () => {
   void downloadReportCsv();
+});
+
+reportCsvStatementButton?.addEventListener("click", () => {
+  void openReportCsvInNewTab();
 });
 
 entryKindInput.addEventListener("change", () => {

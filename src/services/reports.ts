@@ -15,6 +15,20 @@ export interface ReportCategoryItem {
   currencyCode: string;
 }
 
+export interface ReportDailyPoint {
+  date: string;
+  income: number;
+  expense: number;
+  net: number;
+}
+
+export interface ReportMonthlyPoint {
+  monthKey: string;
+  income: number;
+  expense: number;
+  net: number;
+}
+
 export interface ReportResult {
   period: ReportPeriod;
   startDate: string;
@@ -27,12 +41,60 @@ export interface ReportResult {
   incomeByCategory: ReportCategoryItem[];
   expenseByCategory: ReportCategoryItem[];
   transfersCount: number;
+  /** Количество операций (проводок) в периоде + переводы, если не задан фильтр по категории */
+  operationsCount: number;
+  /** Доходы и расходы по календарным дням (UTC) в валюте отчёта */
+  dailySeries: ReportDailyPoint[];
+  /** Агрегаты по календарным месяцам (UTC) в валюте отчёта */
+  monthlySeries: ReportMonthlyPoint[];
   ratesUpdatedAt: string | null;
   appliedCategory?: {
     id: string;
     name: string;
     kind: OperationKind;
   };
+}
+
+function enumerateUtcDaysInclusive(startIso: string, endIso: string): string[] {
+  const startDay = startIso.slice(0, 10);
+  const endDay = endIso.slice(0, 10);
+  const out: string[] = [];
+  const cursor = new Date(`${startDay}T00:00:00.000Z`);
+  const end = new Date(`${endDay}T00:00:00.000Z`);
+
+  while (cursor.getTime() <= end.getTime()) {
+    out.push(cursor.toISOString().slice(0, 10));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+
+  return out;
+}
+
+function utcDayFromOccurredAt(occurredAt: string): string {
+  return new Date(occurredAt).toISOString().slice(0, 10);
+}
+
+function enumerateMonthsInclusive(startIso: string, endIso: string): string[] {
+  const startDay = startIso.slice(0, 10);
+  const endDay = endIso.slice(0, 10);
+  const start = new Date(`${startDay}T00:00:00.000Z`);
+  const end = new Date(`${endDay}T00:00:00.000Z`);
+  const out: string[] = [];
+  const cur = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1));
+  const endMonth = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), 1));
+
+  while (cur.getTime() <= endMonth.getTime()) {
+    out.push(
+      `${cur.getUTCFullYear()}-${String(cur.getUTCMonth() + 1).padStart(2, "0")}`
+    );
+    cur.setUTCMonth(cur.getUTCMonth() + 1);
+  }
+
+  return out;
+}
+
+function utcMonthKeyFromOccurredAt(occurredAt: string): string {
+  return new Date(occurredAt).toISOString().slice(0, 7);
 }
 
 function startOfDay(date: Date): Date {
@@ -82,8 +144,13 @@ export function resolveReportRange(
   };
 }
 
-async function listEntriesByRange(userId: string, startDate: string, endDate: string) {
-  const { data, error } = await supabase
+async function listEntriesByRange(
+  userId: string,
+  startDate: string,
+  endDate: string,
+  filters?: { accountId?: string; kind?: OperationKind }
+) {
+  let query = supabase
     .from("entries")
     .select(
       `
@@ -94,8 +161,17 @@ async function listEntriesByRange(userId: string, startDate: string, endDate: st
     )
     .eq("user_id", userId)
     .gte("occurred_at", startDate)
-    .lte("occurred_at", endDate)
-    .order("occurred_at", { ascending: false });
+    .lte("occurred_at", endDate);
+
+  if (filters?.accountId) {
+    query = query.eq("account_id", filters.accountId);
+  }
+
+  if (filters?.kind) {
+    query = query.eq("kind", filters.kind);
+  }
+
+  const { data, error } = await query.order("occurred_at", { ascending: false });
 
   if (error) {
     throw error;
@@ -138,6 +214,8 @@ async function resolveReportEntriesBundle(input: {
   endDate?: string;
   reportingCurrency?: string;
   categoryId?: string;
+  accountId?: string;
+  kind?: OperationKind;
 }): Promise<ReportEntriesBundle> {
   const reportingCurrency = input.reportingCurrency ?? env.reportingCurrency;
   const range =
@@ -153,7 +231,17 @@ async function resolveReportEntriesBundle(input: {
       ? resolveReportRange("custom", range.startDate, range.endDate)
       : range;
 
-  const rawEntries = await listEntriesByRange(input.userId, startDate, endDate);
+  const entryFilters =
+    input.accountId || input.kind
+      ? { accountId: input.accountId, kind: input.kind }
+      : undefined;
+
+  const rawEntries = await listEntriesByRange(
+    input.userId,
+    startDate,
+    endDate,
+    entryFilters
+  );
   let entries = rawEntries;
   let appliedCategory: ReportResult["appliedCategory"];
 
@@ -242,6 +330,8 @@ export async function buildReportExportPayload(input: {
   endDate?: string;
   reportingCurrency?: string;
   categoryId?: string;
+  accountId?: string;
+  kind?: OperationKind;
 }): Promise<{ report: ReportResult; operations: ReportOperationCsvRow[] }> {
   const bundle = await resolveReportEntriesBundle(input);
 
@@ -355,6 +445,8 @@ async function aggregateReportFromBundle(
   let expenses = 0;
   const expenseByCategoryMap = new Map<string, number>();
   const incomeByCategoryMap = new Map<string, number>();
+  const dailyMap = new Map<string, { income: number; expense: number }>();
+  const monthlyMap = new Map<string, { income: number; expense: number }>();
 
   for (const entry of entries) {
     const convertedAmount = await convert(
@@ -363,6 +455,10 @@ async function aggregateReportFromBundle(
       reportingCurrency
     );
 
+    const occurredAt = String(entry.occurred_at);
+    const day = utcDayFromOccurredAt(occurredAt);
+    const monthKey = utcMonthKeyFromOccurredAt(occurredAt);
+
     if (entry.kind === "income") {
       incomes += convertedAmount;
       const categoryName = entry.category?.name ?? "Без категории";
@@ -370,6 +466,12 @@ async function aggregateReportFromBundle(
         categoryName,
         (incomeByCategoryMap.get(categoryName) ?? 0) + convertedAmount
       );
+      const d = dailyMap.get(day) ?? { income: 0, expense: 0 };
+      d.income += convertedAmount;
+      dailyMap.set(day, d);
+      const m = monthlyMap.get(monthKey) ?? { income: 0, expense: 0 };
+      m.income += convertedAmount;
+      monthlyMap.set(monthKey, m);
     } else {
       expenses += convertedAmount;
       const categoryName = entry.category?.name ?? "Без категории";
@@ -377,6 +479,12 @@ async function aggregateReportFromBundle(
         categoryName,
         (expenseByCategoryMap.get(categoryName) ?? 0) + convertedAmount
       );
+      const d = dailyMap.get(day) ?? { income: 0, expense: 0 };
+      d.expense += convertedAmount;
+      dailyMap.set(day, d);
+      const m = monthlyMap.get(monthKey) ?? { income: 0, expense: 0 };
+      m.expense += convertedAmount;
+      monthlyMap.set(monthKey, m);
     }
   }
 
@@ -400,6 +508,35 @@ async function aggregateReportFromBundle(
     return sum + converted;
   }, Promise.resolve(0));
 
+  const dayKeys = enumerateUtcDaysInclusive(startDate, endDate);
+  const dailySeries: ReportDailyPoint[] = dayKeys.map((date) => {
+    const bucket = dailyMap.get(date) ?? { income: 0, expense: 0 };
+    const inc = Number(bucket.income.toFixed(2));
+    const exp = Number(bucket.expense.toFixed(2));
+    return {
+      date,
+      income: inc,
+      expense: exp,
+      net: Number((inc - exp).toFixed(2))
+    };
+  });
+
+  const monthKeys = enumerateMonthsInclusive(startDate, endDate);
+  const monthlySeries: ReportMonthlyPoint[] = monthKeys.map((mk) => {
+    const bucket = monthlyMap.get(mk) ?? { income: 0, expense: 0 };
+    const inc = Number(bucket.income.toFixed(2));
+    const exp = Number(bucket.expense.toFixed(2));
+    return {
+      monthKey: mk,
+      income: inc,
+      expense: exp,
+      net: Number((inc - exp).toFixed(2))
+    };
+  });
+
+  const operationsCount =
+    entries.length + (appliedCategory ? 0 : transfers.length);
+
   return {
     period: input.period,
     startDate,
@@ -412,6 +549,9 @@ async function aggregateReportFromBundle(
     incomeByCategory: mapToSortedItems(incomeByCategoryMap),
     expenseByCategory: mapToSortedItems(expenseByCategoryMap),
     transfersCount: appliedCategory ? 0 : transfers.length,
+    operationsCount,
+    dailySeries,
+    monthlySeries,
     ratesUpdatedAt: await getLatestExchangeRateUpdate(),
     appliedCategory
   };
@@ -424,6 +564,8 @@ export async function getReport(input: {
   endDate?: string;
   reportingCurrency?: string;
   categoryId?: string;
+  accountId?: string;
+  kind?: OperationKind;
 }): Promise<ReportResult> {
   const bundle = await resolveReportEntriesBundle(input);
 
