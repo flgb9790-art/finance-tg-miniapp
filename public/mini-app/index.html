@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513report-filters-composite";
+        var BALANCY_CLIENT_ASSET_REV = "20260513filter-pill-divider";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -703,54 +703,83 @@
             <div class="web-ops-filter-shell">
               <div class="web-ops-filter-row">
                 <div class="web-ops-filter-cell web-ops-filter-cell--date">
-                  <span class="web-ops-filter-cell-label">с</span>
-                  <div class="web-ops-filter-control web-ops-filter-control--date">
-                    <input id="webOpsDateFrom" class="web-ops-filter-date" type="date" />
+                  <div class="balancy-filter-pill">
+                    <span class="balancy-filter-pill__prefix balancy-filter-pill__prefix--narrow" aria-hidden="true">С</span>
+                    <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                    <div class="balancy-filter-pill__body balancy-filter-pill__body--date">
+                      <input
+                        id="webOpsDateFrom"
+                        class="web-ops-filter-date"
+                        type="date"
+                        aria-label="С (дата начала периода)"
+                      />
+                    </div>
                   </div>
                 </div>
                 <div class="web-ops-filter-cell web-ops-filter-cell--date">
-                  <span class="web-ops-filter-cell-label">по</span>
-                  <div class="web-ops-filter-control web-ops-filter-control--date">
-                    <input id="webOpsDateTo" class="web-ops-filter-date" type="date" />
+                  <div class="balancy-filter-pill">
+                    <span class="balancy-filter-pill__prefix balancy-filter-pill__prefix--narrow" aria-hidden="true">По</span>
+                    <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                    <div class="balancy-filter-pill__body balancy-filter-pill__body--date">
+                      <input
+                        id="webOpsDateTo"
+                        class="web-ops-filter-date"
+                        type="date"
+                        aria-label="По (дата окончания периода)"
+                      />
+                    </div>
                   </div>
                 </div>
                 <div class="web-ops-filter-cell web-ops-filter-cell--grow">
-                  <span class="web-ops-filter-cell-label">тип</span>
-                  <div class="web-ops-filter-control web-ops-filter-control--select">
-                    <select id="webOpsKindFilter" class="web-ops-filter-select">
-                      <option value="all">Все</option>
-                      <option value="income">Доход</option>
-                      <option value="expense">Расход</option>
-                      <option value="transfer">Перевод</option>
-                    </select>
+                  <div class="balancy-filter-pill">
+                    <span class="balancy-filter-pill__prefix" aria-hidden="true">Тип операции</span>
+                    <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                    <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
+                      <select id="webOpsKindFilter" class="web-ops-filter-select" aria-label="Тип операции">
+                        <option value="all">Все</option>
+                        <option value="income">Доход</option>
+                        <option value="expense">Расход</option>
+                        <option value="transfer">Перевод</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
                 <div class="web-ops-filter-cell web-ops-filter-cell--grow">
-                  <span class="web-ops-filter-cell-label">счёт</span>
-                  <div class="web-ops-filter-control web-ops-filter-control--select">
-                    <select id="webOpsAccountFilter" class="web-ops-filter-select">
-                      <option value="">Все счета</option>
-                    </select>
+                  <div class="balancy-filter-pill">
+                    <span class="balancy-filter-pill__prefix" aria-hidden="true">Счёт</span>
+                    <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                    <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
+                      <select id="webOpsAccountFilter" class="web-ops-filter-select" aria-label="Счёт">
+                        <option value="">Все счета</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
                 <div class="web-ops-filter-cell web-ops-filter-cell--grow">
-                  <span class="web-ops-filter-cell-label">категория</span>
-                  <div class="web-ops-filter-control web-ops-filter-control--select">
-                    <select id="webOpsCategoryFilter" class="web-ops-filter-select">
-                      <option value="">Все категории</option>
-                    </select>
+                  <div class="balancy-filter-pill">
+                    <span class="balancy-filter-pill__prefix" aria-hidden="true">Категория</span>
+                    <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                    <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
+                      <select id="webOpsCategoryFilter" class="web-ops-filter-select" aria-label="Категория">
+                        <option value="">Все категории</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
                 <div class="web-ops-filter-cell web-ops-filter-cell--search">
-                  <span class="web-ops-filter-cell-label">поиск</span>
-                  <div class="web-ops-filter-control web-ops-filter-control--search">
-                    <input
-                      id="webOpsSearchInput"
-                      class="web-ops-filter-search"
-                      type="search"
-                      placeholder="Поиск операций…"
-                      autocomplete="off"
-                    />
+                  <div class="balancy-filter-pill">
+                    <span class="balancy-filter-pill__prefix" aria-hidden="true">Поиск</span>
+                    <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                    <div class="balancy-filter-pill__body balancy-filter-pill__body--search">
+                      <input
+                        id="webOpsSearchInput"
+                        class="web-ops-filter-search"
+                        type="search"
+                        placeholder="Найти в операциях…"
+                        autocomplete="off"
+                        aria-label="Поиск по операциям"
+                      />
+                    </div>
                   </div>
                 </div>
                 <div class="web-ops-filter-cell web-ops-filter-cell--action">
@@ -918,110 +947,131 @@
                         <button type="button" class="report-segment" data-report-period="custom">Произвольный</button>
                       </div>
                       <label class="report-inline-field report-period-native-wrap">
-                        <div class="report-filter-composite" title="Период">
-                          <span class="report-filter-composite-prefix" aria-hidden="true">Период</span>
-                          <select
-                            id="reportPeriodInput"
-                            name="period"
-                            class="report-filter-select"
-                            aria-label="Период"
-                          >
-                            <option value="week">Неделя</option>
-                            <option value="month" selected>Месяц</option>
-                            <option value="quarter">3 месяца</option>
-                            <option value="year">Год</option>
-                            <option value="custom">Произвольный период</option>
-                          </select>
+                        <div class="balancy-filter-pill" title="Период">
+                          <span class="balancy-filter-pill__prefix" aria-hidden="true">Период</span>
+                          <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                          <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
+                            <select
+                              id="reportPeriodInput"
+                              name="period"
+                              class="report-filter-select"
+                              aria-label="Период"
+                            >
+                              <option value="week">Неделя</option>
+                              <option value="month" selected>Месяц</option>
+                              <option value="quarter">3 месяца</option>
+                              <option value="year">Год</option>
+                              <option value="custom">Произвольный период</option>
+                            </select>
+                          </div>
                         </div>
                       </label>
 
                       <label class="report-inline-field report-filter-web-only">
-                        <div class="report-filter-composite" title="Счета">
-                          <span class="report-filter-composite-prefix" aria-hidden="true">Счета</span>
-                          <select
-                            id="reportAccountFilterInput"
-                            name="reportAccountFilter"
-                            class="report-filter-select"
-                            aria-label="Счета"
-                          >
-                            <option value="">Все счета</option>
-                          </select>
+                        <div class="balancy-filter-pill" title="Счета">
+                          <span class="balancy-filter-pill__prefix" aria-hidden="true">Счета</span>
+                          <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                          <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
+                            <select
+                              id="reportAccountFilterInput"
+                              name="reportAccountFilter"
+                              class="report-filter-select"
+                              aria-label="Счета"
+                            >
+                              <option value="">Все счета</option>
+                            </select>
+                          </div>
                         </div>
                       </label>
 
                       <label class="report-inline-field">
-                        <div class="report-filter-composite" title="Валюта отчёта">
+                        <div class="balancy-filter-pill" title="Валюта отчёта">
                           <span
-                            class="report-filter-composite-prefix report-filter-composite-prefix--wide"
+                            class="balancy-filter-pill__prefix balancy-filter-pill__prefix--wide"
                             aria-hidden="true"
                             >Валюта отчёта</span>
-                          <select
-                            id="reportingCurrencyInput"
-                            name="reportingCurrency"
-                            class="report-filter-select"
-                            aria-label="Валюта отчёта"
-                          ></select>
+                          <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                          <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
+                            <select
+                              id="reportingCurrencyInput"
+                              name="reportingCurrency"
+                              class="report-filter-select"
+                              aria-label="Валюта отчёта"
+                            ></select>
+                          </div>
                         </div>
                       </label>
 
                       <label class="report-inline-field">
-                        <div class="report-filter-composite" title="Категория">
-                          <span class="report-filter-composite-prefix" aria-hidden="true">Категория</span>
-                          <select
-                            id="reportCategoryFilterInput"
-                            name="reportCategoryFilter"
-                            class="report-filter-select"
-                            aria-label="Категория"
-                          >
-                            <option value="">Все статьи</option>
-                          </select>
+                        <div class="balancy-filter-pill" title="Категория">
+                          <span class="balancy-filter-pill__prefix" aria-hidden="true">Категория</span>
+                          <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                          <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
+                            <select
+                              id="reportCategoryFilterInput"
+                              name="reportCategoryFilter"
+                              class="report-filter-select"
+                              aria-label="Категория"
+                            >
+                              <option value="">Все статьи</option>
+                            </select>
+                          </div>
                         </div>
                       </label>
 
                       <label class="report-inline-field report-filter-web-only">
-                        <div class="report-filter-composite" title="Тип">
-                          <span class="report-filter-composite-prefix" aria-hidden="true">Тип</span>
-                          <select
-                            id="reportKindFilterInput"
-                            name="reportKindFilter"
-                            class="report-filter-select"
-                            aria-label="Тип"
-                          >
-                            <option value="">Все</option>
-                            <option value="income">Доход</option>
-                            <option value="expense">Расход</option>
-                          </select>
+                        <div class="balancy-filter-pill" title="Тип">
+                          <span class="balancy-filter-pill__prefix" aria-hidden="true">Тип</span>
+                          <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                          <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
+                            <select
+                              id="reportKindFilterInput"
+                              name="reportKindFilter"
+                              class="report-filter-select"
+                              aria-label="Тип"
+                            >
+                              <option value="">Все</option>
+                              <option value="income">Доход</option>
+                              <option value="expense">Расход</option>
+                            </select>
+                          </div>
                         </div>
                       </label>
 
                       <label class="report-inline-field report-filter-date-start">
-                        <div class="report-filter-composite report-filter-composite--date">
+                        <div class="balancy-filter-pill">
                           <span
-                            class="report-filter-composite-prefix report-filter-composite-prefix--letter"
+                            class="balancy-filter-pill__prefix balancy-filter-pill__prefix--narrow"
                             aria-hidden="true"
                             >С</span>
-                          <input
-                            id="reportStartDateInput"
-                            name="startDate"
-                            type="date"
-                            class="report-filter-date"
-                            aria-label="С (дата начала произвольного периода)"
-                          />
+                          <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                          <div class="balancy-filter-pill__body balancy-filter-pill__body--date">
+                            <input
+                              id="reportStartDateInput"
+                              name="startDate"
+                              type="date"
+                              class="report-filter-date"
+                              aria-label="С (дата начала произвольного периода)"
+                            />
+                          </div>
                         </div>
                       </label>
                       <label class="report-inline-field report-filter-date-end">
-                        <div class="report-filter-composite report-filter-composite--date">
+                        <div class="balancy-filter-pill">
                           <span
-                            class="report-filter-composite-prefix report-filter-composite-prefix--letter"
+                            class="balancy-filter-pill__prefix balancy-filter-pill__prefix--narrow"
                             aria-hidden="true"
                             >По</span>
-                          <input
-                            id="reportEndDateInput"
-                            name="endDate"
-                            type="date"
-                            class="report-filter-date"
-                            aria-label="По (дата окончания произвольного периода)"
-                          />
+                          <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                          <div class="balancy-filter-pill__body balancy-filter-pill__body--date">
+                            <input
+                              id="reportEndDateInput"
+                              name="endDate"
+                              type="date"
+                              class="report-filter-date"
+                              aria-label="По (дата окончания произвольного периода)"
+                            />
+                          </div>
                         </div>
                       </label>
                     </div>

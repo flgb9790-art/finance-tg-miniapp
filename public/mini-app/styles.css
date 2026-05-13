@@ -3480,6 +3480,125 @@ body.web-mode #screen-activity .activity-form-card {
   margin: 0 0 14px;
 }
 
+/* Пилюля фильтра: подпись | разделитель | поле — История + Отчёты */
+.balancy-filter-pill {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  box-sizing: border-box;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.balancy-filter-pill:focus-within {
+  border-color: rgb(36 173 124 / 0.42);
+  box-shadow: 0 0 0 3px rgb(36 173 124 / 0.1);
+}
+
+.balancy-filter-pill__prefix {
+  flex: 0 1 auto;
+  display: flex;
+  align-items: center;
+  max-width: 7.5rem;
+  padding: 0 8px 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgb(100 116 139);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.balancy-filter-pill__prefix--wide {
+  max-width: 5.75rem;
+  white-space: normal;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.balancy-filter-pill__prefix--narrow {
+  flex: 0 0 auto;
+  max-width: none;
+  min-width: 2rem;
+  justify-content: center;
+  padding-left: 6px;
+  padding-right: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgb(71 85 105);
+}
+
+.balancy-filter-pill__rule {
+  flex: 0 0 1px;
+  align-self: stretch;
+  width: 1px;
+  margin: 5px 0;
+  background: rgb(226 232 240);
+}
+
+.balancy-filter-pill__body {
+  flex: 1 1 0%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 0 28px 0 10px;
+}
+
+.balancy-filter-pill__body--search {
+  padding-right: 10px;
+}
+
+.balancy-filter-pill__body--date {
+  padding-right: 6px;
+}
+
+.balancy-filter-pill__body > select,
+.balancy-filter-pill__body > input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(30 41 59);
+  padding: 8px 0;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.balancy-filter-pill__body--search > input {
+  font-weight: 500;
+}
+
+.balancy-filter-pill__body--select > select {
+  appearance: none;
+  cursor: pointer;
+}
+
+.balancy-filter-pill__body--select::after {
+  content: "";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid rgb(148 163 184);
+  border-bottom: 2px solid rgb(148 163 184);
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
+  opacity: 0.85;
+}
+
 /* Панель фильтров операций (веб) */
 .web-ops-filter-shell {
   box-sizing: border-box;
@@ -3498,113 +3617,50 @@ body.web-mode #screen-history .web-ops-filter-shell {
 .web-ops-filter-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: stretch;
   gap: 12px 14px;
 }
 
 .web-ops-filter-cell {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0;
   min-width: 0;
 }
 
 .web-ops-filter-cell--date {
-  flex: 0 1 148px;
+  flex: 0 1 156px;
 }
 
 .web-ops-filter-cell--grow {
-  flex: 1 1 120px;
+  flex: 1 1 128px;
 }
 
 .web-ops-filter-cell--search {
-  flex: 2 1 220px;
+  flex: 2 1 240px;
 }
 
 .web-ops-filter-cell--action {
   flex: 0 0 auto;
-  padding-top: 22px;
-}
-
-.web-ops-filter-cell-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: rgb(100 116 139);
-  letter-spacing: 0.02em;
-  text-transform: lowercase;
-  line-height: 1.1;
-}
-
-.web-ops-filter-control {
-  position: relative;
   display: flex;
-  align-items: center;
-  min-height: 42px;
-  border-radius: 14px;
-  border: 1px solid rgb(226 232 240);
-  background: #fff;
-  box-sizing: border-box;
+  align-items: flex-end;
 }
 
 .web-ops-filter-date,
 .web-ops-filter-select,
 .web-ops-filter-search {
   box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: rgb(15 23 42);
-  padding: 10px 36px 10px 12px;
-  border-radius: 14px;
-}
-
-.web-ops-filter-search {
-  font-weight: 500;
-  padding-right: 12px;
 }
 
 .web-ops-filter-select {
-  appearance: none;
   cursor: pointer;
 }
 
-.web-ops-filter-control--date::after {
-  content: "";
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  width: 18px;
-  height: 18px;
-  transform: translateY(-50%);
-  pointer-events: none;
-  opacity: 0.72;
-  background: no-repeat center / 16px 16px
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2394a3b8' stroke-width='1.6' viewBox='0 0 24 24'%3E%3Crect x='3.5' y='5' width='17' height='15' rx='2'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E");
-}
-
-.web-ops-filter-control--select::after {
-  content: "";
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  width: 7px;
-  height: 7px;
-  border-right: 2px solid rgb(148 163 184);
-  border-bottom: 2px solid rgb(148 163 184);
-  transform: translateY(-65%) rotate(45deg);
-  pointer-events: none;
-  opacity: 0.85;
-}
-
 .web-ops-filter-apply {
-  min-height: 42px;
+  min-height: 40px;
   padding-left: 20px;
   padding-right: 20px;
-  border-radius: 14px;
+  border-radius: 12px;
   white-space: nowrap;
 }
 
@@ -4684,9 +4740,9 @@ body.web-mode #screen-reports {
 
 .report-period-controls {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
   gap: 10px 12px;
-  align-items: end;
+  align-items: stretch;
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -4763,82 +4819,11 @@ body.web-mode #screen-reports {
 
 .report-inline-field.report-filter-date-start,
 .report-inline-field.report-filter-date-end {
-  flex: 0 1 168px;
+  flex: 0 1 176px;
 }
 
-.report-filter-composite {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-width: 0;
-  min-height: 40px;
-  padding: 0 10px 0 12px;
-  border-radius: 10px;
-  border: 1px solid rgb(15 23 42 / 0.12);
-  background: #fff;
-  color: rgb(15 23 42);
-  box-sizing: border-box;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
-}
-
-.report-filter-composite:focus-within {
-  border-color: rgb(36 173 124 / 0.45);
-  box-shadow: 0 0 0 3px rgb(36 173 124 / 0.12);
-}
-
-.report-filter-composite-prefix {
-  flex-shrink: 0;
-  font-size: 11px;
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: rgb(100 116 139);
-  line-height: 1.2;
-  max-width: 38%;
-}
-
-.report-filter-composite-prefix--wide {
-  max-width: 44%;
-  font-size: 10px;
-  letter-spacing: 0.04em;
-}
-
-.report-filter-composite-prefix--letter {
-  max-width: none;
-  min-width: 1.1em;
-  text-align: center;
-  text-transform: none;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0;
-  color: rgb(71 85 105);
-}
-
-.report-filter-composite .report-filter-select,
-.report-filter-composite .report-filter-date {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 36px;
-  padding: 6px 0;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  font-size: 13px;
-  color: rgb(15 23 42);
-  box-shadow: none;
-  outline: none;
-}
-
-.report-filter-composite--date .report-filter-date {
-  padding-right: 2px;
-}
-
-.report-filter-composite .report-filter-select:focus,
-.report-filter-composite .report-filter-date:focus {
-  outline: none;
+body.web-mode .report-period-controls .balancy-filter-pill {
+  border-color: rgb(15 23 42 / 0.12);
 }
 
 .report-apply-btn {
