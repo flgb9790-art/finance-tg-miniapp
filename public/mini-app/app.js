@@ -1324,15 +1324,15 @@ function renderAccountsList(targetElement, accounts, emptyDescription) {
         const curLine = escapeHtml(formatCurrencyLineFromCode(account.currency_code));
         const bal = escapeHtml(formatMoney(account.balance, account.currency_code));
         return `<article class="web-account-card" data-account-id="${escapeHtml(account.id)}">
-          <div class="web-account-card-deco" style="background: radial-gradient(ellipse 100% 100% at 100% 0%, ${accentEsc}66, transparent 68%)" aria-hidden="true"></div>
-          <span class="web-account-type-chip">${escapeHtml(formatType(account.type))}</span>
           <div class="web-account-card-top">
-            <div class="account-icon account-icon-${escapeHtml(account.type)}">${getAccountTypeIcon(account.type)}</div>
+            <div class="web-account-card-icon" style="background-color:${accentEsc}" aria-hidden="true">${getAccountTypeIcon(
+                account.type
+              )}</div>
             <div class="web-account-card-names">
               <div class="web-account-card-title-line">${escapeHtml(account.name)} · ${escapeHtml(
                 account.currency_code
               )}</div>
-              <div class="web-account-card-sub muted">${curLine}</div>
+              <div class="web-account-card-meta muted">${escapeHtml(formatType(account.type))} · ${curLine}</div>
             </div>
           </div>
           <div class="web-account-card-bottom">
