@@ -3590,10 +3590,6 @@ if (refreshButton) {
     });
   });
 
-  document.getElementById("webTransferHeaderBack")?.addEventListener("click", () => {
-    exitWebTransferView();
-  });
-
   document.getElementById("webTransferCancelButton")?.addEventListener("click", () => {
     exitWebTransferView();
   });
