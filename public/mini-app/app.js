@@ -22,6 +22,13 @@ const recentEntriesListElement = document.getElementById("recentEntriesList");
 const recentTransfersListElement = document.getElementById("recentTransfersList");
 const homeRecentActivityListElement = document.getElementById("homeRecentActivityList");
 const refreshButton = document.getElementById("refreshButton");
+const webProfileMenu = document.getElementById("webProfileMenu");
+const webProfileToggleButton = document.getElementById("webProfileToggleButton");
+const webProfileDropdown = document.getElementById("webProfileDropdown");
+const webProfileName = document.getElementById("webProfileName");
+const webProfileMeta = document.getElementById("webProfileMeta");
+const webLogoutButton = document.getElementById("webLogoutButton");
+const openTelegramMiniAppLink = document.getElementById("openTelegramMiniAppLink");
 const syncRatesButton = document.getElementById("syncRatesButton");
 const fxBoardBaseInput = document.getElementById("fxBoardBaseInput");
 const fxBoardRowsElement = document.getElementById("fxBoardRows");
@@ -1944,6 +1951,56 @@ function renderAll() {
   safeRenderStep("reportCategoryFilterOptions", () => populateReportCategoryFilterOptions());
   safeRenderStep("categoryOptions", () => populateCategoryOptions());
   safeRenderStep("fxReferencePanel", () => syncFxReferencePanel());
+  safeRenderStep("webProfile", () => syncWebProfile());
+}
+
+function syncWebProfile() {
+  if (!isWebMode || !webProfileName || !webProfileMeta) {
+    return;
+  }
+
+  const user = state.user;
+  if (!user) {
+    webProfileName.textContent = "Аккаунт";
+    webProfileMeta.textContent = "Веб-сессия";
+    return;
+  }
+
+  const displayName =
+    [user.first_name, user.last_name].filter(Boolean).join(" ") ||
+    user.username ||
+    "Пользователь";
+  webProfileName.textContent = displayName;
+
+  const usernameLine = user.username ? `@${user.username}` : "без username";
+  webProfileMeta.textContent = `Telegram ID: ${user.telegram_user_id ?? "—"} · ${usernameLine}`;
+}
+
+function closeWebProfileDropdown() {
+  if (!webProfileDropdown || !webProfileToggleButton) {
+    return;
+  }
+
+  webProfileDropdown.hidden = true;
+  webProfileToggleButton.setAttribute("aria-expanded", "false");
+}
+
+function toggleWebProfileDropdown() {
+  if (!webProfileDropdown || !webProfileToggleButton) {
+    return;
+  }
+
+  const nextHidden = !webProfileDropdown.hidden;
+  webProfileDropdown.hidden = nextHidden;
+  webProfileToggleButton.setAttribute("aria-expanded", String(!nextHidden));
+}
+
+async function handleWebLogout() {
+  try {
+    await fetch("/auth/logout", { method: "POST" });
+  } finally {
+    window.location.href = "/web";
+  }
 }
 
 function resolveFetchUrl(url) {
@@ -2780,6 +2837,46 @@ function attachCategoryListsListener() {
 if (refreshButton) {
   refreshButton.addEventListener("click", () => {
     void loadApp();
+  });
+}
+
+if (isWebMode) {
+  document.body.classList.add("web-mode");
+
+  if (webProfileMenu) {
+    webProfileMenu.hidden = false;
+  }
+
+  if (openTelegramMiniAppLink) {
+    openTelegramMiniAppLink.href = "/mini-app/";
+  }
+
+  if (webProfileToggleButton) {
+    webProfileToggleButton.addEventListener("click", () => {
+      toggleWebProfileDropdown();
+    });
+  }
+
+  if (webLogoutButton) {
+    webLogoutButton.addEventListener("click", () => {
+      void handleWebLogout();
+    });
+  }
+
+  document.addEventListener("click", (event) => {
+    if (!webProfileMenu || webProfileMenu.hidden) {
+      return;
+    }
+
+    if (!(event.target instanceof Element)) {
+      return;
+    }
+
+    if (event.target.closest("#webProfileMenu")) {
+      return;
+    }
+
+    closeWebProfileDropdown();
   });
 }
 

@@ -141,6 +141,78 @@ body.keyboard-open .app-shell {
   padding: 2px 0 10px;
 }
 
+.topbar-web-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.web-profile-menu {
+  position: relative;
+}
+
+.web-profile-toggle {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 999px;
+  min-height: 34px;
+  padding: 0 12px;
+  cursor: pointer;
+  font-weight: 600;
+  max-width: 260px;
+}
+
+.web-profile-name {
+  display: inline-block;
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.web-profile-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: min(290px, 80vw);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--shadow);
+  padding: 10px;
+  z-index: 120;
+  display: grid;
+  gap: 8px;
+}
+
+.web-profile-meta {
+  margin: 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.web-profile-link,
+.web-profile-logout {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  min-height: 36px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+  background: var(--card-2);
+}
+
+.web-profile-logout {
+  cursor: pointer;
+  color: #991b1b;
+  border-color: rgb(220 38 38 / 0.25);
+  background: rgb(220 38 38 / 0.07);
+}
+
 .brand-lockup {
   display: flex;
   align-items: center;
@@ -2258,5 +2330,51 @@ details.fx-reference-collapsible[open] .fx-reference-collapsible-chevron {
     width: 31px;
     height: 31px;
     font-size: 19px;
+  }
+}
+
+@media (min-width: 980px) {
+  body.web-mode .app-shell {
+    max-width: 1220px;
+    padding: 18px 18px 18px;
+  }
+
+  body.web-mode::before {
+    display: none;
+  }
+
+  body.web-mode .bottom-nav {
+    left: auto;
+    right: 16px;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+    width: 74px;
+    max-width: none;
+    padding: 8px 6px;
+    border-radius: 18px;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  body.web-mode .bottom-nav-button {
+    min-height: 52px;
+  }
+
+  body.web-mode .nav-label {
+    font-size: 9px;
+  }
+
+  body.web-mode .nav-plus {
+    width: 36px;
+    height: 36px;
+  }
+
+  body.web-mode .content {
+    margin-right: 84px;
+  }
+
+  body.web-mode .screen {
+    gap: 14px;
   }
 }

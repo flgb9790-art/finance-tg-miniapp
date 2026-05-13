@@ -36,7 +36,28 @@
         <div class="brand-lockup" aria-label="Balancy">
           <span class="brand-wordmark">Balancy</span>
         </div>
-        <button id="refreshButton" class="refresh-text-btn" type="button">Обновить</button>
+        <div class="topbar-web-actions">
+          <button id="refreshButton" class="refresh-text-btn" type="button">Обновить</button>
+          <div id="webProfileMenu" class="web-profile-menu" hidden>
+            <button
+              id="webProfileToggleButton"
+              class="web-profile-toggle"
+              type="button"
+              aria-expanded="false"
+            >
+              <span id="webProfileName" class="web-profile-name">Аккаунт</span>
+            </button>
+            <div id="webProfileDropdown" class="web-profile-dropdown" hidden>
+              <p id="webProfileMeta" class="web-profile-meta muted"></p>
+              <a id="openTelegramMiniAppLink" class="web-profile-link" href="/mini-app/" target="_blank" rel="noreferrer">
+                Открыть Telegram Mini App
+              </a>
+              <button id="webLogoutButton" class="web-profile-logout" type="button">
+                Сменить аккаунт
+              </button>
+            </div>
+          </div>
+        </div>
       </header>
 
       <main class="content tabbed-content">
