@@ -3321,10 +3321,16 @@ body.web-mode .web-home-columns > .web-home-col-card .web-home-card-main {
   min-height: 0;
 }
 
-body.web-mode .web-home-columns > .web-home-col-card .web-home-list-fill {
+body.web-mode .web-home-columns > .web-home-col-card .web-home-card-main::after {
+  content: "";
   flex: 1 1 auto;
-  min-height: 132px;
+  min-height: 0;
+}
+
+body.web-mode .web-home-columns > .web-home-col-card .web-home-list-fill {
+  flex: 0 1 auto;
   margin-top: 12px;
+  min-width: 0;
 }
 
 body.web-mode .web-home-columns > .web-home-col-card .web-home-list-fill .empty-state {
@@ -3333,6 +3339,17 @@ body.web-mode .web-home-columns > .web-home-col-card .web-home-list-fill .empty-
   flex-direction: column;
   justify-content: center;
   min-height: 120px;
+}
+
+body.web-mode .web-home-columns > .web-home-col-card > .section-header {
+  flex-shrink: 0;
+  align-items: flex-start;
+  min-height: 52px;
+}
+
+body.web-mode .web-home-columns > .web-home-col-card > .section-header h2 {
+  margin: 0;
+  line-height: 1.2;
 }
 
 body.web-mode .web-home-columns > .card {
@@ -3362,7 +3379,6 @@ body.web-mode .web-home-columns > .card {
 
 body.web-mode .web-home-columns > .card + .card {
   margin-top: 0;
-  padding-top: 0;
   border-top: none;
 }
 
