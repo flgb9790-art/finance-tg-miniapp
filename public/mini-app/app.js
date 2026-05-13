@@ -1119,7 +1119,8 @@ function syncWebPageTitle(screenName) {
   const subtitleByScreen = {
     activity: "Создайте новую операцию дохода или расхода.",
     history: "Лента операций: фильтры по датам, типу, счёту и категории, затем «Показать».",
-    reports: "Сводка за период, графики и выгрузка CSV в валюте отчёта."
+    reports: "Сводка за период, графики и выгрузка CSV в валюте отчёта.",
+    categories: "Создавайте, редактируйте и управляйте категориями доходов и расходов."
   };
   const subtitle = subtitleByScreen[key];
 
@@ -1797,11 +1798,6 @@ function attachWebCategoriesChrome() {
     clearWebCategoryAccentSelection();
     syncCategoryFormChrome();
     document.getElementById("categoryNameInput")?.focus();
-  });
-
-  document.getElementById("webCategoriesPanelClose")?.addEventListener("click", () => {
-    resetCategoryForm();
-    renderCategories(state.categories);
   });
 
   document.getElementById("categoryKindInput")?.addEventListener("change", () => {

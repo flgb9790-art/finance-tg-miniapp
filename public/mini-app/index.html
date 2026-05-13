@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513categories-card-chrome";
+        var BALANCY_CLIENT_ASSET_REV = "20260513categories-header-align";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -884,10 +884,6 @@
           <div class="web-categories-page">
             <div class="web-categories-layout">
               <div class="web-categories-main">
-                <p class="web-categories-lede muted">
-                  Создавайте, редактируйте и управляйте категориями доходов и расходов.
-                </p>
-
                 <div class="web-categories-toolbar web-categories-toolbar--web">
                   <div class="web-categories-tabs" role="tablist" aria-label="Вид списка категорий">
                     <button
@@ -953,9 +949,6 @@
               <aside class="web-categories-panel" id="webCategoriesSidePanel">
                 <div class="web-categories-panel-head">
                   <h2 id="categoryFormTitle" class="web-categories-panel-title">Добавить категорию</h2>
-                  <button type="button" id="webCategoriesPanelClose" class="web-categories-panel-close" aria-label="Закрыть">
-                    ×
-                  </button>
                 </div>
                 <form id="categoryForm" class="web-categories-form stacked-form stacked-form--dense">
                   <label class="category-kind-native-wrap">
