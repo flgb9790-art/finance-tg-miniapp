@@ -1062,7 +1062,9 @@ function resetAccountForm() {
   if (currencyInput.querySelector('option[value="USD"]')) {
     currencyInput.value = "USD";
   }
+  clearWebAccountAccentSelection();
   setAccountsStatus("");
+  syncAccountFormTitles();
 }
 
 function startAccountEdit(accountId) {
@@ -1081,6 +1083,8 @@ function startAccountEdit(accountId) {
   populateCurrencyOptions();
   currencyInput.value = account.currency_code;
   document.getElementById("balanceInput").value = String(account.balance);
+  applyAccentSwatchesForAccountId(account.id);
+  syncAccountFormTitles();
   setAccountsStatus("Режим редактирования: измените данные ниже и нажмите «Сохранить изменения».", "success");
   openScreen("accounts");
 
@@ -1120,7 +1124,8 @@ function syncWebPageTitle(screenName) {
     activity: "Создайте новую операцию дохода или расхода.",
     history: "Лента операций: фильтры по датам, типу, счёту и категории, затем «Показать».",
     reports: "Сводка за период, графики и выгрузка CSV в валюте отчёта.",
-    categories: "Создавайте, редактируйте и управляйте категориями доходов и расходов."
+    categories: "Создавайте, редактируйте и управляйте категориями доходов и расходов.",
+    accounts: "Управляйте своими счетами: создавайте, редактируйте и удаляйте."
   };
   const subtitle = subtitleByScreen[key];
 
@@ -1291,12 +1296,62 @@ function renderAccountsList(targetElement, accounts, emptyDescription) {
   }
 
   if (accounts.length === 0) {
-    targetElement.innerHTML = `
-      <div class="empty-state">
-        <strong>Пока нет счетов</strong>
-        <p class="account-meta">${escapeHtml(emptyDescription)}</p>
-      </div>
-    `;
+    if (isWebMode && targetElement === accountsListElement) {
+      targetElement.innerHTML = `
+        <div class="web-accounts-cards-grid">
+          <div class="empty-state">
+            <strong>Пока нет счетов</strong>
+            <p class="account-meta">${escapeHtml(emptyDescription)}</p>
+          </div>
+        </div>
+      `;
+    } else {
+      targetElement.innerHTML = `
+        <div class="empty-state">
+          <strong>Пока нет счетов</strong>
+          <p class="account-meta">${escapeHtml(emptyDescription)}</p>
+        </div>
+      `;
+    }
+    return;
+  }
+
+  if (isWebMode && targetElement === accountsListElement) {
+    targetElement.innerHTML = `<div class="web-accounts-cards-grid">${accounts
+      .map((account) => {
+        const accent = resolveAccountCardAccent(account);
+        const accentEsc = escapeHtml(accent);
+        const curLine = escapeHtml(formatCurrencyLineFromCode(account.currency_code));
+        const bal = escapeHtml(formatMoney(account.balance, account.currency_code));
+        return `<article class="web-account-card" data-account-id="${escapeHtml(account.id)}">
+          <div class="web-account-card-deco" style="background: radial-gradient(ellipse 100% 100% at 100% 0%, ${accentEsc}66, transparent 68%)" aria-hidden="true"></div>
+          <span class="web-account-type-chip">${escapeHtml(formatType(account.type))}</span>
+          <div class="web-account-card-top">
+            <div class="account-icon account-icon-${escapeHtml(account.type)}">${getAccountTypeIcon(account.type)}</div>
+            <div class="web-account-card-names">
+              <div class="web-account-card-title-line">${escapeHtml(account.name)} · ${escapeHtml(
+                account.currency_code
+              )}</div>
+              <div class="web-account-card-sub muted">${curLine}</div>
+            </div>
+          </div>
+          <div class="web-account-card-bottom">
+            <div>
+              <div class="web-account-balance-label muted">Баланс</div>
+              <div class="web-account-balance-big">${bal}</div>
+            </div>
+            <div class="web-account-card-actions">
+              <button class="web-categories-icon-btn" type="button" data-account-edit-id="${escapeHtml(
+                account.id
+              )}" title="Редактировать" aria-label="Редактировать счёт">${ACCOUNT_EDIT_ICON_SVG}</button>
+              <button class="web-categories-icon-btn web-categories-icon-btn--danger" type="button" data-account-delete-id="${escapeHtml(
+                account.id
+              )}" title="Удалить" aria-label="Удалить счёт">${ACCOUNT_DELETE_ICON_SVG}</button>
+            </div>
+          </div>
+        </article>`;
+      })
+      .join("")}</div>`;
     return;
   }
 
@@ -1591,11 +1646,15 @@ function attachSwipeRowHandlers() {
 function renderAccounts(accounts) {
   accountsCountElement.textContent = String(accounts.length);
   accountsTitleElement.textContent = accounts.length > 0 ? "Ваши счета" : "Счета пока пусты";
-  submitButton.textContent = state.editingAccountId ? "Сохранить изменения" : "Создать счет";
-  accountFormTitleElement.textContent = state.editingAccountId
-    ? "Редактировать счет"
-    : "Новый счет";
+  syncAccountFormTitles();
   cancelAccountEditButton.classList.toggle("hidden-button", !state.editingAccountId);
+
+  const headCount = document.getElementById("webAccountsHeadCount");
+  if (headCount) {
+    headCount.textContent =
+      isWebMode && accounts.length > 0 ? `Всего счетов: ${accounts.length}` : "";
+  }
+
   renderAccountsList(
     accountsListElement,
     accounts,
@@ -1611,6 +1670,128 @@ function renderAccounts(accounts) {
 const CATEGORY_ACCENT_STORAGE_KEY = "balancyCategoryAccentsV1";
 
 const CATEGORY_UI_PALETTE = ["#28b473", "#3b82f6", "#a855f7", "#f97316", "#ef4444", "#14b8a6", "#94a3b8"];
+
+const ACCOUNT_ACCENT_STORAGE_KEY = "balancyAccountAccentsV1";
+
+let webAccountColorChromeAttached = false;
+
+function readAccountAccentMap() {
+  try {
+    const raw = window.localStorage.getItem(ACCOUNT_ACCENT_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return typeof parsed === "object" && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeAccountAccentMap(map) {
+  try {
+    window.localStorage.setItem(ACCOUNT_ACCENT_STORAGE_KEY, JSON.stringify(map));
+  } catch {
+    //
+  }
+}
+
+function readAccountAccent(accountId) {
+  const m = readAccountAccentMap();
+  const v = m[accountId];
+  return typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v.trim()) ? v.trim().toLowerCase() : "";
+}
+
+function writeAccountAccent(accountId, hex) {
+  const m = readAccountAccentMap();
+  m[accountId] = hex.trim().toLowerCase();
+  writeAccountAccentMap(m);
+}
+
+function removeAccountAccent(accountId) {
+  const m = readAccountAccentMap();
+  delete m[accountId];
+  writeAccountAccentMap(m);
+}
+
+function fallbackAccentFromAccountId(accountId) {
+  let h = 0;
+  for (let i = 0; i < accountId.length; i++) {
+    h = (h * 31 + accountId.charCodeAt(i)) | 0;
+  }
+  return CATEGORY_UI_PALETTE[Math.abs(h) % CATEGORY_UI_PALETTE.length];
+}
+
+function resolveAccountCardAccent(account) {
+  return readAccountAccent(account.id) || fallbackAccentFromAccountId(account.id);
+}
+
+function formatCurrencyLineFromCode(code) {
+  const trimmed = String(code ?? "").trim().toUpperCase();
+  const list = getAvailableCurrencies();
+  const hit = list.find((c) => c.code === trimmed);
+  return hit ? formatCurrencyOption(hit) : trimmed || "—";
+}
+
+function clearWebAccountAccentSelection() {
+  const hidden = document.getElementById("accountAccentInput");
+  if (hidden) {
+    hidden.value = "";
+  }
+  document.querySelectorAll("#webAccountColorSwatches .web-cat-swatch").forEach((b) => {
+    b.classList.remove("is-selected");
+  });
+}
+
+function applyAccentSwatchesForAccountId(accountId) {
+  clearWebAccountAccentSelection();
+  const hex = readAccountAccent(accountId);
+  const hidden = document.getElementById("accountAccentInput");
+  if (!hidden || !hex) {
+    return;
+  }
+  hidden.value = hex;
+  document.querySelectorAll("#webAccountColorSwatches .web-cat-swatch").forEach((b) => {
+    if ((b.dataset.accentHex || "").toLowerCase() === hex.toLowerCase()) {
+      b.classList.add("is-selected");
+    }
+  });
+}
+
+function attachWebAccountColorChrome() {
+  if (!isWebMode || webAccountColorChromeAttached) {
+    return;
+  }
+  webAccountColorChromeAttached = true;
+  const sw = document.getElementById("webAccountColorSwatches");
+  sw?.addEventListener("click", (event) => {
+    const t = event.target instanceof Element ? event.target.closest(".web-cat-swatch") : null;
+    if (!t || !sw?.contains(t)) {
+      return;
+    }
+    const hex = t.dataset.accentHex?.trim();
+    if (!hex) {
+      return;
+    }
+    sw.querySelectorAll(".web-cat-swatch").forEach((b) => b.classList.remove("is-selected"));
+    t.classList.add("is-selected");
+    const hidden = document.getElementById("accountAccentInput");
+    if (hidden) {
+      hidden.value = hex.toLowerCase();
+    }
+  });
+}
+
+function syncAccountFormTitles() {
+  if (!accountFormTitleElement || !submitButton) {
+    return;
+  }
+  const editing = Boolean(state.editingAccountId);
+  if (isWebMode) {
+    accountFormTitleElement.textContent = editing ? "Редактировать счёт" : "Добавить новый счёт";
+    submitButton.textContent = editing ? "Сохранить изменения" : "Создать счёт";
+  } else {
+    accountFormTitleElement.textContent = editing ? "Редактировать счет" : "Новый счёт";
+    submitButton.textContent = editing ? "Сохранить изменения" : "Создать счёт";
+  }
+}
 
 function readCategoryAccentMap() {
   try {
@@ -4065,6 +4246,16 @@ async function handleCreateAccount(event) {
       }
     }
 
+    const accentHex = document.getElementById("accountAccentInput")?.value?.trim() ?? "";
+    const accId = String(response.account?.id ?? state.editingAccountId ?? "").trim();
+    if (accId) {
+      if (accentHex && /^#[0-9a-fA-F]{6}$/.test(accentHex)) {
+        writeAccountAccent(accId, accentHex);
+      } else {
+        removeAccountAccent(accId);
+      }
+    }
+
     resetAccountForm();
     setAccountsStatus(isEditing ? "Счет обновлен." : "Счет создан.", "success");
     renderAll();
@@ -4089,6 +4280,8 @@ async function handleDeleteAccount(accountId) {
     });
 
     state.accounts = state.accounts.filter((account) => account.id !== accountId);
+
+    removeAccountAccent(accountId);
 
     if (state.editingAccountId === accountId) {
       resetAccountForm();
@@ -4785,6 +4978,7 @@ attachAccountsListListener();
 attachSwipeRowHandlers();
 attachCategoryListsListener();
 attachWebCategoriesChrome();
+attachWebAccountColorChrome();
 attachFxReferencePanelListeners();
 
 window.addEventListener("focus", () => {

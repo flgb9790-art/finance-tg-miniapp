@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513categories-panel-no-jump";
+        var BALANCY_CLIENT_ASSET_REV = "20260513accounts-web-cards";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -424,54 +424,131 @@
         </section>
 
         <section id="screen-accounts" class="screen" data-screen="accounts">
-          <section class="card">
-            <div class="section-header">
-              <div>
-                <p class="section-label">Счета</p>
-                <h2 id="accountsTitle">Ваши счета</h2>
+          <div class="web-accounts-page">
+            <div class="web-accounts-list-shell web-accounts-surface">
+              <p class="section-label web-accounts-telegram-label">Счета</p>
+              <div class="web-accounts-list-head">
+                <h2 id="accountsTitle" class="web-accounts-title">Ваши счета</h2>
+                <span id="webAccountsHeadCount" class="web-accounts-head-count muted web-accounts-toolbar--web"></span>
               </div>
+              <div id="accountsList" class="accounts-list"></div>
             </div>
-            <div id="accountsList" class="accounts-list"></div>
-          </section>
 
-          <section class="card">
-            <p id="accountFormTitle" class="section-label">Новый счет</p>
-            <form id="accountForm" class="stacked-form stacked-form--dense">
-              <label>
-                <span>Название</span>
-                <input id="nameInput" name="name" placeholder="Например: TBC card" required type="text" />
-              </label>
+            <div class="web-accounts-form-shell web-accounts-surface">
+              <h3 id="accountFormTitle" class="web-accounts-form-title">Новый счёт</h3>
+              <form id="accountForm" class="stacked-form stacked-form--dense web-accounts-form">
+                <div class="web-accounts-form-grid">
+                  <label class="web-accounts-field">
+                    <span>Название счёта <span class="web-op-req" aria-hidden="true">*</span></span>
+                    <input id="nameInput" name="name" placeholder="Например: TBC card" required type="text" />
+                  </label>
 
-              <label>
-                <span>Тип</span>
-                <select id="typeInput" name="type">
-                  <option value="cash">Наличные</option>
-                  <option value="card">Карта</option>
-                  <option value="crypto">Крипта</option>
-                  <option value="savings">Накопления</option>
-                  <option value="other">Другое</option>
-                </select>
-              </label>
+                  <label class="web-accounts-field">
+                    <span>Тип <span class="web-op-req" aria-hidden="true">*</span></span>
+                    <select id="typeInput" name="type">
+                      <option value="cash">Наличные</option>
+                      <option value="card">Карта</option>
+                      <option value="crypto">Крипта</option>
+                      <option value="savings">Накопления</option>
+                      <option value="other">Другое</option>
+                    </select>
+                  </label>
 
-              <label>
-                <span>Валюта</span>
-                <select id="currencyInput" name="currencyCode"></select>
-              </label>
+                  <label class="web-accounts-field">
+                    <span>Валюта <span class="web-op-req" aria-hidden="true">*</span></span>
+                    <select id="currencyInput" name="currencyCode"></select>
+                  </label>
 
-              <label>
-                <span>Стартовый баланс</span>
-                <input id="balanceInput" name="balance" placeholder="0" step="0.01" type="number" />
-              </label>
+                  <label class="web-accounts-field web-accounts-field--balance">
+                    <span>Стартовый баланс</span>
+                    <input id="balanceInput" name="balance" placeholder="0.00" step="0.01" type="number" />
+                  </label>
+                </div>
 
-              <p id="accountsStatusText" class="muted form-status"></p>
-              <div class="form-actions">
-                <button id="submitButton" class="primary-button" type="button">Создать счет</button>
-                <button id="cancelAccountEditButton" class="ghost-button hidden-button" type="button">
-                  Отмена
-                </button>
+                <div class="web-accounts-color-block web-accounts-toolbar--web">
+                  <span class="web-categories-field-label">Цвет (необязательно)</span>
+                  <div id="webAccountColorSwatches" class="web-cat-swatches" role="radiogroup" aria-label="Цвет счёта">
+                    <button
+                      type="button"
+                      class="web-cat-swatch"
+                      data-accent-hex="#28b473"
+                      style="--swatch: #28b473"
+                      aria-label="Зелёный"
+                      title="Зелёный"
+                    ></button>
+                    <button
+                      type="button"
+                      class="web-cat-swatch"
+                      data-accent-hex="#3b82f6"
+                      style="--swatch: #3b82f6"
+                      aria-label="Синий"
+                      title="Синий"
+                    ></button>
+                    <button
+                      type="button"
+                      class="web-cat-swatch"
+                      data-accent-hex="#a855f7"
+                      style="--swatch: #a855f7"
+                      aria-label="Фиолетовый"
+                      title="Фиолетовый"
+                    ></button>
+                    <button
+                      type="button"
+                      class="web-cat-swatch"
+                      data-accent-hex="#f97316"
+                      style="--swatch: #f97316"
+                      aria-label="Оранжевый"
+                      title="Оранжевый"
+                    ></button>
+                    <button
+                      type="button"
+                      class="web-cat-swatch"
+                      data-accent-hex="#ef4444"
+                      style="--swatch: #ef4444"
+                      aria-label="Красный"
+                      title="Красный"
+                    ></button>
+                    <button
+                      type="button"
+                      class="web-cat-swatch"
+                      data-accent-hex="#14b8a6"
+                      style="--swatch: #14b8a6"
+                      aria-label="Бирюзовый"
+                      title="Бирюзовый"
+                    ></button>
+                    <button
+                      type="button"
+                      class="web-cat-swatch"
+                      data-accent-hex="#94a3b8"
+                      style="--swatch: #94a3b8"
+                      aria-label="Серый"
+                      title="Серый"
+                    ></button>
+                  </div>
+                  <input type="hidden" id="accountAccentInput" value="" autocomplete="off" />
+                </div>
+
+                <p id="accountsStatusText" class="muted form-status"></p>
+                <div class="web-accounts-form-actions">
+                  <button id="submitButton" class="primary-button web-accounts-submit" type="button">Создать счёт</button>
+                  <button id="cancelAccountEditButton" class="ghost-button web-accounts-cancel hidden-button" type="button">
+                    Отмена
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div class="web-accounts-tip web-accounts-toolbar--web" role="note">
+              <span class="web-accounts-tip-icon" aria-hidden="true">💡</span>
+              <div class="web-accounts-tip-copy">
+                <strong class="web-accounts-tip-title">Подсказка</strong>
+                <p class="web-accounts-tip-text muted">
+                  Вы можете добавлять счета в разных валютах и отслеживать баланс каждого из них.
+                </p>
               </div>
-            </form>
-          </section>
+              <a class="web-accounts-tip-link" href="/instruction">Подробнее ›</a>
+            </div>
+          </div>
         </section>
 
         <section id="screen-activity" class="screen" data-screen="activity">
