@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260514home-columns-align";
+        var BALANCY_CLIENT_ASSET_REV = "20260513history-ops-app-js";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -58,6 +58,15 @@
               <path d="M8 9H16M8 13H13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
             </svg>
             <span>Операции</span>
+          </button>
+          <button type="button" class="web-sidebar-link" data-web-nav="history">
+            <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 6H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              <path d="M4 12H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              <path d="M4 18H14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              <path d="M17 16V20M15 18H19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+            <span>История</span>
           </button>
           <button type="button" class="web-sidebar-link" data-web-nav="reports">
             <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -148,7 +157,10 @@
       </aside>
       <div class="web-main-column">
         <header class="web-page-header">
-          <h1 id="webPageTitle" class="web-page-title">Главная</h1>
+          <div class="web-page-title-block">
+            <h1 id="webPageTitle" class="web-page-title">Главная</h1>
+            <p id="webPageSubtitle" class="web-page-subtitle muted" hidden></p>
+          </div>
           <div class="web-page-header-actions">
             <div class="web-new-entry-wrap">
               <button
@@ -329,7 +341,7 @@
                   <p class="section-label">Последние операции</p>
                   <h2>История</h2>
                 </div>
-                <button class="text-link-button" data-open-screen="activity" type="button">
+                <button class="text-link-button" data-open-screen="history" type="button">
                   Все
                 </button>
               </div>
@@ -343,7 +355,7 @@
                 <div class="section-footer-actions">
                   <p class="muted secondary-status">Последние записи и переводы из ленты ниже</p>
                   <div class="toolbar-actions-row">
-                    <button class="toolbar-text-btn" data-open-screen="activity" type="button">
+                    <button class="toolbar-text-btn" data-open-screen="history" type="button">
                       Все операции
                     </button>
                     <button
@@ -537,6 +549,161 @@
         </section>
 
         <section id="screen-activity" class="screen" data-screen="activity">
+          <div class="web-activity-compose">
+            <div class="web-op-kind-cards" role="group" aria-label="Тип операции">
+              <button
+                type="button"
+                class="web-op-kind-card web-op-kind-card--income"
+                data-web-set-entry-kind="income"
+                aria-pressed="false"
+              >
+                <span class="web-op-kind-card-icon" aria-hidden="true">↑</span>
+                <span class="web-op-kind-card-title">Доход</span>
+                <span class="web-op-kind-card-desc">Поступление средств</span>
+              </button>
+              <button
+                type="button"
+                class="web-op-kind-card web-op-kind-card--expense is-selected"
+                data-web-set-entry-kind="expense"
+                aria-pressed="true"
+              >
+                <span class="web-op-kind-card-icon" aria-hidden="true">↓</span>
+                <span class="web-op-kind-card-title">Расход</span>
+                <span class="web-op-kind-card-desc">Списание средств</span>
+              </button>
+            </div>
+          </div>
+
+          <section class="card activity-form-card web-op-entry-sheet">
+            <div class="section-header section-header--telegram-only">
+              <div>
+                <p class="section-label">Операции</p>
+                <h2>Доходы и расходы</h2>
+              </div>
+            </div>
+            <form id="entryForm" class="stacked-form web-op-entry-form">
+              <label class="web-op-native-kind-field">
+                <span>Тип операции</span>
+                <select id="entryKindInput" name="kind">
+                  <option value="expense">Расход</option>
+                  <option value="income">Доход</option>
+                </select>
+              </label>
+
+              <label>
+                <span>Счет <span class="web-op-req" aria-hidden="true">*</span></span>
+                <select id="entryAccountInput" name="accountId"></select>
+              </label>
+
+              <label>
+                <span>Категория <span class="web-op-req" aria-hidden="true">*</span></span>
+                <select id="entryCategoryInput" name="categoryId"></select>
+              </label>
+
+              <label>
+                <span>Сумма <span class="web-op-req" aria-hidden="true">*</span></span>
+                <input id="entryAmountInput" min="0.01" name="amount" placeholder="0.00" required step="0.01" type="number" />
+              </label>
+
+              <label>
+                <span>Дата и время <span class="web-op-req" aria-hidden="true">*</span></span>
+                <div class="native-datetime-shell">
+                  <input id="entryDateInput" name="occurredAt" required type="datetime-local" />
+                </div>
+              </label>
+
+              <label class="web-op-field-span-2">
+                <span>Комментарий</span>
+                <input
+                  id="entryNoteInput"
+                  name="note"
+                  placeholder="Добавьте комментарий (необязательно)"
+                  type="text"
+                />
+              </label>
+
+              <div class="web-op-form-actions">
+                <button id="entrySubmitButton" class="primary-button" type="button">Сохранить операцию</button>
+                <button id="entryFormResetWeb" class="ghost-button web-op-cancel-btn" type="button">
+                  Отмена
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <div class="web-activity-tip" role="note">
+            <span class="web-activity-tip-text muted"
+              >Подсказка: регулярные операции можно создавать быстрее через шаблоны.</span
+            >
+            <button type="button" class="text-link-button" disabled>Шаблоны операций ›</button>
+          </div>
+
+          <section class="card activity-form-card">
+            <div class="section-header">
+              <div>
+                <p class="section-label">Переводы</p>
+                <h2>Между счетами</h2>
+              </div>
+            </div>
+            <form id="transferForm" class="stacked-form">
+              <label>
+                <span>Со счета</span>
+                <select id="transferFromAccountInput" name="fromAccountId"></select>
+              </label>
+
+              <label>
+                <span>На счет</span>
+                <select id="transferToAccountInput" name="toAccountId"></select>
+              </label>
+
+              <label>
+                <span>Сумма списания</span>
+                <input id="transferFromAmountInput" min="0.01" name="fromAmount" placeholder="0" required step="0.01" type="number" />
+              </label>
+
+              <label>
+                <span>Сумма зачисления</span>
+                <input id="transferToAmountInput" min="0.01" name="toAmount" placeholder="Оставьте пустым для автоконвертации" step="0.01" type="number" />
+              </label>
+
+              <label>
+                <span>Дата и время</span>
+                <div class="native-datetime-shell">
+                  <input id="transferDateInput" name="occurredAt" required type="datetime-local" />
+                </div>
+              </label>
+
+              <label>
+                <span>Комментарий</span>
+                <input id="transferNoteInput" name="note" placeholder="Необязательно" type="text" />
+              </label>
+
+              <button id="transferSubmitButton" class="primary-button" type="button">Сохранить перевод</button>
+            </form>
+          </section>
+
+          <section class="card activity-ledger-card">
+            <div class="section-header">
+              <div>
+                <p class="section-label">История операций</p>
+                <h2>Последние записи</h2>
+              </div>
+            </div>
+            <div id="recentEntriesList" class="entries-list"></div>
+          </section>
+
+          <section class="card activity-ledger-card">
+            <div class="section-header">
+              <div>
+                <p class="section-label">История переводов</p>
+                <h2>Последние переводы</h2>
+              </div>
+            </div>
+            <div id="recentTransfersList" class="entries-list"></div>
+          </section>
+        </section>
+
+        <section id="screen-history" class="screen" data-screen="history">
           <div id="webOperationsRoot" class="web-operations-root">
             <div class="web-ops-filter-shell">
               <div class="web-ops-filter-row">
@@ -622,7 +789,7 @@
             </div>
             <div class="web-ops-table-card card">
               <div class="web-ops-table-scroll">
-                <table class="web-ops-table" aria-label="Операции">
+                <table class="web-ops-table" aria-label="История операций">
                   <thead>
                     <tr>
                       <th>Дата</th>
@@ -659,117 +826,6 @@
               </div>
             </div>
           </div>
-
-          <section class="card activity-form-card">
-            <div class="section-header">
-              <div>
-                <p class="section-label">Операции</p>
-                <h2>Доходы и расходы</h2>
-              </div>
-            </div>
-            <form id="entryForm" class="stacked-form">
-              <label>
-                <span>Тип операции</span>
-                <select id="entryKindInput" name="kind">
-                  <option value="expense">Расход</option>
-                  <option value="income">Доход</option>
-                </select>
-              </label>
-
-              <label>
-                <span>Счет</span>
-                <select id="entryAccountInput" name="accountId"></select>
-              </label>
-
-              <label>
-                <span>Категория</span>
-                <select id="entryCategoryInput" name="categoryId"></select>
-              </label>
-
-              <label>
-                <span>Сумма</span>
-                <input id="entryAmountInput" min="0.01" name="amount" placeholder="0" required step="0.01" type="number" />
-              </label>
-
-              <label>
-                <span>Дата и время</span>
-                <div class="native-datetime-shell">
-                  <input id="entryDateInput" name="occurredAt" required type="datetime-local" />
-                </div>
-              </label>
-
-              <label>
-                <span>Комментарий</span>
-                <input id="entryNoteInput" name="note" placeholder="Необязательно" type="text" />
-              </label>
-
-              <button id="entrySubmitButton" class="primary-button" type="button">Сохранить операцию</button>
-            </form>
-          </section>
-
-          <section class="card activity-form-card">
-            <div class="section-header">
-              <div>
-                <p class="section-label">Переводы</p>
-                <h2>Между счетами</h2>
-              </div>
-            </div>
-            <form id="transferForm" class="stacked-form">
-              <label>
-                <span>Со счета</span>
-                <select id="transferFromAccountInput" name="fromAccountId"></select>
-              </label>
-
-              <label>
-                <span>На счет</span>
-                <select id="transferToAccountInput" name="toAccountId"></select>
-              </label>
-
-              <label>
-                <span>Сумма списания</span>
-                <input id="transferFromAmountInput" min="0.01" name="fromAmount" placeholder="0" required step="0.01" type="number" />
-              </label>
-
-              <label>
-                <span>Сумма зачисления</span>
-                <input id="transferToAmountInput" min="0.01" name="toAmount" placeholder="Оставьте пустым для автоконвертации" step="0.01" type="number" />
-              </label>
-
-              <label>
-                <span>Дата и время</span>
-                <div class="native-datetime-shell">
-                  <input id="transferDateInput" name="occurredAt" required type="datetime-local" />
-                </div>
-              </label>
-
-              <label>
-                <span>Комментарий</span>
-                <input id="transferNoteInput" name="note" placeholder="Необязательно" type="text" />
-              </label>
-
-              <button id="transferSubmitButton" class="primary-button" type="button">Сохранить перевод</button>
-            </form>
-          </section>
-
-          <section class="card activity-ledger-card">
-            <div class="section-header">
-              <div>
-                <p class="section-label">История операций</p>
-                <h2>Последние записи</h2>
-              </div>
-            </div>
-            <div id="recentEntriesList" class="entries-list"></div>
-          </section>
-
-          <section class="card activity-ledger-card">
-            <div class="section-header">
-              <div>
-                <p class="section-label">История переводов</p>
-                <h2>Последние переводы</h2>
-              </div>
-            </div>
-            <div id="recentTransfersList" class="entries-list"></div>
-          </section>
         </section>
 
         <section id="screen-categories" class="screen" data-screen="categories">
@@ -937,6 +993,24 @@
             </svg>
           </span>
           <span class="nav-label">Главная</span>
+        </button>
+        <button class="bottom-nav-button" data-open-screen="activity" type="button">
+          <span class="nav-icon" aria-hidden="true">
+            <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none">
+              <path d="M5 5H19V19H5V5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+              <path d="M8 9H16M8 13H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span class="nav-label">Операции</span>
+        </button>
+        <button class="bottom-nav-button" data-open-screen="history" type="button">
+          <span class="nav-icon" aria-hidden="true">
+            <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none">
+              <path d="M4 6H20M4 12H20M4 18H14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M17 16V20M15 18H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">История</span>
         </button>
         <button class="bottom-nav-button" data-open-screen="reports" type="button">
           <span class="nav-icon" aria-hidden="true">

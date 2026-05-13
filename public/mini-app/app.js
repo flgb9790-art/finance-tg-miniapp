@@ -4,6 +4,7 @@ const isWebMode = new URLSearchParams(window.location.search).get("web") === "1"
 const WEB_PAGE_TITLES = {
   home: "Главная",
   activity: "Операции",
+  history: "История",
   reports: "Отчёты",
   categories: "Категории",
   accounts: "Счета"
@@ -42,6 +43,7 @@ const webProfileMeta = document.getElementById("webProfileMeta");
 const webSwitchUserButton = document.getElementById("webSwitchUserButton");
 const webNewEntryMenu = document.getElementById("webNewEntryMenu");
 const webPageTitleElement = document.getElementById("webPageTitle");
+const webPageSubtitleElement = document.getElementById("webPageSubtitle");
 const webSidebarUserNameElement = document.getElementById("webSidebarUserName");
 const syncRatesButton = document.getElementById("syncRatesButton");
 const fxBoardBaseInput = document.getElementById("fxBoardBaseInput");
@@ -678,6 +680,8 @@ function formatCurrencyOption(currency) {
 function openScreen(screenName) {
   const nextScreen = screenName || "home";
 
+  document.body.dataset.appActiveScreen = nextScreen;
+
   screenElements.forEach((screenElement) => {
     const isActive = screenElement.dataset.screen === nextScreen;
     screenElement.classList.toggle("screen-active", isActive);
@@ -695,18 +699,19 @@ function openScreen(screenName) {
     syncWebPageTitle(nextScreen);
     closeWebNewEntryMenu();
     if (nextScreen === "activity") {
-      initWebOperationsChrome();
-      if (state.webOperationsLastPayload) {
-        renderWebOperationsFromPayload(state.webOperationsLastPayload);
-      } else {
-        syncWebOperationsIdleChrome();
-      }
+      syncWebEntryKindCardsFromSelect();
     }
+  }
+
+  if (nextScreen === "history") {
+    initWebOperationsChrome();
+    webOpsOffset = 0;
+    void refreshWebOperationsBoard();
   }
 }
 
 function initWebOperationsChrome() {
-  if (!isWebMode || !webOpsDateFrom || !webOpsDateTo) {
+  if (!webOpsDateFrom || !webOpsDateTo) {
     return;
   }
 
@@ -765,6 +770,13 @@ function buildWebOperationsApiUrl() {
   const reportingCurrency = state.summary?.reportingCurrency ?? currentReportingCurrencySelection();
   const params = new URLSearchParams();
   params.set("reportingCurrency", reportingCurrency);
+
+  if (document.body.dataset.appActiveScreen === "history") {
+    params.set("scope", "history");
+    params.set("limit", String(getWebOpsPageSizeValue()));
+    params.set("offset", String(webOpsOffset));
+    return `/api/operations?${params.toString()}`;
+  }
 
   if (webOpsDateFrom?.value) {
     params.set("from", webOpsDateFrom.value);
@@ -921,7 +933,11 @@ function buildWebOperationsTableRowHtml(row) {
 }
 
 async function refreshWebOperationsBoard() {
-  if (!isWebMode || !webOperationsRoot || !webOpsTableBody) {
+  if (!webOperationsRoot || !webOpsTableBody) {
+    return;
+  }
+
+  if (document.body.dataset.appActiveScreen !== "history") {
     return;
   }
 
@@ -939,46 +955,6 @@ async function refreshWebOperationsBoard() {
     webOpsTableBody.innerHTML = `<tr><td colspan="6" class="inline-error">${escapeHtml(
       error instanceof Error ? error.message : "Не удалось загрузить операции"
     )}</td></tr>`;
-  }
-}
-
-function syncWebOperationsIdleChrome() {
-  if (!isWebMode || !webOpsTableBody) {
-    return;
-  }
-
-  if (webOpsStatCount) {
-    webOpsStatCount.textContent = "—";
-  }
-
-  if (webOpsStatIncome) {
-    webOpsStatIncome.textContent = "—";
-  }
-
-  if (webOpsStatExpense) {
-    webOpsStatExpense.textContent = "—";
-  }
-
-  if (webOpsStatNet) {
-    webOpsStatNet.textContent = "—";
-  }
-
-  webOpsTableBody.innerHTML = `<tr><td colspan="6" class="muted web-ops-idle-msg">Нажмите «Показать», чтобы загрузить операции по выбранным фильтрам.</td></tr>`;
-
-  if (webOpsEmptyHint) {
-    webOpsEmptyHint.hidden = true;
-  }
-
-  if (webOpsPageInfo) {
-    webOpsPageInfo.textContent = "";
-  }
-
-  if (webOpsPagePrev) {
-    webOpsPagePrev.disabled = true;
-  }
-
-  if (webOpsPageNext) {
-    webOpsPageNext.disabled = true;
   }
 }
 
@@ -1012,6 +988,7 @@ function openEntryScreenForKind(kind) {
   openScreen("activity");
   entryKindInput.value = kind;
   populateCategoryOptions();
+  syncWebEntryKindCardsFromSelect();
   document.getElementById("entryForm")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -1062,6 +1039,39 @@ function syncWebPageTitle(screenName) {
 
   const key = screenName || "home";
   webPageTitleElement.textContent = WEB_PAGE_TITLES[key] ?? "Balancy";
+
+  if (!webPageSubtitleElement) {
+    return;
+  }
+
+  const subtitleByScreen = {
+    activity: "Создайте новую операцию дохода или расхода.",
+    history: "Полная лента операций без фильтров — доходы, расходы и переводы."
+  };
+  const subtitle = subtitleByScreen[key];
+
+  if (subtitle) {
+    webPageSubtitleElement.textContent = subtitle;
+    webPageSubtitleElement.hidden = false;
+  } else {
+    webPageSubtitleElement.textContent = "";
+    webPageSubtitleElement.hidden = true;
+  }
+}
+
+function syncWebEntryKindCardsFromSelect() {
+  if (!isWebMode) {
+    return;
+  }
+
+  const kind = entryKindInput?.value ?? "expense";
+
+  document.querySelectorAll("[data-web-set-entry-kind]").forEach((button) => {
+    const cardKind = button.dataset.webSetEntryKind;
+    const selected = cardKind === kind;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", selected ? "true" : "false");
+  });
 }
 
 function renderWebDesktopDashboard(summary) {
@@ -2950,11 +2960,9 @@ async function loadApp() {
       "Пользователь";
 
     renderAll();
-    if (
-      isWebMode &&
-      document.getElementById("screen-activity")?.classList.contains("screen-active")
-    ) {
+    if (document.body.dataset.appActiveScreen === "history") {
       populateWebOperationsFilterSelects();
+      void refreshWebOperationsBoard();
     }
     setStatus(
       "Все готово. Интерфейс разбит по вкладкам и стал проще для ежедневного использования.",
@@ -3236,14 +3244,11 @@ async function handleCreateEntry(event) {
     entryKindInput.value = "expense";
     entryDateInput.value = getCurrentLocalDateTimeValue();
     populateCategoryOptions();
+    syncWebEntryKindCardsFromSelect();
     setStatus("Операция сохранена.", "success");
     await loadApp();
-    if (
-      isWebMode &&
-      document.getElementById("screen-activity")?.classList.contains("screen-active")
-    ) {
-      state.webOperationsLastPayload = null;
-      syncWebOperationsIdleChrome();
+    if (document.body.dataset.appActiveScreen === "history") {
+      void refreshWebOperationsBoard();
     }
   } catch (error) {
     console.error(error);
@@ -3281,12 +3286,8 @@ async function handleCreateTransfer(event) {
     transferDateInput.value = getCurrentLocalDateTimeValue();
     setStatus("Перевод сохранен.", "success");
     await loadApp();
-    if (
-      isWebMode &&
-      document.getElementById("screen-activity")?.classList.contains("screen-active")
-    ) {
-      state.webOperationsLastPayload = null;
-      syncWebOperationsIdleChrome();
+    if (document.body.dataset.appActiveScreen === "history") {
+      void refreshWebOperationsBoard();
     }
   } catch (error) {
     console.error(error);
@@ -3398,10 +3399,10 @@ if (refreshButton) {
   });
 }
 
-if (isWebMode) {
-  document.body.classList.add("web-mode");
-  webTopNav?.removeAttribute("hidden");
-  syncWebPageTitle("home");
+  if (isWebMode) {
+    document.body.classList.add("web-mode");
+    webTopNav?.removeAttribute("hidden");
+    syncWebPageTitle("home");
 
   if (webRefreshButton) {
     webRefreshButton.addEventListener("click", () => {
@@ -3469,6 +3470,26 @@ if (isWebMode) {
       webOpsOffset = 0;
       void refreshWebOperationsBoard();
     }
+  });
+
+  document.querySelectorAll("[data-web-set-entry-kind]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const nextKind = button.dataset.webSetEntryKind;
+      if (!nextKind || !entryKindInput) {
+        return;
+      }
+      entryKindInput.value = nextKind;
+      populateCategoryOptions();
+      syncWebEntryKindCardsFromSelect();
+    });
+  });
+
+  document.getElementById("entryFormResetWeb")?.addEventListener("click", () => {
+    entryForm.reset();
+    entryKindInput.value = "expense";
+    entryDateInput.value = getCurrentLocalDateTimeValue();
+    populateCategoryOptions();
+    syncWebEntryKindCardsFromSelect();
   });
 
   document.querySelectorAll("[data-web-nav]").forEach((button) => {
@@ -3724,6 +3745,7 @@ reportDownloadCsvButton?.addEventListener("click", () => {
 
 entryKindInput.addEventListener("change", () => {
   populateCategoryOptions();
+  syncWebEntryKindCardsFromSelect();
 });
 
 reportPeriodInput.addEventListener("change", () => {

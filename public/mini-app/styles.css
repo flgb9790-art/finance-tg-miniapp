@@ -3389,6 +3389,7 @@ body.web-mode .screen > .home-help-footer {
 
 body.web-mode #screen-accounts .card,
 body.web-mode #screen-activity .card,
+body.web-mode #screen-history .card,
 body.web-mode #screen-categories .card,
 body.web-mode #screen-reports .card {
   border: none;
@@ -3402,18 +3403,19 @@ body.web-mode #screen-reports .card {
 
 body.web-mode #screen-accounts .card:last-child,
 body.web-mode #screen-activity .card:last-child,
+body.web-mode #screen-history .card:last-child,
 body.web-mode #screen-categories .card:last-child,
 body.web-mode #screen-reports .card:last-child {
   border-bottom: none;
   padding-bottom: 8px;
 }
 
-/* Web: операции — панель над формами; ленты «последние» скрыты (есть таблица) */
+/* Web: таблица операций только на экране «История» */
 .web-operations-root {
   display: none;
 }
 
-body.web-mode .web-operations-root {
+body.web-mode #screen-history .web-operations-root {
   display: block;
   margin-bottom: 8px;
 }
@@ -3422,7 +3424,7 @@ body.web-mode #screen-activity > .activity-ledger-card {
   display: none !important;
 }
 
-body.web-mode #screen-activity .web-operations-root .card {
+body.web-mode #screen-history .web-operations-root .card {
   background: #fff;
   border-radius: 18px;
   border: 1px solid rgb(15 23 42 / 0.08);
@@ -3451,8 +3453,12 @@ body.web-mode #screen-activity .activity-form-card {
   margin: 0 0 14px;
 }
 
-body.web-mode #screen-activity .web-ops-filter-shell {
+body.web-mode #screen-history .web-ops-filter-shell {
   margin-bottom: 14px;
+}
+
+body[data-app-active-screen="history"] .web-ops-filter-shell {
+  display: none !important;
 }
 
 .web-ops-filter-row {
@@ -3736,4 +3742,167 @@ body.web-mode .web-ops-summary-grid {
 .web-ops-page-info {
   margin: 0;
   font-size: 12px;
+}
+
+/* --- Web: экран «Операции» (форма) в стиле Balancy --- */
+body.web-mode .web-page-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+body.web-mode .web-page-subtitle {
+  font-size: 14px;
+  line-height: 1.35;
+  margin: 0;
+  max-width: 560px;
+}
+
+body.web-mode .section-header--telegram-only {
+  display: none;
+}
+
+body.web-mode .web-op-native-kind-field {
+  display: none;
+}
+
+body:not(.web-mode) .web-activity-compose,
+body:not(.web-mode) .web-activity-tip {
+  display: none !important;
+}
+
+body:not(.web-mode) #entryFormResetWeb {
+  display: none !important;
+}
+
+body.web-mode .web-activity-compose {
+  margin-bottom: 14px;
+}
+
+body.web-mode .web-op-kind-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+body.web-mode .web-op-kind-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 2px solid rgb(226 232 240);
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+body.web-mode .web-op-kind-card:hover {
+  border-color: rgb(203 213 225);
+}
+
+body.web-mode .web-op-kind-card:focus-visible {
+  outline: 2px solid rgb(36 173 124 / 0.45);
+  outline-offset: 2px;
+}
+
+body.web-mode .web-op-kind-card-icon {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+body.web-mode .web-op-kind-card--income .web-op-kind-card-icon {
+  color: #24ad7c;
+}
+
+body.web-mode .web-op-kind-card--expense .web-op-kind-card-icon {
+  color: rgb(239 68 68);
+}
+
+body.web-mode .web-op-kind-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgb(15 23 42);
+}
+
+body.web-mode .web-op-kind-card-desc {
+  font-size: 12px;
+  color: rgb(100 116 139);
+  line-height: 1.35;
+}
+
+body.web-mode .web-op-kind-card--income.is-selected {
+  border-color: #24ad7c;
+  box-shadow: 0 0 0 1px rgb(36 173 124 / 0.22);
+}
+
+body.web-mode .web-op-kind-card--expense.is-selected {
+  border-color: rgb(239 68 68);
+  box-shadow: 0 0 0 1px rgb(239 68 68 / 0.2);
+}
+
+body.web-mode .web-op-entry-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+body.web-mode .web-op-field-span-2 {
+  grid-column: 1 / -1;
+}
+
+body.web-mode .web-op-form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+body.web-mode .web-op-form-actions .primary-button {
+  width: 100%;
+}
+
+body.web-mode .web-op-cancel-btn {
+  width: 100%;
+}
+
+body.web-mode .web-op-req {
+  color: rgb(239 68 68);
+}
+
+body.web-mode .web-activity-tip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 18px;
+  margin: 0 0 14px;
+  border-radius: 16px;
+  background: rgb(248 250 252);
+  border: 1px solid rgb(15 23 42 / 0.06);
+}
+
+body.web-mode .web-activity-tip-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+@media (max-width: 720px) {
+  body.web-mode .web-op-entry-form {
+    grid-template-columns: 1fr;
+  }
+
+  body.web-mode .web-op-kind-cards {
+    grid-template-columns: 1fr;
+  }
 }

@@ -42,6 +42,8 @@ export interface OperationsListQuery {
   q?: string;
   limit: number;
   offset: number;
+  /** Полная лента (вкладка «История»): широкий период, без фильтров, с лимитом строк на стороне БД */
+  historyScope: boolean;
 }
 
 export type OperationTimelineItem =
@@ -72,15 +74,29 @@ function firstQueryString(value: unknown): string | undefined {
   return undefined;
 }
 
+const HISTORY_DB_CAP = 4000;
+
 export function parseOperationsListQuery(
   query: Record<string, unknown>
 ): OperationsListQuery {
+  const scope = (firstQueryString(query.scope) ?? "").toLowerCase();
+  const historyScope = scope === "history";
+
   const fromRaw = firstQueryString(query.from);
   const toRaw = firstQueryString(query.to);
   const { from: defaultFrom, to: defaultTo } = defaultDateRange();
 
-  let fromIso = fromRaw ? startOfDay(parseIsoOrDateOnly(fromRaw)).toISOString() : defaultFrom;
-  let toIso = toRaw ? endOfDay(parseIsoOrDateOnly(toRaw)).toISOString() : defaultTo;
+  let fromIso: string;
+  let toIso: string;
+
+  if (historyScope) {
+    const start = startOfDay(new Date("2000-01-01"));
+    fromIso = start.toISOString();
+    toIso = endOfDay(new Date()).toISOString();
+  } else {
+    fromIso = fromRaw ? startOfDay(parseIsoOrDateOnly(fromRaw)).toISOString() : defaultFrom;
+    toIso = toRaw ? endOfDay(parseIsoOrDateOnly(toRaw)).toISOString() : defaultTo;
+  }
 
   const fromMs = new Date(fromIso).getTime();
   const toMs = new Date(toIso).getTime();
@@ -90,19 +106,31 @@ export function parseOperationsListQuery(
   if (fromMs > toMs) {
     throw new Error("Дата «с» позже даты «по»");
   }
-  const maxSpan = 93 * 24 * 60 * 60 * 1000;
-  if (toMs - fromMs > maxSpan) {
-    throw new Error("Интервал не больше 93 дней");
+  if (!historyScope) {
+    const maxSpan = 93 * 24 * 60 * 60 * 1000;
+    if (toMs - fromMs > maxSpan) {
+      throw new Error("Интервал не больше 93 дней");
+    }
   }
 
   const kindRaw = (firstQueryString(query.kind) ?? "all").toLowerCase();
-  const kind: OperationsKindFilter = ["all", "income", "expense", "transfer"].includes(kindRaw)
+  let kind: OperationsKindFilter = ["all", "income", "expense", "transfer"].includes(kindRaw)
     ? (kindRaw as OperationsKindFilter)
     : "all";
 
-  const accountId = firstQueryString(query.accountId);
-  const categoryId = firstQueryString(query.categoryId);
-  const q = firstQueryString(query.q);
+  if (historyScope) {
+    kind = "all";
+  }
+
+  let accountId = firstQueryString(query.accountId);
+  let categoryId = firstQueryString(query.categoryId);
+  let q = firstQueryString(query.q);
+
+  if (historyScope) {
+    accountId = undefined;
+    categoryId = undefined;
+    q = undefined;
+  }
 
   const limitRaw = firstQueryString(query.limit);
   const offsetRaw = firstQueryString(query.offset);
@@ -126,7 +154,8 @@ export function parseOperationsListQuery(
     categoryId,
     q,
     limit,
-    offset
+    offset,
+    historyScope
   };
 }
 
@@ -138,6 +167,7 @@ async function fetchEntriesWindow(
     kind?: OperationKind;
     accountId?: string;
     categoryId?: string;
+    maxRows?: number;
   }
 ): Promise<EntryListItem[]> {
   let q = supabase
@@ -163,7 +193,13 @@ async function fetchEntriesWindow(
     q = q.eq("category_id", opts.categoryId);
   }
 
-  const { data, error } = await q.order("occurred_at", { ascending: false });
+  q = q.order("occurred_at", { ascending: false });
+
+  if (opts.maxRows !== undefined) {
+    q = q.limit(opts.maxRows);
+  }
+
+  const { data, error } = await q;
 
   if (error) {
     throw error;
@@ -178,6 +214,7 @@ async function fetchTransfersWindow(
     from: string;
     to: string;
     accountId?: string;
+    maxRows?: number;
   }
 ): Promise<TransferListItem[]> {
   let q = supabase
@@ -199,7 +236,13 @@ async function fetchTransfersWindow(
     );
   }
 
-  const { data, error } = await q.order("occurred_at", { ascending: false });
+  q = q.order("occurred_at", { ascending: false });
+
+  if (opts.maxRows !== undefined) {
+    q = q.limit(opts.maxRows);
+  }
+
+  const { data, error } = await q;
 
   if (error) {
     throw error;
@@ -271,12 +314,25 @@ export async function listOperationsTimeline(
   reportingCurrency: string,
   query: OperationsListQuery
 ): Promise<OperationsListResult> {
-  const base = { from: query.from, to: query.to, accountId: query.accountId };
+  const cap = query.historyScope ? HISTORY_DB_CAP : undefined;
+  const base = {
+    from: query.from,
+    to: query.to,
+    accountId: query.historyScope ? undefined : query.accountId,
+    maxRows: cap
+  };
 
   let entryRows: EntryListItem[] = [];
   let transferRows: TransferListItem[] = [];
 
-  if (query.categoryId) {
+  if (query.historyScope) {
+    const [e, tr] = await Promise.all([
+      fetchEntriesWindow(userId, { ...base }),
+      fetchTransfersWindow(userId, { ...base })
+    ]);
+    entryRows = e;
+    transferRows = tr;
+  } else if (query.categoryId) {
     entryRows = await fetchEntriesWindow(userId, {
       ...base,
       categoryId: query.categoryId,
@@ -321,7 +377,7 @@ export async function listOperationsTimeline(
     )
   ];
 
-  const q = query.q?.trim() ?? "";
+  const q = query.historyScope ? "" : query.q?.trim() ?? "";
   const filtered = merged
     .filter((item) => matchesSearch(item, q))
     .sort(
