@@ -22,7 +22,8 @@ const monthlyExpenseElement = document.getElementById("monthlyExpense");
 const monthlyIncomeInlineElement = document.getElementById("monthlyIncomeInline");
 const totalBalanceConvertedElement = document.getElementById("totalBalanceConverted");
 const homeReportingCurrencyInput = document.getElementById("homeReportingCurrencyInput");
-const homeBalancesByCurrencyListElement = document.getElementById("homeBalancesByCurrencyList");
+const homeBalancesByCurrencyListWebElement = document.getElementById("homeBalancesByCurrencyListWeb");
+const homeBalancesByCurrencyListTgElement = document.getElementById("homeBalancesByCurrencyListTg");
 const ratesStatusTextElement = document.getElementById("ratesStatusText");
 const homeAccountsListElement = document.getElementById("homeAccountsList");
 const accountsListElement = document.getElementById("accountsList");
@@ -1305,24 +1306,28 @@ function renderSummary(summary) {
 
   const balances = Object.entries(summary?.balancesByCurrency ?? {});
 
-  if (!homeBalancesByCurrencyListElement) {
-    return;
+  if (homeBalancesByCurrencyListWebElement || homeBalancesByCurrencyListTgElement) {
+    const emptyMarkup = `<p class="currency-breakdown-empty muted">Нет остатков по валютам — добавьте счета.</p>`;
+    let balancesMarkup = emptyMarkup;
+
+    if (balances.length > 0) {
+      const sortedBalances = [...balances].sort(([a], [b]) => a.localeCompare(b, "en"));
+      balancesMarkup = sortedBalances
+        .map(
+          ([currencyCode, amount]) =>
+            `<div class="currency-mini-pill">${escapeHtml(formatMoney(amount, currencyCode))}</div>`
+        )
+        .join("");
+    }
+
+    if (homeBalancesByCurrencyListWebElement) {
+      homeBalancesByCurrencyListWebElement.innerHTML = balancesMarkup;
+    }
+
+    if (homeBalancesByCurrencyListTgElement) {
+      homeBalancesByCurrencyListTgElement.innerHTML = balancesMarkup;
+    }
   }
-
-  if (balances.length === 0) {
-    homeBalancesByCurrencyListElement.innerHTML =
-      `<p class="currency-breakdown-empty muted">Нет остатков по валютам — добавьте счета.</p>`;
-    return;
-  }
-
-  const sortedBalances = balances.sort(([a], [b]) => a.localeCompare(b, "en"));
-
-  homeBalancesByCurrencyListElement.innerHTML = sortedBalances
-    .map(
-      ([currencyCode, amount]) =>
-        `<div class="currency-mini-pill">${escapeHtml(formatMoney(amount, currencyCode))}</div>`
-    )
-    .join("");
 }
 
 function renderAccountsList(targetElement, accounts, emptyDescription) {
@@ -4797,6 +4802,49 @@ if (webDayTipBanner && webDayTipClose) {
   });
 }
 
+document.querySelector("#screen-home .tg-home-quick-actions")?.addEventListener("click", (event) => {
+  const target = event.target instanceof Element ? event.target.closest("[data-tg-quick-action]") : null;
+  if (!target) {
+    return;
+  }
+
+  const action = target.dataset.tgQuickAction ?? "";
+
+  if (action === "transfer") {
+    openScreen("activity");
+    window.setTimeout(() => {
+      transferForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+    return;
+  }
+
+  if (action === "entry") {
+    openEntryTypeModal();
+    return;
+  }
+
+  if (action === "category") {
+    resetCategoryForm();
+    openScreen("categories");
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        categoryForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+    return;
+  }
+
+  if (action === "account") {
+    resetAccountForm();
+    openScreen("accounts");
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        accountForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+  }
+});
+
 if (isWebMode) {
     document.body.classList.add("web-mode");
     webTopNav?.removeAttribute("hidden");
@@ -4815,42 +4863,6 @@ if (isWebMode) {
   webTopNavAddButton?.addEventListener("click", (event) => {
     event.stopPropagation();
     toggleWebNewEntryMenu();
-  });
-
-  document.querySelectorAll("[data-web-new-entry]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const kind = button.dataset.webNewEntry;
-      closeWebNewEntryMenu();
-      if (kind === "transfer") {
-        closeEntryTypeModal();
-        if (isWebMode) {
-          openScreen("activity", { transferView: true });
-          window.requestAnimationFrame(() => {
-            window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-          });
-        } else {
-          openScreen("activity");
-          window.setTimeout(() => {
-            transferForm?.scrollIntoView({ behavior: "smooth", block: "start" });
-          }, 120);
-        }
-      } else if (kind === "income" || kind === "expense") {
-        openEntryScreenForKind(kind);
-      } else if (kind === "account") {
-        closeEntryTypeModal();
-        openScreen("accounts");
-        window.setTimeout(() => {
-          accountForm?.scrollIntoView({ behavior: "smooth", block: "start" });
-          document.getElementById("nameInput")?.focus({ preventScroll: true });
-        }, 120);
-      } else if (kind === "category") {
-        closeEntryTypeModal();
-        openScreen("categories");
-        window.setTimeout(() => {
-          categoryForm?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 120);
-      }
-    });
   });
 
   webOpsApplyButton?.addEventListener("click", () => {
@@ -4974,6 +4986,44 @@ if (isWebMode) {
     }
   });
 }
+
+document.querySelectorAll("[data-web-new-entry]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const kind = button.dataset.webNewEntry;
+    if (isWebMode) {
+      closeWebNewEntryMenu();
+    }
+    if (kind === "transfer") {
+      closeEntryTypeModal();
+      if (isWebMode) {
+        openScreen("activity", { transferView: true });
+        window.requestAnimationFrame(() => {
+          window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        });
+      } else {
+        openScreen("activity");
+        window.setTimeout(() => {
+          transferForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 120);
+      }
+    } else if (kind === "income" || kind === "expense") {
+      openEntryScreenForKind(kind);
+    } else if (kind === "account") {
+      closeEntryTypeModal();
+      openScreen("accounts");
+      window.setTimeout(() => {
+        accountForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.getElementById("nameInput")?.focus({ preventScroll: true });
+      }, 120);
+    } else if (kind === "category") {
+      closeEntryTypeModal();
+      openScreen("categories");
+      window.setTimeout(() => {
+        categoryForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 120);
+    }
+  });
+});
 
 Array.from(document.querySelectorAll("[data-refresh-action]")).forEach((button) => {
   button.addEventListener("click", () => {

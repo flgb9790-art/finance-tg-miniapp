@@ -6254,6 +6254,10 @@ body.web-mode .tg-home-screen-head {
   display: none !important;
 }
 
+body.web-mode .tg-only-block {
+  display: none !important;
+}
+
 body:not(.web-mode) #miniTopbar {
   display: none !important;
 }
@@ -6406,23 +6410,11 @@ body:not(.web-mode) #screen-home .web-dash-hero .balance-trend-positive {
 }
 
 body:not(.web-mode) #screen-home .web-dash-hero .currency-breakdown {
-  border-top-color: rgb(255 255 255 / 0.22);
-  margin-top: 14px;
-}
-
-body:not(.web-mode) #screen-home .web-dash-hero .currency-breakdown-summary::after {
-  border-color: rgb(236 253 245 / 0.75);
-}
-
-body:not(.web-mode) #screen-home .web-dash-hero .currency-breakdown-title {
-  color: rgb(236 253 245 / 0.92);
+  display: none !important;
 }
 
 body:not(.web-mode) #screen-home .web-dash-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  width: 100%;
+  display: none !important;
 }
 
 body:not(.web-mode) #screen-home .web-dash-stat-card {
@@ -6461,6 +6453,10 @@ body:not(.web-mode) #screen-home .web-home-mid-grid {
   gap: 14px;
 }
 
+body:not(.web-mode) #screen-home .web-home-mid-grid > aside.web-home-rail {
+  display: none !important;
+}
+
 body:not(.web-mode) #screen-home .web-home-columns {
   display: flex;
   flex-direction: column;
@@ -6495,28 +6491,186 @@ body:not(.web-mode) #screen-home .tg-home-section-link .tg-only-inline::after {
   font-weight: 600;
 }
 
-body:not(.web-mode) #screen-home .web-home-rail {
-  display: flex !important;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
+body:not(.web-mode) #screen-home .web-dash-hero {
+  min-width: 0;
+  overflow: hidden;
 }
 
-body:not(.web-mode) #screen-home .web-dash-donut-card {
+body:not(.web-mode) #screen-home .tg-hero-currency-band {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgb(255 255 255 / 0.22);
+  min-width: 0;
+}
+
+body:not(.web-mode) #screen-home .tg-hero-currency-band-label {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(236 253 245 / 0.72);
+}
+
+body:not(.web-mode) #screen-home .tg-hero-currency-scroll {
+  margin: 0 -6px;
+  padding: 0 6px 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+
+body:not(.web-mode) #screen-home .tg-hero-currency-scroll::-webkit-scrollbar {
+  height: 0;
+}
+
+body:not(.web-mode) #screen-home .tg-hero-currency-strip {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  width: max-content;
+  max-width: none;
+  align-items: center;
+}
+
+body:not(.web-mode) #screen-home .tg-hero-currency-strip .currency-mini-pill {
+  flex-shrink: 0;
+  padding: 8px 13px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.2);
+  border: 1px solid rgb(255 255 255 / 0.22);
+  color: #ecfdf5;
+  font-size: 12.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+body:not(.web-mode) #screen-home .tg-hero-currency-strip .currency-breakdown-empty {
+  color: rgb(236 253 245 / 0.78);
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0;
+  white-space: normal;
+  max-width: 28ch;
+}
+
+body:not(.web-mode) #screen-home .tg-home-quick-actions {
   border-radius: 18px;
-  padding: 16px 16px 18px;
+  padding: 16px 14px 14px;
   box-shadow: 0 2px 12px rgb(15 23 42 / 0.06);
+  border: 1px solid rgb(15 23 42 / 0.08);
+  background: #fff;
 }
 
-body:not(.web-mode) #screen-home .web-dash-donut-card .section-header h2 {
+body:not(.web-mode) #screen-home .tg-home-quick-actions-title {
+  margin: 0 0 12px;
   font-size: 17px;
   font-weight: 750;
   letter-spacing: -0.02em;
+  color: #0f172a;
 }
 
-body:not(.web-mode) #screen-home .web-donut-visual {
-  width: 112px;
-  height: 112px;
+body:not(.web-mode) #screen-home .tg-home-quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (min-width: 380px) {
+  body:not(.web-mode) #screen-home .tg-home-quick-actions-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+body:not(.web-mode) #screen-home .tg-home-quick-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  min-height: 102px;
+  padding: 12px 8px 10px;
+  border-radius: 14px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  text-align: center;
+  color: #334155;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+body:not(.web-mode) #screen-home .tg-home-quick-action:active {
+  background: rgb(248 250 252);
+  border-color: rgb(203 213 225);
+}
+
+body:not(.web-mode) #screen-home .tg-home-quick-action-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+body:not(.web-mode) #screen-home .tg-home-quick-action-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+body:not(.web-mode) #screen-home .tg-home-quick-action-icon--transfer {
+  color: #0d9f6e;
+  background: rgb(13 159 110 / 0.1);
+}
+
+body:not(.web-mode) #screen-home .tg-home-quick-action-icon--entry {
+  color: #0d9f6e;
+  background: rgb(13 159 110 / 0.1);
+}
+
+body:not(.web-mode) #screen-home .tg-home-quick-action-icon--category {
+  color: #2563eb;
+  background: rgb(37 99 235 / 0.1);
+}
+
+body:not(.web-mode) #screen-home .tg-home-quick-action-icon--account {
+  color: #9333ea;
+  background: rgb(147 51 234 / 0.1);
+}
+
+body:not(.web-mode) #screen-home .tg-home-quick-action-label {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  hyphens: auto;
+}
+
+body:not(.web-mode) #screen-home .web-home-foot-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px dashed rgb(15 23 42 / 0.18);
+  background: var(--fill-subtle);
+  font-weight: 650;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+body:not(.web-mode) #screen-home .web-home-foot-cta-ghost {
+  background: transparent;
 }
 
 body:not(.web-mode) .web-day-tip {
