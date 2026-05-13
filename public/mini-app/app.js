@@ -11,6 +11,7 @@ const WEB_PAGE_TITLES = {
 };
 
 const userNameElement = document.getElementById("userName");
+const homeWelcomeLine = document.getElementById("homeWelcomeLine");
 const statusTextElement = document.getElementById("statusText");
 const accountsTitleElement = document.getElementById("accountsTitle");
 const accountFormTitleElement = document.getElementById("accountFormTitle");
@@ -489,6 +490,24 @@ function setAccountsStatus(text, type = "muted") {
       : type === "success"
         ? "inline-success form-status"
         : "muted form-status";
+}
+
+function syncHomeWelcomeLine(user) {
+  if (!homeWelcomeLine) {
+    return;
+  }
+
+  if (!user || typeof user !== "object") {
+    homeWelcomeLine.textContent = "";
+    return;
+  }
+
+  const first =
+    (typeof user.first_name === "string" && user.first_name.trim()) ||
+    (typeof user.username === "string" && user.username.trim()) ||
+    "друг";
+
+  homeWelcomeLine.textContent = `Добро пожаловать, ${first} 👋`;
 }
 
 function formatMoneyAmount(value) {
@@ -4221,6 +4240,8 @@ async function loadApp(options = {}) {
         "Пользователь";
     }
 
+    syncHomeWelcomeLine(user);
+
     renderAll();
     if (document.body.dataset.appActiveScreen === "history") {
       populateWebOperationsFilterSelects();
@@ -4760,7 +4781,23 @@ if (refreshButton) {
   });
 }
 
-  if (isWebMode) {
+document.getElementById("tgHomeRefreshButton")?.addEventListener("click", () => {
+  if (refreshButton) {
+    refreshButton.click();
+  } else {
+    void loadApp();
+  }
+});
+
+const webDayTipBanner = document.getElementById("webDayTipBanner");
+const webDayTipClose = document.getElementById("webDayTipClose");
+if (webDayTipBanner && webDayTipClose) {
+  webDayTipClose.addEventListener("click", () => {
+    webDayTipBanner.hidden = true;
+  });
+}
+
+if (isWebMode) {
     document.body.classList.add("web-mode");
     webTopNav?.removeAttribute("hidden");
     syncWebPageTitle("home");
@@ -4912,14 +4949,6 @@ if (refreshButton) {
       document.getElementById("helpDocTransferSection")?.scrollIntoView({ block: "start", behavior: "smooth" });
     });
   });
-
-  const webDayTipBanner = document.getElementById("webDayTipBanner");
-  const webDayTipClose = document.getElementById("webDayTipClose");
-  if (webDayTipBanner && webDayTipClose) {
-    webDayTipClose.addEventListener("click", () => {
-      webDayTipBanner.hidden = true;
-    });
-  }
 
   window.addEventListener("resize", () => {
     if (!webProfileDropdown?.hidden) {

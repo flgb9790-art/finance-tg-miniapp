@@ -6236,3 +6236,304 @@ a.web-accounts-tip-link:hover {
     max-width: none;
   }
 }
+
+/* --- Telegram: главная (макет); не применяется при body.web-mode --- */
+body.web-mode .tg-only-inline {
+  display: none !important;
+}
+
+body:not(.web-mode) .web-only-inline {
+  display: none !important;
+}
+
+body:not(.web-mode) .web-only-home-eyebrow {
+  display: none !important;
+}
+
+body.web-mode .tg-home-screen-head {
+  display: none !important;
+}
+
+body:not(.web-mode) #miniTopbar {
+  display: none !important;
+}
+
+body:not(.web-mode) .app-shell {
+  padding-top: 10px;
+}
+
+body:not(.web-mode) #screen-home {
+  gap: 14px;
+}
+
+body:not(.web-mode) .tg-home-screen-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0 2px;
+}
+
+body:not(.web-mode) .tg-home-screen-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 780;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  color: #0f172a;
+}
+
+body:not(.web-mode) .tg-home-welcome {
+  margin: 6px 0 0;
+  font-size: 15px;
+  line-height: 1.35;
+  color: #64748b;
+  font-weight: 500;
+}
+
+body:not(.web-mode) .tg-home-screen-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding-top: 4px;
+}
+
+body:not(.web-mode) .tg-home-icon-btn {
+  position: relative;
+  border: none;
+  background: transparent;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #475569;
+  cursor: pointer;
+  padding: 0;
+}
+
+body:not(.web-mode) .tg-home-icon-btn:active {
+  background: rgb(15 23 42 / 0.06);
+}
+
+body:not(.web-mode) .tg-home-icon-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+body:not(.web-mode) .tg-home-icon-svg {
+  width: 24px;
+  height: 24px;
+}
+
+body:not(.web-mode) .tg-home-notify-dot {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid #fff;
+}
+
+body:not(.web-mode) #screen-home .web-dash-hero.hero-card {
+  border: none;
+  border-radius: 20px;
+  padding: 18px 18px 16px;
+  box-shadow: 0 14px 36px rgb(4 120 87 / 0.28);
+  background:
+    radial-gradient(circle at 88% 12%, rgb(255 255 255 / 0.22), transparent 40%),
+    linear-gradient(148deg, #064e3b 0%, #047857 38%, #10b981 72%, #34d399 100%);
+  color: #ecfdf5;
+}
+
+body:not(.web-mode) #screen-home .hero-balance-top .section-label {
+  color: rgb(236 253 245 / 0.72);
+  letter-spacing: 0.1em;
+}
+
+body:not(.web-mode) #screen-home .hero-home-user-name {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+body:not(.web-mode) #screen-home .web-dash-hero #totalBalanceConverted {
+  color: #fff;
+  font-size: 32px;
+  font-weight: 780;
+  letter-spacing: -0.04em;
+}
+
+body:not(.web-mode) #screen-home .web-dash-hero .hero-balance-main strong {
+  color: #fff;
+}
+
+body:not(.web-mode) #screen-home .web-dash-hero .hero-currency-label {
+  color: rgb(236 253 245 / 0.78);
+}
+
+body:not(.web-mode) #screen-home .web-dash-hero .hero-currency-select,
+body:not(.web-mode) #screen-home .web-dash-hero select {
+  background: rgb(255 255 255 / 0.16);
+  border: 1px solid rgb(255 255 255 / 0.32);
+  color: #fff;
+  border-radius: 11px;
+  font-weight: 700;
+}
+
+body:not(.web-mode) #screen-home .web-dash-hero #statusText {
+  color: rgb(236 253 245 / 0.88);
+  font-size: 13px;
+}
+
+body:not(.web-mode) #screen-home .web-dash-hero .balance-trend .muted {
+  color: rgb(236 253 245 / 0.65) !important;
+}
+
+body:not(.web-mode) #screen-home .web-dash-hero .balance-trend-positive {
+  color: #d1fae5;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+body:not(.web-mode) #screen-home .web-dash-hero .currency-breakdown {
+  border-top-color: rgb(255 255 255 / 0.22);
+  margin-top: 14px;
+}
+
+body:not(.web-mode) #screen-home .web-dash-hero .currency-breakdown-summary::after {
+  border-color: rgb(236 253 245 / 0.75);
+}
+
+body:not(.web-mode) #screen-home .web-dash-hero .currency-breakdown-title {
+  color: rgb(236 253 245 / 0.92);
+}
+
+body:not(.web-mode) #screen-home .web-dash-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+body:not(.web-mode) #screen-home .web-dash-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  min-height: 108px;
+  padding: 12px 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgb(15 23 42 / 0.08);
+  background: #fff;
+  box-shadow: 0 2px 10px rgb(15 23 42 / 0.05);
+}
+
+body:not(.web-mode) #screen-home .web-dash-stat-card .section-label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
+}
+
+body:not(.web-mode) #screen-home .web-dash-stat-value {
+  font-size: 15px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+body:not(.web-mode) #screen-home .web-dash-stat-sub {
+  font-size: 10px;
+  line-height: 1.35;
+  color: #94a3b8;
+}
+
+body:not(.web-mode) #screen-home .web-home-mid-grid {
+  gap: 14px;
+}
+
+body:not(.web-mode) #screen-home .web-home-columns {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+body:not(.web-mode) #screen-home .web-home-col-card {
+  border-radius: 18px;
+  padding: 16px 16px 14px;
+  box-shadow: 0 2px 12px rgb(15 23 42 / 0.06);
+}
+
+body:not(.web-mode) #screen-home .web-home-col-card .section-header h2 {
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+body:not(.web-mode) #screen-home .tg-home-section-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+body:not(.web-mode) #screen-home .tg-home-section-link[data-open-screen="accounts"]::after {
+  content: " ›";
+}
+
+body:not(.web-mode) #screen-home .tg-home-section-link .tg-only-inline::after {
+  content: " ›";
+  font-weight: 600;
+}
+
+body:not(.web-mode) #screen-home .web-home-rail {
+  display: flex !important;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+body:not(.web-mode) #screen-home .web-dash-donut-card {
+  border-radius: 18px;
+  padding: 16px 16px 18px;
+  box-shadow: 0 2px 12px rgb(15 23 42 / 0.06);
+}
+
+body:not(.web-mode) #screen-home .web-dash-donut-card .section-header h2 {
+  font-size: 17px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+body:not(.web-mode) #screen-home .web-donut-visual {
+  width: 112px;
+  height: 112px;
+}
+
+body:not(.web-mode) .web-day-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgb(220 252 231 / 0.65);
+  border: 1px solid rgb(34 197 94 / 0.22);
+}
+
+body:not(.web-mode) .web-day-tip-text {
+  color: #166534;
+  font-weight: 500;
+}
+
+body:not(.web-mode) .web-day-tip-close {
+  color: #15803d;
+}

@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513tg-shell-visibility-fix";
+        var BALANCY_CLIENT_ASSET_REV = "20260513tg-home-redesign";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -231,12 +231,57 @@
 
       <main class="content tabbed-content">
         <section id="screen-home" class="screen screen-active" data-screen="home">
+          <header class="tg-home-screen-head" aria-label="Главная">
+            <div class="tg-home-screen-head-main">
+              <h1 class="tg-home-screen-title">Главная</h1>
+              <p id="homeWelcomeLine" class="tg-home-welcome muted"></p>
+            </div>
+            <div class="tg-home-screen-head-actions">
+              <button
+                type="button"
+                class="tg-home-icon-btn"
+                id="tgHomeRefreshButton"
+                title="Обновить"
+                aria-label="Обновить данные"
+              >
+                <svg class="tg-home-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M21 12a9 9 0 1 1-2.64-6.36"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                  />
+                  <path d="M21 3v6h-6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="tg-home-icon-btn tg-home-icon-btn--notify"
+                disabled
+                title="Скоро"
+                aria-label="Уведомления (скоро)"
+              >
+                <svg class="tg-home-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M6 8a6 6 0 1 1 12 0c0 7 3 7 3 7H3s3 0 3-7"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path d="M10 21h4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                </svg>
+                <span class="tg-home-notify-dot" aria-hidden="true"></span>
+              </button>
+            </div>
+          </header>
+
           <div class="web-home-dash-top">
             <section class="card hero-card hero-balance-card web-dash-hero">
               <div class="hero-balance-top">
                 <div>
                   <p class="section-label">Общий баланс</p>
-                  <h2 id="userName">Загрузка...</h2>
+                  <h2 id="userName" class="hero-home-user-name">Загрузка...</h2>
                 </div>
                 <label class="hero-currency-field">
                   <span class="hero-currency-label">Валюта</span>
@@ -294,11 +339,11 @@
             <section class="card compact-section-card web-home-col-card">
               <div class="section-header">
                 <div>
-                  <p class="section-label">Счета</p>
-                  <h2>Все счета</h2>
+                  <p class="section-label web-only-home-eyebrow">Счета</p>
+                  <h2>Ваши счета</h2>
                 </div>
                 <button
-                  class="text-link-button"
+                  class="text-link-button tg-home-section-link"
                   data-open-screen="accounts"
                   data-scroll-screen-top="true"
                   type="button"
@@ -342,11 +387,15 @@
             <section class="card compact-section-card web-home-col-card">
               <div class="section-header">
                 <div>
-                  <p class="section-label">Последние операции</p>
-                  <h2>История</h2>
+                  <p class="section-label web-only-home-eyebrow">Последние операции</p>
+                  <h2 class="web-home-activity-h2">
+                    <span class="tg-only-inline">Последние операции</span>
+                    <span class="web-only-inline">История</span>
+                  </h2>
                 </div>
-                <button class="text-link-button" data-open-screen="history" type="button">
-                  Все
+                <button class="text-link-button tg-home-section-link" data-open-screen="history" type="button">
+                  <span class="tg-only-inline">Все</span>
+                  <span class="web-only-inline">Все</span>
                 </button>
               </div>
               <div class="web-home-card-main">
@@ -359,14 +408,18 @@
           </div>
 
           <aside class="web-home-rail" aria-label="Сводки">
-            <section class="card web-dash-donut-card web-rail-web-only">
+            <section class="card web-dash-donut-card">
               <div class="section-header">
                 <div>
-                  <p class="section-label">Расходы</p>
-                  <h2>По категориям</h2>
+                  <p class="section-label web-only-home-eyebrow">Расходы</p>
+                  <h2 class="web-dash-donut-heading">
+                    <span class="tg-only-inline">Расходы по категориям</span>
+                    <span class="web-only-inline">По категориям</span>
+                  </h2>
                 </div>
-                <button type="button" class="text-link-button" data-web-nav="categories">
-                  Все категории
+                <button type="button" class="text-link-button tg-home-section-link" data-web-nav="categories">
+                  <span class="tg-only-inline">Месяц</span>
+                  <span class="web-only-inline">Все категории</span>
                 </button>
               </div>
               <div class="web-donut-layout">
