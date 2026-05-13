@@ -22,6 +22,16 @@ const recentTransfersListElement = document.getElementById("recentTransfersList"
 const homeRecentActivityListElement = document.getElementById("homeRecentActivityList");
 const refreshButton = document.getElementById("refreshButton");
 const syncRatesButton = document.getElementById("syncRatesButton");
+const fxBoardBaseInput = document.getElementById("fxBoardBaseInput");
+const fxBoardRowsElement = document.getElementById("fxBoardRows");
+const fxReferenceSummaryMetaElement = document.getElementById("fxReferenceSummaryMeta");
+const fxCalcAmountInput = document.getElementById("fxCalcAmountInput");
+const fxCalcFromInput = document.getElementById("fxCalcFromInput");
+const fxCalcToInput = document.getElementById("fxCalcToInput");
+const fxCalcSwapButton = document.getElementById("fxCalcSwapButton");
+const fxCalcResultElement = document.getElementById("fxCalcResult");
+const fxCalcKeyboardAccessory = document.getElementById("fxCalcKeyboardAccessory");
+const fxCalcKeyboardDoneButton = document.getElementById("fxCalcKeyboardDone");
 const accountForm = document.getElementById("accountForm");
 const submitButton = document.getElementById("submitButton");
 const cancelAccountEditButton = document.getElementById("cancelAccountEditButton");
@@ -63,10 +73,16 @@ const reportCurrentBalanceCurrencyElement = document.getElementById("reportCurre
 const reportIncomeCategoriesListElement = document.getElementById("reportIncomeCategoriesList");
 const reportExpenseCategoriesListElement = document.getElementById("reportExpenseCategoriesList");
 const reportTransfersStatBox = document.getElementById("reportTransfersStatBox");
+const reportDownloadCsvButton = document.getElementById("reportDownloadCsvButton");
 const addOperationButton = document.getElementById("addOperationButton");
 const entryTypeModalElement = document.getElementById("entryTypeModal");
 const entryTypeModalBackdrop = document.getElementById("entryTypeModalBackdrop");
 const entryTypeModalCloseButton = document.getElementById("entryTypeModalClose");
+const helpDocumentationModalElement = document.getElementById("helpDocumentationModal");
+const helpDocumentationBackdrop = document.getElementById("helpDocumentationBackdrop");
+const helpDocumentationCloseTopButton = document.getElementById("helpDocumentationCloseTop");
+const helpDocumentationCloseBottomButton = document.getElementById("helpDocumentationCloseBottom");
+const openHelpDocumentationButton = document.getElementById("openHelpDocumentationButton");
 const entryTypeActionButtons = Array.from(document.querySelectorAll("[data-entry-kind]"));
 const screenElements = Array.from(document.querySelectorAll(".screen"));
 const navButtons = Array.from(document.querySelectorAll(".bottom-nav-button"));
@@ -81,9 +97,13 @@ const state = {
   recentTransfers: [],
   summary: null,
   report: null,
+  /** Query string параметров, с которыми последний раз получен `report` */
+  reportExportQuery: null,
   editingAccountId: null,
   editingCategoryId: null
 };
+
+const balancySplashStartedAt = Date.now();
 
 (function noteClientBundleEvaluated() {
   try {
@@ -148,6 +168,12 @@ const FALLBACK_CURRENCIES = [
   { code: "ZAR", name: "South African Rand", symbol: "ZAR" }
 ];
 
+const FX_REFERENCE_FLAGS = {
+  USD: "\u{1F1FA}\u{1F1F8}",
+  EUR: "\u{1F1EA}\u{1F1FA}",
+  RUB: "\u{1F1F7}\u{1F1FA}"
+};
+
 function normalizeCurrency(currency) {
   if (!currency || typeof currency !== "object") {
     return null;
@@ -166,6 +192,8 @@ function normalizeCurrency(currency) {
 }
 
 let blurSnapTimer = null;
+let fxCalculatorTimer = null;
+let fxCalculatorRequestId = 0;
 
 function isFormTextField(element) {
   if (!element || element.nodeType !== 1) {
@@ -201,16 +229,64 @@ function isFormTextField(element) {
 }
 
 /**
- * Состояние «клавиатура / поле в фокусе» только по activeElement.
- * В Telegram WebView на iOS высота visualViewport может оставаться заниженной
- * ещё несколько секунд после закрытия клавиатуры — если ориентироваться на неё,
- * нижнее меню не появляется долгое время.
+ * Состояние «фокус в поле ввода» для нижней навигации и класса keyboard-open.
+ * Плашку «Готово» показываем только пока активно поле суммы (на iPad с числовой
+ * раскладкой часто нет клавиши Enter). Закрытие — по «Готово», по Enter или blur.
  */
+function syncFxCalcKeyboardAccessory() {
+  if (!(fxCalcKeyboardAccessory instanceof HTMLElement)) {
+    return;
+  }
+
+  const showAmountFocus =
+    fxCalcAmountInput instanceof HTMLInputElement && document.activeElement === fxCalcAmountInput;
+
+  fxCalcKeyboardAccessory.hidden = !showAmountFocus;
+}
+
 function syncViewportMetrics() {
   document.body.classList.toggle(
     "keyboard-open",
     isFormTextField(document.activeElement)
   );
+  syncFxCalcKeyboardAccessory();
+}
+
+function dismissAppSplash(options = {}) {
+  const el = document.getElementById("appSplash");
+
+  if (!el || el.dataset.dismissed === "1") {
+    return;
+  }
+
+  el.dataset.dismissed = "1";
+  el.classList.add("app-splash--out");
+  el.setAttribute("aria-hidden", "true");
+
+  window.setTimeout(() => {
+    if (el.isConnected) {
+      el.remove();
+    }
+  }, options.fast ? 280 : 620);
+}
+
+async function dismissAppSplashAfterSuccess() {
+  const el = document.getElementById("appSplash");
+
+  if (!el || el.dataset.dismissed === "1") {
+    return;
+  }
+
+  const minMs = 1200;
+  const elapsed = Date.now() - balancySplashStartedAt;
+
+  if (elapsed < minMs) {
+    await new Promise((resolve) => {
+      window.setTimeout(resolve, minMs - elapsed);
+    });
+  }
+
+  dismissAppSplash({ fast: false });
 }
 
 function scheduleScrollFieldIntoView(element) {
@@ -575,6 +651,23 @@ function closeEntryTypeModal() {
   entryTypeModalElement.hidden = true;
 }
 
+function openHelpDocumentationModal() {
+  if (!helpDocumentationModalElement) {
+    return;
+  }
+
+  closeEntryTypeModal();
+  helpDocumentationModalElement.hidden = false;
+}
+
+function closeHelpDocumentationModal() {
+  if (!helpDocumentationModalElement) {
+    return;
+  }
+
+  helpDocumentationModalElement.hidden = true;
+}
+
 function openEntryScreenForKind(kind) {
   closeEntryTypeModal();
   openScreen("activity");
@@ -692,7 +785,7 @@ function renderAccountsList(targetElement, accounts, emptyDescription) {
               ${ACCOUNT_DELETE_ICON_SVG}
             </button>
           </div>
-          <div class="swipe-row-sheet swipe-row-sheet--accent">
+          <div class="swipe-row-sheet">
             <div class="account-item-header">
               <div class="item-leading">
                 <div class="account-icon account-icon-${escapeHtml(account.type)}">${getAccountTypeIcon(
@@ -1048,8 +1141,10 @@ function renderCategories(categories) {
     }
 
     targetElement.innerHTML = items
-      .map(
-        (category) => `
+      .map((category) => {
+        const kindSlug = category.kind === "income" ? "income" : "expense";
+
+        return `
           <div class="category-item swipe-row">
             <div class="swipe-row-actions" aria-hidden="true">
               <button class="icon-action-button" data-category-edit-id="${escapeHtml(category.id)}" type="button" title="Редактировать" aria-label="Редактировать категорию">
@@ -1061,13 +1156,15 @@ function renderCategories(categories) {
             </div>
             <div class="swipe-row-sheet">
               <div class="category-strip-content">
-                <strong>${escapeHtml(category.name)}</strong>
-                <div class="account-meta">${escapeHtml(formatKind(category.kind))}</div>
+                <strong class="category-strip-name">${escapeHtml(category.name)}</strong>
+                <span class="category-strip-kind category-strip-kind--${kindSlug}">${escapeHtml(
+                  formatKind(category.kind)
+                )}</span>
               </div>
             </div>
           </div>
-        `
-      )
+        `;
+      })
       .join("");
   };
 
@@ -1320,6 +1417,10 @@ function renderReport(report) {
       ? "За этот период не было записей по выбранной статье."
       : "Когда появятся расходы, здесь будет разбивка по статьям."
   );
+
+  if (reportDownloadCsvButton) {
+    reportDownloadCsvButton.disabled = !report || !getInitData();
+  }
 }
 
 function populateAccountOptions() {
@@ -1475,6 +1576,338 @@ function populateReportCategoryFilterOptions() {
   }
 }
 
+function getStoredFxBoardDisplayBase() {
+  try {
+    return window.localStorage.getItem("fxBoardDisplayBase") ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function setStoredFxBoardDisplayBase(code) {
+  try {
+    const trimmed = String(code ?? "").trim().toUpperCase();
+
+    if (trimmed) {
+      window.localStorage.setItem("fxBoardDisplayBase", trimmed);
+    } else {
+      window.localStorage.removeItem("fxBoardDisplayBase");
+    }
+  } catch {
+    //
+  }
+}
+
+function formatFxReferenceNumeric(value, minimumFractionDigits, maximumFractionDigits) {
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    return "—";
+  }
+
+  return new Intl.NumberFormat("ru-RU", {
+    minimumFractionDigits,
+    maximumFractionDigits
+  }).format(number);
+}
+
+function resolveFxBoardFallbackCode(currencies) {
+  const codes = currencies.map((currency) => currency.code);
+  const saved = getStoredFxBoardDisplayBase().trim().toUpperCase();
+
+  if (saved && codes.includes(saved)) {
+    return saved;
+  }
+
+  const reporting = currentReportingCurrencySelection()?.trim().toUpperCase();
+
+  if (reporting && codes.includes(reporting)) {
+    return reporting;
+  }
+
+  if (codes.includes("USD")) {
+    return "USD";
+  }
+
+  return codes[0] ?? "";
+}
+
+function resolveFxCalcDefaultTo(currencies, fromCode) {
+  const alternatives = currencies
+    .map((currency) => currency.code)
+    .filter((code) => code !== fromCode);
+
+  if (alternatives.includes("EUR")) {
+    return "EUR";
+  }
+
+  return alternatives[0] ?? fromCode;
+}
+
+function fillFxCurrencySelect(selectEl, currencies, fallbackCode, stickyValue) {
+  if (!selectEl) {
+    return "";
+  }
+
+  const codes = currencies.map((currency) => currency.code);
+
+  selectEl.innerHTML = currencies
+    .map((currency) => {
+      const code = escapeHtml(currency.code);
+      return `<option value="${code}">${code} · ${escapeHtml(currency.name)}</option>`;
+    })
+    .join("");
+
+  const stickyCandidate = stickyValue?.trim()?.toUpperCase();
+  let next =
+    (stickyCandidate && codes.includes(stickyCandidate) ? stickyCandidate : "") ||
+    (fallbackCode && codes.includes(fallbackCode) ? fallbackCode : "") ||
+    codes[0] ||
+    "";
+
+  if (next && selectHasCurrencyCode(selectEl, next)) {
+    selectEl.value = next;
+  }
+
+  return next;
+}
+
+function renderFxReferenceQuoteRows(payload) {
+  if (!fxBoardRowsElement || !payload) {
+    return;
+  }
+
+  if (!payload.rows || payload.rows.length === 0) {
+    fxBoardRowsElement.innerHTML = `
+      <div class="empty-state muted fx-quote-empty">
+        Нет котировок: база совпадает с каждой из строк экрана выбора или включите активные коды USD, EUR и RUB.
+      </div>
+    `;
+
+    return;
+  }
+
+  fxBoardRowsElement.innerHTML = payload.rows
+    .map((row) => {
+      const rawNominalLabel = String(row.label ?? `${row.displayUnit ?? 1} ${row.code}`).trim();
+      const leftLabel = escapeHtml(rawNominalLabel);
+      const flagEmoji = FX_REFERENCE_FLAGS[row.code] ?? "◌";
+      const baseCode = escapeHtml(payload.base ?? "");
+      const nominalValue = formatFxReferenceNumeric(row.amountInBase, 2, 4);
+      const valueEsc = escapeHtml(String(nominalValue));
+
+      return `
+        <div class="fx-quote-row fx-quote-row--compact">
+          <div class="fx-quote-left--compact">
+            <span class="fx-flag-ring--compact" aria-hidden="true">${flagEmoji}</span>
+            <span class="fx-quote-title">${leftLabel}</span>
+          </div>
+          <div class="fx-quote-values">
+            <div class="fx-quote-values-line fx-quote-summary" title="Сколько единиц базовой валюты за указанный номинал строки">
+              ${leftLabel}<span class="muted fx-quote-sep"> - </span><strong>${valueEsc}</strong><span class="fx-quote-ccy-inline">${baseCode}</span>
+            </div>
+          </div>
+        </div>`;
+    })
+    .join("");
+}
+
+function applyFxRatesSummaryText(text = "") {
+  if (!fxReferenceSummaryMetaElement) {
+    return;
+  }
+
+  const trimmed = typeof text === "string" ? text.trim() : "";
+
+  fxReferenceSummaryMetaElement.textContent =
+    trimmed.length > 0 ? trimmed : "Справочные курсы и калькулятор";
+}
+
+async function refreshFxBoardQuotes() {
+  if (!fxBoardBaseInput || !fxBoardRowsElement) {
+    return;
+  }
+
+  const baseRaw = fxBoardBaseInput.value?.trim().toUpperCase();
+
+  if (!baseRaw) {
+    return;
+  }
+
+  if (!getInitData()) {
+    fxBoardRowsElement.innerHTML = "";
+
+    applyFxRatesSummaryText("");
+    return;
+  }
+
+  applyFxRatesSummaryText("Подгружаем курс…");
+
+  fxBoardRowsElement.innerHTML =
+    `<div class="muted secondary-status fx-quote-loading">Подождите несколько секунд…</div>`;
+
+  try {
+    const data = await apiFetch(`/api/exchange-rates/quotes?base=${encodeURIComponent(baseRaw)}`);
+    const updated =
+      typeof data.ratesUpdatedAt === "string" && data.ratesUpdatedAt.trim()
+        ? formatDateTime(data.ratesUpdatedAt)
+        : "нет даты синхронизации — нажмите «Курсы» под списком счетов";
+
+    applyFxRatesSummaryText(`Курс к ${data.base} · синхронизация: ${updated}`);
+    renderFxReferenceQuoteRows(data);
+  } catch (error) {
+    console.error(error);
+    applyFxRatesSummaryText(
+      error instanceof Error ? error.message : "Не удалось загрузить справочный курс"
+    );
+    fxBoardRowsElement.innerHTML = `
+      <div class="empty-state muted">
+        Откройте экран синхронизации курсов или повторите позже после обновления данных.
+      </div>
+    `;
+  }
+}
+
+function scheduleFxCalculatorRefresh() {
+  if (!fxCalcResultElement || !fxCalcFromInput || !fxCalcToInput) {
+    return;
+  }
+
+  window.clearTimeout(fxCalculatorTimer);
+  fxCalculatorTimer = window.setTimeout(() => {
+    void refreshFxCalculatorResult();
+  }, 320);
+}
+
+async function refreshFxCalculatorResult() {
+  if (!fxCalcResultElement || !fxCalcAmountInput || !fxCalcFromInput || !fxCalcToInput) {
+    return;
+  }
+
+  fxCalcResultElement.classList.remove("fx-calc-result-error");
+
+  const normalizedAmount = fxCalcAmountInput.value.replace(",", ".").trim();
+
+  if (normalizedAmount === "") {
+    fxCalcResultElement.textContent = "Укажите сумму или введите 0 для пробного перевода.";
+    return;
+  }
+
+  const numericAmount = Number(normalizedAmount);
+  const fromCode = fxCalcFromInput.value?.trim()?.toUpperCase();
+  const toCode = fxCalcToInput.value?.trim()?.toUpperCase();
+
+  if (!fromCode || !toCode) {
+    fxCalcResultElement.textContent = "Выберите валюты для конвертации.";
+    return;
+  }
+
+  if (!Number.isFinite(numericAmount)) {
+    fxCalcResultElement.classList.add("fx-calc-result-error");
+    fxCalcResultElement.textContent = "Укажите корректное числовое значение суммы.";
+    return;
+  }
+
+  if (!getInitData()) {
+    fxCalcResultElement.textContent = "Калькулятор станет доступен после загрузки сессии Telegram.";
+    return;
+  }
+
+  if (fromCode === toCode) {
+    const formattedSame = formatFxReferenceNumeric(numericAmount, 2, 6);
+    fxCalcResultElement.textContent = `${formattedSame} ${fromCode} — перевод между одинаковыми валютами.`;
+    return;
+  }
+
+  const requestGeneration = ++fxCalculatorRequestId;
+
+  fxCalcResultElement.textContent = "Считаем…";
+
+  try {
+    const params = new URLSearchParams({
+      amount: String(numericAmount),
+      from: fromCode,
+      to: toCode
+    });
+
+    const payload = await apiFetch(`/api/exchange-rates/convert-preview?${params.toString()}`);
+
+    if (requestGeneration !== fxCalculatorRequestId) {
+      return;
+    }
+
+    const convertedPretty = formatFxReferenceNumeric(payload.converted, 2, 8);
+    const ratePretty = formatFxReferenceNumeric(payload.rate, 2, 8);
+
+    fxCalcResultElement.textContent =
+      `${convertedPretty} ${payload.to}` +
+      `\nПри сумме ${formatFxReferenceNumeric(Number(payload.amount), 2, 6)} ${payload.from} средний коэффициент ≈ ${ratePretty}.`;
+
+    fxCalcResultElement.classList.remove("fx-calc-result-error");
+  } catch (error) {
+    console.error(error);
+
+    if (requestGeneration !== fxCalculatorRequestId) {
+      return;
+    }
+
+    fxCalcResultElement.classList.add("fx-calc-result-error");
+    fxCalcResultElement.textContent =
+      error instanceof Error ? error.message : "Не удалось выполнить конвертацию";
+  }
+}
+
+function syncFxReferencePanel() {
+  if (
+    !fxBoardBaseInput ||
+    !fxBoardRowsElement ||
+    !fxCalcAmountInput ||
+    !fxCalcFromInput ||
+    !fxCalcToInput
+  ) {
+    return;
+  }
+
+  const currencies = getAvailableCurrencies();
+
+  if (!currencies.length) {
+    fxBoardRowsElement.innerHTML =
+      `<div class="muted secondary-status fx-quote-empty">Справочная таблица появится, когда приложение синхронизирует доступные коды.</div>`;
+
+    applyFxRatesSummaryText("");
+    return;
+  }
+
+  const fallbackBoardCode = resolveFxBoardFallbackCode(currencies);
+  const stickyBoardPreference = fillFxCurrencySelect(
+    fxBoardBaseInput,
+    currencies,
+    fallbackBoardCode,
+    getStoredFxBoardDisplayBase() || fxBoardBaseInput.value
+  );
+
+  if (stickyBoardPreference) {
+    setStoredFxBoardDisplayBase(stickyBoardPreference);
+  }
+
+  const fromSticky = fxCalcFromInput.value;
+  const currencyCodesArr = currencies.map((currency) => currency.code);
+  const reportingCode = currentReportingCurrencySelection()?.trim().toUpperCase();
+  const calcFromFallback =
+    reportingCode && currencyCodesArr.includes(reportingCode)
+      ? reportingCode
+      : resolveFxBoardFallbackCode(currencies);
+  fillFxCurrencySelect(fxCalcFromInput, currencies, calcFromFallback, fromSticky || calcFromFallback);
+
+  const computedFromCode = fxCalcFromInput.value;
+  const stickyToCode = fxCalcToInput.value;
+  const fallbackToCode = resolveFxCalcDefaultTo(currencies, computedFromCode);
+  fillFxCurrencySelect(fxCalcToInput, currencies, fallbackToCode, stickyToCode || fallbackToCode);
+
+  void refreshFxBoardQuotes();
+  scheduleFxCalculatorRefresh();
+}
+
 function populateCategoryOptions() {
   const selectedKind = entryKindInput.value;
   const filteredCategories = state.categories.filter(
@@ -1509,6 +1942,7 @@ function renderAll() {
   safeRenderStep("reportingCurrencyOptions", () => populateReportingCurrencyOptions());
   safeRenderStep("reportCategoryFilterOptions", () => populateReportCategoryFilterOptions());
   safeRenderStep("categoryOptions", () => populateCategoryOptions());
+  safeRenderStep("fxReferencePanel", () => syncFxReferencePanel());
 }
 
 function resolveFetchUrl(url) {
@@ -1525,6 +1959,53 @@ function resolveFetchUrl(url) {
   } catch {
     return url;
   }
+}
+
+function buildReportQueryString() {
+  const params = new URLSearchParams();
+  params.set("period", reportPeriodInput.value);
+  params.set("reportingCurrency", currentReportingCurrencySelection());
+
+  if (reportPeriodInput.value === "custom") {
+    params.set("startDate", toIsoDate(toDateRangeStart(reportStartDateInput.value)));
+    params.set("endDate", toIsoDate(toDateRangeEnd(reportEndDateInput.value)));
+  }
+
+  const filterCategoryId = reportCategoryFilterInput?.value?.trim();
+  if (filterCategoryId) {
+    params.set("categoryId", filterCategoryId);
+  }
+
+  return params.toString();
+}
+
+function reportCsvSuggestedFilename() {
+  if (
+    typeof state.report?.startDate === "string" &&
+    typeof state.report?.endDate === "string"
+  ) {
+    const startDay = state.report.startDate.slice(0, 10).replace(/-/g, "");
+    const endDay = state.report.endDate.slice(0, 10).replace(/-/g, "");
+    return `balancy-report-${startDay}-${endDay}.csv`;
+  }
+
+  return "balancy-report.csv";
+}
+
+async function authenticatedFetchRaw(url, options = {}) {
+  const method = String(options.method ?? "GET").toUpperCase();
+  const optionHeaders = { ...(options.headers ?? {}) };
+
+  return fetch(resolveFetchUrl(url), {
+    ...options,
+    method,
+    headers: {
+      ...optionHeaders,
+      "x-telegram-init-data": getInitData(),
+      "ngrok-skip-browser-warning": "true",
+      "bypass-tunnel-reminder": "true"
+    }
+  });
 }
 
 async function apiFetch(url, options = {}) {
@@ -1594,29 +2075,175 @@ async function apiFetch(url, options = {}) {
 }
 
 async function loadReport() {
-  const params = new URLSearchParams();
-  params.set("period", reportPeriodInput.value);
-  params.set("reportingCurrency", currentReportingCurrencySelection());
-
-  if (reportPeriodInput.value === "custom") {
-    params.set("startDate", toIsoDate(toDateRangeStart(reportStartDateInput.value)));
-    params.set("endDate", toIsoDate(toDateRangeEnd(reportEndDateInput.value)));
-  }
-
-  const filterCategoryId = reportCategoryFilterInput?.value?.trim();
-  if (filterCategoryId) {
-    params.set("categoryId", filterCategoryId);
-  }
-
-  const payload = await apiFetch(`/api/reports?${params.toString()}`);
+  const query = buildReportQueryString();
+  const payload = await apiFetch(`/api/reports?${query}`);
   state.report = payload.report;
+  state.reportExportQuery = query;
   renderReport(state.report);
+}
+
+async function downloadReportCsv() {
+  if (!reportDownloadCsvButton || reportDownloadCsvButton.disabled) {
+    return;
+  }
+
+  const currentQuery = buildReportQueryString();
+
+  if (
+    state.report &&
+    state.reportExportQuery &&
+    currentQuery !== state.reportExportQuery
+  ) {
+    setStatus("Параметры отчёта изменились — нажмите «Построить отчёт», затем скачайте CSV.", "error");
+    return;
+  }
+
+  const exportQuery = state.reportExportQuery ?? currentQuery;
+  const suggestedName = reportCsvSuggestedFilename();
+
+  const tryTelegramNativeDownload =
+    tg &&
+    typeof tg.downloadFile === "function" &&
+    typeof tg.isVersionAtLeast === "function" &&
+    tg.isVersionAtLeast("8.0") &&
+    window.location.protocol === "https:";
+
+  if (tryTelegramNativeDownload) {
+    const initDataValue = getInitData();
+
+    if (initDataValue) {
+      setStatus("Открываем загрузку в Telegram…");
+
+      try {
+        const csvUrlStr = resolveFetchUrl(
+          `/api/reports/export.csv?${exportQuery}`
+        );
+        const downloadUrl = new URL(csvUrlStr);
+        downloadUrl.searchParams.set("telegram_init_data", initDataValue);
+        tg.downloadFile(
+          {
+            url: downloadUrl.href,
+            file_name: suggestedName
+          },
+          (accepted) => {
+            if (accepted) {
+              setStatus(
+                "Готово. В системном окне сохраните файл — на iPhone его можно сохранить в приложение «Файлы».",
+                "success"
+              );
+            } else {
+              setStatus("Загрузка отменена.");
+            }
+          }
+        );
+      } catch (error) {
+        console.error(error);
+        setStatus(
+          error instanceof Error ? error.message : "Не удалось начать загрузку",
+          "error"
+        );
+      }
+
+      return;
+    }
+  }
+
+  setStatus("Готовим CSV…");
+
+  try {
+    const response = await authenticatedFetchRaw(
+      `/api/reports/export.csv?${exportQuery}`
+    );
+
+    const errProbe = async () => {
+      const errText = await response.text();
+
+      /** @type {string} */
+      let message = `HTTP ${response.status}`;
+
+      try {
+        const json = JSON.parse(errText);
+
+        if (typeof json?.error === "string" && json.error) {
+          message = json.error;
+        }
+      } catch {
+        if (errText.trim()) {
+          message = stripHtmlToSnippet(errText.slice(0, 240));
+        }
+      }
+
+      return message;
+    };
+
+    if (!response.ok) {
+      throw new Error(await errProbe());
+    }
+
+    const disposition = response.headers.get("Content-Disposition") ?? "";
+    const match = /filename="([^"]+)"/.exec(disposition);
+    const filename = match?.[1] ?? suggestedName;
+
+    const blob = await response.blob();
+
+    /** @type {File | null} */
+    let shareFile = null;
+
+    try {
+      shareFile = new File([blob], filename, {
+        type: "text/csv;charset=utf-8"
+      });
+    } catch {
+      shareFile = null;
+    }
+
+    if (
+      shareFile &&
+      typeof navigator.share === "function" &&
+      typeof navigator.canShare === "function" &&
+      navigator.canShare({ files: [shareFile] })
+    ) {
+      try {
+        await navigator.share({
+          files: [shareFile],
+          title: filename
+        });
+        setStatus(
+          "Файл открыт в меню «Поделиться»: на iPhone выберите «Сохранить в файлы» при необходимости.",
+          "success"
+        );
+        return;
+      } catch (shareError) {
+        if (shareError && shareError.name === "AbortError") {
+          setStatus("Меню «Поделиться» закрыто без сохранения.");
+          return;
+        }
+
+        console.warn("navigator.share failed, fallback to загрузке", shareError);
+      }
+    }
+
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = filename;
+    link.rel = "noopener";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(blobUrl);
+    setStatus("Отчёт скачан (CSV).", "success");
+  } catch (error) {
+    console.error(error);
+    setStatus(error instanceof Error ? error.message : "Не удалось скачать отчёт", "error");
+  }
 }
 
 async function loadApp() {
   if (!tg) {
     userNameElement.textContent = "Откройте приложение из Telegram";
     setStatus("Mini app должен открываться из Telegram, чтобы получить данные пользователя.", "error");
+    dismissAppSplash({ fast: true });
     return;
   }
 
@@ -1643,6 +2270,20 @@ async function loadApp() {
       console.warn("disableVerticalSwipes is unavailable", error);
     }
 
+    try {
+      if (typeof tg.setHeaderColor === "function") {
+        tg.setHeaderColor("#ffffff");
+      }
+      if (typeof tg.setBackgroundColor === "function") {
+        tg.setBackgroundColor("#eef2f7");
+      }
+      if (typeof tg.setBottomBarColor === "function") {
+        tg.setBottomBarColor("#ffffff");
+      }
+    } catch (error) {
+      console.warn("Telegram.WebApp theme colors", error);
+    }
+
     syncViewportMetrics();
 
     if (!getInitData()) {
@@ -1658,6 +2299,7 @@ async function loadApp() {
         "Telegram WebApp еще не передал данные сессии. Закройте mini app и откройте снова из бота.",
         "error"
       );
+      dismissAppSplash({ fast: true });
       return;
     }
 
@@ -1689,6 +2331,7 @@ async function loadApp() {
     state.recentTransfers = payload.recentTransfers ?? [];
     state.summary = payload.summary ?? null;
     state.report = payload.report ?? null;
+    state.reportExportQuery = buildReportQueryString();
 
     const resolvedReportingCurrency = payload.summary?.reportingCurrency ?? reportingCurrency;
     setStoredReportingCurrency(resolvedReportingCurrency);
@@ -1704,6 +2347,7 @@ async function loadApp() {
       "Все готово. Интерфейс разбит по вкладкам и стал проще для ежедневного использования.",
       "success"
     );
+    await dismissAppSplashAfterSuccess();
   } catch (error) {
     console.error(error);
     userNameElement.textContent = "Не удалось загрузить приложение";
@@ -1721,6 +2365,7 @@ async function loadApp() {
     }
 
     setStatus(message, "error");
+    dismissAppSplash({ fast: true });
   }
 }
 
@@ -1801,6 +2446,50 @@ async function handleDeleteAccount(accountId) {
       "error"
     );
   }
+}
+
+function attachFxReferencePanelListeners() {
+  fxBoardBaseInput?.addEventListener("change", () => {
+    if (fxBoardBaseInput?.value) {
+      setStoredFxBoardDisplayBase(fxBoardBaseInput.value);
+    }
+
+    void refreshFxBoardQuotes();
+  });
+
+  fxCalcAmountInput?.addEventListener("input", scheduleFxCalculatorRefresh);
+
+  fxCalcAmountInput?.addEventListener("keydown", (event) => {
+    if (
+      event.key === "Enter" ||
+      event.code === "Enter" ||
+      event.code === "NumpadEnter" ||
+      Number(event.keyCode) === 13
+    ) {
+      event.preventDefault();
+      fxCalcAmountInput?.blur();
+    }
+  });
+
+  fxCalcKeyboardDoneButton?.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    fxCalcAmountInput?.blur();
+  });
+
+  fxCalcFromInput?.addEventListener("change", scheduleFxCalculatorRefresh);
+  fxCalcToInput?.addEventListener("change", scheduleFxCalculatorRefresh);
+
+  fxCalcSwapButton?.addEventListener("click", () => {
+    if (!fxCalcFromInput || !fxCalcToInput) {
+      return;
+    }
+
+    const previousFrom = fxCalcFromInput.value;
+    fxCalcFromInput.value = fxCalcToInput.value;
+    fxCalcToInput.value = previousFrom;
+
+    scheduleFxCalculatorRefresh();
+  });
 }
 
 function attachAccountsListListener() {
@@ -2112,6 +2801,42 @@ if (entryTypeModalCloseButton) {
   });
 }
 
+if (openHelpDocumentationButton) {
+  openHelpDocumentationButton.addEventListener("click", () => {
+    openHelpDocumentationModal();
+  });
+}
+
+if (helpDocumentationBackdrop) {
+  helpDocumentationBackdrop.addEventListener("click", () => {
+    closeHelpDocumentationModal();
+  });
+}
+
+if (helpDocumentationCloseTopButton) {
+  helpDocumentationCloseTopButton.addEventListener("click", () => {
+    closeHelpDocumentationModal();
+  });
+}
+
+if (helpDocumentationCloseBottomButton) {
+  helpDocumentationCloseBottomButton.addEventListener("click", () => {
+    closeHelpDocumentationModal();
+  });
+}
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") {
+    return;
+  }
+
+  if (!helpDocumentationModalElement || helpDocumentationModalElement.hidden) {
+    return;
+  }
+
+  closeHelpDocumentationModal();
+});
+
 entryTypeActionButtons.forEach((button) => {
   button.addEventListener("click", () => {
     openEntryScreenForKind(button.dataset.entryKind ?? "expense");
@@ -2123,13 +2848,13 @@ document.getElementById("entryTypeOpenTransferButton")?.addEventListener("click"
   openScreen("activity");
   window.setTimeout(() => {
     transferForm?.scrollIntoView({ behavior: "smooth", block: "start" });
-    document.getElementById("transferFromAmountInput")?.focus();
   }, 120);
 });
 
 attachAccountsListListener();
 attachSwipeRowHandlers();
 attachCategoryListsListener();
+attachFxReferencePanelListeners();
 
 window.addEventListener("focus", () => {
   void loadApp();
@@ -2222,6 +2947,10 @@ reportForm.addEventListener("submit", (event) => {
 
 reportSubmitButton.addEventListener("click", () => {
   submitFormSafely(reportForm);
+});
+
+reportDownloadCsvButton?.addEventListener("click", () => {
+  void downloadReportCsv();
 });
 
 entryKindInput.addEventListener("change", () => {

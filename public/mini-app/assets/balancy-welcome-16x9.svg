@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="32%" r="78%">
+      <stop offset="0%" stop-color="#ecfdf5"/>
+      <stop offset="48%" stop-color="#eef2f7"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </radialGradient>
+    <linearGradient id="word" x1="8%" y1="52%" x2="92%" y2="48%">
+      <stop offset="0%" stop-color="#045c43"/>
+      <stop offset="22%" stop-color="#047857"/>
+      <stop offset="48%" stop-color="#0d9488"/>
+      <stop offset="72%" stop-color="#0f766e"/>
+      <stop offset="100%" stop-color="#134e4a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <text
+    x="800"
+    y="418"
+    text-anchor="middle"
+    font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    font-size="132"
+    font-weight="700"
+    letter-spacing="-8"
+    fill="url(#word)"
+  >Balancy</text>
+  <text
+    x="800"
+    y="508"
+    text-anchor="middle"
+    font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    font-size="34"
+    font-weight="500"
+    fill="#64748b"
+    letter-spacing="0.02em"
+  >Personal finance in Telegram</text>
+  <rect x="668" y="562" width="264" height="5" rx="2.5" fill="#0fb87e" opacity="0.55"/>
+</svg>

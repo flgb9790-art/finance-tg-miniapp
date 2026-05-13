@@ -156,6 +156,82 @@ export async function convertAmount(
   return roundAmount(amount * rate);
 }
 
+export interface SpotlightQuoteRow {
+  code: string;
+  displayUnit: number;
+  label: string;
+  /** Сколько единиц базовой валюты за `displayUnit` единиц валюты строки (средний курс). */
+  amountInBase: number;
+  /** Сколько единиц валюты строки за 1 единицу базовой валюты. */
+  quotePerBase: number;
+}
+
+const SPOTLIGHT_QUOTE_DEFS: Array<{ code: string; displayUnit: number }> = [
+  { code: "USD", displayUnit: 1 },
+  { code: "EUR", displayUnit: 1 },
+  { code: "RUB", displayUnit: 100 }
+];
+
+export async function getSpotlightQuotesForBase(
+  baseCurrencyCode: string
+): Promise<{
+  base: string;
+  rows: SpotlightQuoteRow[];
+  ratesUpdatedAt: string | null;
+}> {
+  const base = baseCurrencyCode.trim().toUpperCase();
+  const rows: SpotlightQuoteRow[] = [];
+
+  for (const def of SPOTLIGHT_QUOTE_DEFS) {
+    if (def.code === base) {
+      continue;
+    }
+
+    const perUnitOfCodeInBase = await getExchangeRate(def.code, base);
+    const quotePerBase = await getExchangeRate(base, def.code);
+    const amountInBase = Number(
+      (perUnitOfCodeInBase * def.displayUnit).toFixed(6)
+    );
+
+    const label =
+      def.displayUnit === 100
+        ? `100 ${def.code}`
+        : `1 ${def.code}`;
+
+    rows.push({
+      code: def.code,
+      displayUnit: def.displayUnit,
+      label,
+      amountInBase,
+      quotePerBase: Number(quotePerBase.toFixed(8))
+    });
+  }
+
+  return {
+    base,
+    rows,
+    ratesUpdatedAt: await getLatestExchangeRateUpdate()
+  };
+}
+
+export async function convertFxPreview(
+  amount: number,
+  fromCurrencyCode: string,
+  toCurrencyCode: string
+): Promise<{ converted: number; rate: number }> {
+  const from = fromCurrencyCode.trim().toUpperCase();
+  const to = toCurrencyCode.trim().toUpperCase();
+
+  if (!Number.isFinite(amount)) {
+    throw new Error("Amount must be a finite number");
+  }
+
+  const rate = await getExchangeRate(from, to);
+  const converted = Number((amount * rate).toFixed(6));
+
+  return { converted, rate };
+}
+
 export async function getLatestExchangeRateUpdate(): Promise<string | null> {
   const { data, error } = await supabase
     .from("exchange_rates")

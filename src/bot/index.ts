@@ -1,4 +1,7 @@
 import type { Express } from "express";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import TelegramBot from "node-telegram-bot-api";
 import { env } from "../config/env.js";
 import { createAccount, listAccounts } from "../services/accounts.js";
@@ -27,24 +30,152 @@ const accountTypeOptions: Array<{ key: AccountType; label: string }> = [
 
 const currencyOptions = ["USD", "EUR", "RUB", "GEL"];
 
-function createMainKeyboard(): TelegramBot.ReplyKeyboardMarkup {
-  const firstRow: TelegramBot.KeyboardButton[] = env.appUrl
-    ? [
-        {
-          text: "Открыть приложение",
-          web_app: {
-            url: `${env.appUrl}/mini-app/`
-          }
-        }
-      ]
-    : [];
+const botModuleDir = path.dirname(fileURLToPath(import.meta.url));
+const welcomeBannerPngPath = path.join(
+  botModuleDir,
+  "../../public/mini-app/assets/balancy-welcome-16x9.png"
+);
 
+const WELCOME_PHOTO_CAPTION_HTML = [
+  "<b>Balancy</b> — личные финансы в Telegram.",
+  "",
+  "В приложении: дашборд, доходы и расходы, категории, переводы между счетами, отчёты за период и курсы валют.",
+  "Вход в аккаунт: кнопка <b>«Открыть приложение»</b> ниже или <b>меню</b> слева от поля ввода — один и тот же адрес.",
+  "В этом чате — быстро завести счёт и посмотреть список (кнопки под полем ввода)."
+].join("\n");
+
+function publicMiniAppUrl(): string | null {
+  const base = (env.appUrl ?? "").trim().replace(/\/+$/, "");
+
+  return base.length > 0 ? `${base}/mini-app/` : null;
+}
+
+function buildWelcomeDetailHtml(): string {
+  return [
+    "<b>Что где делать</b>",
+    "",
+    "<b>Приложение</b> — полный сценарий: общий баланс с пересчётом в выбранную валюту, последние операции, настройка категорий, экспорт отчётов.",
+    "",
+    "<b>Этот бот</b> — пошаговое создание счёта (название → тип → валюта → стартовый баланс) и просмотр счетов без открытия приложения.",
+    "",
+    "<b>Вход в аккаунт</b> — кнопка <b>«Открыть приложение»</b> под постером в чате или кнопка <b>меню</b> слева от поля ввода (рядом с именем бота). Это один и тот же адрес приложения.",
+    "",
+    "<i>Кнопка Mini App на нижней клавиатуре в Telegram не передаёт сессию в приложение — поэтому мы её не показываем.</i>"
+  ].join("\n");
+}
+
+function buildHelpHtml(): string {
+  return [
+    "<b>Справка Balancy</b>",
+    "",
+    buildWelcomeDetailHtml(),
+    "",
+    "<b>Команды</b>",
+    "/start — приветствие",
+    "/accounts — список счетов",
+    "/help — эта справка"
+  ].join("\n");
+}
+
+async function sendWelcomeBannerPhoto(
+  bot: TelegramBot,
+  chatId: number
+): Promise<void> {
+  const miniUrl = publicMiniAppUrl();
+  const photoMarkup: TelegramBot.InlineKeyboardMarkup | undefined = miniUrl
+    ? {
+        inline_keyboard: [
+          [{ text: "Открыть приложение", web_app: { url: miniUrl } }]
+        ]
+      }
+    : undefined;
+
+  if (!fs.existsSync(welcomeBannerPngPath)) {
+    console.warn(
+      "[telegram] Welcome banner PNG missing at %s. Run: npm run welcome:png",
+      welcomeBannerPngPath
+    );
+
+    await bot.sendMessage(chatId, WELCOME_PHOTO_CAPTION_HTML, {
+      parse_mode: "HTML",
+      ...(photoMarkup ? { reply_markup: photoMarkup } : {})
+    });
+
+    return;
+  }
+
+  await bot.sendPhoto(chatId, welcomeBannerPngPath, {
+    caption: WELCOME_PHOTO_CAPTION_HTML,
+    parse_mode: "HTML",
+    ...(photoMarkup ? { reply_markup: photoMarkup } : {})
+  });
+}
+
+async function sendWelcomeFollowUp(
+  bot: TelegramBot,
+  chatId: number
+): Promise<void> {
+  await bot.sendMessage(chatId, `${buildWelcomeDetailHtml()}\n\nПрофиль сохранён.`, {
+    parse_mode: "HTML",
+    reply_markup: createMainKeyboard()
+  });
+}
+
+async function sendHelpMessage(bot: TelegramBot, chatId: number): Promise<void> {
+  await bot.sendMessage(chatId, buildHelpHtml(), {
+    parse_mode: "HTML",
+    reply_markup: createMainKeyboard()
+  });
+}
+
+function scheduleBotCommandMenu(bot: TelegramBot): void {
+  void bot
+    .setMyCommands([
+      { command: "start", description: "Приветствие и меню" },
+      { command: "accounts", description: "Список счетов" },
+      { command: "help", description: "Возможности Balancy" }
+    ])
+    .catch((error) => {
+      console.warn("[telegram] setMyCommands failed:", error);
+    });
+}
+
+/**
+ * Кнопка меню (слева от поля ввода) с тем же URL, что и inline web_app под постером.
+ * Без этого в @BotFather мог остаться другой URL.
+ */
+function syncDefaultMiniAppMenuButton(bot: TelegramBot): void {
+  const miniUrl = publicMiniAppUrl();
+
+  if (!miniUrl) {
+    return;
+  }
+
+  const menuButton = {
+    type: "web_app" as const,
+    text: "Открыть приложение",
+    web_app: { url: miniUrl }
+  };
+
+  void bot
+    .setChatMenuButton({
+      menu_button: menuButton
+    })
+    .then(() => {
+      console.log("[telegram] Меню чата: Mini App → %s", miniUrl);
+    })
+    .catch((error) => {
+      console.warn("[telegram] setChatMenuButton:", error);
+    });
+}
+
+function createMainKeyboard(): TelegramBot.ReplyKeyboardMarkup {
   return {
     keyboard: [
-      firstRow,
       [{ text: "Добавить счет" }],
-      [{ text: "Мои счета" }]
-    ].filter((row) => row.length > 0),
+      [{ text: "Мои счета" }],
+      [{ text: "Помощь" }]
+    ],
     resize_keyboard: true
   };
 }
@@ -130,46 +261,10 @@ function registerTelegramHandlers(bot: TelegramBot): void {
     }
 
     try {
-      const user = await registerTelegramUser(message.from);
+      await registerTelegramUser(message.from);
 
-      await bot.sendMessage(
-        message.chat.id,
-        [
-          "Бот запущен и ваш профиль сохранен.",
-          "",
-          `Telegram user id: ${user.telegram_user_id}`,
-          "",
-          "Что уже можно делать:",
-          env.appUrl ? "- открыть mini app" : "- mini app будет доступен после настройки APP_URL",
-          "- добавить счет",
-          "- посмотреть список счетов"
-        ].join("\n"),
-      );
-
-      if (env.appUrl) {
-        await bot.sendMessage(message.chat.id, "Открыть mini app:", {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: "Открыть приложение",
-                  web_app: {
-                    url: `${env.appUrl}/mini-app/`
-                  }
-                }
-              ]
-            ]
-          }
-        });
-      }
-
-      await bot.sendMessage(
-        message.chat.id,
-        "Ниже оставил быстрые кнопки для работы с ботом.",
-        {
-          reply_markup: createMainKeyboard()
-        }
-      );
+      await sendWelcomeBannerPhoto(bot, message.chat.id);
+      await sendWelcomeFollowUp(bot, message.chat.id);
     } catch (error) {
       console.error("Failed to register Telegram user", error);
 
@@ -177,6 +272,23 @@ function registerTelegramHandlers(bot: TelegramBot): void {
         message.chat.id,
         "Something went wrong while saving your profile. Please try again."
       );
+    }
+  });
+
+  bot.onText(/^\/help$/, async (message) => {
+    if (!message.chat.id) {
+      return;
+    }
+
+    try {
+      if (message.from) {
+        await registerTelegramUser(message.from);
+      }
+
+      await sendHelpMessage(bot, message.chat.id);
+    } catch (error) {
+      console.error("Failed to send help", error);
+      await bot.sendMessage(message.chat.id, "Не удалось показать справку.");
     }
   });
 
@@ -216,6 +328,11 @@ function registerTelegramHandlers(bot: TelegramBot): void {
 
       if (message.text === "Мои счета") {
         await showAccounts(bot, message.chat.id, user.id);
+        return;
+      }
+
+      if (message.text === "Помощь") {
+        await sendHelpMessage(bot, message.chat.id);
         return;
       }
 
@@ -361,6 +478,8 @@ export function attachTelegramBotRoutes(app: Express): TelegramBot {
   });
 
   registerTelegramHandlers(bot);
+  scheduleBotCommandMenu(bot);
+  syncDefaultMiniAppMenuButton(bot);
 
   if (useWebhook) {
     app.post(TELEGRAM_WEBHOOK_PATH, (req, res) => {
@@ -428,7 +547,7 @@ export async function syncTelegramWebhook(bot: TelegramBot): Promise<void> {
   const baseUrl = (env.appUrl ?? "").trim().replace(/\/+$/, "");
 
   if (!baseUrl) {
-    await bot.deleteWebHook({ drop_pending_updates: false });
+    await bot.deleteWebHook();
 
     console.log(
       "[telegram] APP_URL не задан: webhook на стороне Telegram снят, используется long polling."
@@ -449,11 +568,9 @@ export async function syncTelegramWebhook(bot: TelegramBot): Promise<void> {
 
   const hookUrl = `${baseUrl}${TELEGRAM_WEBHOOK_PATH}`;
 
-  await bot.deleteWebHook({ drop_pending_updates: false });
+  await bot.deleteWebHook();
 
-  const options: TelegramBot.SetWebHookOptions = {
-    drop_pending_updates: false
-  };
+  const options: TelegramBot.SetWebHookOptions = {};
 
   if (env.telegramWebhookSecret?.trim()) {
     options.secret_token = env.telegramWebhookSecret.trim();

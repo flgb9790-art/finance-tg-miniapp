@@ -17,8 +17,12 @@ function optionalEnv(name: string): string | undefined {
   return value && value.trim() ? value : undefined;
 }
 
-/** Loopback/ngrok-friendly default: bind IPv6 all-interfaces (::), which accepts [::1] on dual-stack setups. */
-const defaultListenHost = "::";
+/**
+ * Railway и другие контейнеры надёжнее слушают на 0.0.0.0.
+ * Локально по умолчанию :: (dual-stack, удобно с ngrok на Windows).
+ */
+const defaultListenHost =
+  process.env.RAILWAY_ENVIRONMENT !== undefined ? "0.0.0.0" : "::";
 
 export const env = {
   telegramBotToken: requireEnv("TELEGRAM_BOT_TOKEN"),

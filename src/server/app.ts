@@ -18,11 +18,15 @@ import {
   createEntry,
 } from "../services/entries.js";
 import {
+  convertFxPreview,
   getLatestExchangeRateUpdate,
+  getSpotlightQuotesForBase,
   syncExchangeRates
 } from "../services/exchange-rates.js";
 import { getCurrencyByCode, listActiveCurrencies } from "../services/currencies.js";
 import {
+  buildReportExportPayload,
+  formatReportResultAsCsv,
   getDashboardSummary,
   getRecentActivity,
   getReport,
@@ -52,8 +56,36 @@ function getTelegramInitData(req: express.Request): string {
   return headerValue;
 }
 
+function getTelegramInitDataForCsvDownload(req: express.Request): string {
+  const headerValue = req.header("x-telegram-init-data");
+
+  if (headerValue) {
+    return headerValue;
+  }
+
+  const queryValue = req.query.telegram_init_data;
+
+  if (typeof queryValue === "string" && queryValue.trim().length > 0) {
+    return queryValue;
+  }
+
+  throw new Error(
+    "Missing Telegram Web App credentials (header x-telegram-init-data or telegram_init_data query)"
+  );
+}
+
 async function authenticateMiniAppUser(req: express.Request) {
   const initData = getTelegramInitData(req);
+  const webAppUser = validateTelegramWebAppInitData(
+    initData,
+    env.telegramBotToken
+  );
+
+  return registerTelegramUser(toTelegramBotUser(webAppUser));
+}
+
+async function authenticateCsvExportMiniAppUser(req: express.Request) {
+  const initData = getTelegramInitDataForCsvDownload(req);
   const webAppUser = validateTelegramWebAppInitData(
     initData,
     env.telegramBotToken
@@ -580,6 +612,65 @@ export function createHttpApp(): express.Express {
     }
   });
 
+  app.options("/api/reports/export.csv", (_req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.status(204).end();
+  });
+
+  app.get("/api/reports/export.csv", async (req, res) => {
+    try {
+      const appUser = await authenticateCsvExportMiniAppUser(req);
+      const period =
+        typeof req.query.period === "string" ? req.query.period : "month";
+      const startDate =
+        typeof req.query.startDate === "string" ? req.query.startDate : undefined;
+      const endDate =
+        typeof req.query.endDate === "string" ? req.query.endDate : undefined;
+      const reportingCurrency = await resolveReportingCurrency(req);
+
+      const categoryIdRaw =
+        typeof req.query.categoryId === "string" ? req.query.categoryId.trim() : "";
+      const categoryId = categoryIdRaw.length > 0 ? categoryIdRaw : undefined;
+
+      if (!["week", "month", "quarter", "custom"].includes(period)) {
+        res.status(400).json({ error: "Report period is invalid" });
+        return;
+      }
+
+      const exportInput = {
+        userId: appUser.id,
+        period: period as "week" | "month" | "quarter" | "custom",
+        startDate,
+        endDate,
+        reportingCurrency,
+        categoryId
+      };
+
+      const { report, operations } = await buildReportExportPayload(exportInput);
+
+      const body = formatReportResultAsCsv(report, operations);
+      const fromDay = report.startDate.slice(0, 10).replace(/-/g, "");
+      const toDay = report.endDate.slice(0, 10).replace(/-/g, "");
+
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="balancy-report-${fromDay}-${toDay}.csv"`
+      );
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+      res.status(200).send(body);
+    } catch (error) {
+      console.error("Failed to export report CSV", error);
+
+      res.status(400).json({
+        error:
+          error instanceof Error ? error.message : "Failed to export report CSV"
+      });
+    }
+  });
+
   app.post("/api/exchange-rates/sync", async (req, res) => {
     try {
       await authenticateMiniAppUser(req);
@@ -596,6 +687,98 @@ export function createHttpApp(): express.Express {
       res.status(400).json({
         error:
           error instanceof Error ? error.message : "Failed to sync exchange rates"
+      });
+    }
+  });
+
+  app.get("/api/exchange-rates/quotes", async (req, res) => {
+    try {
+      await authenticateMiniAppUser(req);
+      const requestedBase =
+        typeof req.query.base === "string" ? req.query.base.trim().toUpperCase() : "";
+
+      if (!requestedBase) {
+        res.status(400).json({
+          error: "Query «base» (код базовой валюты) обязателен"
+        });
+        return;
+      }
+
+      const currency = await getCurrencyByCode(requestedBase);
+
+      if (!currency) {
+        res.status(400).json({
+          error: "Неизвестная или выключенная базовая валюта"
+        });
+        return;
+      }
+
+      const payload = await getSpotlightQuotesForBase(currency.code);
+      res.json(payload);
+    } catch (error) {
+      console.error("Failed to load exchange quotes", error);
+
+      res.status(400).json({
+        error:
+          error instanceof Error ? error.message : "Failed to load exchange quotes"
+      });
+    }
+  });
+
+  app.get("/api/exchange-rates/convert-preview", async (req, res) => {
+    try {
+      await authenticateMiniAppUser(req);
+
+      const from =
+        typeof req.query.from === "string" ? req.query.from.trim().toUpperCase() : "";
+      const to =
+        typeof req.query.to === "string" ? req.query.to.trim().toUpperCase() : "";
+
+      const rawAmount =
+        typeof req.query.amount === "string" ? req.query.amount.trim() : "";
+      const amount = Number(rawAmount.replace(",", "."));
+
+      if (!Number.isFinite(amount)) {
+        res.status(400).json({
+          error: "Укажите числовую сумму в параметре «amount»"
+        });
+        return;
+      }
+
+      if (!from || !to) {
+        res.status(400).json({
+          error: "Укажите параметры «from» и «to»"
+        });
+        return;
+      }
+
+      const [fromCurrency, toCurrency] = await Promise.all([
+        getCurrencyByCode(from),
+        getCurrencyByCode(to)
+      ]);
+
+      if (!fromCurrency || !toCurrency) {
+        res.status(400).json({
+          error: "Одна из валют не найдена или выключена"
+        });
+        return;
+      }
+
+      const result = await convertFxPreview(amount, fromCurrency.code, toCurrency.code);
+
+      res.json({
+        amount,
+        from: fromCurrency.code,
+        to: toCurrency.code,
+        rate: result.rate,
+        converted: result.converted
+      });
+    } catch (error) {
+      console.error("Failed to convert preview", error);
+
+      res.status(400).json({
+        error:
+          error instanceof Error ? error.message : "Failed to convert preview"
       });
     }
   });

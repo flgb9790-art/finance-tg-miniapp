@@ -7,10 +7,12 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta name="color-scheme" content="light" />
     <title>Balancy</title>
+    <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260512d";
+        var BALANCY_CLIENT_ASSET_REV = "20260512logo-gradient-dark";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -21,9 +23,19 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
   <body>
+    <div id="appSplash" class="app-splash" role="status" aria-live="polite" aria-label="Загрузка Balancy">
+      <div class="app-splash-inner">
+        <span class="app-splash-wordmark">Balancy</span>
+        <div class="app-splash-tagline">Баланс и учёт в одном месте</div>
+        <div class="app-splash-line" aria-hidden="true"></div>
+      </div>
+    </div>
+
     <div class="app-shell">
       <header class="topbar topbar-compact">
-        <div class="brand-title">Balancy</div>
+        <div class="brand-lockup" aria-label="Balancy">
+          <span class="brand-wordmark">Balancy</span>
+        </div>
         <button id="refreshButton" class="refresh-text-btn" type="button">Обновить</button>
       </header>
 
@@ -39,7 +51,7 @@
                 <span class="hero-currency-label">Валюта</span>
                 <select
                   id="homeReportingCurrencyInput"
-                  class="hero-currency-select"
+                  class="hero-currency-select fx-board-base-select fx-board-base-select--toolbar"
                   aria-label="Валюта отображения баланса"
                 ></select>
               </label>
@@ -120,6 +132,73 @@
             </div>
             <div id="homeRecentActivityList" class="entries-list"></div>
           </section>
+
+          <details class="card fx-reference-card fx-reference-collapsible">
+            <summary class="fx-reference-collapsible-summary">
+              <div class="fx-reference-summary-main">
+                <p class="section-label">Справочно</p>
+                <h2 class="fx-reference-summary-heading">Курсы валют</h2>
+                <p id="fxReferenceSummaryMeta" class="fx-reference-summary-line muted"></p>
+              </div>
+              <div class="fx-reference-summary-aside muted">
+                <div class="fx-reference-hint-row">
+                  <span class="fx-reference-collapsible-hint" aria-hidden="true"></span>
+                  <span class="fx-reference-collapsible-chevron" aria-hidden="true"></span>
+                </div>
+              </div>
+            </summary>
+            <div class="fx-reference-collapsible-body">
+              <div class="section-header fx-ref-body-toolbar">
+                <p class="section-label fx-ref-base-toolbar-label">Базовая валюта</p>
+                <select
+                  id="fxBoardBaseInput"
+                  class="fx-board-base-select fx-board-base-select--toolbar"
+                  aria-label="Базовая валюта для справочных курсов"
+                ></select>
+              </div>
+              <div id="fxBoardRows" class="fx-quote-rows"></div>
+              <div class="fx-calculator-intro">
+                <p class="section-label">Калькулятор</p>
+                <p class="muted secondary-status fx-calculator-hint">
+                  Расчёт по курсам приложения — счета и балансы не меняются.
+                </p>
+              </div>
+              <div class="fx-calculator-layout">
+                <input
+                  id="fxCalcAmountInput"
+                  class="fx-calc-input"
+                  type="text"
+                  inputmode="decimal"
+                  enterkeyhint="done"
+                  autocomplete="off"
+                  spellcheck="false"
+                  aria-label="Сумма для конвертации"
+                  placeholder="Сумма"
+                />
+                <div class="fx-calc-fromto">
+                  <select id="fxCalcFromInput" class="fx-calc-select"></select>
+                  <button
+                    type="button"
+                    class="fx-swap-btn"
+                    id="fxCalcSwapButton"
+                    aria-label="Поменять исходную и целевую валюту"
+                  >
+                    ⇄
+                  </button>
+                  <select id="fxCalcToInput" class="fx-calc-select"></select>
+                </div>
+                <div id="fxCalcResult" class="fx-calc-result muted">
+                  Конвертация появится здесь.
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <div class="home-help-footer">
+            <button type="button" id="openHelpDocumentationButton" class="home-help-doc-trigger">
+              Справка: как пользоваться
+            </button>
+          </div>
 
           <div class="hidden-summary">
             <span id="accountsCount">0</span>
@@ -393,6 +472,9 @@
                 <p class="section-label">Результат</p>
                 <h2 id="reportTitle">Отчет за месяц</h2>
               </div>
+              <button id="reportDownloadCsvButton" class="report-download-csv-btn" type="button" disabled>
+                Скачать CSV
+              </button>
             </div>
             <div class="stats-grid compact-stats-grid">
               <article class="stat-box stat-income">
@@ -492,6 +574,12 @@
           <span class="nav-label">Счета</span>
         </button>
       </nav>
+
+      <div id="fxCalcKeyboardAccessory" class="fx-calc-keyboard-accessory" hidden>
+        <button type="button" class="fx-calc-keyboard-done" id="fxCalcKeyboardDone">
+          Готово
+        </button>
+      </div>
     </div>
 
     <div id="entryTypeModal" class="entry-type-modal" hidden>
@@ -526,6 +614,188 @@
         </div>
     </div>
 
+    <div
+      id="helpDocumentationModal"
+      class="help-doc-modal"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="helpDocumentationTitle"
+    >
+      <button
+        id="helpDocumentationBackdrop"
+        type="button"
+        class="help-doc-backdrop"
+        aria-label="Закрыть справку"
+      ></button>
+      <div class="help-doc-sheet">
+        <div class="help-doc-sheet-bar" aria-hidden="true"></div>
+        <header class="help-doc-header">
+          <div>
+            <p class="section-label">Balancy</p>
+            <h2 id="helpDocumentationTitle">Справка по приложению</h2>
+          </div>
+          <button type="button" id="helpDocumentationCloseTop" class="help-doc-close-corner" title="Закрыть">
+            Закрыть
+          </button>
+        </header>
+        <div class="help-doc-scroll">
+          <p class="help-doc-lede muted">
+            Ниже — как завести счета и категории, записать доход или расход, сделать перевод и собрать
+            отчёт. Серые блоки ниже текстом — упрощённые макеты экрана (не настоящие скриншоты), чтобы
+            было проще сопоставить с интерфейсом.
+          </p>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">1. Общая идея</h3>
+            <ul class="help-doc-list">
+              <li>
+                Вы заводите <strong>счета</strong> (карта, наличные, криптокошелёк и т.п.) каждый со своей
+                валютой.
+              </li>
+              <li>
+                <strong>Операции</strong>: доход или расход по счёту и <strong>категории</strong>, либо
+                <strong>перевод</strong> между двумя счетами — тогда сумма списывается с одного и
+                зачисляется на другой (при желании можно указать сумму получения во второй валюте).
+              </li>
+              <li>На главной показывается общий остаток в выбранной вами валюте отображения (пересчёт по курсам).</li>
+            </ul>
+            <aside class="help-mock-caption muted">Пример: как выглядит заголовок карточки «Счета» на главной</aside>
+            <div class="help-mock-mini" aria-hidden="true">
+              <span class="help-mock-pill muted">Все счета</span>
+              <div class="help-mock-line strong">Моя карта</div>
+              <div class="help-mock-line muted small">USD · Карта</div>
+              <div class="help-mock-line right">−120,40 USD</div>
+            </div>
+          </article>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">2. Счета: создание</h3>
+            <ol class="help-doc-list help-doc-numbered">
+              <li>Внизу откройте вкладку <strong>Счета</strong>.</li>
+              <li>
+                В блоке <strong>Новый счет</strong> укажите название — например
+                <code>Сбер основная</code> или <code>Нал USD в сейфе</code>.
+              </li>
+              <li>
+                Выберите <strong>тип</strong> (карта, наличные, крипта, накопления, другое) — только для вашего удобства,
+                расчёт балансов от типа не меняется.
+              </li>
+              <li>Задайте <strong>валюту</strong> счёта.</li>
+              <li>Стартовый баланс: например текущее сальдо <code>0</code> или <code>1500.50</code>.</li>
+              <li>
+                Нажмите <strong>Создать счет</strong>. Счёт появится в списке; на главном экране в блоке счетов можно
+                нажать <strong>Все счета</strong>, если видно не всё сразу.
+              </li>
+            </ol>
+          </article>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">3. Счета: редактирование и удаление</h3>
+            <ul class="help-doc-list">
+              <li>
+                В списке счётов у строки есть <strong>свайп влево</strong>: появятся кнопки редактировать и удалить —
+                они справа «под» карточкой.
+              </li>
+              <li>
+                После редактирования сохраните форму; удаление приложение может запросить подтвердить действие.
+              </li>
+              <li>Удалённые счета и связанная история в MVP не восстанавливаются через интерфейс — будьте внимательны.</li>
+            </ul>
+            <aside class="help-mock-caption muted">Подсказка по жесту: свайпните строку пальцем влево</aside>
+            <div class="help-mock-swipe help-mock-mini" aria-hidden="true">
+              <div class="help-mock-swipe-face">
+                <div class="help-mock-line strong">Строка счёта</div>
+                <div class="help-mock-line muted small">свайп ←</div>
+              </div>
+              <span class="help-mock-chip">✎</span>
+              <span class="help-mock-chip danger">⌫</span>
+            </div>
+          </article>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">4. Категории</h3>
+            <ol class="help-doc-list help-doc-numbered">
+              <li>Откройте вкладку <strong>Категории</strong>.</li>
+              <li>Вверху выберите, заводите вы категории для <strong>доходов</strong> или <strong>расходов</strong>.</li>
+              <li>Введите имя — примеры: <code>Продукты</code>, <code>Подработка</code>, <code>Транспорт</code>.</li>
+              <li>Сохраните. Категория понадобится при записи операции.</li>
+            </ol>
+            <p class="muted help-doc-tip">
+              Редактирование и удаление категории — так же через <strong>свайп влево</strong> по строке в списке.
+            </p>
+          </article>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">5. Операции: доход или расход</h3>
+            <ol class="help-doc-list help-doc-numbered">
+              <li>Внизу нажмите зелёную кнопку <strong>+</strong>.</li>
+              <li>Выберите <strong>Доход</strong> или <strong>Расход</strong> — приложение переключит вкладку на экран операций.</li>
+              <li>Заполните: счёт, категория, сумму, дату и время, при желании комментарий.</li>
+              <li>Сохраните операцию.</li>
+            </ol>
+            <div class="help-example mono">
+              Расход: счёт «Карта» · категория «Продукты» · сумма <code>45,30</code> · комментарий «Ужин в кафе».
+            </div>
+          </article>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">6. Перевод между счетами</h3>
+            <ol class="help-doc-list help-doc-numbered">
+              <li>Снова <strong>+</strong>, затем <strong>Обмен между счетами</strong> (перевод).</li>
+              <li>В форме перевода выберите счёт «откуда» и «куда», суммы; при переводе в другую валюту вторую сумму
+                можно указать явно или оставить расчёт по курсу — как настроено в форме.</li>
+              <li>Сохраните: балансы обоих счетов изменятся согласованно.</li>
+            </ol>
+            <div class="help-example mono">
+              От USD-карты 100&nbsp;USD на счёт в EUR так, чтобы поступило 95&nbsp;EUR (если в форме есть поле второй суммы).
+            </div>
+          </article>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">7. Главная страница</h3>
+            <ul class="help-doc-list">
+              <li>
+                Общий баланс считается пересчётом всех счетов в одну выбранную валюту (селект <strong>Валюта</strong> в блоке сверху).
+              </li>
+              <li>Блок <strong>Остатки по валютам</strong> — раскройте строку или пролистайте «чипсы» с суммами по каждому коду без пересчёта.</li>
+              <li>
+                По необходимости нажмите <strong>Курсы</strong> под списком счетов на главной, чтобы синхронизировать
+                котировки перед отчётами и блоком справочных курсов.
+              </li>
+            </ul>
+          </article>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">8. Справочные курсы и калькулятор</h3>
+            <p class="muted">
+              Карточка <strong>Курсы валют</strong> свёрнута по умолчанию. Внутри — таблица к выбранной базовой валюте и
+              простой калькулятор перевода между двумя валютами <em>справочно</em>: он не меняет суммы по счетам.
+            </p>
+          </article>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">9. Отчёты и выгрузка</h3>
+            <ul class="help-doc-list">
+              <li>Вкладка <strong>Отчеты</strong>: выберите период (неделя, месяц, квартал или свои даты) и фильтры.</li>
+              <li>Сначала <strong>Построить отчёт</strong>, затем при необходимости <strong>Скачать CSV</strong>.</li>
+              <li>В файле есть сводные строки по категориям и построчно операции с датой, типом, счётом и суммами.</li>
+            </ul>
+          </article>
+
+          <p class="help-doc-note muted">
+            Если в интерфейсе появится новое поле, логика останется прежней: сверху вниз — счёт, категории, сумма, дата;
+            ошибки сохранятся текстом над формой.
+          </p>
+        </div>
+        <footer class="help-doc-footer">
+          <button type="button" id="helpDocumentationCloseBottom" class="ghost-button help-doc-footer-btn">
+            Закрыть справку
+          </button>
+        </footer>
+      </div>
+    </div>
+
     <script>
       (function () {
         function showScriptLoadFailure() {
@@ -544,7 +814,7 @@
         var CLIENT_ASSET_REV =
           typeof window.__BALANCY_CLIENT_ASSET_REV === "string"
             ? window.__BALANCY_CLIENT_ASSET_REV
-            : "20260512d";
+            : "20260513b";
 
         var scriptEl = document.createElement("script");
         scriptEl.type = "module";

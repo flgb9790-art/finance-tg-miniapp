@@ -94,3 +94,15 @@ MVP-проект для учета личных финансов через Tele
 - искать валюту при создании счета
 - быстро выбирать популярные валюты
 - выбирать валюту отчета прямо в интерфейсе
+
+## Деплой на Railway
+
+1. Создайте проект на [Railway](https://railway.app), подключите этот репозиторий, добавьте **один сервис** из корня репозитория.
+2. Во вкладке **Variables** задайте как минимум: `TELEGRAM_BOT_TOKEN`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `APP_URL`.
+   - **APP_URL**: `https://${{RAILWAY_PUBLIC_DOMAIN}}` — подставится публичный URL сервиса (без финального `/`).
+   - Рекомендуется **TELEGRAM_WEBHOOK_SECRET** (случайная строка): тот же секрет укажите в Telegram при настройке webhook, если используете проверку заголовка.
+3. **PORT** и **RAILWAY_ENVIRONMENT** Railway задаёт сама. Слушание в контейнере идёт на `0.0.0.0`, если задан `RAILWAY_ENVIRONMENT` (см. `src/config/env.ts`).
+4. После первого успешного деплоя откройте домен сервиса, убедитесь что `GET /health` отвечает `{"ok":true}`.
+5. В Telegram бот должен принимать webhook на `https://<ваш-домен>/api/telegram/webhook` — это настраивается автоматически при старте, если задан `APP_URL`.
+
+В репозитории лежит `railway.json`: сборка `npm run build`, старт `npm run start`, healthcheck `/health`.
