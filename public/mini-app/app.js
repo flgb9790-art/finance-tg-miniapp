@@ -1,6 +1,16 @@
 const tg = window.Telegram?.WebApp;
 const isWebMode = new URLSearchParams(window.location.search).get("web") === "1";
 
+const WEB_PAGE_TITLES = {
+  home: "Главная",
+  activity: "Операции",
+  reports: "Отчёты",
+  categories: "Категории",
+  accounts: "Счета"
+};
+
+const WEB_TIP_DISMISS_KEY = "balancy_web_tip_v1";
+
 const userNameElement = document.getElementById("userName");
 const statusTextElement = document.getElementById("statusText");
 const accountsTitleElement = document.getElementById("accountsTitle");
@@ -31,6 +41,8 @@ const webProfileDropdown = document.getElementById("webProfileDropdown");
 const webProfileMeta = document.getElementById("webProfileMeta");
 const webSwitchUserButton = document.getElementById("webSwitchUserButton");
 const webNewEntryMenu = document.getElementById("webNewEntryMenu");
+const webPageTitleElement = document.getElementById("webPageTitle");
+const webSidebarUserNameElement = document.getElementById("webSidebarUserName");
 const syncRatesButton = document.getElementById("syncRatesButton");
 const fxBoardBaseInput = document.getElementById("fxBoardBaseInput");
 const fxBoardRowsElement = document.getElementById("fxBoardRows");
@@ -657,6 +669,7 @@ function openScreen(screenName) {
   });
 
   if (isWebMode) {
+    syncWebPageTitle(nextScreen);
     closeWebNewEntryMenu();
   }
 }
@@ -734,6 +747,111 @@ function startAccountEdit(accountId) {
   });
 }
 
+function syncWebPageTitle(screenName) {
+  if (!isWebMode || !webPageTitleElement) {
+    return;
+  }
+
+  const key = screenName || "home";
+  webPageTitleElement.textContent = WEB_PAGE_TITLES[key] ?? "Balancy";
+}
+
+function renderWebDesktopDashboard(summary) {
+  if (!isWebMode) {
+    return;
+  }
+
+  const reportingCurrency = summary?.reportingCurrency ?? "";
+  const monthlyIncome = Number(summary?.monthlyIncome ?? 0);
+  const monthlyExpense = Number(summary?.monthlyExpense ?? 0);
+  const monthlyNetRaw =
+    summary?.monthlyNet !== undefined && summary?.monthlyNet !== null
+      ? Number(summary.monthlyNet)
+      : monthlyIncome - monthlyExpense;
+
+  const incEl = document.getElementById("webDashIncomeValue");
+  const expEl = document.getElementById("webDashExpenseValue");
+  const netEl = document.getElementById("webDashNetValue");
+
+  if (incEl) {
+    incEl.textContent = `+${formatMoney(monthlyIncome, reportingCurrency)}`;
+  }
+
+  if (expEl) {
+    expEl.textContent = `−${formatMoney(monthlyExpense, reportingCurrency)}`;
+  }
+
+  if (netEl) {
+    const sign = monthlyNetRaw >= 0 ? "+" : "−";
+    const absVal = Math.abs(monthlyNetRaw);
+    netEl.textContent = `${sign}${formatMoney(absVal, reportingCurrency)}`;
+  }
+
+  const sumFlow = monthlyIncome + monthlyExpense;
+  const expensePct = sumFlow > 0 ? Math.round((monthlyExpense / sumFlow) * 100) : 0;
+  const incomePct = sumFlow > 0 ? Math.round((monthlyIncome / sumFlow) * 100) : 0;
+  const expBar = document.getElementById("webDashPlanExpenseBar");
+  const incBar = document.getElementById("webDashPlanIncomeBar");
+  const expPctEl = document.getElementById("webDashPlanExpensePct");
+  const incPctEl = document.getElementById("webDashPlanIncomePct");
+
+  if (expBar) {
+    expBar.style.width = `${expensePct}%`;
+  }
+
+  if (incBar) {
+    incBar.style.width = `${incomePct}%`;
+  }
+
+  if (expPctEl) {
+    expPctEl.textContent = `${expensePct}%`;
+  }
+
+  if (incPctEl) {
+    incPctEl.textContent = `${incomePct}%`;
+  }
+
+  const visual = document.getElementById("webHomeDonutVisual");
+  const legend = document.getElementById("webHomeDonutLegend");
+
+  if (!visual || !legend) {
+    return;
+  }
+
+  const rows = summary?.monthlyExpenseByCategory ?? [];
+  const colors = ["#0d9f6e", "#6366f1", "#f97316", "#ec4899", "#14b8a6", "#94a3b8", "#eab308"];
+
+  if (rows.length === 0 || monthlyExpense <= 0) {
+    visual.style.background = "#e2e8f0";
+    legend.innerHTML = `<span class="muted">Нет расходов за текущий месяц.</span>`;
+    return;
+  }
+
+  const total = rows.reduce((sum, row) => sum + Number(row.total ?? 0), 0) || 1;
+  let cursor = 0;
+  const parts = rows.map((row, index) => {
+    const sweep = (Number(row.total) / total) * 360;
+    const start = cursor;
+    cursor += sweep;
+    const color = colors[index % colors.length];
+
+    return `${color} ${start}deg ${cursor}deg`;
+  });
+
+  visual.style.background = `conic-gradient(${parts.join(", ")})`;
+
+  const topRows = rows.slice(0, 6);
+  legend.innerHTML = topRows
+    .map((row, index) => {
+      const currencyCode = row.currencyCode || reportingCurrency;
+      const amt = formatMoney(row.total, currencyCode);
+      const dot = colors[index % colors.length];
+
+      return `<div class="web-donut-legend-row"><span style="display:flex;align-items:center;gap:8px;min-width:0"><span class="web-donut-dot" style="background:${escapeHtml(dot)}"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(row.categoryName)}</span></span><span style="flex-shrink:0">${escapeHtml(amt)}</span></div>`;
+    })
+    .join("");
+}
+
 function renderSummary(summary) {
   categoriesCountElement.textContent = String(summary?.categoriesCount ?? 0);
   monthlyIncomeElement.textContent = formatMoney(summary?.monthlyIncome ?? 0, summary?.reportingCurrency ?? "");
@@ -750,6 +868,8 @@ function renderSummary(summary) {
   ratesStatusTextElement.textContent = summary?.ratesUpdatedAt
     ? `Курсы обновлены: ${formatDateTime(summary.ratesUpdatedAt)}`
     : "Курсы валют еще не синхронизированы";
+
+  renderWebDesktopDashboard(summary);
 
   const balances = Object.entries(summary?.balancesByCurrency ?? {});
 
@@ -1965,13 +2085,20 @@ function renderAll() {
 }
 
 function syncWebProfile() {
-  if (!isWebMode || !webProfileMeta) {
+  if (!isWebMode) {
     return;
   }
 
   const user = state.user;
   if (!user) {
-    webProfileMeta.textContent = "Сессия не загружена.";
+    if (webProfileMeta) {
+      webProfileMeta.textContent = "Сессия не загружена.";
+    }
+
+    if (webSidebarUserNameElement) {
+      webSidebarUserNameElement.textContent = "Профиль";
+    }
+
     return;
   }
 
@@ -1985,7 +2112,13 @@ function syncWebProfile() {
       ? String(user.telegram_user_id)
       : "—";
 
-  webProfileMeta.textContent = `${displayName} · Telegram ID ${telegramId}`;
+  if (webProfileMeta) {
+    webProfileMeta.textContent = `${displayName} · Telegram ID ${telegramId}`;
+  }
+
+  if (webSidebarUserNameElement) {
+    webSidebarUserNameElement.textContent = displayName;
+  }
 }
 
 function closeWebProfileDropdown() {
@@ -2879,6 +3012,7 @@ if (refreshButton) {
 if (isWebMode) {
   document.body.classList.add("web-mode");
   webTopNav?.removeAttribute("hidden");
+  syncWebPageTitle("home");
 
   if (webRefreshButton) {
     webRefreshButton.addEventListener("click", () => {
@@ -2935,6 +3069,34 @@ if (isWebMode) {
   webSwitchUserButton?.addEventListener("click", () => {
     void handleWebLogout();
   });
+
+  document.querySelectorAll("[data-web-sidebar-action]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const action = button.dataset.webSidebarAction;
+      if (action === "transfer") {
+        closeWebNewEntryMenu();
+        closeWebProfileDropdown();
+        closeEntryTypeModal();
+        openScreen("activity");
+        window.setTimeout(() => {
+          transferForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 120);
+      }
+    });
+  });
+
+  const webDayTipBanner = document.getElementById("webDayTipBanner");
+  const webDayTipClose = document.getElementById("webDayTipClose");
+  if (webDayTipBanner && webDayTipClose) {
+    if (sessionStorage.getItem(WEB_TIP_DISMISS_KEY) === "1") {
+      webDayTipBanner.hidden = true;
+    }
+
+    webDayTipClose.addEventListener("click", () => {
+      webDayTipBanner.hidden = true;
+      sessionStorage.setItem(WEB_TIP_DISMISS_KEY, "1");
+    });
+  }
 
   document.addEventListener("click", (event) => {
     if (!(event.target instanceof Element)) {

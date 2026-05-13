@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513web-minimal";
+        var BALANCY_CLIENT_ASSET_REV = "20260514desktop-mockup";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -31,78 +31,110 @@
       </div>
     </div>
 
-    <header id="webTopNav" class="web-top-nav" hidden>
-      <div class="web-top-nav-inner">
-        <button
-          type="button"
-          class="web-top-nav-brand web-top-nav-brand-btn"
-          data-web-nav="home"
-          aria-label="Balancy — на главную"
-        >
-          <span class="brand-wordmark">Balancy</span>
-          <span class="web-top-nav-badge muted">браузер</span>
-        </button>
-        <nav class="web-top-nav-links" aria-label="Разделы">
-          <button type="button" class="web-top-nav-link" data-web-nav="home">Главная</button>
-          <button type="button" class="web-top-nav-link" data-web-nav="activity">Операции</button>
-          <button type="button" class="web-top-nav-link" data-web-nav="reports">Отчёты</button>
-          <button type="button" class="web-top-nav-link" data-web-nav="categories">Категории</button>
-          <button type="button" class="web-top-nav-link" data-web-nav="accounts">Счета</button>
-          <div class="web-new-entry-wrap">
-            <button
-              type="button"
-              class="web-top-nav-link web-top-nav-link-accent"
-              id="webTopNavAddButton"
-              aria-expanded="false"
-              aria-haspopup="true"
-            >
-              Новая запись
-            </button>
-            <div id="webNewEntryMenu" class="web-new-entry-menu" role="menu" hidden>
-              <p class="web-new-entry-group-label">Операции</p>
-              <button type="button" class="web-new-entry-option web-new-entry-income" data-web-new-entry="income" role="menuitem">
-                Доход
-              </button>
-              <button type="button" class="web-new-entry-option web-new-entry-expense" data-web-new-entry="expense" role="menuitem">
-                Расход
-              </button>
-              <button type="button" class="web-new-entry-option web-new-entry-transfer" data-web-new-entry="transfer" role="menuitem">
-                Обмен между счетами
-              </button>
-              <p class="web-new-entry-group-label">Сначала настройте</p>
-              <button type="button" class="web-new-entry-option web-new-entry-setup" data-web-new-entry="account" role="menuitem">
-                Новый счёт
-              </button>
-              <button type="button" class="web-new-entry-option web-new-entry-setup" data-web-new-entry="category" role="menuitem">
-                Новая категория
-              </button>
-            </div>
-          </div>
+    <div id="webTopNav" class="web-desktop-shell" hidden>
+      <aside class="web-sidebar" aria-label="Меню Balancy">
+        <div class="web-sidebar-top">
+          <button type="button" class="web-sidebar-brand" data-web-nav="home" aria-label="Balancy — на главную">
+            <span class="web-sidebar-brand-mark" aria-hidden="true"></span>
+            <span class="brand-wordmark">Balancy</span>
+          </button>
+        </div>
+        <nav class="web-sidebar-nav" aria-label="Разделы">
+          <button type="button" class="web-sidebar-link is-active" data-web-nav="home">
+            <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M4 10.5L12 4L20 10.5V19A1 1 0 0 1 19 20H5A1 1 0 0 1 4 19V10.5Z"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linejoin="round"
+              />
+              <path d="M9 20V13H15V20" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+            </svg>
+            <span>Главная</span>
+          </button>
+          <button type="button" class="web-sidebar-link" data-web-nav="activity">
+            <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 5H19V19H5V5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+              <path d="M8 9H16M8 13H13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+            <span>Операции</span>
+          </button>
+          <button type="button" class="web-sidebar-link" data-web-nav="reports">
+            <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 19V5M5 19H19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              <path d="M8 15L11 11L14 13L18 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>Отчёты</span>
+          </button>
+          <button type="button" class="web-sidebar-link" data-web-nav="categories">
+            <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M7 7H17L20 10V17A1 1 0 0 1 19 18H7A2 2 0 0 1 5 16V9A2 2 0 0 1 7 7Z"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linejoin="round"
+              />
+              <circle cx="16.5" cy="10.5" r="1.2" fill="currentColor" />
+            </svg>
+            <span>Категории</span>
+          </button>
+          <button type="button" class="web-sidebar-link" data-web-nav="accounts">
+            <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="4" y="6" width="16" height="12" rx="2.5" stroke="currentColor" stroke-width="1.7" />
+              <path d="M4 10H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              <path d="M8 14H10.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+            <span>Счета</span>
+          </button>
+          <button type="button" class="web-sidebar-link" data-web-sidebar-action="transfer">
+            <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 8H17M7 16H17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              <path d="M14 5L17 8L14 11M10 19L7 16L10 13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>Переводы</span>
+          </button>
         </nav>
-        <div class="web-top-nav-aside">
-          <button type="button" class="web-top-nav-ghost" id="webRefreshButton">Обновить</button>
-          <div id="webProfileMenu" class="web-profile-menu">
+        <div class="web-sidebar-spacer" aria-hidden="true"></div>
+        <div class="web-sidebar-upsell">
+          <div class="web-sidebar-upsell-icon" aria-hidden="true">◇</div>
+          <div class="web-sidebar-upsell-copy">
+            <strong>Premium</strong>
+            <span class="muted">Расширенные отчёты — скоро</span>
+          </div>
+          <button type="button" class="web-sidebar-upsell-btn" disabled>Оформить</button>
+        </div>
+        <div class="web-sidebar-footer">
+          <div id="webProfileMenu" class="web-profile-menu web-profile-menu--sidebar">
             <button
               type="button"
               id="webProfileToggleButton"
-              class="web-profile-icon"
+              class="web-sidebar-user"
               aria-label="Аккаунт"
               aria-expanded="false"
             >
-              <svg class="web-profile-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"
-                  stroke="currentColor"
-                  stroke-width="1.7"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-                <path
-                  d="M5 20.5c1.8-3.2 5.2-5 7-5s5.2 1.8 7 5"
-                  stroke="currentColor"
-                  stroke-width="1.7"
-                  stroke-linecap="round"
-                />
+              <span class="web-sidebar-user-avatar" aria-hidden="true">
+                <svg class="web-profile-icon-svg" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M5 20.5c1.8-3.2 5.2-5 7-5s5.2 1.8 7 5"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </span>
+              <span class="web-sidebar-user-meta">
+                <span id="webSidebarUserName" class="web-sidebar-user-name">Профиль</span>
+                <span class="muted web-sidebar-user-hint">Настройки</span>
+              </span>
+              <svg class="web-sidebar-user-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </button>
             <div id="webProfileDropdown" class="web-profile-dropdown" hidden>
@@ -113,8 +145,67 @@
             </div>
           </div>
         </div>
-      </div>
-    </header>
+      </aside>
+      <div class="web-main-column">
+        <header class="web-page-header">
+          <h1 id="webPageTitle" class="web-page-title">Главная</h1>
+          <div class="web-page-header-actions">
+            <div class="web-new-entry-wrap">
+              <button
+                type="button"
+                class="web-page-primary-btn"
+                id="webTopNavAddButton"
+                aria-expanded="false"
+                aria-haspopup="true"
+              >
+                + Новая запись
+              </button>
+              <div id="webNewEntryMenu" class="web-new-entry-menu" role="menu" hidden>
+                <p class="web-new-entry-group-label">Операции</p>
+                <button type="button" class="web-new-entry-option web-new-entry-income" data-web-new-entry="income" role="menuitem">
+                  Доход
+                </button>
+                <button type="button" class="web-new-entry-option web-new-entry-expense" data-web-new-entry="expense" role="menuitem">
+                  Расход
+                </button>
+                <button type="button" class="web-new-entry-option web-new-entry-transfer" data-web-new-entry="transfer" role="menuitem">
+                  Обмен между счетами
+                </button>
+                <p class="web-new-entry-group-label">Сначала настройте</p>
+                <button type="button" class="web-new-entry-option web-new-entry-setup" data-web-new-entry="account" role="menuitem">
+                  Новый счёт
+                </button>
+                <button type="button" class="web-new-entry-option web-new-entry-setup" data-web-new-entry="category" role="menuitem">
+                  Новая категория
+                </button>
+              </div>
+            </div>
+            <button type="button" class="web-page-ghost-btn" id="webRefreshButton">
+              <svg class="web-page-refresh-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M21 12a9 9 0 1 1-2.64-6.36"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                />
+                <path d="M21 3v6h-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Обновить
+            </button>
+            <button type="button" class="web-page-icon-btn" disabled title="Скоро" aria-label="Уведомления (скоро)">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M6 8a6 6 0 1 1 12 0c0 7 3 7 3 7H3s3 0 3-7"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path d="M10 21h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              </svg>
+            </button>
+          </div>
+        </header>
 
     <div class="app-shell">
       <header id="miniTopbar" class="topbar topbar-compact">
@@ -126,7 +217,8 @@
 
       <main class="content tabbed-content">
         <section id="screen-home" class="screen screen-active" data-screen="home">
-          <section class="card hero-card hero-balance-card">
+          <div class="web-dash-summary-grid">
+            <section class="card hero-card hero-balance-card web-dash-hero">
             <div class="hero-balance-top">
               <div>
                 <p class="section-label">Общий баланс</p>
@@ -162,6 +254,26 @@
             </details>
           </section>
 
+          <article class="web-dash-stat-card web-dash-stat-card-income">
+            <p class="section-label">Доходы за месяц</p>
+            <strong id="webDashIncomeValue" class="web-dash-stat-value">+0</strong>
+            <span class="muted web-dash-stat-sub">в валюте отчёта</span>
+            <div class="web-dash-spark web-dash-spark-income" aria-hidden="true"></div>
+          </article>
+          <article class="web-dash-stat-card web-dash-stat-card-expense">
+            <p class="section-label">Расходы за месяц</p>
+            <strong id="webDashExpenseValue" class="web-dash-stat-value">−0</strong>
+            <span class="muted web-dash-stat-sub">в валюте отчёта</span>
+            <div class="web-dash-spark web-dash-spark-expense" aria-hidden="true"></div>
+          </article>
+          <article class="web-dash-stat-card web-dash-stat-card-net">
+            <p class="section-label">Чистый поток</p>
+            <strong id="webDashNetValue" class="web-dash-stat-value">+0</strong>
+            <span class="muted web-dash-stat-sub">доходы минус расходы</span>
+          </article>
+          </div>
+
+          <div class="web-home-mid-grid">
           <div class="web-home-columns">
             <section class="card compact-section-card">
               <div class="section-header">
@@ -179,6 +291,9 @@
                 </button>
               </div>
               <div id="homeAccountsList" class="accounts-list"></div>
+              <button type="button" class="web-home-foot-cta web-home-foot-cta-ghost" data-web-new-entry="account">
+                + Добавить счёт
+              </button>
               <div class="section-footer-note">
                 <div class="section-footer-actions">
                   <p id="ratesStatusText" class="muted secondary-status">
@@ -217,7 +332,53 @@
                 </button>
               </div>
               <div id="homeRecentActivityList" class="entries-list"></div>
+              <button type="button" class="web-home-foot-cta" data-web-new-entry="expense">
+                + Новая операция
+              </button>
             </section>
+          </div>
+
+          <aside class="web-home-rail" aria-label="Сводки">
+            <section class="card web-dash-donut-card">
+              <div class="section-header">
+                <div>
+                  <p class="section-label">Расходы</p>
+                  <h2>По категориям</h2>
+                </div>
+                <button type="button" class="text-link-button" data-web-nav="categories">
+                  Все категории
+                </button>
+              </div>
+              <div class="web-donut-layout">
+                <div id="webHomeDonutVisual" class="web-donut-visual" aria-hidden="true"></div>
+                <div id="webHomeDonutLegend" class="web-donut-legend muted"></div>
+              </div>
+            </section>
+            <section class="card web-dash-plan-card">
+              <p class="section-label">Месяц</p>
+              <h2>Расходы и доходы</h2>
+              <div class="web-dash-plan-rows">
+                <div class="web-dash-plan-row">
+                  <div class="web-dash-plan-label">
+                    <span>Расходы</span>
+                    <span id="webDashPlanExpensePct" class="muted">0%</span>
+                  </div>
+                  <div class="web-dash-plan-track">
+                    <div id="webDashPlanExpenseBar" class="web-dash-plan-fill web-dash-plan-fill-expense"></div>
+                  </div>
+                </div>
+                <div class="web-dash-plan-row">
+                  <div class="web-dash-plan-label">
+                    <span>Доходы</span>
+                    <span id="webDashPlanIncomePct" class="muted">0%</span>
+                  </div>
+                  <div class="web-dash-plan-track">
+                    <div id="webDashPlanIncomeBar" class="web-dash-plan-fill web-dash-plan-fill-income"></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </aside>
           </div>
 
           <details class="card fx-reference-card fx-reference-collapsible">
@@ -280,6 +441,14 @@
               </div>
             </div>
           </details>
+
+          <div id="webDayTipBanner" class="web-day-tip" role="status">
+            <span class="web-day-tip-icon" aria-hidden="true">💡</span>
+            <p class="web-day-tip-text">
+              Совет: сначала добавьте счёт и категории расходов — так операции будут точнее отражаться в отчётах.
+            </p>
+            <button type="button" id="webDayTipClose" class="web-day-tip-close" aria-label="Закрыть совет">×</button>
+          </div>
 
           <div class="home-help-footer">
             <button type="button" id="openHelpDocumentationButton" class="home-help-doc-trigger">
@@ -667,6 +836,8 @@
           Готово
         </button>
       </div>
+    </div>
+    </div>
     </div>
 
     <div id="entryTypeModal" class="entry-type-modal" hidden>

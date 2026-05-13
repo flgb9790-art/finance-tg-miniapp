@@ -262,6 +262,8 @@ export async function getDashboardSummary(
   categoriesCount: number;
   monthlyIncome: number;
   monthlyExpense: number;
+  monthlyNet: number;
+  monthlyExpenseByCategory: ReportCategoryItem[];
   reportingCurrency: string;
   totalBalanceConverted: number;
   ratesUpdatedAt: string | null;
@@ -314,6 +316,8 @@ export async function getDashboardSummary(
     categoriesCount: (categories ?? []).length,
     monthlyIncome: monthReport.incomes,
     monthlyExpense: monthReport.expenses,
+    monthlyNet: monthReport.net,
+    monthlyExpenseByCategory: monthReport.expenseByCategory,
     reportingCurrency,
     totalBalanceConverted: Number(totalBalanceConverted.toFixed(2)),
     ratesUpdatedAt: await getLatestExchangeRateUpdate()
