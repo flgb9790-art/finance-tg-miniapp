@@ -77,6 +77,7 @@ const transferToAccountInput = document.getElementById("transferToAccountInput")
 const transferDateInput = document.getElementById("transferDateInput");
 const reportForm = document.getElementById("reportForm");
 const reportSubmitButton = document.getElementById("reportSubmitButton");
+const reportResetFiltersButton = document.getElementById("reportResetFiltersButton");
 const reportPeriodInput = document.getElementById("reportPeriodInput");
 const reportingCurrencyInput = document.getElementById("reportingCurrencyInput");
 const reportCategoryFilterInput = document.getElementById("reportCategoryFilterInput");
@@ -3544,11 +3545,15 @@ async function openReportCsvInNewTab() {
   }
 
   const exportQuery = state.reportExportQuery ?? currentQuery;
+  const exportParams = new URLSearchParams(exportQuery);
+  exportParams.set("disposition", "inline");
 
   setStatus("Открываем CSV…");
 
   try {
-    const response = await authenticatedFetchRaw(`/api/reports/export.csv?${exportQuery}`);
+    const response = await authenticatedFetchRaw(
+      `/api/reports/export.csv?${exportParams.toString()}`
+    );
 
     const errProbe = async () => {
       const errText = await response.text();
@@ -3570,7 +3575,8 @@ async function openReportCsvInNewTab() {
       throw new Error(await errProbe());
     }
 
-    const blob = await response.blob();
+    const text = await response.text();
+    const blob = new Blob([text], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const tab = window.open(url, "_blank", "noopener,noreferrer");
 
@@ -4059,6 +4065,49 @@ async function handleSyncRates() {
   }
 }
 
+function resetReportFiltersToDefaults() {
+  if (reportPeriodInput) {
+    reportPeriodInput.value = "month";
+  }
+  if (reportAccountFilterInput) {
+    reportAccountFilterInput.value = "";
+  }
+  if (reportCategoryFilterInput) {
+    reportCategoryFilterInput.value = "";
+  }
+  if (reportKindFilterInput) {
+    reportKindFilterInput.value = "";
+  }
+  const today = getCurrentLocalDateValue();
+  if (reportStartDateInput) {
+    reportStartDateInput.value = today;
+  }
+  if (reportEndDateInput) {
+    reportEndDateInput.value = today;
+  }
+  const fallbackCcy =
+    (state.summary?.reportingCurrency && String(state.summary.reportingCurrency).trim()) ||
+    getStoredReportingCurrency() ||
+    "USD";
+  if (reportingCurrencyInput) {
+    const codes = Array.from(reportingCurrencyInput.options)
+      .map((o) => o.value)
+      .filter((c) => c && c.length > 0);
+    let nextCcy = fallbackCcy;
+    if (!codes.includes(nextCcy)) {
+      nextCcy = codes.includes("USD") ? "USD" : codes[0] ?? nextCcy;
+    }
+    if (nextCcy && codes.includes(nextCcy)) {
+      reportingCurrencyInput.value = nextCcy;
+    }
+  }
+  const appliedCcy = reportingCurrencyInput?.value?.trim() || fallbackCcy;
+  setStoredReportingCurrency(appliedCcy);
+  syncReportingCurrencyInputs(appliedCcy);
+  toggleReportDateInputs();
+  syncReportPeriodSegmented();
+}
+
 async function handleBuildReport(event) {
   event.preventDefault();
   reportSubmitButton.disabled = true;
@@ -4072,6 +4121,26 @@ async function handleBuildReport(event) {
     setStatus(error instanceof Error ? error.message : "Не удалось построить отчет", "error");
   } finally {
     reportSubmitButton.disabled = false;
+  }
+}
+
+async function handleResetReportFilters() {
+  if (!reportResetFiltersButton) {
+    return;
+  }
+
+  reportResetFiltersButton.disabled = true;
+  setStatus("Сбрасываем фильтры…");
+
+  try {
+    resetReportFiltersToDefaults();
+    await loadReport();
+    setStatus("Фильтры сброшены.", "success");
+  } catch (error) {
+    console.error(error);
+    setStatus(error instanceof Error ? error.message : "Не удалось сбросить фильтры", "error");
+  } finally {
+    reportResetFiltersButton.disabled = false;
   }
 }
 
@@ -4511,6 +4580,10 @@ reportForm.addEventListener("submit", (event) => {
 
 reportSubmitButton.addEventListener("click", () => {
   submitFormSafely(reportForm);
+});
+
+reportResetFiltersButton?.addEventListener("click", () => {
+  void handleResetReportFilters();
 });
 
 reportDownloadCsvButton?.addEventListener("click", () => {

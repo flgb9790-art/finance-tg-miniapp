@@ -896,6 +896,18 @@ export function formatReportResultAsCsv(
   }
 
   block += csvRow([]);
+  block += csvRow(["Сводка по категориям (валюта отчёта)"]);
+  block += csvRow(["Категория", "Расходы", "Доходы", "Чистый поток"]);
+  const matrix = report.categoryMatrix ?? [];
+  if (matrix.length === 0) {
+    block += csvRow(["—", "", "", ""]);
+  } else {
+    for (const row of matrix) {
+      block += csvRow([row.categoryName, row.expense, row.income, row.net]);
+    }
+  }
+
+  block += csvRow([]);
   block += csvRow(["Операции (каждая запись дохода/расхода, по дате по возрастанию, UTC)"]);
   block += csvRow([
     "Дата и время (ISO UTC)",

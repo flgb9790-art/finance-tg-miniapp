@@ -4699,7 +4699,22 @@ body.web-mode #screen-reports {
   min-width: 0;
 }
 
-.report-period-controls #reportPeriodSegmented {
+.report-segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  padding: 3px;
+  border-radius: 12px;
+  background: rgb(241 245 249);
+  border: 1px solid rgb(226 232 240);
+  gap: 2px;
+  width: fit-content;
+  max-width: 100%;
+  justify-self: start;
+  box-sizing: border-box;
+}
+
+/* Сегменты периода — отдельная строка сетки, плашка по ширине вкладок, не «1fr» колонки */
+#reportPeriodSegmented {
   grid-column: 1 / -1;
 }
 
@@ -4712,16 +4727,15 @@ body.web-mode #screen-reports {
     width: 100%;
     margin-left: 0;
   }
-}
 
-.report-segmented {
-  display: inline-flex;
-  flex-wrap: wrap;
-  padding: 3px;
-  border-radius: 12px;
-  background: rgb(241 245 249);
-  border: 1px solid rgb(226 232 240);
-  gap: 2px;
+  .report-period-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .report-reset-btn {
+    flex: 1 1 auto;
+  }
 }
 
 .report-segment {
@@ -4778,6 +4792,37 @@ body.web-mode #screen-reports {
   padding-left: 18px;
   padding-right: 18px;
   border-radius: 10px;
+}
+
+.report-period-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.report-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgb(15 23 42 / 0.12);
+  background: #fff;
+  color: rgb(51 65 85);
+  font-size: 13px;
+  font-weight: 600;
+  font: inherit;
+  cursor: pointer;
+}
+
+.report-reset-btn:hover {
+  border-color: rgb(15 23 42 / 0.22);
+  background: rgb(248 250 252);
 }
 
 .report-web-body {

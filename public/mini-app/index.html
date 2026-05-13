@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513reports-sync-layout";
+        var BALANCY_CLIENT_ASSET_REV = "20260513reports-segment-row-inline-csv";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -965,9 +965,14 @@
                         <input id="reportEndDateInput" name="endDate" type="date" class="report-filter-date" />
                       </label>
                     </div>
-                    <button id="reportSubmitButton" class="primary-button report-apply-btn" type="button">
-                      Показать
-                    </button>
+                    <div class="report-period-actions">
+                      <button type="button" id="reportResetFiltersButton" class="report-reset-btn">
+                        Сбросить
+                      </button>
+                      <button id="reportSubmitButton" class="primary-button report-apply-btn" type="button">
+                        Показать
+                      </button>
+                    </div>
                   </div>
                 </form>
               </div>

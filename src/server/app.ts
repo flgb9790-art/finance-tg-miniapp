@@ -967,10 +967,14 @@ export function createHttpApp(): express.Express {
       const fromDay = report.startDate.slice(0, 10).replace(/-/g, "");
       const toDay = report.endDate.slice(0, 10).replace(/-/g, "");
 
+      const dispositionRaw =
+        typeof req.query.disposition === "string" ? req.query.disposition.trim().toLowerCase() : "";
+      const inline = dispositionRaw === "inline";
+
       res.setHeader("Content-Type", "text/csv; charset=utf-8");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename="balancy-report-${fromDay}-${toDay}.csv"`
+        `${inline ? "inline" : "attachment"}; filename="balancy-report-${fromDay}-${toDay}.csv"`
       );
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
