@@ -3495,10 +3495,6 @@ body.web-mode #screen-history .web-ops-filter-shell {
   margin-bottom: 14px;
 }
 
-body[data-app-active-screen="history"] .web-ops-filter-shell {
-  display: none !important;
-}
-
 .web-ops-filter-row {
   display: flex;
   flex-wrap: wrap;
@@ -3775,6 +3771,44 @@ body.web-mode .web-ops-summary-grid {
 
 .web-ops-page-btn {
   min-height: 36px;
+}
+
+body.web-mode .web-ops-pagination .web-ops-page-btn {
+  appearance: none;
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  border: 1px solid rgb(15 23 42 / 0.1);
+  background: #fff;
+  color: rgb(51 65 85);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+body.web-mode .web-ops-pagination .web-ops-page-btn:hover:not(:disabled) {
+  border-color: rgb(13 159 110 / 0.42);
+  color: rgb(13 110 75);
+  background: rgb(13 159 110 / 0.07);
+  box-shadow: 0 2px 8px rgb(13 159 110 / 0.12);
+}
+
+body.web-mode .web-ops-pagination .web-ops-page-btn:focus-visible {
+  outline: 2px solid rgb(13 159 110 / 0.45);
+  outline-offset: 2px;
+}
+
+body.web-mode .web-ops-pagination .web-ops-page-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  box-shadow: none;
 }
 
 .web-ops-page-info {

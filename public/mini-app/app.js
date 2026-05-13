@@ -768,13 +768,7 @@ function buildWebOperationsApiUrl() {
   const reportingCurrency = state.summary?.reportingCurrency ?? currentReportingCurrencySelection();
   const params = new URLSearchParams();
   params.set("reportingCurrency", reportingCurrency);
-
-  if (document.body.dataset.appActiveScreen === "history") {
-    params.set("scope", "history");
-    params.set("limit", String(getWebOpsPageSizeValue()));
-    params.set("offset", String(webOpsOffset));
-    return `/api/operations?${params.toString()}`;
-  }
+  params.set("scope", "history");
 
   if (webOpsDateFrom?.value) {
     params.set("from", webOpsDateFrom.value);
@@ -796,9 +790,9 @@ function buildWebOperationsApiUrl() {
     params.set("categoryId", categoryId);
   }
 
-  const q = webOpsSearchInput?.value?.trim();
-  if (q) {
-    params.set("q", q);
+  const searchQ = webOpsSearchInput?.value?.trim();
+  if (searchQ) {
+    params.set("q", searchQ);
   }
 
   params.set("limit", String(getWebOpsPageSizeValue()));
@@ -1044,7 +1038,7 @@ function syncWebPageTitle(screenName) {
 
   const subtitleByScreen = {
     activity: "Создайте новую операцию дохода или расхода.",
-    history: "Полная лента операций без фильтров — доходы, расходы и переводы."
+    history: "Лента операций: фильтры по датам, типу, счёту и категории, затем «Показать»."
   };
   const subtitle = subtitleByScreen[key];
 
@@ -2854,7 +2848,7 @@ async function downloadReportCsv() {
   }
 }
 
-async function loadApp() {
+async function loadApp(options = {}) {
   if (!tg) {
     userNameElement.textContent = "Откройте приложение из Telegram";
     setStatus("Mini app должен открываться из Telegram, чтобы получить данные пользователя.", "error");
@@ -2960,7 +2954,9 @@ async function loadApp() {
     renderAll();
     if (document.body.dataset.appActiveScreen === "history") {
       populateWebOperationsFilterSelects();
-      void refreshWebOperationsBoard();
+      if (options.syncWebOperationsHistory) {
+        void refreshWebOperationsBoard();
+      }
     }
     setStatus(
       "Все готово. Интерфейс разбит по вкладкам и стал проще для ежедневного использования.",
@@ -3245,9 +3241,6 @@ async function handleCreateEntry(event) {
     syncWebEntryKindCardsFromSelect();
     setStatus("Операция сохранена.", "success");
     await loadApp();
-    if (document.body.dataset.appActiveScreen === "history") {
-      void refreshWebOperationsBoard();
-    }
   } catch (error) {
     console.error(error);
     setStatus(error instanceof Error ? error.message : "Не удалось сохранить операцию", "error");
@@ -3284,9 +3277,6 @@ async function handleCreateTransfer(event) {
     transferDateInput.value = getCurrentLocalDateTimeValue();
     setStatus("Перевод сохранен.", "success");
     await loadApp();
-    if (document.body.dataset.appActiveScreen === "history") {
-      void refreshWebOperationsBoard();
-    }
   } catch (error) {
     console.error(error);
     setStatus(error instanceof Error ? error.message : "Не удалось сохранить перевод", "error");
@@ -3404,7 +3394,7 @@ if (refreshButton) {
 
   if (webRefreshButton) {
     webRefreshButton.addEventListener("click", () => {
-      void loadApp();
+      void loadApp({ syncWebOperationsHistory: true });
     });
   }
 
@@ -3556,7 +3546,7 @@ if (refreshButton) {
 
 Array.from(document.querySelectorAll("[data-refresh-action]")).forEach((button) => {
   button.addEventListener("click", () => {
-    void loadApp();
+    void loadApp({ syncWebOperationsHistory: true });
   });
 });
 
@@ -3686,13 +3676,13 @@ cancelAccountEditButton?.addEventListener("click", () => {
 reportingCurrencyInput.addEventListener("change", () => {
   setStoredReportingCurrency(reportingCurrencyInput.value);
   syncReportingCurrencyInputs(reportingCurrencyInput.value);
-  void loadApp();
+  void loadApp({ syncWebOperationsHistory: true });
 });
 
 homeReportingCurrencyInput?.addEventListener("change", () => {
   setStoredReportingCurrency(homeReportingCurrencyInput.value);
   syncReportingCurrencyInputs(homeReportingCurrencyInput.value);
-  void loadApp();
+  void loadApp({ syncWebOperationsHistory: true });
 });
 
 categoryForm.addEventListener("submit", (event) => {

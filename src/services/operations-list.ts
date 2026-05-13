@@ -42,7 +42,7 @@ export interface OperationsListQuery {
   q?: string;
   limit: number;
   offset: number;
-  /** Полная лента (вкладка «История»): широкий период, без фильтров, с лимитом строк на стороне БД */
+  /** Вкладка «История»: лимит строк на стороне БД, те же фильтры что и в обычном режиме */
   historyScope: boolean;
 }
 
@@ -90,9 +90,14 @@ export function parseOperationsListQuery(
   let toIso: string;
 
   if (historyScope) {
-    const start = startOfDay(new Date("2000-01-01"));
-    fromIso = start.toISOString();
-    toIso = endOfDay(new Date()).toISOString();
+    if (fromRaw && toRaw) {
+      fromIso = startOfDay(parseIsoOrDateOnly(fromRaw)).toISOString();
+      toIso = endOfDay(parseIsoOrDateOnly(toRaw)).toISOString();
+    } else {
+      const start = startOfDay(new Date("2000-01-01"));
+      fromIso = start.toISOString();
+      toIso = endOfDay(new Date()).toISOString();
+    }
   } else {
     fromIso = fromRaw ? startOfDay(parseIsoOrDateOnly(fromRaw)).toISOString() : defaultFrom;
     toIso = toRaw ? endOfDay(parseIsoOrDateOnly(toRaw)).toISOString() : defaultTo;
@@ -111,26 +116,21 @@ export function parseOperationsListQuery(
     if (toMs - fromMs > maxSpan) {
       throw new Error("Интервал не больше 93 дней");
     }
+  } else if (fromRaw && toRaw) {
+    const maxSpanHistory = 400 * 24 * 60 * 60 * 1000;
+    if (toMs - fromMs > maxSpanHistory) {
+      throw new Error("Интервал не больше 400 дней");
+    }
   }
 
   const kindRaw = (firstQueryString(query.kind) ?? "all").toLowerCase();
-  let kind: OperationsKindFilter = ["all", "income", "expense", "transfer"].includes(kindRaw)
+  const kind: OperationsKindFilter = ["all", "income", "expense", "transfer"].includes(kindRaw)
     ? (kindRaw as OperationsKindFilter)
     : "all";
 
-  if (historyScope) {
-    kind = "all";
-  }
-
-  let accountId = firstQueryString(query.accountId);
-  let categoryId = firstQueryString(query.categoryId);
-  let q = firstQueryString(query.q);
-
-  if (historyScope) {
-    accountId = undefined;
-    categoryId = undefined;
-    q = undefined;
-  }
+  const accountId = firstQueryString(query.accountId);
+  const categoryId = firstQueryString(query.categoryId);
+  const q = firstQueryString(query.q);
 
   const limitRaw = firstQueryString(query.limit);
   const offsetRaw = firstQueryString(query.offset);
@@ -318,21 +318,14 @@ export async function listOperationsTimeline(
   const base = {
     from: query.from,
     to: query.to,
-    accountId: query.historyScope ? undefined : query.accountId,
+    accountId: query.accountId,
     maxRows: cap
   };
 
   let entryRows: EntryListItem[] = [];
   let transferRows: TransferListItem[] = [];
 
-  if (query.historyScope) {
-    const [e, tr] = await Promise.all([
-      fetchEntriesWindow(userId, { ...base }),
-      fetchTransfersWindow(userId, { ...base })
-    ]);
-    entryRows = e;
-    transferRows = tr;
-  } else if (query.categoryId) {
+  if (query.categoryId) {
     entryRows = await fetchEntriesWindow(userId, {
       ...base,
       categoryId: query.categoryId,
@@ -377,7 +370,7 @@ export async function listOperationsTimeline(
     )
   ];
 
-  const q = query.historyScope ? "" : query.q?.trim() ?? "";
+  const q = query.q?.trim() ?? "";
   const filtered = merged
     .filter((item) => matchesSearch(item, q))
     .sort(
