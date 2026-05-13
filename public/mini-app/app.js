@@ -97,6 +97,24 @@ const reportExpenseCategoriesListElement = document.getElementById("reportExpens
 const reportTransfersStatBox = document.getElementById("reportTransfersStatBox");
 const reportDownloadCsvButton = document.getElementById("reportDownloadCsvButton");
 const addOperationButton = document.getElementById("addOperationButton");
+const webOperationsRoot = document.getElementById("webOperationsRoot");
+const webOpsDateFrom = document.getElementById("webOpsDateFrom");
+const webOpsDateTo = document.getElementById("webOpsDateTo");
+const webOpsKindFilter = document.getElementById("webOpsKindFilter");
+const webOpsAccountFilter = document.getElementById("webOpsAccountFilter");
+const webOpsCategoryFilter = document.getElementById("webOpsCategoryFilter");
+const webOpsSearchInput = document.getElementById("webOpsSearchInput");
+const webOpsApplyButton = document.getElementById("webOpsApplyButton");
+const webOpsTableBody = document.getElementById("webOpsTableBody");
+const webOpsEmptyHint = document.getElementById("webOpsEmptyHint");
+const webOpsStatCount = document.getElementById("webOpsStatCount");
+const webOpsStatIncome = document.getElementById("webOpsStatIncome");
+const webOpsStatExpense = document.getElementById("webOpsStatExpense");
+const webOpsStatNet = document.getElementById("webOpsStatNet");
+const webOpsPageInfo = document.getElementById("webOpsPageInfo");
+const webOpsPagePrev = document.getElementById("webOpsPagePrev");
+const webOpsPageNext = document.getElementById("webOpsPageNext");
+const webOpsPageSize = document.getElementById("webOpsPageSize");
 const entryTypeModalElement = document.getElementById("entryTypeModal");
 const entryTypeModalBackdrop = document.getElementById("entryTypeModalBackdrop");
 const entryTypeModalCloseButton = document.getElementById("entryTypeModalClose");
@@ -124,6 +142,9 @@ const state = {
   editingAccountId: null,
   editingCategoryId: null
 };
+
+let webOpsOffset = 0;
+let webOpsDatesInitialized = false;
 
 const balancySplashStartedAt = Date.now();
 
@@ -671,6 +692,247 @@ function openScreen(screenName) {
   if (isWebMode) {
     syncWebPageTitle(nextScreen);
     closeWebNewEntryMenu();
+    if (nextScreen === "activity") {
+      initWebOperationsChrome();
+      void refreshWebOperationsBoard();
+    }
+  }
+}
+
+function initWebOperationsChrome() {
+  if (!isWebMode || !webOpsDateFrom || !webOpsDateTo) {
+    return;
+  }
+
+  if (!webOpsDatesInitialized) {
+    webOpsDatesInitialized = true;
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 6);
+    webOpsDateTo.value = end.toISOString().slice(0, 10);
+    webOpsDateFrom.value = start.toISOString().slice(0, 10);
+  }
+
+  populateWebOperationsFilterSelects();
+  webOpsOffset = 0;
+}
+
+function populateWebOperationsFilterSelects() {
+  if (!webOpsAccountFilter || !webOpsCategoryFilter) {
+    return;
+  }
+
+  const prevAccount = webOpsAccountFilter.value;
+  const prevCategory = webOpsCategoryFilter.value;
+
+  webOpsAccountFilter.innerHTML = `<option value="">Все счета</option>${state.accounts
+    .map(
+      (account) =>
+        `<option value="${escapeHtml(account.id)}">${escapeHtml(account.name)}</option>`
+    )
+    .join("")}`;
+
+  webOpsCategoryFilter.innerHTML = `<option value="">Все категории</option>${state.categories
+    .map(
+      (category) =>
+        `<option value="${escapeHtml(category.id)}">${escapeHtml(category.name)}</option>`
+    )
+    .join("")}`;
+
+  if (prevAccount && [...webOpsAccountFilter.options].some((o) => o.value === prevAccount)) {
+    webOpsAccountFilter.value = prevAccount;
+  }
+
+  if (prevCategory && [...webOpsCategoryFilter.options].some((o) => o.value === prevCategory)) {
+    webOpsCategoryFilter.value = prevCategory;
+  }
+}
+
+function getWebOpsPageSizeValue() {
+  const raw = Number(webOpsPageSize?.value ?? 8);
+  if (!Number.isFinite(raw) || raw < 1) {
+    return 8;
+  }
+  return raw;
+}
+
+function buildWebOperationsApiUrl() {
+  const reportingCurrency = state.summary?.reportingCurrency ?? currentReportingCurrencySelection();
+  const params = new URLSearchParams();
+  params.set("reportingCurrency", reportingCurrency);
+
+  if (webOpsDateFrom?.value) {
+    params.set("from", webOpsDateFrom.value);
+  }
+
+  if (webOpsDateTo?.value) {
+    params.set("to", webOpsDateTo.value);
+  }
+
+  params.set("kind", webOpsKindFilter?.value ?? "all");
+
+  const accountId = webOpsAccountFilter?.value?.trim();
+  if (accountId) {
+    params.set("accountId", accountId);
+  }
+
+  const categoryId = webOpsCategoryFilter?.value?.trim();
+  if (categoryId) {
+    params.set("categoryId", categoryId);
+  }
+
+  const q = webOpsSearchInput?.value?.trim();
+  if (q) {
+    params.set("q", q);
+  }
+
+  params.set("limit", String(getWebOpsPageSizeValue()));
+  params.set("offset", String(webOpsOffset));
+  return `/api/operations?${params.toString()}`;
+}
+
+function renderWebOperationsFromPayload(payload) {
+  if (!webOpsTableBody) {
+    return;
+  }
+
+  const cur = payload.reportingCurrency ?? "USD";
+  const summary = payload.summary ?? {
+    operationsCount: 0,
+    incomeReporting: 0,
+    expenseReporting: 0,
+    netReporting: 0
+  };
+
+  if (webOpsStatCount) {
+    webOpsStatCount.textContent = String(summary.operationsCount);
+  }
+
+  if (webOpsStatIncome) {
+    webOpsStatIncome.textContent = `+${formatMoney(summary.incomeReporting, cur)}`;
+  }
+
+  if (webOpsStatExpense) {
+    webOpsStatExpense.textContent = `−${formatMoney(summary.expenseReporting, cur)}`;
+  }
+
+  if (webOpsStatNet) {
+    const net = Number(summary.netReporting ?? 0);
+    const sign = net >= 0 ? "+" : "−";
+    webOpsStatNet.textContent = `${sign}${formatMoney(Math.abs(net), cur)}`;
+  }
+
+  const items = Array.isArray(payload.items) ? payload.items : [];
+  const total = typeof payload.total === "number" ? payload.total : items.length;
+  const pageSize = getWebOpsPageSizeValue();
+
+  if (webOpsPageInfo) {
+    if (total === 0) {
+      webOpsPageInfo.textContent = "Показано 0 из 0";
+    } else {
+      const from = webOpsOffset + 1;
+      const to = webOpsOffset + items.length;
+      webOpsPageInfo.textContent = `Показано ${from}–${to} из ${total}`;
+    }
+  }
+
+  if (webOpsPagePrev) {
+    webOpsPagePrev.disabled = webOpsOffset <= 0;
+  }
+
+  if (webOpsPageNext) {
+    webOpsPageNext.disabled = webOpsOffset + items.length >= total || items.length === 0;
+  }
+
+  if (webOpsEmptyHint) {
+    webOpsEmptyHint.hidden = items.length > 0;
+  }
+
+  if (items.length === 0) {
+    webOpsTableBody.innerHTML = "";
+    return;
+  }
+
+  webOpsTableBody.innerHTML = items.map((row) => buildWebOperationsTableRowHtml(row)).join("");
+}
+
+function buildWebOperationsTableRowHtml(row) {
+  if (row.kind === "entry") {
+    const e = row.entry;
+    const dt = escapeHtml(formatDateTime(e.occurred_at));
+    const iconKind = escapeHtml(e.kind);
+    const opTitle = escapeHtml(e.category?.name ?? "Без категории");
+    const opSub = escapeHtml(formatKind(e.kind));
+    const acc = escapeHtml(e.account?.name ?? "Счёт");
+    const cat = escapeHtml(e.category?.name ?? "—");
+    const cur = escapeHtml(e.currency_code ?? "");
+    const isIncome = e.kind === "income";
+    const sign = isIncome ? "+" : "−";
+    const amtClass = isIncome ? "web-ops-amount-income" : "web-ops-amount-expense";
+    const amt = escapeHtml(formatMoneyAmount(e.amount));
+
+    return `<tr>
+      <td>${dt}</td>
+      <td>
+        <div class="web-ops-cell-op">
+          <div class="entry-icon entry-icon-${iconKind}">${getEntryIcon(e.kind)}</div>
+          <div>
+            <div class="web-ops-op-title">${opTitle}</div>
+            <div class="web-ops-op-sub">${opSub}</div>
+          </div>
+        </div>
+      </td>
+      <td>${acc}</td>
+      <td>${cat}</td>
+      <td class="web-ops-col-num"><span class="${amtClass}">${sign}${amt}</span></td>
+      <td>${cur}</td>
+    </tr>`;
+  }
+
+  const t = row.transfer;
+  const dt = escapeHtml(formatDateTime(t.occurred_at));
+  const fromName = escapeHtml(t.from_account?.name ?? "Счёт");
+  const toName = escapeHtml(t.to_account?.name ?? "Счёт");
+  const acc = `${fromName} → ${toName}`;
+  const fromAmt = escapeHtml(formatMoneyAmount(t.from_amount));
+  const fromCur = escapeHtml(t.from_currency_code ?? "");
+
+  return `<tr>
+    <td>${dt}</td>
+    <td>
+      <div class="web-ops-cell-op">
+        <div class="entry-icon entry-icon-transfer">${getEntryIcon("transfer")}</div>
+        <div>
+          <div class="web-ops-op-title">Перевод</div>
+          <div class="web-ops-op-sub">Между счетами</div>
+        </div>
+      </div>
+    </td>
+    <td>${acc}</td>
+    <td>—</td>
+    <td class="web-ops-col-num"><span class="web-ops-amount-transfer">−${fromAmt}</span></td>
+    <td>${fromCur}</td>
+  </tr>`;
+}
+
+async function refreshWebOperationsBoard() {
+  if (!isWebMode || !webOperationsRoot || !webOpsTableBody) {
+    return;
+  }
+
+  webOpsTableBody.innerHTML = `<tr><td colspan="6" class="muted">Загрузка…</td></tr>`;
+  if (webOpsEmptyHint) {
+    webOpsEmptyHint.hidden = true;
+  }
+
+  try {
+    const payload = await apiFetch(buildWebOperationsApiUrl());
+    renderWebOperationsFromPayload(payload);
+  } catch (error) {
+    console.error(error);
+    webOpsTableBody.innerHTML = `<tr><td colspan="6" class="inline-error">${escapeHtml(
+      error instanceof Error ? error.message : "Не удалось загрузить операции"
+    )}</td></tr>`;
   }
 }
 
@@ -1410,8 +1672,8 @@ function renderHomeRecentActivity(entries, transfers) {
   if (combined.length === 0) {
     homeRecentActivityListElement.innerHTML = `
       <div class="empty-state">
-        <strong>Пока нет активности</strong>
-        <p class="account-meta">Последние операции и переводы появятся здесь автоматически.</p>
+        <strong>Пока нет операций</strong>
+        <p class="account-meta">Добавьте доход, расход или перевод — последние движения появятся здесь.</p>
       </div>
     `;
     return;
@@ -2642,6 +2904,13 @@ async function loadApp() {
       "Пользователь";
 
     renderAll();
+    if (
+      isWebMode &&
+      document.getElementById("screen-activity")?.classList.contains("screen-active")
+    ) {
+      populateWebOperationsFilterSelects();
+      void refreshWebOperationsBoard();
+    }
     setStatus(
       "Все готово. Интерфейс разбит по вкладкам и стал проще для ежедневного использования.",
       "success"
@@ -3113,6 +3382,34 @@ if (isWebMode) {
         }, 120);
       }
     });
+  });
+
+  webOpsApplyButton?.addEventListener("click", () => {
+    webOpsOffset = 0;
+    void refreshWebOperationsBoard();
+  });
+
+  webOpsPagePrev?.addEventListener("click", () => {
+    webOpsOffset = Math.max(0, webOpsOffset - getWebOpsPageSizeValue());
+    void refreshWebOperationsBoard();
+  });
+
+  webOpsPageNext?.addEventListener("click", () => {
+    webOpsOffset += getWebOpsPageSizeValue();
+    void refreshWebOperationsBoard();
+  });
+
+  webOpsPageSize?.addEventListener("change", () => {
+    webOpsOffset = 0;
+    void refreshWebOperationsBoard();
+  });
+
+  webOpsSearchInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      webOpsOffset = 0;
+      void refreshWebOperationsBoard();
+    }
   });
 
   document.querySelectorAll("[data-web-nav]").forEach((button) => {

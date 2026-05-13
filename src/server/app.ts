@@ -34,6 +34,10 @@ import {
   resolveReportRange
 } from "../services/reports.js";
 import { createTransfer } from "../services/transfers.js";
+import {
+  listOperationsTimeline,
+  parseOperationsListQuery
+} from "../services/operations-list.js";
 import { getAppUserById, registerTelegramUser } from "../services/users.js";
 import {
   toTelegramBotUser,
@@ -428,6 +432,26 @@ export function createHttpApp(): express.Express {
       res.status(400).json({
         error: error instanceof Error ? error.message : "Failed to bootstrap mini app"
       });
+    }
+  });
+
+  app.get("/api/operations", async (req, res) => {
+    try {
+      const appUser = await authenticateMiniAppUser(req);
+      const reportingCurrency = await resolveReportingCurrency(req);
+      const parsed = parseOperationsListQuery(req.query as Record<string, unknown>);
+      const result = await listOperationsTimeline(appUser.id, reportingCurrency, parsed);
+      res.json(result);
+    } catch (error) {
+      console.error("Failed to list operations", error);
+      const message =
+        getThrownErrorMessage(error) || "Не удалось загрузить операции.";
+      const isClientRangeError =
+        typeof message === "string" &&
+        (message.startsWith("Некорректный") ||
+          message.startsWith("Дата") ||
+          message.startsWith("Интервал"));
+      res.status(isClientRangeError ? 400 : 500).json({ error: message });
     }
   });
 

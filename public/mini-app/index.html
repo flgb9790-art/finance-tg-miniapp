@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260514home-layout-profile";
+        var BALANCY_CLIENT_ASSET_REV = "20260514web-ops-home-cards";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -275,7 +275,7 @@
 
           <div class="web-home-mid-grid">
           <div class="web-home-columns">
-            <section class="card compact-section-card">
+            <section class="card compact-section-card web-home-col-card">
               <div class="section-header">
                 <div>
                   <p class="section-label">Счета</p>
@@ -290,7 +290,9 @@
                   Все счета
                 </button>
               </div>
-              <div id="homeAccountsList" class="accounts-list"></div>
+              <div class="web-home-card-main">
+                <div id="homeAccountsList" class="accounts-list web-home-list-fill"></div>
+              </div>
               <button type="button" class="web-home-foot-cta web-home-foot-cta-ghost" data-web-new-entry="account">
                 + Добавить счёт
               </button>
@@ -321,7 +323,7 @@
               </div>
             </section>
 
-            <section class="card compact-section-card">
+            <section class="card compact-section-card web-home-col-card">
               <div class="section-header">
                 <div>
                   <p class="section-label">Последние операции</p>
@@ -331,10 +333,30 @@
                   Все
                 </button>
               </div>
-              <div id="homeRecentActivityList" class="entries-list"></div>
+              <div class="web-home-card-main">
+                <div id="homeRecentActivityList" class="entries-list web-home-list-fill"></div>
+              </div>
               <button type="button" class="web-home-foot-cta" data-web-new-entry="expense">
                 + Новая операция
               </button>
+              <div class="section-footer-note">
+                <div class="section-footer-actions">
+                  <p class="muted secondary-status">Последние записи и переводы из ленты ниже</p>
+                  <div class="toolbar-actions-row">
+                    <button class="toolbar-text-btn" data-open-screen="activity" type="button">
+                      Все операции
+                    </button>
+                    <button
+                      class="toolbar-text-btn"
+                      data-refresh-action="true"
+                      type="button"
+                      title="Обновить данные приложения"
+                    >
+                      Обновить
+                    </button>
+                  </div>
+                </div>
+              </div>
             </section>
           </div>
 
@@ -515,7 +537,116 @@
         </section>
 
         <section id="screen-activity" class="screen" data-screen="activity">
-          <section class="card">
+          <div id="webOperationsRoot" class="web-operations-root">
+            <div class="web-ops-toolbar card">
+              <div class="web-ops-toolbar-row">
+                <label class="web-ops-field">
+                  <span class="web-ops-field-label">С</span>
+                  <input id="webOpsDateFrom" class="web-ops-input" type="date" />
+                </label>
+                <label class="web-ops-field">
+                  <span class="web-ops-field-label">По</span>
+                  <input id="webOpsDateTo" class="web-ops-input" type="date" />
+                </label>
+                <label class="web-ops-field web-ops-field-grow">
+                  <span class="web-ops-field-label">Тип</span>
+                  <select id="webOpsKindFilter" class="web-ops-select">
+                    <option value="all">Все</option>
+                    <option value="income">Доход</option>
+                    <option value="expense">Расход</option>
+                    <option value="transfer">Перевод</option>
+                  </select>
+                </label>
+                <label class="web-ops-field web-ops-field-grow">
+                  <span class="web-ops-field-label">Счёт</span>
+                  <select id="webOpsAccountFilter" class="web-ops-select">
+                    <option value="">Все счета</option>
+                  </select>
+                </label>
+                <label class="web-ops-field web-ops-field-grow">
+                  <span class="web-ops-field-label">Категория</span>
+                  <select id="webOpsCategoryFilter" class="web-ops-select">
+                    <option value="">Все категории</option>
+                  </select>
+                </label>
+                <label class="web-ops-field web-ops-field-search">
+                  <span class="web-ops-field-label">Поиск</span>
+                  <input
+                    id="webOpsSearchInput"
+                    class="web-ops-input"
+                    type="search"
+                    placeholder="Поиск операций…"
+                    autocomplete="off"
+                  />
+                </label>
+                <button id="webOpsApplyButton" class="primary-button web-ops-apply" type="button">
+                  Показать
+                </button>
+              </div>
+            </div>
+            <div class="web-ops-summary-grid">
+              <article class="web-dash-stat-card">
+                <p class="section-label">Всего операций</p>
+                <strong id="webOpsStatCount" class="web-dash-stat-value">0</strong>
+                <span class="muted web-dash-stat-sub">за выбранный период</span>
+              </article>
+              <article class="web-dash-stat-card web-dash-stat-card-income">
+                <p class="section-label">Доходы</p>
+                <strong id="webOpsStatIncome" class="web-dash-stat-value">+0</strong>
+                <span class="muted web-dash-stat-sub">в валюте отчёта</span>
+              </article>
+              <article class="web-dash-stat-card web-dash-stat-card-expense">
+                <p class="section-label">Расходы</p>
+                <strong id="webOpsStatExpense" class="web-dash-stat-value">−0</strong>
+                <span class="muted web-dash-stat-sub">в валюте отчёта</span>
+              </article>
+              <article class="web-dash-stat-card web-dash-stat-card-net">
+                <p class="section-label">Чистый поток</p>
+                <strong id="webOpsStatNet" class="web-dash-stat-value">+0</strong>
+                <span class="muted web-dash-stat-sub">доходы минус расходы</span>
+              </article>
+            </div>
+            <div class="web-ops-table-card card">
+              <div class="web-ops-table-scroll">
+                <table class="web-ops-table" aria-label="Операции">
+                  <thead>
+                    <tr>
+                      <th>Дата</th>
+                      <th>Операция</th>
+                      <th>Счёт</th>
+                      <th>Категория</th>
+                      <th class="web-ops-col-num">Сумма</th>
+                      <th>Валюта</th>
+                    </tr>
+                  </thead>
+                  <tbody id="webOpsTableBody"></tbody>
+                </table>
+              </div>
+              <p id="webOpsEmptyHint" class="muted web-ops-empty-hint" hidden>За выбранный период ничего не найдено.</p>
+            </div>
+            <div class="web-ops-pagination">
+              <p id="webOpsPageInfo" class="muted web-ops-page-info">Показано 0 из 0</p>
+              <div class="web-ops-page-controls">
+                <label class="web-ops-page-size">
+                  <span class="muted">На странице</span>
+                  <select id="webOpsPageSize" class="web-ops-select">
+                    <option value="8">8</option>
+                    <option value="15">15</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                  </select>
+                </label>
+                <button id="webOpsPagePrev" class="ghost-button web-ops-page-btn" type="button" disabled>
+                  Назад
+                </button>
+                <button id="webOpsPageNext" class="ghost-button web-ops-page-btn" type="button" disabled>
+                  Вперёд
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <section class="card activity-form-card">
             <div class="section-header">
               <div>
                 <p class="section-label">Операции</p>
@@ -562,7 +693,7 @@
             </form>
           </section>
 
-          <section class="card">
+          <section class="card activity-form-card">
             <div class="section-header">
               <div>
                 <p class="section-label">Переводы</p>
@@ -606,7 +737,7 @@
             </form>
           </section>
 
-          <section class="card">
+          <section class="card activity-ledger-card">
             <div class="section-header">
               <div>
                 <p class="section-label">История операций</p>
@@ -616,7 +747,7 @@
             <div id="recentEntriesList" class="entries-list"></div>
           </section>
 
-          <section class="card">
+          <section class="card activity-ledger-card">
             <div class="section-header">
               <div>
                 <p class="section-label">История переводов</p>

@@ -3302,9 +3302,37 @@ body.web-mode .web-home-columns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
   padding: 0;
   border: none;
+}
+
+body.web-mode .web-home-columns > .web-home-col-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 0;
+}
+
+body.web-mode .web-home-columns > .web-home-col-card .web-home-card-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+body.web-mode .web-home-columns > .web-home-col-card .web-home-list-fill {
+  flex: 1 1 auto;
+  min-height: 132px;
+  margin-top: 12px;
+}
+
+body.web-mode .web-home-columns > .web-home-col-card .web-home-list-fill .empty-state {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 120px;
 }
 
 body.web-mode .web-home-columns > .card {
@@ -3362,4 +3390,226 @@ body.web-mode #screen-categories .card:last-child,
 body.web-mode #screen-reports .card:last-child {
   border-bottom: none;
   padding-bottom: 8px;
+}
+
+/* Web: операции — панель над формами; ленты «последние» скрыты (есть таблица) */
+.web-operations-root {
+  display: none;
+}
+
+body.web-mode .web-operations-root {
+  display: block;
+  margin-bottom: 8px;
+}
+
+body.web-mode #screen-activity > .activity-ledger-card {
+  display: none !important;
+}
+
+body.web-mode #screen-activity .web-operations-root .card {
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid rgb(15 23 42 / 0.08);
+  box-shadow: 0 4px 22px rgb(15 23 42 / 0.06);
+  padding: 14px 16px 16px;
+  margin: 0 0 14px;
+}
+
+body.web-mode #screen-activity .activity-form-card {
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid rgb(15 23 42 / 0.08);
+  box-shadow: 0 4px 22px rgb(15 23 42 / 0.06);
+  padding: 16px 16px 18px;
+  margin: 0 0 14px;
+}
+
+.web-ops-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 12px;
+}
+
+.web-ops-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.web-ops-field-grow {
+  flex: 1 1 140px;
+}
+
+.web-ops-field-search {
+  flex: 2 1 220px;
+}
+
+.web-ops-field-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.web-ops-input,
+.web-ops-select {
+  box-sizing: border-box;
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font: inherit;
+  font-size: 13px;
+  width: 100%;
+  min-width: 0;
+}
+
+.web-ops-apply {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  min-height: 38px;
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
+body.web-mode .web-ops-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 1100px) {
+  body.web-mode .web-ops-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  body.web-mode .web-ops-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.web-ops-table-card {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.web-ops-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.web-ops-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.web-ops-table th,
+.web-ops-table td {
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid rgb(15 23 42 / 0.08);
+}
+
+.web-ops-table th {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 700;
+  background: rgb(248 250 252 / 0.96);
+}
+
+.web-ops-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.web-ops-col-num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.web-ops-cell-op {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.web-ops-cell-op .entry-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.web-ops-op-title {
+  font-weight: 650;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.web-ops-op-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.web-ops-amount-income {
+  color: var(--success);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.web-ops-amount-expense {
+  color: rgb(15 23 42);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.web-ops-amount-transfer {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.web-ops-empty-hint {
+  padding: 12px 16px 16px;
+  margin: 0;
+}
+
+.web-ops-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.web-ops-page-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.web-ops-page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.web-ops-page-btn {
+  min-height: 36px;
+}
+
+.web-ops-page-info {
+  margin: 0;
+  font-size: 12px;
 }
