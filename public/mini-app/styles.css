@@ -4033,7 +4033,7 @@ body.web-mode[data-app-active-screen="home"] .section-footer-note:has(#syncRates
 }
 
 body.web-mode[data-app-active-screen="home"] .web-home-columns > .card {
-  padding: 12px 12px 12px !important;
+  padding: calc(12px + 5mm) calc(12px + 5mm) calc(12px + 5mm) !important;
 }
 
 body.web-mode[data-app-active-screen="home"] .web-home-columns > .web-home-col-card > .section-header {
@@ -4077,7 +4077,7 @@ body.web-mode[data-app-active-screen="home"] .web-dash-donut-card {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 10px 10px 12px;
+  padding: calc(10px + 5mm) calc(10px + 5mm) calc(12px + 5mm);
 }
 
 body.web-mode[data-app-active-screen="home"] .web-dash-plan-card {
@@ -4089,7 +4089,7 @@ body.web-mode[data-app-active-screen="home"] .web-dash-plan-card {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 8px 8px 10px;
+  padding: calc(8px + 5mm) calc(8px + 5mm) calc(10px + 5mm);
 }
 
 body.web-mode[data-app-active-screen="home"] .web-dash-donut-card .section-header {
