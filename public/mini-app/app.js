@@ -10,8 +10,6 @@ const WEB_PAGE_TITLES = {
   accounts: "Счета"
 };
 
-const WEB_TIP_DISMISS_KEY = "balancy_web_tip_v1";
-
 const userNameElement = document.getElementById("userName");
 const statusTextElement = document.getElementById("statusText");
 const accountsTitleElement = document.getElementById("accountsTitle");
@@ -3526,13 +3524,8 @@ if (refreshButton) {
   const webDayTipBanner = document.getElementById("webDayTipBanner");
   const webDayTipClose = document.getElementById("webDayTipClose");
   if (webDayTipBanner && webDayTipClose) {
-    if (sessionStorage.getItem(WEB_TIP_DISMISS_KEY) === "1") {
-      webDayTipBanner.hidden = true;
-    }
-
     webDayTipClose.addEventListener("click", () => {
       webDayTipBanner.hidden = true;
-      sessionStorage.setItem(WEB_TIP_DISMISS_KEY, "1");
     });
   }
 
