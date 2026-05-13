@@ -792,10 +792,6 @@ function openScreen(screenName, options = {}) {
     destroyReportCharts();
   }
 
-  if (!isWebMode && nextScreen === "activity") {
-    syncTgEntryKindSegmentFromSelect();
-    syncEntryAmountCurrencyBadgeTg();
-  }
 }
 
 function initWebOperationsChrome() {
@@ -1095,8 +1091,6 @@ function openEntryScreenForKind(kind) {
   entryKindInput.value = kind;
   populateCategoryOptions();
   syncWebEntryKindCardsFromSelect();
-  syncTgEntryKindSegmentFromSelect();
-  syncEntryAmountCurrencyBadgeTg();
   document.getElementById("entryForm")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -1199,36 +1193,6 @@ function syncWebEntryKindCardsFromSelect() {
   });
 }
 
-function syncTgEntryKindSegmentFromSelect() {
-  if (isWebMode || !entryKindInput) {
-    return;
-  }
-
-  const kind = entryKindInput.value === "income" ? "income" : "expense";
-
-  document.querySelectorAll("[data-tg-set-entry-kind]").forEach((button) => {
-    const cardKind = button.dataset.tgSetEntryKind;
-    const selected = cardKind === kind;
-    button.classList.toggle("is-selected", selected);
-    button.setAttribute("aria-pressed", selected ? "true" : "false");
-  });
-}
-
-function syncEntryAmountCurrencyBadgeTg() {
-  if (isWebMode) {
-    return;
-  }
-
-  const badge = document.getElementById("entryAmountCurrencyBadge");
-  if (!badge || !entryAccountInput) {
-    return;
-  }
-
-  const opt = entryAccountInput.selectedOptions[0];
-  const code = (opt?.dataset?.currency ?? "").trim().toUpperCase();
-  badge.textContent = code || "—";
-}
-
 function resetEntryFormToDefaults() {
   if (!entryForm || !entryKindInput || !entryDateInput) {
     return;
@@ -1239,8 +1203,6 @@ function resetEntryFormToDefaults() {
   entryDateInput.value = getCurrentLocalDateTimeValue();
   populateCategoryOptions();
   syncWebEntryKindCardsFromSelect();
-  syncTgEntryKindSegmentFromSelect();
-  syncEntryAmountCurrencyBadgeTg();
 }
 
 function renderWebDesktopDashboard(summary) {
@@ -3134,7 +3096,6 @@ function populateAccountOptions() {
     transferFromAccountInput.innerHTML = `<option value="">Сначала создайте счет</option>`;
     transferToAccountInput.innerHTML = `<option value="">Сначала создайте счет</option>`;
     syncWebTransferAmountCurrencyUi();
-    syncEntryAmountCurrencyBadgeTg();
     return;
   }
 
@@ -3147,7 +3108,6 @@ function populateAccountOptions() {
   }
 
   syncWebTransferAmountCurrencyUi();
-  syncEntryAmountCurrencyBadgeTg();
 }
 
 function populateCurrencyOptions() {
@@ -4632,7 +4592,9 @@ async function handleCreateEntry(event) {
     occurredAt: rawDate ? toIsoDate(rawDate) : new Date().toISOString()
   };
 
-  entrySubmitButton?.disabled = true;
+  if (entrySubmitButton) {
+    entrySubmitButton.disabled = true;
+  }
   setStatus("Сохраняем операцию...");
 
   try {
@@ -4648,7 +4610,9 @@ async function handleCreateEntry(event) {
     console.error(error);
     setStatus(error instanceof Error ? error.message : "Не удалось сохранить операцию", "error");
   } finally {
-    entrySubmitButton?.disabled = false;
+    if (entrySubmitButton) {
+      entrySubmitButton.disabled = false;
+    }
   }
 }
 
@@ -4815,8 +4779,6 @@ function handleOpenScreenButtonClick(button) {
       entryKindInput.value = "expense";
       populateCategoryOptions();
       syncWebEntryKindCardsFromSelect();
-      syncTgEntryKindSegmentFromSelect();
-      syncEntryAmountCurrencyBadgeTg();
     }
     (entryAmountInput ?? document.getElementById("entryAmountInput"))?.focus();
   } else if (label?.includes("Перевод")) {
@@ -4982,6 +4944,7 @@ if (isWebMode) {
     });
   });
 
+  document.querySelectorAll("[data-web-nav]").forEach((button) => {
     button.addEventListener("click", () => {
       openScreen(button.dataset.webNav ?? "home");
       closeWebProfileDropdown();
@@ -5295,29 +5258,10 @@ reportCsvStatementButton?.addEventListener("click", () => {
 entryKindInput?.addEventListener("change", () => {
   populateCategoryOptions();
   syncWebEntryKindCardsFromSelect();
-  syncTgEntryKindSegmentFromSelect();
 });
 
 document.getElementById("entryFormResetWeb")?.addEventListener("click", () => {
   resetEntryFormToDefaults();
-});
-
-document.querySelectorAll("[data-tg-set-entry-kind]").forEach((button) => {
-  button.addEventListener("click", () => {
-    const nextKind = button.dataset.tgSetEntryKind;
-    if (!nextKind || !entryKindInput || isWebMode) {
-      return;
-    }
-
-    entryKindInput.value = nextKind;
-    populateCategoryOptions();
-    syncWebEntryKindCardsFromSelect();
-    syncTgEntryKindSegmentFromSelect();
-  });
-});
-
-entryAccountInput?.addEventListener("change", () => {
-  syncEntryAmountCurrencyBadgeTg();
 });
 
 (function initTgEntryOperationHint() {
