@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260513filter-pill-divider";
+        var BALANCY_CLIENT_ASSET_REV = "20260513home-hero-width-op-cards";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -231,60 +231,65 @@
 
       <main class="content tabbed-content">
         <section id="screen-home" class="screen screen-active" data-screen="home">
-          <div class="web-dash-summary-grid">
-            <section class="card hero-card hero-balance-card web-dash-hero">
-            <div class="hero-balance-top">
-              <div>
-                <p class="section-label">Общий баланс</p>
-                <h2 id="userName">Загрузка...</h2>
-              </div>
-              <label class="hero-currency-field">
-                <span class="hero-currency-label">Валюта</span>
-                <select
-                  id="homeReportingCurrencyInput"
-                  class="hero-currency-select fx-board-base-select fx-board-base-select--toolbar"
-                  aria-label="Валюта отображения баланса"
-                ></select>
-              </label>
-            </div>
-            <div class="hero-balance-main">
-              <div class="hero-balance-copy">
-                <strong id="totalBalanceConverted">0</strong>
-                <p id="statusText" class="muted">Подключаем приложение...</p>
-                <div class="balance-trend">
-                  <span class="balance-trend-positive" id="monthlyIncomeInline">+0.00 USD</span>
-                  <span class="muted">за этот месяц</span>
+          <div class="web-home-dash-top">
+            <div class="web-home-dash-top-main">
+              <section class="card hero-card hero-balance-card web-dash-hero">
+                <div class="hero-balance-top">
+                  <div>
+                    <p class="section-label">Общий баланс</p>
+                    <h2 id="userName">Загрузка...</h2>
+                  </div>
+                  <label class="hero-currency-field">
+                    <span class="hero-currency-label">Валюта</span>
+                    <select
+                      id="homeReportingCurrencyInput"
+                      class="hero-currency-select fx-board-base-select fx-board-base-select--toolbar"
+                      aria-label="Валюта отображения баланса"
+                    ></select>
+                  </label>
                 </div>
+                <div class="hero-balance-main">
+                  <div class="hero-balance-copy">
+                    <strong id="totalBalanceConverted">0</strong>
+                    <p id="statusText" class="muted">Подключаем приложение...</p>
+                    <div class="balance-trend">
+                      <span class="balance-trend-positive" id="monthlyIncomeInline">+0.00 USD</span>
+                      <span class="muted">за этот месяц</span>
+                    </div>
+                  </div>
+                </div>
+                <details class="currency-breakdown">
+                  <summary class="currency-breakdown-summary">
+                    <span class="currency-breakdown-title">Остатки по валютам</span>
+                    <span class="currency-breakdown-hint muted"></span>
+                  </summary>
+                  <div class="currency-breakdown-inner">
+                    <div id="homeBalancesByCurrencyList" class="currency-breakdown-strip"></div>
+                  </div>
+                </details>
+              </section>
+
+              <div class="web-dash-summary-grid">
+                <article class="web-dash-stat-card web-dash-stat-card-income">
+                  <p class="section-label">Доходы за месяц</p>
+                  <strong id="webDashIncomeValue" class="web-dash-stat-value">+0</strong>
+                  <span class="muted web-dash-stat-sub">в валюте отчёта</span>
+                  <div class="web-dash-spark web-dash-spark-income" aria-hidden="true"></div>
+                </article>
+                <article class="web-dash-stat-card web-dash-stat-card-expense">
+                  <p class="section-label">Расходы за месяц</p>
+                  <strong id="webDashExpenseValue" class="web-dash-stat-value">−0</strong>
+                  <span class="muted web-dash-stat-sub">в валюте отчёта</span>
+                  <div class="web-dash-spark web-dash-spark-expense" aria-hidden="true"></div>
+                </article>
+                <article class="web-dash-stat-card web-dash-stat-card-net">
+                  <p class="section-label">Чистый поток</p>
+                  <strong id="webDashNetValue" class="web-dash-stat-value">+0</strong>
+                  <span class="muted web-dash-stat-sub">доходы минус расходы</span>
+                </article>
               </div>
             </div>
-            <details class="currency-breakdown">
-              <summary class="currency-breakdown-summary">
-                <span class="currency-breakdown-title">Остатки по валютам</span>
-                <span class="currency-breakdown-hint muted"></span>
-              </summary>
-              <div class="currency-breakdown-inner">
-                <div id="homeBalancesByCurrencyList" class="currency-breakdown-strip"></div>
-              </div>
-            </details>
-          </section>
-
-          <article class="web-dash-stat-card web-dash-stat-card-income">
-            <p class="section-label">Доходы за месяц</p>
-            <strong id="webDashIncomeValue" class="web-dash-stat-value">+0</strong>
-            <span class="muted web-dash-stat-sub">в валюте отчёта</span>
-            <div class="web-dash-spark web-dash-spark-income" aria-hidden="true"></div>
-          </article>
-          <article class="web-dash-stat-card web-dash-stat-card-expense">
-            <p class="section-label">Расходы за месяц</p>
-            <strong id="webDashExpenseValue" class="web-dash-stat-value">−0</strong>
-            <span class="muted web-dash-stat-sub">в валюте отчёта</span>
-            <div class="web-dash-spark web-dash-spark-expense" aria-hidden="true"></div>
-          </article>
-          <article class="web-dash-stat-card web-dash-stat-card-net">
-            <p class="section-label">Чистый поток</p>
-            <strong id="webDashNetValue" class="web-dash-stat-value">+0</strong>
-            <span class="muted web-dash-stat-sub">доходы минус расходы</span>
-          </article>
+            <div class="web-home-dash-top-spacer" aria-hidden="true"></div>
           </div>
 
           <div class="web-home-mid-grid">
@@ -481,9 +486,11 @@
                 data-web-set-entry-kind="income"
                 aria-pressed="false"
               >
+                <span class="web-op-kind-card-copy">
+                  <span class="web-op-kind-card-title">Доход</span>
+                  <span class="web-op-kind-card-desc">Поступление средств</span>
+                </span>
                 <span class="web-op-kind-card-icon" aria-hidden="true">↑</span>
-                <span class="web-op-kind-card-title">Доход</span>
-                <span class="web-op-kind-card-desc">Поступление средств</span>
               </button>
               <button
                 type="button"
@@ -491,9 +498,11 @@
                 data-web-set-entry-kind="expense"
                 aria-pressed="true"
               >
+                <span class="web-op-kind-card-copy">
+                  <span class="web-op-kind-card-title">Расход</span>
+                  <span class="web-op-kind-card-desc">Списание средств</span>
+                </span>
                 <span class="web-op-kind-card-icon" aria-hidden="true">↓</span>
-                <span class="web-op-kind-card-title">Расход</span>
-                <span class="web-op-kind-card-desc">Списание средств</span>
               </button>
             </div>
           </div>
@@ -713,6 +722,17 @@
                         type="date"
                         aria-label="С (дата начала периода)"
                       />
+                      <button
+                        type="button"
+                        class="balancy-filter-pill__date-open"
+                        aria-label="Открыть календарь"
+                        title="Календарь"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" stroke-width="1.6" />
+                          <path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -727,6 +747,17 @@
                         type="date"
                         aria-label="По (дата окончания периода)"
                       />
+                      <button
+                        type="button"
+                        class="balancy-filter-pill__date-open"
+                        aria-label="Открыть календарь"
+                        title="Календарь"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" stroke-width="1.6" />
+                          <path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -985,11 +1016,8 @@
                       </label>
 
                       <label class="report-inline-field">
-                        <div class="balancy-filter-pill" title="Валюта отчёта">
-                          <span
-                            class="balancy-filter-pill__prefix balancy-filter-pill__prefix--wide"
-                            aria-hidden="true"
-                            >Валюта отчёта</span>
+                        <div class="balancy-filter-pill" title="Валюта">
+                          <span class="balancy-filter-pill__prefix" aria-hidden="true">Валюта</span>
                           <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
                           <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
                             <select
@@ -1053,6 +1081,17 @@
                               class="report-filter-date"
                               aria-label="С (дата начала произвольного периода)"
                             />
+                            <button
+                              type="button"
+                              class="balancy-filter-pill__date-open"
+                              aria-label="Открыть календарь"
+                              title="Календарь"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" stroke-width="1.6" />
+                                <path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                              </svg>
+                            </button>
                           </div>
                         </div>
                       </label>
@@ -1071,6 +1110,17 @@
                               class="report-filter-date"
                               aria-label="По (дата окончания произвольного периода)"
                             />
+                            <button
+                              type="button"
+                              class="balancy-filter-pill__date-open"
+                              aria-label="Открыть календарь"
+                              title="Календарь"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" stroke-width="1.6" />
+                                <path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                              </svg>
+                            </button>
                           </div>
                         </div>
                       </label>

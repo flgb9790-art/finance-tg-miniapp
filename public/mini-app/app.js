@@ -4622,6 +4622,34 @@ reportDayTipClose?.addEventListener("click", () => {
   }
 });
 
+document.addEventListener("click", (event) => {
+  const openBtn =
+    event.target instanceof Element ? event.target.closest(".balancy-filter-pill__date-open") : null;
+  if (!openBtn) {
+    return;
+  }
+  event.preventDefault();
+  const host = openBtn.closest(".balancy-filter-pill__body--date");
+  const input = host?.querySelector('input[type="date"]');
+  if (!(input instanceof HTMLInputElement)) {
+    return;
+  }
+  try {
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+      return;
+    }
+  } catch {
+    //
+  }
+  input.focus();
+  try {
+    input.click();
+  } catch {
+    //
+  }
+});
+
 openScreenButtons.forEach((button) => {
   button.addEventListener("click", () => {
     handleOpenScreenButtonClick(button);

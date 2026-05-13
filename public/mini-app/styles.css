@@ -2992,11 +2992,41 @@ body.web-mode .web-dash-stat-card {
 
 body.web-mode .web-dash-summary-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   align-items: stretch;
   width: 100%;
   max-width: none;
+}
+
+.web-home-dash-top {
+  display: block;
+  width: 100%;
+}
+
+.web-home-dash-top-spacer {
+  display: none;
+}
+
+body.web-mode .web-home-dash-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.72fr) minmax(240px, 0.92fr);
+  gap: 16px;
+  align-items: start;
+  width: 100%;
+  max-width: none;
+}
+
+body.web-mode .web-home-dash-top-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+body.web-mode .web-home-dash-top-spacer {
+  display: block;
+  min-height: 1px;
 }
 
 body.web-mode .web-dash-hero {
@@ -3300,6 +3330,14 @@ body.web-mode .web-home-foot-cta:hover {
 }
 
 @media (max-width: 1100px) {
+  body.web-mode .web-home-dash-top {
+    grid-template-columns: 1fr;
+  }
+
+  body.web-mode .web-home-dash-top-spacer {
+    display: none;
+  }
+
   body.web-mode .web-dash-summary-grid {
     grid-template-columns: 1fr;
   }
@@ -3321,7 +3359,14 @@ body.web-mode {
   background: #eef1f5;
 }
 
-body.web-mode .screen > .web-dash-summary-grid {
+body.web-mode .screen > .web-dash-summary-grid,
+body.web-mode .screen > .web-home-dash-top {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+body.web-mode .web-home-dash-top-main .web-dash-summary-grid {
   border: none;
   margin: 0;
   padding: 0;
@@ -3557,7 +3602,53 @@ body.web-mode #screen-activity .activity-form-card {
 }
 
 .balancy-filter-pill__body--date {
-  padding-right: 6px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px 0 10px;
+}
+
+.balancy-filter-pill__body--date > input[type="date"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-right: 2px;
+}
+
+/* Одна явная кнопка: нативный индикатор в пилюле часто крошечный или не кликается в WebView */
+.balancy-filter-pill__body--date input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+.balancy-filter-pill__date-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgb(100 116 139);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.balancy-filter-pill__date-open:hover {
+  background: rgb(241 245 249);
+  color: rgb(51 65 85);
+}
+
+.balancy-filter-pill__date-open:focus-visible {
+  outline: 2px solid rgb(36 173 124 / 0.45);
+  outline-offset: 1px;
+}
+
+.balancy-filter-pill__date-open svg {
+  display: block;
+  width: 18px;
+  height: 18px;
 }
 
 .balancy-filter-pill__body > select,
@@ -3629,7 +3720,7 @@ body.web-mode #screen-history .web-ops-filter-shell {
 }
 
 .web-ops-filter-cell--date {
-  flex: 0 1 156px;
+  flex: 0 1 172px;
 }
 
 .web-ops-filter-cell--grow {
@@ -3916,9 +4007,10 @@ body.web-mode .web-op-kind-cards {
 
 body.web-mode .web-op-kind-card {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 16px 18px;
   border-radius: 16px;
   border: 2px solid rgb(226 232 240);
@@ -3931,6 +4023,15 @@ body.web-mode .web-op-kind-card {
     box-shadow 0.15s ease;
 }
 
+body.web-mode .web-op-kind-card-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 body.web-mode .web-op-kind-card:hover {
   border-color: rgb(203 213 225);
 }
@@ -3941,6 +4042,7 @@ body.web-mode .web-op-kind-card:focus-visible {
 }
 
 body.web-mode .web-op-kind-card-icon {
+  flex-shrink: 0;
   font-size: 22px;
   font-weight: 700;
   line-height: 1;
@@ -4344,6 +4446,14 @@ body.web-mode[data-app-active-screen="home"] .web-page-title {
 }
 
 body.web-mode[data-app-active-screen="home"] .web-dash-summary-grid {
+  gap: 10px;
+}
+
+body.web-mode[data-app-active-screen="home"] .web-home-dash-top-main {
+  gap: 10px;
+}
+
+body.web-mode[data-app-active-screen="home"] .web-home-dash-top {
   gap: 10px;
 }
 
@@ -4819,7 +4929,7 @@ body.web-mode #screen-reports {
 
 .report-inline-field.report-filter-date-start,
 .report-inline-field.report-filter-date-end {
-  flex: 0 1 176px;
+  flex: 0 1 190px;
 }
 
 body.web-mode .report-period-controls .balancy-filter-pill {
