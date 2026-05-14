@@ -1243,6 +1243,29 @@ function scrollTelegramAppShellToTop() {
   }
 }
 
+/** Прокрутка активного экрана в Telegram так, чтобы якорь оказался у верхнего края (под шапкой). */
+function scrollTgContentToElement(element) {
+  if (isWebMode || !element || !(element instanceof HTMLElement)) {
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      const main = document.querySelector("main.tabbed-content");
+      if (main instanceof HTMLElement) {
+        main.scrollTop = 0;
+      }
+      document.querySelectorAll(".screen.screen-active").forEach((el) => {
+        if (el instanceof HTMLElement) {
+          el.scrollTop = 0;
+        }
+      });
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      element.scrollIntoView({ block: "start", inline: "nearest", behavior: "auto" });
+    });
+  });
+}
+
 function resolveTgGlobalScreenTitle(screenName) {
   if (screenName === "transfer") {
     return WEB_PAGE_TITLES.transfer;
@@ -1684,7 +1707,26 @@ function openEntryScreenForKind(kind) {
   entryKindInput.value = kind;
   populateCategoryOptions();
   syncWebEntryKindCardsFromSelect();
-  document.getElementById("entryForm")?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  const activityTop =
+    document.querySelector("#screen-activity .web-activity-compose") ?? document.getElementById("screen-activity");
+
+  if (isWebMode) {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        if (activityTop instanceof HTMLElement) {
+          activityTop.scrollIntoView({ block: "start", behavior: "auto" });
+        } else {
+          document.getElementById("entryForm")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+    });
+    return;
+  }
+
+  const tgScrollAnchor =
+    activityTop instanceof HTMLElement ? activityTop : document.getElementById("screen-activity");
+  scrollTgContentToElement(tgScrollAnchor instanceof HTMLElement ? tgScrollAnchor : null);
 }
 
 function resetAccountForm() {
@@ -1732,14 +1774,23 @@ function startAccountEdit(accountId) {
   setAccountsStatus("Режим редактирования: измените данные ниже и нажмите «Сохранить изменения».", "success");
   openScreen("accounts");
 
-  window.requestAnimationFrame(() => {
+  if (isWebMode) {
     window.requestAnimationFrame(() => {
-      accountForm?.scrollIntoView({ behavior: "smooth", block: "start" });
-      window.setTimeout(() => {
-        document.getElementById("nameInput")?.focus({ preventScroll: true });
-      }, 320);
+      window.requestAnimationFrame(() => {
+        accountForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.setTimeout(() => {
+          document.getElementById("nameInput")?.focus({ preventScroll: true });
+        }, 320);
+      });
     });
-  });
+    return;
+  }
+
+  const anchor = document.getElementById("accountFormTitle");
+  scrollTgContentToElement(anchor instanceof HTMLElement ? anchor : accountForm);
+  window.setTimeout(() => {
+    document.getElementById("nameInput")?.focus({ preventScroll: true });
+  }, 160);
 }
 
 function syncWebPageTitle(screenName) {
@@ -3207,14 +3258,11 @@ function startCategoryEdit(categoryId) {
     return;
   }
 
-  window.requestAnimationFrame(() => {
-    window.requestAnimationFrame(() => {
-      categoryForm?.scrollIntoView({ behavior: "smooth", block: "start" });
-      window.setTimeout(() => {
-        document.getElementById("categoryNameInput")?.focus({ preventScroll: true });
-      }, 320);
-    });
-  });
+  const anchor = document.getElementById("categoryFormTitle");
+  scrollTgContentToElement(anchor instanceof HTMLElement ? anchor : categoryForm);
+  window.setTimeout(() => {
+    document.getElementById("categoryNameInput")?.focus({ preventScroll: true });
+  }, 160);
 }
 
 function renderCategories(categories) {
@@ -4834,7 +4882,6 @@ function openTransferScreen() {
 
   window.requestAnimationFrame(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    document.getElementById("transferFromAmountInput")?.focus({ preventScroll: true });
   });
 }
 
@@ -6259,10 +6306,11 @@ function attachTgAccountsScreenChrome() {
   tgAccountsScreenChromeAttached = true;
 
   const scrollToAccountForm = () => {
-    accountForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const anchor = document.getElementById("accountFormTitle");
+    scrollTgContentToElement(anchor instanceof HTMLElement ? anchor : accountForm);
     window.setTimeout(() => {
       document.getElementById("nameInput")?.focus({ preventScroll: true });
-    }, 280);
+    }, 160);
   };
 
   document.getElementById("tgAccountsAddOutlineButton")?.addEventListener("click", scrollToAccountForm);
@@ -6655,9 +6703,9 @@ function handleOpenScreenButtonClick(button) {
       populateCategoryOptions();
       syncWebEntryKindCardsFromSelect();
     }
-    (entryAmountInput ?? document.getElementById("entryAmountInput"))?.focus();
+    (entryAmountInput ?? document.getElementById("entryAmountInput"))?.focus({ preventScroll: true });
   } else if (label?.includes("Перевод")) {
-    document.getElementById("transferFromAmountInput")?.focus();
+    document.getElementById("transferFromAmountInput")?.focus({ preventScroll: true });
   }
 }
 
@@ -6733,22 +6781,15 @@ document.querySelector("#screen-home .tg-home-quick-actions")?.addEventListener(
   if (action === "category") {
     resetCategoryForm();
     openScreen("categories");
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        categoryForm?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    });
+    scrollTgContentToElement(document.getElementById("categoryFormTitle"));
     return;
   }
 
   if (action === "account") {
     resetAccountForm();
     openScreen("accounts");
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        accountForm?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    });
+    scrollTgContentToElement(document.getElementById("accountFormTitle"));
+    return;
   }
 });
 
