@@ -198,6 +198,9 @@ let transferRateHintTimer = null;
 let transferRateHintRequestId = 0;
 let transferToPreviewTimer = null;
 let transferToPreviewRequestId = 0;
+/** Значение `transferToAmountInput`, выставленное автоконвертацией (для перезаписи при смене суммы списания). */
+let transferToAmountAutofillTag = null;
+let transferToAmountProgrammatic = false;
 
 /** @type {{ trend?: object, category?: object }} */
 let reportChartInstances = { trend: null, category: null };
@@ -942,6 +945,55 @@ function formatMoney(value, currencyCode = "") {
   return currencyCode ? `${formatted} ${currencyCode}` : formatted;
 }
 
+function formatAmountForNumberInput(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) {
+    return "";
+  }
+  return n.toFixed(2);
+}
+
+function clearTransferToAmountIfAutofill(toInput) {
+  if (!toInput) {
+    return;
+  }
+  const v = String(toInput.value ?? "").trim();
+  if (v && transferToAmountAutofillTag !== null && v === transferToAmountAutofillTag) {
+    toInput.value = "";
+  }
+  transferToAmountAutofillTag = null;
+}
+
+function canAutofillTransferToAmount(toInput) {
+  const v = String(toInput.value ?? "").trim();
+  if (v === "") {
+    return true;
+  }
+  if (transferToAmountAutofillTag !== null && v === transferToAmountAutofillTag) {
+    return true;
+  }
+  return false;
+}
+
+function handleTransferToAmountUserInput() {
+  if (transferToAmountProgrammatic) {
+    return;
+  }
+  const toInput = document.getElementById("transferToAmountInput");
+  if (!toInput) {
+    return;
+  }
+  const v = String(toInput.value ?? "").trim();
+  if (v === "") {
+    transferToAmountAutofillTag = null;
+    scheduleTransferToAmountPreview();
+    return;
+  }
+  if (transferToAmountAutofillTag !== null && v !== transferToAmountAutofillTag) {
+    transferToAmountAutofillTag = null;
+  }
+}
+
 function formatEntryAmountStackHtml(prefix, amount, currencyCode, modifierClass) {
   const amountText = escapeHtml(`${prefix}${formatMoneyAmount(amount)}`);
   const currencyText = escapeHtml(currencyCode || "");
@@ -1573,6 +1625,11 @@ function resetAccountForm() {
     currencyInput.value = "USD";
   }
   clearWebAccountAccentSelection();
+  const desc = document.getElementById("accountDescriptionInput");
+  if (desc instanceof HTMLTextAreaElement) {
+    desc.value = "";
+  }
+  applyAccountIconKeyToForm(DEFAULT_ACCOUNT_ICON_KEY);
   setAccountsStatus("");
   syncAccountFormTitles();
 }
@@ -1594,6 +1651,12 @@ function startAccountEdit(accountId) {
   currencyInput.value = account.currency_code;
   document.getElementById("balanceInput").value = String(account.balance);
   applyAccentSwatchesForAccountId(account.id);
+  const meta = readAccountUiMeta(account.id);
+  const descEl = document.getElementById("accountDescriptionInput");
+  if (descEl instanceof HTMLTextAreaElement) {
+    descEl.value = meta.description || "";
+  }
+  applyAccountIconKeyToForm(meta.iconKey || defaultAccountIconKeyForType(account.type));
   syncAccountFormTitles();
   setAccountsStatus("Режим редактирования: измените данные ниже и нажмите «Сохранить изменения».", "success");
   openScreen("accounts");
@@ -1865,8 +1928,8 @@ function renderAccountsList(targetElement, accounts, emptyDescription) {
         const bal = escapeHtml(formatMoney(account.balance, account.currency_code));
         return `<article class="web-account-card" data-account-id="${escapeHtml(account.id)}">
           <div class="web-account-card-top">
-            <div class="web-account-card-icon" style="background-color:${accentEsc}" aria-hidden="true">${getAccountTypeIcon(
-                account.type
+            <div class="web-account-card-icon" style="background-color:${accentEsc}" aria-hidden="true">${formatAccountLeadingGlyphHtml(
+                account
               )}</div>
             <div class="web-account-card-names">
               <div class="web-account-card-title-line">${escapeHtml(account.name)} · ${escapeHtml(
@@ -1913,13 +1976,13 @@ function renderAccountsList(targetElement, accounts, emptyDescription) {
           <div class="swipe-row-sheet">
             <div class="account-item-header">
               <div class="item-leading">
-                <div class="account-icon account-icon-${escapeHtml(account.type)}">${getAccountTypeIcon(
-                  account.type
-                )}</div>
+                <div class="account-icon account-icon-tg-tile" style="background-color:${escapeHtml(
+                  resolveAccountCardAccent(account)
+                )}">${formatAccountLeadingGlyphHtml(account)}</div>
                 <div class="item-copy">
-                  <div class="account-name">${escapeHtml(account.name)}</div>
-                  <div class="account-meta">${escapeHtml(account.currency_code)} · ${escapeHtml(
-                  formatType(account.type)
+                  <div class="account-name">${escapeHtml(account.name)} · ${escapeHtml(account.currency_code)}</div>
+                  <div class="account-meta">${escapeHtml(formatType(account.type))} · ${escapeHtml(
+                  formatCurrencyLineFromCode(account.currency_code)
                 )}</div>
                 </div>
               </div>
@@ -1934,13 +1997,13 @@ function renderAccountsList(targetElement, accounts, emptyDescription) {
         <article class="account-item">
           <div class="account-item-header">
             <div class="item-leading">
-              <div class="account-icon account-icon-${escapeHtml(account.type)}">${getAccountTypeIcon(
-                account.type
-              )}</div>
+              <div class="account-icon account-icon-tg-tile" style="background-color:${escapeHtml(
+                resolveAccountCardAccent(account)
+              )}">${formatAccountLeadingGlyphHtml(account)}</div>
               <div class="item-copy">
-                <div class="account-name">${escapeHtml(account.name)}</div>
-                <div class="account-meta">${escapeHtml(account.currency_code)} · ${escapeHtml(
-                formatType(account.type)
+                <div class="account-name">${escapeHtml(account.name)} · ${escapeHtml(account.currency_code)}</div>
+                <div class="account-meta">${escapeHtml(formatType(account.type))} · ${escapeHtml(
+                formatCurrencyLineFromCode(account.currency_code)
               )}</div>
               </div>
             </div>
@@ -2183,6 +2246,66 @@ function attachSwipeRowHandlers() {
   });
 }
 
+function renderTgAccountsSummary(accounts) {
+  const card = document.getElementById("tgAccountsSummaryCard");
+  const dl = document.getElementById("tgAccountsSummaryDl");
+  if (!card || !dl || isWebMode) {
+    return;
+  }
+
+  if (!Array.isArray(accounts) || accounts.length === 0) {
+    card.hidden = true;
+    dl.innerHTML = "";
+    return;
+  }
+
+  card.hidden = false;
+
+  const sumForTypes = (types) => {
+    const map = new Map();
+    for (const a of accounts) {
+      if (!types.includes(a.type)) {
+        continue;
+      }
+      const c = String(a.currency_code ?? "")
+        .trim()
+        .toUpperCase();
+      const code = c || "—";
+      const prev = map.get(code) ?? 0;
+      map.set(code, prev + Number(a.balance ?? 0));
+    }
+    return map;
+  };
+
+  const formatMap = (map) => {
+    if (map.size === 0) {
+      return "0,00 —";
+    }
+    return [...map.entries()].map(([c, v]) => formatMoney(v, c)).join(" · ");
+  };
+
+  const rep = String(state.summary?.reportingCurrency ?? "").trim() || "USD";
+  const totalNum = Number(state.summary?.totalBalanceConverted ?? 0);
+  const totalLine = Number.isFinite(totalNum) ? formatMoney(totalNum, rep) : "—";
+
+  const rows = [
+    ["Общий баланс", totalLine, true],
+    ["Количество счетов", String(accounts.length), false],
+    ["Наличными", formatMap(sumForTypes(["cash"])), false],
+    ["На картах", formatMap(sumForTypes(["card"])), false],
+    ["В накоплениях", formatMap(sumForTypes(["savings"])), false]
+  ];
+
+  dl.innerHTML = rows
+    .map(([dt, dd, accent]) => {
+      const ddInner = accent ? `<strong>${escapeHtml(dd)}</strong>` : escapeHtml(dd);
+      return `<div class="tg-accounts-summary-row"><dt>${escapeHtml(dt)}</dt><dd class="${
+        accent ? "tg-accounts-summary-dd--accent" : ""
+      }">${ddInner}</dd></div>`;
+    })
+    .join("");
+}
+
 function renderAccounts(accounts) {
   if (accountsCountElement) {
     accountsCountElement.textContent = String(accounts.length);
@@ -2195,9 +2318,10 @@ function renderAccounts(accounts) {
 
   const headCount = document.getElementById("webAccountsHeadCount");
   if (headCount) {
-    headCount.textContent =
-      isWebMode && accounts.length > 0 ? `Всего счетов: ${accounts.length}` : "";
+    headCount.textContent = accounts.length > 0 ? `Всего счетов: ${accounts.length}` : "";
   }
+
+  renderTgAccountsSummary(accounts);
 
   renderAccountsList(
     accountsListElement,
@@ -2240,6 +2364,135 @@ const CATEGORY_ICON_GLYPHS = {
 function getCategoryIconGlyph(iconKey) {
   const k = String(iconKey ?? "").trim();
   return CATEGORY_ICON_GLYPHS[k] || CATEGORY_ICON_GLYPHS.briefcase;
+}
+
+const ACCOUNT_UI_META_STORAGE_KEY = "balancyAccountUiMetaV1";
+const DEFAULT_ACCOUNT_ICON_KEY = "card";
+
+const ACCOUNT_ICON_GLYPHS = {
+  card: "💳",
+  wallet: "👛",
+  cashbill: "💵",
+  piggy: "🐷",
+  bank: "🏦",
+  briefcase: "💼",
+  building: "🏢",
+  gift: "🎁",
+  house: "🏠",
+  cart: "🛒",
+  car: "🚗",
+  laptop: "💻",
+  food: "🍽",
+  heart: "❤️",
+  sport: "💪",
+  plane: "✈️",
+  study: "🎓",
+  pet: "🐾",
+  crypto: "🪙",
+  more: "⋯"
+};
+
+function defaultAccountIconKeyForType(type) {
+  if (type === "cash") {
+    return "cashbill";
+  }
+  if (type === "card") {
+    return "card";
+  }
+  if (type === "savings") {
+    return "piggy";
+  }
+  if (type === "crypto") {
+    return "crypto";
+  }
+  if (type === "other") {
+    return "briefcase";
+  }
+  return "card";
+}
+
+function getAccountIconGlyph(iconKey) {
+  const k = String(iconKey ?? "").trim();
+  if (ACCOUNT_ICON_GLYPHS[k]) {
+    return ACCOUNT_ICON_GLYPHS[k];
+  }
+  return getCategoryIconGlyph(k);
+}
+
+function readAccountUiMetaMap() {
+  try {
+    const raw = window.localStorage.getItem(ACCOUNT_UI_META_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return typeof parsed === "object" && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeAccountUiMetaMap(map) {
+  try {
+    window.localStorage.setItem(ACCOUNT_UI_META_STORAGE_KEY, JSON.stringify(map));
+  } catch {
+    //
+  }
+}
+
+function readAccountUiMeta(accountId) {
+  if (!accountId) {
+    return { description: "", iconKey: "" };
+  }
+  const m = readAccountUiMetaMap();
+  const row = m[accountId];
+  if (!row || typeof row !== "object") {
+    return { description: "", iconKey: "" };
+  }
+  const description = typeof row.description === "string" ? row.description : "";
+  const iconKey = typeof row.iconKey === "string" && row.iconKey.trim() ? row.iconKey.trim() : "";
+  return { description, iconKey };
+}
+
+function writeAccountUiMeta(accountId, patch) {
+  if (!accountId) {
+    return;
+  }
+  const m = readAccountUiMetaMap();
+  const prev = m[accountId] && typeof m[accountId] === "object" ? m[accountId] : {};
+  m[accountId] = { ...prev, ...patch };
+  writeAccountUiMetaMap(m);
+}
+
+function removeAccountUiMeta(accountId) {
+  if (!accountId) {
+    return;
+  }
+  const m = readAccountUiMetaMap();
+  delete m[accountId];
+  writeAccountUiMetaMap(m);
+}
+
+function resolveAccountIconKey(account) {
+  const { iconKey } = readAccountUiMeta(account.id);
+  if (iconKey) {
+    return iconKey;
+  }
+  return defaultAccountIconKeyForType(account.type);
+}
+
+function formatAccountLeadingGlyphHtml(account) {
+  const ch = getAccountIconGlyph(resolveAccountIconKey(account));
+  return `<span class="account-leading-glyph" aria-hidden="true">${escapeHtml(ch)}</span>`;
+}
+
+function applyAccountIconKeyToForm(iconKey) {
+  const k =
+    iconKey && String(iconKey).trim() ? String(iconKey).trim() : DEFAULT_ACCOUNT_ICON_KEY;
+  const hidden = document.getElementById("accountIconKeyInput");
+  if (hidden) {
+    hidden.value = k;
+  }
+  document.querySelectorAll("#webAccountIconGrid .web-category-icon-btn").forEach((btn) => {
+    btn.classList.toggle("is-selected", btn.dataset.accountIcon === k);
+  });
 }
 
 let categoryFormSharedChromeAttached = false;
@@ -2329,7 +2582,7 @@ function applyAccentSwatchesForAccountId(accountId) {
 }
 
 function attachWebAccountColorChrome() {
-  if (!isWebMode || webAccountColorChromeAttached) {
+  if (webAccountColorChromeAttached) {
     return;
   }
   webAccountColorChromeAttached = true;
@@ -2357,11 +2610,17 @@ function syncAccountFormTitles() {
     return;
   }
   const editing = Boolean(state.editingAccountId);
+  const sub = document.getElementById("accountFormSubtitle");
+  if (sub) {
+    sub.textContent = editing
+      ? "Измените данные счёта и нажмите «Сохранить изменения»."
+      : "Заполните данные для создания счёта.";
+  }
   if (isWebMode) {
     accountFormTitleElement.textContent = editing ? "Редактировать счёт" : "Добавить новый счёт";
     submitButton.textContent = editing ? "Сохранить изменения" : "Создать счёт";
   } else {
-    accountFormTitleElement.textContent = editing ? "Редактировать счет" : "Новый счёт";
+    accountFormTitleElement.textContent = editing ? "Редактировать счёт" : "Добавить новый счёт";
     submitButton.textContent = editing ? "Сохранить изменения" : "Создать счёт";
   }
 }
@@ -4371,30 +4630,25 @@ function syncWebTransferAmountCurrencyUi() {
 }
 
 async function refreshTransferToAmountPreview() {
-  const line = document.getElementById("transferToAmountPreviewLine");
   const fromInput = document.getElementById("transferFromAmountInput");
   const toInput = document.getElementById("transferToAmountInput");
-  if (!line || !fromInput || !toInput || !transferForm) {
+  if (!fromInput || !toInput || !transferForm) {
     return;
   }
 
   if (!transferForm.classList.contains("transfer-is-cross-currency")) {
-    line.hidden = true;
-    line.textContent = "";
+    clearTransferToAmountIfAutofill(toInput);
     return;
   }
 
-  if (String(toInput.value ?? "").trim() !== "") {
-    line.hidden = true;
-    line.textContent = "";
+  if (!canAutofillTransferToAmount(toInput)) {
     return;
   }
 
   const fromCur = readTransferOptionCurrency(transferFromAccountInput?.selectedOptions[0]);
   const toCur = readTransferOptionCurrency(transferToAccountInput?.selectedOptions[0]);
   if (!fromCur || !toCur || fromCur === toCur) {
-    line.hidden = true;
-    line.textContent = "";
+    clearTransferToAmountIfAutofill(toInput);
     return;
   }
 
@@ -4403,8 +4657,7 @@ async function refreshTransferToAmountPreview() {
     .trim();
   const amt = Number(raw);
   if (!Number.isFinite(amt) || amt <= 0) {
-    line.hidden = true;
-    line.textContent = "";
+    clearTransferToAmountIfAutofill(toInput);
     return;
   }
 
@@ -4424,19 +4677,27 @@ async function refreshTransferToAmountPreview() {
 
     const converted = Number(payload?.converted);
     if (!Number.isFinite(converted)) {
-      line.hidden = true;
-      line.textContent = "";
+      clearTransferToAmountIfAutofill(toInput);
       return;
     }
 
-    line.textContent = `≈ ${formatMoneyAmount(converted)} ${toCur}`;
-    line.hidden = false;
+    const formatted = formatAmountForNumberInput(converted);
+    if (!formatted) {
+      clearTransferToAmountIfAutofill(toInput);
+      return;
+    }
+
+    transferToAmountProgrammatic = true;
+    toInput.value = formatted;
+    transferToAmountAutofillTag = formatted;
+    queueMicrotask(() => {
+      transferToAmountProgrammatic = false;
+    });
   } catch {
     if (requestId !== transferToPreviewRequestId) {
       return;
     }
-    line.hidden = true;
-    line.textContent = "";
+    clearTransferToAmountIfAutofill(toInput);
   }
 }
 
@@ -4456,6 +4717,7 @@ function swapWebTransferAccounts() {
   const toValue = transferToAccountInput.value;
   transferFromAccountInput.value = toValue;
   transferToAccountInput.value = fromValue;
+  transferToAmountAutofillTag = null;
   syncWebTransferAmountCurrencyUi();
 }
 
@@ -4463,6 +4725,9 @@ function exitTransferScreen() {
   if (transferForm) {
     transferForm.reset();
   }
+
+  transferToAmountAutofillTag = null;
+  transferToAmountProgrammatic = false;
 
   if (transferDateInput) {
     transferDateInput.value = getCurrentLocalDateTimeValue();
@@ -4477,6 +4742,8 @@ function exitTransferScreen() {
 
 function openTransferScreen() {
   transferReturnScreen = document.body.dataset.appActiveScreen || "home";
+  transferToAmountAutofillTag = null;
+  transferToAmountProgrammatic = false;
   closeEntryTypeModal();
   if (isWebMode) {
     closeWebNewEntryMenu();
@@ -5802,6 +6069,11 @@ async function handleCreateAccount(event) {
       } else {
         removeAccountAccent(accId);
       }
+      const iconKey =
+        String(document.getElementById("accountIconKeyInput")?.value ?? "").trim() || DEFAULT_ACCOUNT_ICON_KEY;
+      const descField = document.getElementById("accountDescriptionInput");
+      const description = descField instanceof HTMLTextAreaElement ? descField.value.trim() : "";
+      writeAccountUiMeta(accId, { iconKey, description });
     }
 
     resetAccountForm();
@@ -5832,6 +6104,7 @@ async function handleDeleteAccount(accountId) {
     state.accounts = state.accounts.filter((account) => account.id !== accountId);
 
     removeAccountAccent(accountId);
+    removeAccountUiMeta(accountId);
 
     if (state.editingAccountId === accountId) {
       resetAccountForm();
@@ -5892,6 +6165,62 @@ function attachFxReferencePanelListeners() {
     fxCalcToInput.value = previousFrom;
 
     scheduleFxCalculatorRefresh();
+  });
+}
+
+let tgAccountsScreenChromeAttached = false;
+
+function attachTgAccountsScreenChrome() {
+  if (isWebMode || tgAccountsScreenChromeAttached) {
+    return;
+  }
+  tgAccountsScreenChromeAttached = true;
+
+  const scrollToAccountForm = () => {
+    accountForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => {
+      document.getElementById("nameInput")?.focus({ preventScroll: true });
+    }, 280);
+  };
+
+  document.getElementById("tgAccountsHeadPlusButton")?.addEventListener("click", scrollToAccountForm);
+  document.getElementById("tgAccountsAddOutlineButton")?.addEventListener("click", scrollToAccountForm);
+
+  document.getElementById("tgAccountFormBackButton")?.addEventListener("click", () => {
+    resetAccountForm();
+    renderAccounts(state.accounts);
+    document.querySelector("#screen-accounts .web-accounts-main")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  document.getElementById("tgAccountsReorderTipClose")?.addEventListener("click", () => {
+    const tip = document.getElementById("tgAccountsReorderTip");
+    if (tip) {
+      tip.hidden = true;
+    }
+  });
+
+  const iconGrid = document.getElementById("webAccountIconGrid");
+  iconGrid?.addEventListener("click", (event) => {
+    const t = event.target instanceof Element ? event.target.closest("[data-account-icon]") : null;
+    if (!t || !iconGrid.contains(t)) {
+      return;
+    }
+    const key = t.dataset.accountIcon?.trim();
+    if (!key) {
+      return;
+    }
+    iconGrid.querySelectorAll(".web-category-icon-btn").forEach((b) => b.classList.remove("is-selected"));
+    t.classList.add("is-selected");
+    applyAccountIconKeyToForm(key);
+  });
+
+  document.getElementById("typeInput")?.addEventListener("change", () => {
+    if (state.editingAccountId) {
+      return;
+    }
+    const typeEl = document.getElementById("typeInput");
+    const nextType = typeEl instanceof HTMLSelectElement ? typeEl.value : "cash";
+    applyAccountIconKeyToForm(defaultAccountIconKeyForType(nextType));
   });
 }
 
@@ -6100,6 +6429,8 @@ async function handleCreateTransfer(event) {
 
     transferForm.reset();
     transferDateInput.value = getCurrentLocalDateTimeValue();
+    transferToAmountAutofillTag = null;
+    transferToAmountProgrammatic = false;
     setStatus("Перевод сохранен.", "success");
     await loadApp({ backgroundRefresh: true });
     const back = transferReturnScreen || "home";
@@ -6474,7 +6805,7 @@ transferFromAccountInput?.addEventListener("change", syncWebTransferAmountCurren
 transferToAccountInput?.addEventListener("change", syncWebTransferAmountCurrencyUi);
 
 document.getElementById("transferFromAmountInput")?.addEventListener("input", scheduleTransferToAmountPreview);
-document.getElementById("transferToAmountInput")?.addEventListener("input", scheduleTransferToAmountPreview);
+document.getElementById("transferToAmountInput")?.addEventListener("input", handleTransferToAmountUserInput);
 
 document.getElementById("webTransferTipMore")?.addEventListener("click", () => {
   openHelpDocumentationModal();
@@ -6594,6 +6925,7 @@ attachCategoryListsListener();
 attachCategoryFormSharedChrome();
 attachWebCategoriesChrome();
 attachWebAccountColorChrome();
+attachTgAccountsScreenChrome();
 attachFxReferencePanelListeners();
 
 window.addEventListener("focus", () => {

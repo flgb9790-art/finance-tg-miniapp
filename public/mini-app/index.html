@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260514bottom-nav-static";
+        var BALANCY_CLIENT_ASSET_REV = "20260514accounts-transfer-autofill";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -570,18 +570,82 @@
 
         <section id="screen-accounts" class="screen" data-screen="accounts">
           <div class="web-accounts-page">
-            <div class="web-accounts-list-shell web-accounts-surface">
-              <p class="section-label web-accounts-telegram-label">Счета</p>
-              <div class="web-accounts-list-head">
-                <h2 id="accountsTitle" class="web-accounts-title">Ваши счета</h2>
-                <span id="webAccountsHeadCount" class="web-accounts-head-count muted web-accounts-toolbar--web"></span>
-              </div>
-              <div id="accountsList" class="accounts-list"></div>
-            </div>
+            <div class="web-accounts-layout">
+              <div class="web-accounts-main">
+                <header class="tg-accounts-screen-head tg-only-block" aria-label="Счета">
+                  <div class="tg-accounts-screen-head-text">
+                    <h1 class="tg-accounts-screen-title">Счета</h1>
+                    <p class="tg-accounts-screen-sub muted">Управляйте своими счетами: создавайте, редактируйте и удаляйте.</p>
+                  </div>
+                  <button
+                    type="button"
+                    class="tg-accounts-head-plus"
+                    id="tgAccountsHeadPlusButton"
+                    aria-label="Добавить счёт"
+                    title="Добавить счёт"
+                  >
+                    +
+                  </button>
+                </header>
 
-            <div class="web-accounts-form-shell web-accounts-surface">
-              <h3 id="accountFormTitle" class="web-accounts-form-title">Новый счёт</h3>
-              <form id="accountForm" class="stacked-form stacked-form--dense web-accounts-form">
+                <div class="web-accounts-list-shell web-accounts-surface">
+                  <p class="section-label web-accounts-telegram-label">Счета</p>
+                  <div class="web-accounts-list-head">
+                    <h2 id="accountsTitle" class="web-accounts-title">Ваши счета</h2>
+                    <span id="webAccountsHeadCount" class="web-accounts-head-count muted"></span>
+                  </div>
+                  <div id="accountsList" class="accounts-list"></div>
+                  <button type="button" class="web-categories-add-outline tg-accounts-add-btn" id="tgAccountsAddOutlineButton">
+                    + Добавить счёт
+                  </button>
+                </div>
+
+                <section id="tgAccountsSummaryCard" class="web-accounts-surface tg-accounts-summary tg-only-block" hidden>
+                  <h3 class="tg-accounts-summary-title">Сводка по счетам</h3>
+                  <dl class="tg-accounts-summary-dl" id="tgAccountsSummaryDl"></dl>
+                </section>
+
+                <div id="tgAccountsReorderTip" class="tg-accounts-reorder-tip tg-only-block" role="status">
+                  <span class="tg-accounts-reorder-tip-icon" aria-hidden="true">💡</span>
+                  <div class="tg-accounts-reorder-tip-copy">
+                    <strong class="tg-accounts-reorder-tip-title">Подсказка</strong>
+                    <p class="tg-accounts-reorder-tip-text muted">
+                      Смахните строку счёта влево, чтобы открыть действия «Изменить» и «Удалить».
+                    </p>
+                  </div>
+                  <button type="button" class="tg-accounts-reorder-tip-close" id="tgAccountsReorderTipClose" aria-label="Закрыть подсказку">
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              <aside class="web-accounts-panel web-categories-panel" id="webAccountsSidePanel">
+                <div class="web-categories-panel-head tg-category-panel-head">
+                  <button
+                    type="button"
+                    id="tgAccountFormBackButton"
+                    class="tg-category-back-btn tg-only-block"
+                    aria-label="Назад к списку счетов"
+                  >
+                    <svg class="tg-category-back-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path
+                        d="M14 6L8 12L14 18"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <div class="tg-category-head-text">
+                    <h2 id="accountFormTitle" class="web-categories-panel-title">Новый счёт</h2>
+                    <p id="accountFormSubtitle" class="web-categories-panel-subtitle muted">
+                      Заполните данные для создания счёта.
+                    </p>
+                  </div>
+                </div>
+
+                <form id="accountForm" class="stacked-form stacked-form--dense web-accounts-form web-categories-form">
                 <div class="web-accounts-form-grid">
                   <label class="web-accounts-field">
                     <span>Название счёта <span class="web-op-req" aria-hidden="true">*</span></span>
@@ -589,7 +653,7 @@
                   </label>
 
                   <label class="web-accounts-field">
-                    <span>Тип <span class="web-op-req" aria-hidden="true">*</span></span>
+                    <span>Тип счёта <span class="web-op-req" aria-hidden="true">*</span></span>
                     <select id="typeInput" name="type">
                       <option value="cash">Наличные</option>
                       <option value="card">Карта</option>
@@ -597,21 +661,25 @@
                       <option value="savings">Накопления</option>
                       <option value="other">Другое</option>
                     </select>
+                    <span class="web-accounts-field-hint muted">Наличные, Карта, Накопления и др.</span>
                   </label>
 
                   <label class="web-accounts-field">
                     <span>Валюта <span class="web-op-req" aria-hidden="true">*</span></span>
                     <select id="currencyInput" name="currencyCode"></select>
+                    <span class="web-accounts-field-hint muted">Валюта счёта</span>
                   </label>
 
                   <label class="web-accounts-field web-accounts-field--balance">
                     <span>Стартовый баланс</span>
                     <input id="balanceInput" name="balance" placeholder="0.00" step="0.01" type="number" />
+                    <span class="web-accounts-field-hint muted">Укажите начальный баланс счёта</span>
                   </label>
                 </div>
 
-                <div class="web-accounts-color-block web-accounts-toolbar--web">
-                  <span class="web-categories-field-label">Цвет (необязательно)</span>
+                <div class="web-accounts-color-block">
+                  <span class="web-categories-field-label tg-color-label-web">Цвет (необязательно)</span>
+                  <span class="web-categories-field-label tg-color-label-tg">Цвет счёта</span>
                   <div id="webAccountColorSwatches" class="web-cat-swatches" role="radiogroup" aria-label="Цвет счёта">
                     <button
                       type="button"
@@ -671,7 +739,46 @@
                     ></button>
                   </div>
                   <input type="hidden" id="accountAccentInput" value="" autocomplete="off" />
+                  <p class="web-categories-color-hint muted tg-only-category-hint">
+                    Выберите цвет плитки счёта в списке.
+                  </p>
                 </div>
+
+                <div class="tg-account-icon-block tg-only-block">
+                  <span class="web-categories-field-label">Иконка (необязательно)</span>
+                  <div id="webAccountIconGrid" class="web-category-icon-grid" role="group" aria-label="Иконка счёта">
+                    <button type="button" class="web-category-icon-btn is-selected" data-account-icon="card" aria-label="Карта" title="Карта"><span aria-hidden="true">💳</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="wallet" aria-label="Кошелёк" title="Кошелёк"><span aria-hidden="true">👛</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="cashbill" aria-label="Наличные" title="Наличные"><span aria-hidden="true">💵</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="piggy" aria-label="Накопления" title="Накопления"><span aria-hidden="true">🐷</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="bank" aria-label="Банк" title="Банк"><span aria-hidden="true">🏦</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="briefcase" aria-label="Портфель" title="Портфель"><span aria-hidden="true">💼</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="cart" aria-label="Покупки" title="Покупки"><span aria-hidden="true">🛒</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="gift" aria-label="Подарок" title="Подарок"><span aria-hidden="true">🎁</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="house" aria-label="Дом" title="Дом"><span aria-hidden="true">🏠</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="car" aria-label="Авто" title="Авто"><span aria-hidden="true">🚗</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="plane" aria-label="Путешествия" title="Путешествия"><span aria-hidden="true">✈️</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="heart" aria-label="Здоровье" title="Здоровье"><span aria-hidden="true">❤️</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="sport" aria-label="Спорт" title="Спорт"><span aria-hidden="true">💪</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="crypto" aria-label="Крипта" title="Крипта"><span aria-hidden="true">🪙</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="more" aria-label="Другое" title="Другое"><span aria-hidden="true">⋯</span></button>
+                  </div>
+                  <input type="hidden" id="accountIconKeyInput" value="card" autocomplete="off" />
+                  <p class="web-categories-color-hint muted tg-only-category-hint">
+                    Выберите иконку, которая лучше всего подходит для этого счёта.
+                  </p>
+                </div>
+
+                <label class="tg-category-desc-label tg-only-block">
+                  <span class="web-categories-field-label">Описание (необязательно)</span>
+                  <textarea
+                    id="accountDescriptionInput"
+                    class="tg-category-desc-input"
+                    rows="2"
+                    maxlength="500"
+                    placeholder="Добавьте описание счёта"
+                  ></textarea>
+                </label>
 
                 <p id="accountsStatusText" class="muted form-status"></p>
                 <div class="web-accounts-form-actions">
@@ -681,17 +788,18 @@
                   </button>
                 </div>
               </form>
-            </div>
+              </aside>
 
-            <div class="web-accounts-tip web-accounts-toolbar--web" role="note">
-              <span class="web-accounts-tip-icon" aria-hidden="true">💡</span>
-              <div class="web-accounts-tip-copy">
-                <strong class="web-accounts-tip-title">Подсказка</strong>
-                <p class="web-accounts-tip-text muted">
-                  Вы можете добавлять счета в разных валютах и отслеживать баланс каждого из них.
-                </p>
+              <div class="web-accounts-tip web-accounts-toolbar--web" role="note">
+                <span class="web-accounts-tip-icon" aria-hidden="true">💡</span>
+                <div class="web-accounts-tip-copy">
+                  <strong class="web-accounts-tip-title">Подсказка</strong>
+                  <p class="web-accounts-tip-text muted">
+                    Вы можете добавлять счета в разных валютах и отслеживать баланс каждого из них.
+                  </p>
+                </div>
+                <a class="web-accounts-tip-link" href="/instruction">Подробнее ›</a>
               </div>
-              <a class="web-accounts-tip-link" href="/instruction">Подробнее ›</a>
             </div>
           </div>
         </section>
@@ -1044,7 +1152,6 @@
                     />
                     <span id="webTransferToAmountCurrencyBadge" class="web-transfer-currency-badge">USD</span>
                   </div>
-                  <p id="transferToAmountPreviewLine" class="web-transfer-amount-preview muted" hidden></p>
                   <p id="transferRateHint" class="tg-transfer-rate-hint muted" hidden>
                     <span id="transferRateHintText"></span>
                   </p>

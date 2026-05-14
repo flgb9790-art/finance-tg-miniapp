@@ -7349,17 +7349,244 @@ body.web-mode .web-categories-cancel-btn.ghost-button:hover {
   }
 }
 
-/* --- Счета: веб-карточки, форма, подсказка --- */
-body:not(.web-mode) .web-accounts-toolbar--web {
-  display: none !important;
-}
-
 .web-accounts-page {
   display: flex;
   flex-direction: column;
   gap: 16px;
   width: 100%;
   min-width: 0;
+}
+
+.web-accounts-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+}
+
+body.web-mode .web-accounts-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.web-accounts-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+body.web-mode .web-accounts-panel {
+  width: 100%;
+  min-width: 0;
+}
+
+.tg-accounts-screen-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 2px 2px;
+}
+
+.tg-accounts-screen-head-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tg-accounts-screen-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: rgb(15 23 42);
+}
+
+.tg-accounts-screen-sub {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.tg-accounts-head-plus {
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  border: 0;
+  background: linear-gradient(180deg, #2ecf84 0%, #28b473 55%, #1fa866 100%);
+  color: #fff;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgb(16 185 129 / 0.28);
+}
+
+.tg-accounts-head-plus:active {
+  transform: scale(0.97);
+}
+
+.tg-accounts-add-btn {
+  width: 100%;
+  margin-top: 12px;
+  min-height: 46px;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.tg-accounts-summary-title {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: rgb(15 23 42);
+}
+
+.tg-accounts-summary-dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.tg-accounts-summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgb(241 245 249);
+  font-size: 14px;
+}
+
+.tg-accounts-summary-row:last-child {
+  border-bottom: none;
+}
+
+.tg-accounts-summary-row dt {
+  margin: 0;
+  color: rgb(71 85 105);
+  font-weight: 550;
+}
+
+.tg-accounts-summary-row dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 650;
+  color: rgb(30 41 59);
+  font-variant-numeric: tabular-nums;
+}
+
+.tg-accounts-summary-dd--accent {
+  color: #047857 !important;
+}
+
+.tg-accounts-summary-dd--accent strong {
+  font-weight: 800;
+}
+
+.tg-accounts-reorder-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgb(167 243 208);
+  background: rgb(236 253 245);
+  color: rgb(6 78 59);
+}
+
+.tg-accounts-reorder-tip-icon {
+  flex-shrink: 0;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.tg-accounts-reorder-tip-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tg-accounts-reorder-tip-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 750;
+  margin-bottom: 4px;
+}
+
+.tg-accounts-reorder-tip-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.tg-accounts-reorder-tip-close {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: rgb(5 46 22);
+  font-size: 20px;
+  line-height: 1;
+  padding: 0 4px;
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.tg-accounts-reorder-tip-close:hover {
+  opacity: 1;
+}
+
+.web-accounts-field-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.account-icon-tg-tile {
+  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
+}
+
+.account-icon-tg-tile .account-leading-glyph {
+  filter: drop-shadow(0 1px 0 rgb(0 0 0 / 0.12));
+}
+
+.web-account-card-icon .account-leading-glyph {
+  font-size: 20px;
+  line-height: 1;
+  display: block;
+}
+
+body.web-mode .tg-account-icon-block,
+body.web-mode #accountFormSubtitle {
+  display: none !important;
+}
+
+body.web-mode .web-accounts-form.web-categories-form {
+  margin-top: 0;
+}
+
+/* --- Счета: веб-карточки, форма, подсказка --- */
+body:not(.web-mode) .web-accounts-toolbar--web {
+  display: none !important;
 }
 
 .web-accounts-surface {
