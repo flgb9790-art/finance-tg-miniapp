@@ -17,6 +17,21 @@ function optionalEnv(name: string): string | undefined {
   return value && value.trim() ? value : undefined;
 }
 
+/** Публичный URL без хвостового `/`. Если схемы нет — `https://` (Telegram Web App иначе 400). */
+function normalizePublicAppUrl(raw: string | undefined): string | undefined {
+  if (!raw?.trim()) {
+    return undefined;
+  }
+
+  const base = raw.trim().replace(/\/+$/, "");
+
+  if (/^https?:\/\//i.test(base)) {
+    return base;
+  }
+
+  return `https://${base.replace(/^\/+/, "")}`;
+}
+
 /**
  * PaaS (Railway, Render, Fly) задаёт PORT. Healthcheck и прокси часто ходят по IPv4;
  * при `HOST=::` в Variables деплой «зеленеет» не всегда — принудительно слушаем 0.0.0.0.
@@ -43,7 +58,8 @@ export const env = {
   telegramBotUsername: optionalEnv("TELEGRAM_BOT_USERNAME"),
   supabaseUrl: requireEnv("SUPABASE_URL"),
   supabaseServiceRoleKey: requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
-  appUrl: optionalEnv("APP_URL"),
+  /** Публичный базовый URL (webhook, кнопка «Открыть приложение»). Из APP_URL; без `https://` схема дописывается. */
+  appUrl: normalizePublicAppUrl(optionalEnv("APP_URL")),
   telegramWebhookSecret: optionalEnv("TELEGRAM_WEBHOOK_SECRET"),
   /** HTTP bind address (`::`, `0.0.0.0`, `127.0.0.1`). If ngrok mentions `[::1]:PORT` refused on Windows, use `127.0.0.1` and tunnel `ngrok http 127.0.0.1:PORT`. */
   host: resolveListenHost(),
