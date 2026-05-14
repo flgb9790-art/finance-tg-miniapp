@@ -180,6 +180,8 @@ let tgOpsAppliedFilter = {
   catId: ""
 };
 let tgOpsFilterSnapshotInitialized = false;
+let tgActivityOpsChromeAttached = false;
+let tgOpsDefaultDatesInitialized = false;
 
 /** Активная вкладка списка категорий в веб-режиме */
 let webCategoriesActiveKind = "income";
