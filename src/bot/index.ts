@@ -246,11 +246,16 @@ function registerTelegramHandlers(bot: TelegramBot): void {
       await sendWelcomeBannerPhoto(bot, message.chat.id);
       await sendWelcomeKeyboardCleanup(bot, message.chat.id);
     } catch (error) {
-      console.error("Failed to register Telegram user", error);
+      console.error("Failed to register Telegram user (/start)", error);
 
       await bot.sendMessage(
         message.chat.id,
-        "Something went wrong while saving your profile. Please try again."
+        [
+          "Не удалось сохранить профиль в базе (ошибка на сервере).",
+          "",
+          "Частые причины: в Railway указан не тот ключ Supabase (нужен service_role, не anon), неверный SUPABASE_URL, или не применены миграции (нет таблицы app_users).",
+          "Откройте Deploy Logs в Railway — там будет строка [app_users] с кодом ошибки."
+        ].join("\n")
       );
     }
   });
