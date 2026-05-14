@@ -422,11 +422,13 @@ function attachTelegramPullToRefresh() {
   let armed = false;
   let pulling = false;
   let ptrGestureVertical = false;
+  let pullHapticSent = false;
   /** @type {Element | null} */
   let ptrStartTarget = null;
   let lastPullRefreshAt = 0;
   const COOLDOWN_MS = 2000;
-  const THRESH = 76;
+  const THRESH = 132;
+  const INDICATOR_MIN_DY = 52;
   const host = document.getElementById("pullRefreshHost");
   const label = document.getElementById("pullRefreshLabel");
 
@@ -491,6 +493,7 @@ function attachTelegramPullToRefresh() {
       armed = true;
       pulling = false;
       ptrGestureVertical = false;
+      pullHapticSent = false;
       ptrStartTarget = t;
       startY = e.touches[0]?.clientY ?? 0;
       startX = e.touches[0]?.clientX ?? 0;
@@ -532,13 +535,30 @@ function attachTelegramPullToRefresh() {
       if (dy <= 4) {
         return;
       }
+      if (dy < INDICATOR_MIN_DY) {
+        if (host) {
+          host.hidden = true;
+          host.classList.remove("pull-refresh-host--ready");
+          host.style.transform = "";
+        }
+        return;
+      }
       pulling = true;
       if (host) {
         host.hidden = false;
         host.removeAttribute("aria-hidden");
-        const offset = Math.min(52, dy * 0.38);
+        const offset = Math.min(52, (dy - INDICATOR_MIN_DY) * 0.42);
         host.style.transform = `translateY(${offset}px)`;
-        host.classList.toggle("pull-refresh-host--ready", dy > THRESH);
+        const ready = dy > THRESH;
+        host.classList.toggle("pull-refresh-host--ready", ready);
+        if (ready && !pullHapticSent && tg?.HapticFeedback?.impactOccurred) {
+          try {
+            tg.HapticFeedback.impactOccurred("medium");
+          } catch {
+            //
+          }
+          pullHapticSent = true;
+        }
       }
       if (label) {
         label.textContent = dy > THRESH ? "Отпустите для обновления" : "Потяните для обновления";
@@ -554,6 +574,7 @@ function attachTelegramPullToRefresh() {
     armed = false;
     ptrStartTarget = null;
     ptrGestureVertical = false;
+    pullHapticSent = false;
     let didPull = false;
     if (pulling && host && !host.hidden) {
       const ready = host.classList.contains("pull-refresh-host--ready");
@@ -993,6 +1014,21 @@ function formatCurrencyOption(currency) {
 
 function openScreen(screenName, options = {}) {
   const nextScreen = screenName || "home";
+  const enteringTgTransfer = nextScreen === "activity" && options.tgTransferOnly === true;
+  const enteringWebTransfer = nextScreen === "activity" && options.webTransferView === true;
+
+  if (!enteringTgTransfer) {
+    delete document.body.dataset.tgTransferOnly;
+  }
+  if (!enteringWebTransfer) {
+    delete document.body.dataset.webTransferView;
+  }
+  if (enteringTgTransfer) {
+    document.body.dataset.tgTransferOnly = "1";
+  }
+  if (enteringWebTransfer) {
+    document.body.dataset.webTransferView = "1";
+  }
 
   document.body.dataset.appActiveScreen = nextScreen;
 
@@ -1012,13 +1048,14 @@ function openScreen(screenName, options = {}) {
 
   document.querySelectorAll("[data-web-nav]").forEach((button) => {
     const nav = button.dataset.webNav ?? "";
-    const isActivityOps = nav === "activity" && nextScreen === "activity";
+    const isActivityOps =
+      nav === "activity" && nextScreen === "activity" && document.body.dataset.webTransferView !== "1";
     const isOtherNav = nav !== "activity" && nav === nextScreen;
     button.classList.toggle("is-active", isActivityOps || isOtherNav);
   });
 
   document.querySelectorAll('[data-web-sidebar-action="transfer"]').forEach((button) => {
-    button.classList.toggle("is-active", nextScreen === "transfer");
+    button.classList.toggle("is-active", document.body.dataset.webTransferView === "1");
   });
 
   if (isWebMode) {
@@ -1046,26 +1083,15 @@ function openScreen(screenName, options = {}) {
     destroyReportCharts();
   }
 
-  if (nextScreen === "transfer") {
-    populateAccountOptions();
-    if (transferDateInput && !String(transferDateInput.value ?? "").trim()) {
-      transferDateInput.value = getCurrentLocalDateTimeValue();
-    }
-    syncWebTransferAmountCurrencyUi();
-    syncTransferAccountAvailabilityLines();
-    scheduleTransferRateHintRefresh();
-    window.requestAnimationFrame(() => {
-      document.getElementById("transferFromAmountInput")?.focus({ preventScroll: true });
-    });
-  }
-
   if (!isWebMode && nextScreen === "activity") {
     populateTgActivityFilterSelects();
     ensureTgOpsDefaultDates();
     Object.assign(tgOpsAppliedFilter, readTgOpsFilterFromDom());
     tgOpsFilterSnapshotInitialized = true;
     tgOpsPageOffset = 0;
-    void refreshTgOperationsBoard();
+    if (document.body.dataset.tgTransferOnly !== "1") {
+      void refreshTgOperationsBoard();
+    }
   }
 }
 
@@ -1448,9 +1474,7 @@ function syncWebPageTitle(screenName) {
     return;
   }
 
-  const key = screenName || "home";
-
-  if (key === "transfer") {
+  if (document.body.dataset.webTransferView === "1") {
     webPageTitleElement.textContent = WEB_PAGE_TITLES.transfer ?? "Перевод между счетами";
     if (webPageSubtitleElement) {
       webPageSubtitleElement.textContent = "Переведите средства с одного счёта на другой.";
@@ -1458,6 +1482,8 @@ function syncWebPageTitle(screenName) {
     }
     return;
   }
+
+  const key = screenName || "home";
 
   webPageTitleElement.textContent = WEB_PAGE_TITLES[key] ?? "Balancy";
 
@@ -3260,6 +3286,9 @@ async function refreshTgOperationsBoard() {
   if (isWebMode) {
     return;
   }
+  if (document.body.dataset.tgTransferOnly === "1") {
+    return;
+  }
   const root = document.getElementById("tgActivityCombinedList");
   if (!root) {
     return;
@@ -4211,6 +4240,8 @@ function exitTransferScreen() {
   }
 
   const back = transferReturnScreen || "home";
+  delete document.body.dataset.tgTransferOnly;
+  delete document.body.dataset.webTransferView;
   openScreen(back);
   populateAccountOptions();
 }
@@ -4221,10 +4252,22 @@ function openTransferScreen() {
   if (isWebMode) {
     closeWebNewEntryMenu();
     closeWebProfileDropdown();
+    openScreen("activity", { webTransferView: true });
+  } else {
+    openScreen("activity", { tgTransferOnly: true });
   }
-  openScreen("transfer");
+
+  populateAccountOptions();
+  if (transferDateInput && !String(transferDateInput.value ?? "").trim()) {
+    transferDateInput.value = getCurrentLocalDateTimeValue();
+  }
+  syncWebTransferAmountCurrencyUi();
+  syncTransferAccountAvailabilityLines();
+  scheduleTransferRateHintRefresh();
+
   window.requestAnimationFrame(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.getElementById("transferFromAmountInput")?.focus({ preventScroll: true });
   });
 }
 
@@ -6188,7 +6231,7 @@ if (isWebMode) {
   });
 }
 
-document.getElementById("transferScreenBackButton")?.addEventListener("click", () => {
+document.getElementById("tgTransferScreenBackButton")?.addEventListener("click", () => {
   exitTransferScreen();
 });
 

@@ -568,181 +568,6 @@
           </section>
         </section>
 
-        <section id="screen-transfer" class="screen" data-screen="transfer">
-          <div class="transfer-screen">
-            <header class="transfer-screen-head">
-              <button
-                type="button"
-                id="transferScreenBackButton"
-                class="transfer-screen-back"
-                aria-label="Назад"
-              >
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path
-                    d="M15 6L9 12L15 18"
-                    stroke="currentColor"
-                    stroke-width="1.85"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </button>
-              <div class="transfer-screen-head-text">
-                <h1 class="transfer-screen-title">Перевод между счетами</h1>
-                <p class="transfer-screen-lead muted">Переведите средства с одного счёта на другой.</p>
-              </div>
-            </header>
-
-            <div class="transfer-screen-body">
-              <form id="transferForm" class="stacked-form transfer-form">
-                <div class="transfer-account-block">
-                  <label class="transfer-field-label" for="transferFromAccountInput">С списания <span class="web-op-req" aria-hidden="true">*</span></label>
-                  <div class="transfer-account-card">
-                    <div class="transfer-account-card-top">
-                      <span class="transfer-account-chip transfer-account-chip--from" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none">
-                          <rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.6" />
-                          <path d="M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                        </svg>
-                      </span>
-                      <div class="transfer-account-select-wrap">
-                        <select id="transferFromAccountInput" name="fromAccountId" class="transfer-account-select" required></select>
-                      </div>
-                    </div>
-                    <div id="transferFromAvailableLine" class="transfer-account-available muted">Доступно: —</div>
-                  </div>
-                </div>
-
-                <div class="transfer-swap-row">
-                  <button
-                    type="button"
-                    id="webTransferSwapAccounts"
-                    class="transfer-swap-btn"
-                    aria-label="Поменять счета местами"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path
-                        d="M7 5v6h6M17 19v-6h-6"
-                        stroke="currentColor"
-                        stroke-width="1.75"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </button>
-                </div>
-
-                <div class="transfer-account-block">
-                  <label class="transfer-field-label" for="transferToAccountInput">На зачисление <span class="web-op-req" aria-hidden="true">*</span></label>
-                  <div class="transfer-account-card">
-                    <div class="transfer-account-card-top">
-                      <span class="transfer-account-chip transfer-account-chip--to" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none">
-                          <rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.6" />
-                          <path d="M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                        </svg>
-                      </span>
-                      <div class="transfer-account-select-wrap">
-                        <select id="transferToAccountInput" name="toAccountId" class="transfer-account-select" required></select>
-                      </div>
-                    </div>
-                    <div id="transferToAvailableLine" class="transfer-account-available muted">Доступно: —</div>
-                  </div>
-                </div>
-
-                <div class="transfer-field-block">
-                  <label class="transfer-field-label" for="transferFromAmountInput">Сумма перевода <span class="web-op-req" aria-hidden="true">*</span></label>
-                  <div class="transfer-amount-row">
-                    <input
-                      id="transferFromAmountInput"
-                      min="0.01"
-                      name="fromAmount"
-                      placeholder="0.00"
-                      required
-                      step="0.01"
-                      type="number"
-                      class="transfer-amount-input"
-                    />
-                    <span id="webTransferAmountCurrencyBadge" class="transfer-currency-badge">USD</span>
-                  </div>
-                  <p id="transferFromMinHint" class="transfer-field-hint muted"></p>
-                </div>
-
-                <div class="transfer-field-block transfer-secondary-amount">
-                  <label class="transfer-field-label" for="transferToAmountInput">Сумма к зачислению</label>
-                  <div class="transfer-amount-row">
-                    <input
-                      id="transferToAmountInput"
-                      min="0.01"
-                      name="toAmount"
-                      placeholder="0.00"
-                      step="0.01"
-                      type="number"
-                      class="transfer-amount-input"
-                    />
-                    <span id="webTransferToAmountCurrencyBadge" class="transfer-currency-badge">USD</span>
-                  </div>
-                  <p id="transferRateHint" class="transfer-field-hint transfer-rate-hint muted" hidden>
-                    <span id="transferRateHintText"></span>
-                    <button type="button" class="transfer-rate-info" id="webTransferTipMore" title="Справка по переводам" aria-label="Подробнее о переводах">
-                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6" />
-                        <path d="M12 16v-1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                        <path d="M12 11a1.2 1.2 0 1 1 1.2-1.2A1.2 1.2 0 0 1 12 11Z" fill="currentColor" />
-                      </svg>
-                    </button>
-                  </p>
-                </div>
-
-                <div class="transfer-field-block">
-                  <label class="transfer-field-label" for="transferDateInput">Дата и время <span class="web-op-req" aria-hidden="true">*</span></label>
-                  <div class="native-datetime-shell transfer-datetime-shell">
-                    <input id="transferDateInput" name="occurredAt" required type="datetime-local" />
-                  </div>
-                </div>
-
-                <div class="transfer-field-block">
-                  <label class="transfer-field-label" for="transferNoteInput">Комментарий (необязательно)</label>
-                  <input
-                    id="transferNoteInput"
-                    name="note"
-                    placeholder="Добавьте комментарий к переводу"
-                    type="text"
-                    class="transfer-note-input"
-                  />
-                </div>
-
-                <div class="transfer-security-card" role="status">
-                  <span class="transfer-security-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M12 3l7 3v6c0 5-3.2 9.2-7 10-3.8-.8-7-5-7-10V6l7-3Z"
-                        stroke="currentColor"
-                        stroke-width="1.6"
-                        stroke-linejoin="round"
-                      />
-                      <path d="M9.2 12.3 11 14l3.8-4.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                  </span>
-                  <div class="transfer-security-copy">
-                    <strong class="transfer-security-title">Безопасность перевода</strong>
-                    <p class="transfer-security-text muted">Переводы между вашими счетами не влияют на общий баланс.</p>
-                  </div>
-                </div>
-
-                <div class="transfer-form-actions">
-                  <button id="transferSubmitButton" class="primary-button transfer-submit-btn" type="button">
-                    Сохранить перевод
-                  </button>
-                  <button type="button" id="webTransferCancelButton" class="ghost-button transfer-cancel-btn">
-                    Отмена
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </section>
-
         <section id="screen-accounts" class="screen" data-screen="accounts">
           <div class="web-accounts-page">
             <div class="web-accounts-list-shell web-accounts-surface">
@@ -1106,6 +931,170 @@
               >Подсказка: регулярные операции можно создавать быстрее через шаблоны.</span
             >
             <button type="button" class="text-link-button" disabled>Шаблоны операций ›</button>
+          </div>
+
+          <div class="web-transfer-sheet">
+            <header class="tg-transfer-top tg-only-block" aria-label="Перевод между счетами">
+              <button type="button" id="tgTransferScreenBackButton" class="tg-transfer-back-btn" aria-label="Назад">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M15 6L9 12L15 18"
+                    stroke="currentColor"
+                    stroke-width="1.85"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              <div class="tg-transfer-top-text">
+                <h2 class="tg-transfer-title">Перевод между счетами</h2>
+                <p class="tg-transfer-sub muted">Переведите средства с одного счёта на другой.</p>
+              </div>
+            </header>
+
+            <section class="card activity-form-card web-transfer-card">
+              <div class="section-header web-transfer-card-head">
+                <div>
+                  <p class="section-label">Перевод</p>
+                  <h2>Детали перевода</h2>
+                </div>
+              </div>
+              <form id="transferForm" class="stacked-form web-transfer-form">
+                <div class="web-transfer-accounts-row">
+                  <label class="web-transfer-field web-transfer-field--account">
+                    <span>Со счета <span class="web-op-req" aria-hidden="true">*</span></span>
+                    <div class="web-transfer-select-shell">
+                      <span class="web-transfer-select-icon web-transfer-select-icon--from" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.6" />
+                          <path d="M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        </svg>
+                      </span>
+                      <select id="transferFromAccountInput" name="fromAccountId" class="web-transfer-select"></select>
+                    </div>
+                    <p id="transferFromAvailableLine" class="web-transfer-available muted">Доступно: —</p>
+                  </label>
+                  <button
+                    type="button"
+                    id="webTransferSwapAccounts"
+                    class="web-transfer-swap-btn"
+                    aria-label="Поменять счета местами"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path
+                        d="M7.5 17V7M7.5 7 5 9.5M7.5 7 10 9.5"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <path
+                        d="M16.5 7v10M16.5 17 14 14.5M16.5 17 19 14.5"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <label class="web-transfer-field web-transfer-field--account">
+                    <span>На счет <span class="web-op-req" aria-hidden="true">*</span></span>
+                    <div class="web-transfer-select-shell">
+                      <span class="web-transfer-select-icon web-transfer-select-icon--to" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.6" />
+                          <path d="M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        </svg>
+                      </span>
+                      <select id="transferToAccountInput" name="toAccountId" class="web-transfer-select"></select>
+                    </div>
+                    <p id="transferToAvailableLine" class="web-transfer-available muted">Доступно: —</p>
+                  </label>
+                </div>
+
+                <label class="web-transfer-field web-transfer-field--amount">
+                  <span>Сумма перевода <span class="web-op-req" aria-hidden="true">*</span></span>
+                  <div class="web-transfer-amount-row">
+                    <input
+                      id="transferFromAmountInput"
+                      min="0.01"
+                      name="fromAmount"
+                      placeholder="0.00"
+                      required
+                      step="0.01"
+                      type="number"
+                      class="web-transfer-amount-input"
+                    />
+                    <span id="webTransferAmountCurrencyBadge" class="web-transfer-currency-badge">USD</span>
+                  </div>
+                  <p id="transferFromMinHint" class="tg-transfer-min-hint muted"></p>
+                </label>
+
+                <label class="web-transfer-secondary-amount">
+                  <span>Сумма зачисления</span>
+                  <div class="web-transfer-amount-row web-transfer-amount-row--to">
+                    <input
+                      id="transferToAmountInput"
+                      min="0.01"
+                      name="toAmount"
+                      placeholder="Оставьте пустым для автоконвертации"
+                      step="0.01"
+                      type="number"
+                      class="web-transfer-amount-input"
+                    />
+                    <span id="webTransferToAmountCurrencyBadge" class="web-transfer-currency-badge">USD</span>
+                  </div>
+                  <p id="transferRateHint" class="tg-transfer-rate-hint muted" hidden>
+                    <span id="transferRateHintText"></span>
+                  </p>
+                </label>
+
+                <label class="web-transfer-field">
+                  <span>Дата и время <span class="web-op-req" aria-hidden="true">*</span></span>
+                  <div class="native-datetime-shell web-transfer-datetime">
+                    <input id="transferDateInput" name="occurredAt" required type="datetime-local" />
+                  </div>
+                </label>
+
+                <label class="web-transfer-field">
+                  <span>Комментарий</span>
+                  <input id="transferNoteInput" name="note" placeholder="Необязательно" type="text" />
+                </label>
+
+                <div class="tg-transfer-security tg-only-block" role="status">
+                  <span class="tg-transfer-security-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M12 3l7 3v6c0 5-3.2 9.2-7 10-3.8-.8-7-5-7-10V6l7-3Z"
+                        stroke="currentColor"
+                        stroke-width="1.6"
+                        stroke-linejoin="round"
+                      />
+                      <path d="M9.2 12.3 11 14l3.8-4.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </span>
+                  <div>
+                    <strong class="tg-transfer-security-title">Безопасность перевода</strong>
+                    <p class="muted tg-transfer-security-text">Переводы между вашими счетами не влияют на общий баланс.</p>
+                  </div>
+                </div>
+
+                <div class="web-transfer-actions">
+                  <button id="transferSubmitButton" class="primary-button web-transfer-submit" type="button">Сохранить перевод</button>
+                  <button type="button" id="webTransferCancelButton" class="ghost-button web-transfer-cancel-btn">Отмена</button>
+                </div>
+              </form>
+            </section>
+
+            <div class="web-transfer-foot-tip" role="note">
+              <span class="web-transfer-foot-icon" aria-hidden="true">💡</span>
+              <p class="web-transfer-foot-text">
+                Переводы между вашими счетами не влияют на <strong>общий баланс</strong>.
+              </p>
+              <button type="button" class="text-link-button web-transfer-foot-more" id="webTransferTipMore">
+                Подробнее &gt;
+              </button>
+            </div>
           </div>
 
           <section class="card activity-ledger-card">
