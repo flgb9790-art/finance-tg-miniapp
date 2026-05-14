@@ -4880,6 +4880,11 @@ function swapWebTransferAccounts() {
   transferFromAccountInput.value = toValue;
   transferToAccountInput.value = fromValue;
   transferToAmountAutofillTag = null;
+  transferToPreviewRequestId += 1;
+  const toAmt = document.getElementById("transferToAmountInput");
+  if (toAmt instanceof HTMLInputElement) {
+    toAmt.value = "";
+  }
   syncWebTransferAmountCurrencyUi();
 }
 
@@ -7318,7 +7323,7 @@ try {
   attachTelegramPullToRefresh();
   attachTelegramEdgeSwipeBack();
 
-  void loadApp({ globalBusy: true, busyMessage: "Загрузка…" });
+  void loadApp();
 } catch (error) {
   console.error("Mini app boot failed before loadApp", error);
   if (userNameElement) {

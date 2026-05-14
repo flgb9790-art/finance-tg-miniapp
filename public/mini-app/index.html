@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260514tg-home-hints-op-save-width";
+        var BALANCY_CLIENT_ASSET_REV = "20260514tg-transfer-swap-splash";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -25,9 +25,13 @@
   <body>
     <div id="appSplash" class="app-splash" role="status" aria-live="polite" aria-label="Загрузка Balancy">
       <div class="app-splash-inner">
-        <span class="app-splash-wordmark">Balancy</span>
-        <div class="app-splash-tagline">Баланс и учёт в одном месте</div>
-        <div class="app-splash-line" aria-hidden="true"></div>
+        <div class="app-splash-brand">
+          <span class="app-splash-wordmark">Balancy</span>
+          <div class="app-splash-tagline">Баланс и учёт в одном месте</div>
+        </div>
+        <div class="app-splash-footer">
+          <div class="app-splash-spinner" aria-hidden="true"></div>
+        </div>
       </div>
     </div>
 
