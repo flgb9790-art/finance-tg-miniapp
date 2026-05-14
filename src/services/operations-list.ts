@@ -344,13 +344,9 @@ export async function listOperationsTimeline(
       kind: query.kind as OperationKind
     });
     transferRows = [];
-  } else {
-    const [e, tr] = await Promise.all([
-      fetchEntriesWindow(userId, base),
-      fetchTransfersWindow(userId, base)
-    ]);
-    entryRows = e;
-    transferRows = tr;
+  } else if (query.kind === "all") {
+    entryRows = await fetchEntriesWindow(userId, base);
+    transferRows = [];
   }
 
   const merged: OperationTimelineItem[] = [

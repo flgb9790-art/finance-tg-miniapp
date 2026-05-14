@@ -652,7 +652,7 @@ function performTelegramGestureBack() {
     return true;
   }
 
-  if (document.body.dataset.tgTransferOnly === "1") {
+  if ((document.body.dataset.appActiveScreen || "") === "transfer") {
     exitTransferScreen();
     return true;
   }
@@ -1244,7 +1244,7 @@ function scrollTelegramAppShellToTop() {
 }
 
 function resolveTgGlobalScreenTitle(screenName) {
-  if (screenName === "activity" && document.body.dataset.tgTransferOnly === "1") {
+  if (screenName === "transfer") {
     return WEB_PAGE_TITLES.transfer;
   }
 
@@ -1266,24 +1266,9 @@ function syncTgGlobalScreenChrome(screenName) {
   tgGlobalScreenTitleElement.textContent = resolveTgGlobalScreenTitle(screenName);
 }
 
-function openScreen(screenName, options = {}) {
+function openScreen(screenName) {
   const prevScreen = document.body.dataset.appActiveScreen || "home";
   const nextScreen = screenName || "home";
-  const enteringTgTransfer = nextScreen === "activity" && options.tgTransferOnly === true;
-  const enteringWebTransfer = nextScreen === "activity" && options.webTransferView === true;
-
-  if (!enteringTgTransfer) {
-    delete document.body.dataset.tgTransferOnly;
-  }
-  if (!enteringWebTransfer) {
-    delete document.body.dataset.webTransferView;
-  }
-  if (enteringTgTransfer) {
-    document.body.dataset.tgTransferOnly = "1";
-  }
-  if (enteringWebTransfer) {
-    document.body.dataset.webTransferView = "1";
-  }
 
   document.body.dataset.appActiveScreen = nextScreen;
 
@@ -1295,7 +1280,11 @@ function openScreen(screenName, options = {}) {
   navButtons.forEach((button) => {
     const target = button.dataset.openScreen ?? "";
     let active = target === nextScreen;
-    if (!isWebMode && target === "more" && nextScreen === "accounts") {
+    if (
+      !isWebMode &&
+      target === "more" &&
+      (nextScreen === "ledger" || nextScreen === "reports" || nextScreen === "instruction")
+    ) {
       active = true;
     }
     button.classList.toggle("is-active", active);
@@ -1303,14 +1292,13 @@ function openScreen(screenName, options = {}) {
 
   document.querySelectorAll("[data-web-nav]").forEach((button) => {
     const nav = button.dataset.webNav ?? "";
-    const isActivityOps =
-      nav === "activity" && nextScreen === "activity" && document.body.dataset.webTransferView !== "1";
+    const isActivityOps = nav === "activity" && nextScreen === "activity";
     const isOtherNav = nav !== "activity" && nav === nextScreen;
     button.classList.toggle("is-active", isActivityOps || isOtherNav);
   });
 
   document.querySelectorAll('[data-web-sidebar-action="transfer"]').forEach((button) => {
-    button.classList.toggle("is-active", document.body.dataset.webTransferView === "1");
+    button.classList.toggle("is-active", nextScreen === "transfer");
   });
 
   if (isWebMode) {
@@ -1349,14 +1337,11 @@ function openScreen(screenName, options = {}) {
 
   if (!isWebMode && nextScreen === "activity") {
     populateTgActivityFilterSelects();
-    if (document.body.dataset.tgTransferOnly !== "1") {
-      syncWebEntryKindCardsFromSelect();
-    }
+    syncWebEntryKindCardsFromSelect();
   }
 
   if (!isWebMode && prevScreen !== nextScreen) {
-    const overlayEnter =
-      nextScreen === "activity" && (options.tgTransferOnly === true || options.webTransferView === true);
+    const overlayEnter = nextScreen === "transfer";
     if (!overlayEnter) {
       telegramGestureBackTarget = prevScreen;
     }
@@ -1762,7 +1747,9 @@ function syncWebPageTitle(screenName) {
     return;
   }
 
-  if (document.body.dataset.webTransferView === "1") {
+  const key = screenName || "home";
+
+  if (key === "transfer") {
     webPageTitleElement.textContent = WEB_PAGE_TITLES.transfer ?? "Перевод между счетами";
     if (webPageSubtitleElement) {
       webPageSubtitleElement.textContent = "Переведите средства с одного счёта на другой.";
@@ -1770,8 +1757,6 @@ function syncWebPageTitle(screenName) {
     }
     return;
   }
-
-  const key = screenName || "home";
 
   webPageTitleElement.textContent = WEB_PAGE_TITLES[key] ?? "Balancy";
 
@@ -3772,7 +3757,7 @@ async function refreshTgOperationsBoard() {
   if (isWebMode) {
     return;
   }
-  if (document.body.dataset.tgTransferOnly === "1") {
+  if (document.body.dataset.appActiveScreen === "transfer") {
     return;
   }
   const root = document.getElementById("tgActivityCombinedList");
@@ -4826,8 +4811,6 @@ function exitTransferScreen() {
   }
 
   const back = transferReturnScreen || "home";
-  delete document.body.dataset.tgTransferOnly;
-  delete document.body.dataset.webTransferView;
   openScreen(back);
   populateAccountOptions();
 }
@@ -4840,10 +4823,8 @@ function openTransferScreen() {
   if (isWebMode) {
     closeWebNewEntryMenu();
     closeWebProfileDropdown();
-    openScreen("activity", { webTransferView: true });
-  } else {
-    openScreen("activity", { tgTransferOnly: true });
   }
+  openScreen("transfer");
 
   populateAccountOptions();
   if (transferDateInput && !String(transferDateInput.value ?? "").trim()) {

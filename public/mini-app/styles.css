@@ -116,8 +116,16 @@ body:not(.web-mode) .app-shell {
 }
 
 body:not(.web-mode).keyboard-open .app-shell {
-  min-height: 0;
+  min-height: var(--balancy-tg-vh, 100svh);
   padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+}
+
+/* В Telegram при открытой клавиатуре нижнее меню уходит под клавиатуру, а не «прилипает» над ней */
+body:not(.web-mode).keyboard-open .bottom-nav {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(calc(100% + 12px));
 }
 
 body:not(.web-mode) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]),
@@ -1875,8 +1883,8 @@ details.currency-breakdown[open] .currency-breakdown-hint::before {
   margin: auto 0;
 }
 
-/* Нижнее меню остаётся на месте и при открытой клавиатуре (Telegram / моб. браузер) */
-body.keyboard-open .bottom-nav {
+/* Нижнее меню в веб-режиме при клавиатуре оставляем доступным; в Telegram см. правило для :not(.web-mode) */
+body.web-mode.keyboard-open .bottom-nav {
   opacity: 1;
   pointer-events: auto;
   transform: none;
@@ -4205,6 +4213,11 @@ body:not(.web-mode) #screen-activity {
   max-width: 100%;
 }
 
+body:not(.web-mode) #screen-ledger.screen-active .tg-ops-activity-root {
+  flex: 1 1 auto;
+  min-height: min(520px, calc(var(--balancy-tg-vh, 100svh) - 168px));
+}
+
 body:not(.web-mode) #screen-ledger {
   min-width: 0;
   max-width: 100%;
@@ -4263,7 +4276,7 @@ body:not(.web-mode) #screen-activity .web-op-kind-card--expense.is-selected {
 }
 
 body:not(.web-mode) .bottom-nav .nav-label {
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .tg-ops-activity-root {
@@ -4990,11 +5003,11 @@ body.web-mode .tg-only-block {
   display: none !important;
 }
 
-body.web-mode[data-web-transfer-view="1"] #screen-activity.screen-active > :not(.web-transfer-sheet) {
+body.web-mode[data-app-active-screen="transfer"] #screen-transfer.screen-active > :not(.web-transfer-sheet) {
   display: none !important;
 }
 
-body.web-mode[data-web-transfer-view="1"] #screen-activity.screen-active {
+body.web-mode[data-app-active-screen="transfer"] #screen-transfer.screen-active {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -5002,32 +5015,32 @@ body.web-mode[data-web-transfer-view="1"] #screen-activity.screen-active {
   padding-top: 8px;
 }
 
-body.web-mode[data-web-transfer-view="1"] .web-transfer-sheet {
+body.web-mode[data-app-active-screen="transfer"] .web-transfer-sheet {
   width: 100%;
   max-width: 560px;
 }
 
-body:not(.web-mode)[data-tg-transfer-only="1"] #screen-activity.screen-active > :not(.web-transfer-sheet) {
+body:not(.web-mode)[data-app-active-screen="transfer"] #screen-transfer.screen-active > :not(.web-transfer-sheet) {
   display: none !important;
 }
 
-body:not(.web-mode)[data-tg-transfer-only="1"] #screen-activity.screen-active {
+body:not(.web-mode)[data-app-active-screen="transfer"] #screen-transfer.screen-active {
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding-bottom: 8px;
 }
 
-body:not(.web-mode)[data-tg-transfer-only="1"] .web-transfer-sheet {
+body:not(.web-mode)[data-app-active-screen="transfer"] .web-transfer-sheet {
   flex: 1 1 auto;
   min-height: 0;
 }
 
-body:not(.web-mode)[data-tg-transfer-only="1"] .web-transfer-card .web-transfer-card-head {
+body:not(.web-mode)[data-app-active-screen="transfer"] .web-transfer-card .web-transfer-card-head {
   display: none;
 }
 
-body:not(.web-mode)[data-tg-transfer-only="1"] .web-transfer-foot-tip {
+body:not(.web-mode)[data-app-active-screen="transfer"] .web-transfer-foot-tip {
   display: none;
 }
 
@@ -8084,27 +8097,27 @@ body.web-mode .bottom-nav-button[data-open-screen="home"] {
   order: 1;
 }
 
-body.web-mode .bottom-nav-button[data-open-screen="activity"] {
+body.web-mode .bottom-nav-button[data-open-screen="accounts"] {
   order: 2;
 }
 
-body.web-mode .bottom-nav-button[data-open-screen="history"] {
+body.web-mode .bottom-nav-button[data-open-screen="categories"] {
   order: 3;
 }
 
-body.web-mode .bottom-nav-button[data-open-screen="reports"] {
+body.web-mode .bottom-nav-button[data-open-screen="activity"] {
   order: 4;
 }
 
-body.web-mode #addOperationButton {
+body.web-mode .bottom-nav-button[data-open-screen="more"] {
   order: 5;
 }
 
-body.web-mode .bottom-nav-button[data-open-screen="categories"] {
+body.web-mode .bottom-nav-button[data-open-screen="history"] {
   order: 6;
 }
 
-body.web-mode .bottom-nav-button[data-open-screen="accounts"] {
+body.web-mode #addOperationButton {
   order: 7;
 }
 
