@@ -1797,7 +1797,13 @@ function renderAccounts(accounts) {
 
 const CATEGORY_ACCENT_STORAGE_KEY = "balancyCategoryAccentsV1";
 
-const CATEGORY_UI_PALETTE = ["#28b473", "#3b82f6", "#a855f7", "#f97316", "#ef4444", "#14b8a6", "#94a3b8"];
+const CATEGORY_UI_PALETTE = ["#28b473", "#3b82f6", "#a855f7", "#f97316", "#ec4899", "#14b8a6", "#94a3b8"];
+
+const CATEGORY_UI_META_STORAGE_KEY = "balancyCategoryUiMetaV1";
+
+const DEFAULT_CATEGORY_ICON_KEY = "briefcase";
+
+let categoryFormSharedChromeAttached = false;
 
 const ACCOUNT_ACCENT_STORAGE_KEY = "balancyAccountAccentsV1";
 
@@ -1991,6 +1997,224 @@ function syncWebCategoryKindPicksFromSelect() {
   });
 }
 
+function readCategoryUiMetaMap() {
+  try {
+    const raw = window.localStorage.getItem(CATEGORY_UI_META_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return typeof parsed === "object" && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeCategoryUiMetaMap(map) {
+  try {
+    window.localStorage.setItem(CATEGORY_UI_META_STORAGE_KEY, JSON.stringify(map));
+  } catch {
+    //
+  }
+}
+
+function readCategoryUiMeta(categoryId) {
+  if (!categoryId) {
+    return { description: "", iconKey: DEFAULT_CATEGORY_ICON_KEY };
+  }
+  const m = readCategoryUiMetaMap();
+  const row = m[categoryId];
+  if (!row || typeof row !== "object") {
+    return { description: "", iconKey: DEFAULT_CATEGORY_ICON_KEY };
+  }
+  const description = typeof row.description === "string" ? row.description : "";
+  const iconKey =
+    typeof row.iconKey === "string" && row.iconKey.trim() ? row.iconKey.trim() : DEFAULT_CATEGORY_ICON_KEY;
+  return { description, iconKey };
+}
+
+function writeCategoryUiMeta(categoryId, patch) {
+  if (!categoryId) {
+    return;
+  }
+  const m = readCategoryUiMetaMap();
+  const prev = m[categoryId] && typeof m[categoryId] === "object" ? m[categoryId] : {};
+  m[categoryId] = { ...prev, ...patch };
+  writeCategoryUiMetaMap(m);
+}
+
+function removeCategoryUiMeta(categoryId) {
+  if (!categoryId) {
+    return;
+  }
+  const m = readCategoryUiMetaMap();
+  delete m[categoryId];
+  writeCategoryUiMetaMap(m);
+}
+
+function hexToRgbComponents(hex) {
+  const h = String(hex ?? "")
+    .trim()
+    .replace("#", "");
+  if (h.length !== 6 || !/^[0-9a-fA-F]+$/.test(h)) {
+    return { r: 40, g: 180, b: 115 };
+  }
+  return {
+    r: Number.parseInt(h.slice(0, 2), 16),
+    g: Number.parseInt(h.slice(2, 4), 16),
+    b: Number.parseInt(h.slice(4, 6), 16)
+  };
+}
+
+function rgbaFromHex(hex, alpha) {
+  const { r, g, b } = hexToRgbComponents(hex);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function applyDefaultCategoryAccentSwatch() {
+  const sw = document.getElementById("webCategoryColorSwatches");
+  const hidden = document.getElementById("categoryAccentInput");
+  if (!sw || !hidden) {
+    return;
+  }
+  sw.querySelectorAll(".web-cat-swatch").forEach((b) => b.classList.remove("is-selected"));
+  const first = sw.querySelector(".web-cat-swatch[data-accent-hex]");
+  if (first instanceof HTMLElement) {
+    first.classList.add("is-selected");
+    const hex = first.dataset.accentHex?.trim().toLowerCase();
+    if (hex) {
+      hidden.value = hex;
+    }
+  }
+}
+
+function applyCategoryIconKeyToForm(iconKey) {
+  const key = iconKey && String(iconKey).trim() ? String(iconKey).trim() : DEFAULT_CATEGORY_ICON_KEY;
+  const hidden = document.getElementById("categoryIconKeyInput");
+  if (hidden) {
+    hidden.value = key;
+  }
+  document.querySelectorAll("#webCategoryIconGrid .web-category-icon-btn").forEach((btn) => {
+    btn.classList.toggle("is-selected", btn.dataset.categoryIcon === key);
+  });
+}
+
+function syncTgCategoryPreview() {
+  const nameEl = document.getElementById("tgCategoryPreviewName");
+  const descEl = document.getElementById("tgCategoryPreviewDesc");
+  const pill = document.getElementById("tgCategoryPreviewKindPill");
+  const glyph = document.getElementById("tgCategoryPreviewIconGlyph");
+  const ring = document.getElementById("tgCategoryPreviewIconRing");
+  const nameInput = document.getElementById("categoryNameInput");
+  const descInput = document.getElementById("categoryDescriptionInput");
+  const kindInput = document.getElementById("categoryKindInput");
+  const accentHidden = document.getElementById("categoryAccentInput");
+  const selectedIconBtn = document.querySelector("#webCategoryIconGrid .web-category-icon-btn.is-selected");
+
+  if (!nameEl || !pill || !glyph || !ring) {
+    return;
+  }
+
+  const rawName = nameInput instanceof HTMLInputElement ? nameInput.value.trim() : "";
+  nameEl.textContent = rawName || "Зарплата";
+
+  const kind = kindInput?.value === "income" ? "income" : "expense";
+  pill.textContent = kind === "income" ? "Доход" : "Расход";
+  pill.classList.toggle("tg-category-preview-pill--income", kind === "income");
+  pill.classList.toggle("tg-category-preview-pill--expense", kind === "expense");
+
+  const iconSpan = selectedIconBtn?.querySelector("span[aria-hidden='true']");
+  glyph.textContent = iconSpan?.textContent?.trim() || "💼";
+
+  const accentHex = (accentHidden?.value || "#28b473").trim() || "#28b473";
+  ring.style.background = rgbaFromHex(accentHex, 0.16);
+  ring.style.boxShadow = `inset 0 0 0 1px ${rgbaFromHex(accentHex, 0.28)}`;
+
+  if (descEl) {
+    const d = descInput instanceof HTMLTextAreaElement ? descInput.value.trim() : "";
+    descEl.textContent = d;
+    descEl.hidden = !d;
+  }
+}
+
+function attachCategoryFormSharedChrome() {
+  if (categoryFormSharedChromeAttached) {
+    return;
+  }
+  categoryFormSharedChromeAttached = true;
+
+  document.querySelectorAll("[data-set-category-kind]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const k = btn.dataset.setCategoryKind;
+      if (k !== "income" && k !== "expense") {
+        return;
+      }
+      const sel = document.getElementById("categoryKindInput");
+      if (sel) {
+        sel.value = k;
+      }
+      syncWebCategoryKindPicksFromSelect();
+      syncTgCategoryPreview();
+    });
+  });
+
+  const sw = document.getElementById("webCategoryColorSwatches");
+  sw?.addEventListener("click", (event) => {
+    const t = event.target instanceof Element ? event.target.closest(".web-cat-swatch") : null;
+    if (!t || !sw.contains(t)) {
+      return;
+    }
+    const hex = t.dataset.accentHex?.trim();
+    if (!hex) {
+      return;
+    }
+    sw.querySelectorAll(".web-cat-swatch").forEach((b) => b.classList.remove("is-selected"));
+    t.classList.add("is-selected");
+    const hidden = document.getElementById("categoryAccentInput");
+    if (hidden) {
+      hidden.value = hex.toLowerCase();
+    }
+    syncTgCategoryPreview();
+  });
+
+  const iconGrid = document.getElementById("webCategoryIconGrid");
+  iconGrid?.addEventListener("click", (event) => {
+    const t = event.target instanceof Element ? event.target.closest("[data-category-icon]") : null;
+    if (!t || !iconGrid.contains(t)) {
+      return;
+    }
+    const key = t.dataset.categoryIcon?.trim();
+    if (!key) {
+      return;
+    }
+    iconGrid.querySelectorAll(".web-category-icon-btn").forEach((b) => b.classList.remove("is-selected"));
+    t.classList.add("is-selected");
+    applyCategoryIconKeyToForm(key);
+    syncTgCategoryPreview();
+  });
+
+  document.getElementById("categoryNameInput")?.addEventListener("input", syncTgCategoryPreview);
+  document.getElementById("categoryDescriptionInput")?.addEventListener("input", syncTgCategoryPreview);
+
+  document.getElementById("categoryKindInput")?.addEventListener("change", () => {
+    syncWebCategoryKindPicksFromSelect();
+    syncTgCategoryPreview();
+  });
+
+  document.getElementById("tgCategoryFormBackButton")?.addEventListener("click", () => {
+    resetCategoryForm();
+    renderCategories(state.categories);
+    const anchor =
+      document.querySelector(".web-categories-main") ?? document.getElementById("incomeCategoriesList");
+    anchor?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  const accentHidden = document.getElementById("categoryAccentInput");
+  if (accentHidden && !String(accentHidden.value ?? "").trim()) {
+    if (!isWebMode) {
+      applyDefaultCategoryAccentSwatch();
+    }
+  }
+  syncTgCategoryPreview();
+}
+
 function clearWebCategoryAccentSelection() {
   const hidden = document.getElementById("categoryAccentInput");
   if (hidden) {
@@ -2006,17 +2230,21 @@ function applyAccentSwatchesForCategoryId(categoryId) {
   const hex = readCategoryAccent(categoryId);
   const hidden = document.getElementById("categoryAccentInput");
   if (!hidden) {
+    syncTgCategoryPreview();
     return;
   }
   if (!hex) {
+    syncTgCategoryPreview();
     return;
   }
   hidden.value = hex;
+  const normalizedHex = hex.toLowerCase() === "#ef4444" ? "#ec4899" : hex.toLowerCase();
   document.querySelectorAll("#webCategoryColorSwatches .web-cat-swatch").forEach((b) => {
-    if ((b.dataset.accentHex || "").toLowerCase() === hex.toLowerCase()) {
+    if ((b.dataset.accentHex || "").toLowerCase() === normalizedHex) {
       b.classList.add("is-selected");
     }
   });
+  syncTgCategoryPreview();
 }
 
 function renderWebCategoriesTable(categories) {
@@ -2108,44 +2336,14 @@ function attachWebCategoriesChrome() {
     }
     syncWebCategoryKindPicksFromSelect();
     clearWebCategoryAccentSelection();
+    const desc = document.getElementById("categoryDescriptionInput");
+    if (desc instanceof HTMLTextAreaElement) {
+      desc.value = "";
+    }
+    applyCategoryIconKeyToForm(DEFAULT_CATEGORY_ICON_KEY);
     syncCategoryFormChrome();
+    syncTgCategoryPreview();
     document.getElementById("categoryNameInput")?.focus();
-  });
-
-  document.getElementById("categoryKindInput")?.addEventListener("change", () => {
-    syncWebCategoryKindPicksFromSelect();
-  });
-
-  document.querySelectorAll("[data-set-category-kind]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const k = btn.dataset.setCategoryKind;
-      if (k !== "income" && k !== "expense") {
-        return;
-      }
-      const sel = document.getElementById("categoryKindInput");
-      if (sel) {
-        sel.value = k;
-      }
-      syncWebCategoryKindPicksFromSelect();
-    });
-  });
-
-  const sw = document.getElementById("webCategoryColorSwatches");
-  sw?.addEventListener("click", (event) => {
-    const t = event.target instanceof Element ? event.target.closest(".web-cat-swatch") : null;
-    if (!t) {
-      return;
-    }
-    const hex = t.dataset.accentHex?.trim();
-    if (!hex) {
-      return;
-    }
-    sw.querySelectorAll(".web-cat-swatch").forEach((b) => b.classList.remove("is-selected"));
-    t.classList.add("is-selected");
-    const hidden = document.getElementById("categoryAccentInput");
-    if (hidden) {
-      hidden.value = hex.toLowerCase();
-    }
   });
 }
 
@@ -2160,8 +2358,8 @@ function syncCategoryFormChrome() {
     categoryFormTitleElement.textContent = editing ? "Редактировать категорию" : "Добавить категорию";
     categorySubmitButton.textContent = "Сохранить";
   } else {
-    categoryFormTitleElement.textContent = editing ? "Редактировать категорию" : "Новая категория";
-    categorySubmitButton.textContent = editing ? "Сохранить изменения" : "Создать категорию";
+    categoryFormTitleElement.textContent = editing ? "Редактировать категорию" : "Добавить категорию";
+    categorySubmitButton.textContent = editing ? "Сохранить изменения" : "Сохранить категорию";
   }
 
   if (cancelCategoryEditButton) {
@@ -2182,7 +2380,16 @@ function resetCategoryForm() {
   }
   syncWebCategoryKindPicksFromSelect();
   clearWebCategoryAccentSelection();
+  if (!isWebMode) {
+    applyDefaultCategoryAccentSwatch();
+  }
+  const desc = document.getElementById("categoryDescriptionInput");
+  if (desc instanceof HTMLTextAreaElement) {
+    desc.value = "";
+  }
+  applyCategoryIconKeyToForm(DEFAULT_CATEGORY_ICON_KEY);
   syncCategoryFormChrome();
+  syncTgCategoryPreview();
 }
 
 function startCategoryEdit(categoryId) {
@@ -2198,9 +2405,16 @@ function startCategoryEdit(categoryId) {
   state.editingCategoryId = category.id;
   document.getElementById("categoryKindInput").value = category.kind;
   document.getElementById("categoryNameInput").value = category.name;
+  const meta = readCategoryUiMeta(category.id);
+  const desc = document.getElementById("categoryDescriptionInput");
+  if (desc instanceof HTMLTextAreaElement) {
+    desc.value = meta.description;
+  }
+  applyCategoryIconKeyToForm(meta.iconKey);
   syncWebCategoryKindPicksFromSelect();
   applyAccentSwatchesForCategoryId(category.id);
   syncCategoryFormChrome();
+  syncTgCategoryPreview();
   setStatus("Отредактируйте поля и нажмите «Сохранить».", "success");
   openScreen("categories");
 
@@ -5063,13 +5277,19 @@ async function handleCategorySubmit(event) {
     }
 
     const accentHex = document.getElementById("categoryAccentInput")?.value?.trim() ?? "";
-    const catId = result?.category?.id ?? (isEditing ? state.editingCategoryId : "");
+    const descEl = document.getElementById("categoryDescriptionInput");
+    const iconEl = document.getElementById("categoryIconKeyInput");
+    const description =
+      descEl instanceof HTMLTextAreaElement ? String(descEl.value ?? "").trim() : "";
+    const iconKey = String(iconEl?.value ?? DEFAULT_CATEGORY_ICON_KEY).trim() || DEFAULT_CATEGORY_ICON_KEY;
+    const catId = String(result?.category?.id ?? (isEditing ? state.editingCategoryId : "") ?? "").trim();
     if (catId) {
       if (accentHex && /^#[0-9a-fA-F]{6}$/.test(accentHex)) {
         writeCategoryAccent(catId, accentHex);
       } else {
         removeCategoryAccent(catId);
       }
+      writeCategoryUiMeta(catId, { description, iconKey });
     }
 
     resetCategoryForm();
@@ -5101,6 +5321,7 @@ async function handleDeleteCategory(categoryId) {
     }
 
     removeCategoryAccent(categoryId);
+    removeCategoryUiMeta(categoryId);
 
     setStatus(
       "Категория удалена. Старые операции сохранены, но у них больше не будет этой статьи.",
@@ -5689,6 +5910,7 @@ document.getElementById("entryTypeOpenTransferButton")?.addEventListener("click"
 attachAccountsListListener();
 attachSwipeRowHandlers();
 attachCategoryListsListener();
+attachCategoryFormSharedChrome();
 attachWebCategoriesChrome();
 attachWebAccountColorChrome();
 attachFxReferencePanelListeners();

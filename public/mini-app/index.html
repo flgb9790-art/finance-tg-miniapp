@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260514tg-reports-segments-stats";
+        var BALANCY_CLIENT_ASSET_REV = "20260514tg-category-form-ui";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -1312,8 +1312,29 @@
               </div>
 
               <aside class="web-categories-panel" id="webCategoriesSidePanel">
-                <div class="web-categories-panel-head">
-                  <h2 id="categoryFormTitle" class="web-categories-panel-title">Добавить категорию</h2>
+                <div class="web-categories-panel-head tg-category-panel-head">
+                  <button
+                    type="button"
+                    id="tgCategoryFormBackButton"
+                    class="tg-category-back-btn"
+                    aria-label="Назад"
+                  >
+                    <svg class="tg-category-back-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path
+                        d="M14 6L8 12L14 18"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <div class="tg-category-head-text">
+                    <h2 id="categoryFormTitle" class="web-categories-panel-title">Добавить категорию</h2>
+                    <p id="categoryFormSubtitle" class="web-categories-panel-subtitle muted">
+                      Создайте новую категорию доходов или расходов.
+                    </p>
+                  </div>
                 </div>
                 <form id="categoryForm" class="web-categories-form stacked-form stacked-form--dense">
                   <label class="category-kind-native-wrap">
@@ -1326,19 +1347,25 @@
 
                   <div class="web-cat-kind-picks" role="group" aria-label="Тип категории">
                     <button type="button" class="web-cat-kind-pick is-selected" data-set-category-kind="income">
-                      <span class="web-cat-kind-pick-icon web-cat-kind-pick-icon--up" aria-hidden="true">↑</span>
+                      <span class="web-cat-kind-pick-icon-ring web-cat-kind-pick-icon-ring--income" aria-hidden="true">
+                        <span class="web-cat-kind-pick-icon web-cat-kind-pick-icon--up">↑</span>
+                      </span>
                       <span class="web-cat-kind-pick-title">Доход</span>
                       <span class="web-cat-kind-pick-desc muted">Категория для доходов</span>
                     </button>
                     <button type="button" class="web-cat-kind-pick" data-set-category-kind="expense">
-                      <span class="web-cat-kind-pick-icon web-cat-kind-pick-icon--down" aria-hidden="true">↓</span>
+                      <span class="web-cat-kind-pick-icon-ring web-cat-kind-pick-icon-ring--expense" aria-hidden="true">
+                        <span class="web-cat-kind-pick-icon web-cat-kind-pick-icon--down">↓</span>
+                      </span>
                       <span class="web-cat-kind-pick-title">Расход</span>
                       <span class="web-cat-kind-pick-desc muted">Категория для расходов</span>
                     </button>
                   </div>
 
                   <label>
-                    <span class="web-categories-field-label">Название категории</span>
+                    <span class="web-categories-field-label">
+                      Название категории <abbr class="field-req-star" title="Обязательное поле">*</abbr>
+                    </span>
                     <input
                       id="categoryNameInput"
                       name="name"
@@ -1349,8 +1376,20 @@
                   </label>
                   <p class="web-categories-name-hint muted">Например: Зарплата, Фриланс, Еда, Транспорт</p>
 
+                  <label class="tg-category-desc-label">
+                    <span class="web-categories-field-label">Описание (необязательно)</span>
+                    <textarea
+                      id="categoryDescriptionInput"
+                      class="tg-category-desc-input"
+                      rows="2"
+                      maxlength="500"
+                      placeholder="Добавьте описание категории"
+                    ></textarea>
+                  </label>
+
                   <div class="web-categories-color-block">
-                    <span class="web-categories-field-label">Цвет (необязательно)</span>
+                    <span class="web-categories-field-label tg-color-label-web">Цвет (необязательно)</span>
+                    <span class="web-categories-field-label tg-color-label-tg">Цвет категории</span>
                     <div id="webCategoryColorSwatches" class="web-cat-swatches" role="radiogroup" aria-label="Цвет">
                       <button
                         type="button"
@@ -1387,10 +1426,10 @@
                       <button
                         type="button"
                         class="web-cat-swatch"
-                        data-accent-hex="#ef4444"
-                        style="--swatch: #ef4444"
-                        aria-label="Красный"
-                        title="Красный"
+                        data-accent-hex="#ec4899"
+                        style="--swatch: #ec4899"
+                        aria-label="Розовый"
+                        title="Розовый"
                       ></button>
                       <button
                         type="button"
@@ -1410,6 +1449,52 @@
                       ></button>
                     </div>
                     <input type="hidden" id="categoryAccentInput" value="" autocomplete="off" />
+                    <p class="web-categories-color-hint muted tg-only-category-hint">
+                      Выберите цвет для отображения категории в отчётах и графиках.
+                    </p>
+                  </div>
+
+                  <div class="tg-category-icon-block">
+                    <span class="web-categories-field-label">Иконка (необязательно)</span>
+                    <div id="webCategoryIconGrid" class="web-category-icon-grid" role="group" aria-label="Иконка">
+                      <button type="button" class="web-category-icon-btn is-selected" data-category-icon="briefcase" aria-label="Портфель" title="Портфель"><span aria-hidden="true">💼</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="laptop" aria-label="Ноутбук" title="Ноутбук"><span aria-hidden="true">💻</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="building" aria-label="Офис" title="Офис"><span aria-hidden="true">🏢</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="gift" aria-label="Подарок" title="Подарок"><span aria-hidden="true">🎁</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="house" aria-label="Дом" title="Дом"><span aria-hidden="true">🏠</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="cart" aria-label="Покупки" title="Покупки"><span aria-hidden="true">🛒</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="car" aria-label="Авто" title="Авто"><span aria-hidden="true">🚗</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="food" aria-label="Еда" title="Еда"><span aria-hidden="true">🍽</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="heart" aria-label="Здоровье" title="Здоровье"><span aria-hidden="true">❤️</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="sport" aria-label="Спорт" title="Спорт"><span aria-hidden="true">💪</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="plane" aria-label="Путешествия" title="Путешествия"><span aria-hidden="true">✈️</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="study" aria-label="Обучение" title="Обучение"><span aria-hidden="true">🎓</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="pet" aria-label="Питомцы" title="Питомцы"><span aria-hidden="true">🐾</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="more" aria-label="Другое" title="Другое"><span aria-hidden="true">⋯</span></button>
+                    </div>
+                    <input type="hidden" id="categoryIconKeyInput" value="briefcase" autocomplete="off" />
+                    <p class="web-categories-color-hint muted tg-only-category-hint">
+                      Выберите иконку, которая лучше всего подходит для этой категории.
+                    </p>
+                  </div>
+
+                  <div class="tg-category-preview-block">
+                    <span class="web-categories-field-label">Предпросмотр</span>
+                    <div class="tg-category-preview-card" id="tgCategoryPreviewCard">
+                      <div class="tg-category-preview-leading">
+                        <span class="tg-category-preview-icon-ring" id="tgCategoryPreviewIconRing">
+                          <span id="tgCategoryPreviewIconGlyph" class="tg-category-preview-icon-glyph">💼</span>
+                        </span>
+                      </div>
+                      <div class="tg-category-preview-copy">
+                        <div class="tg-category-preview-title-row">
+                          <strong id="tgCategoryPreviewName" class="tg-category-preview-name">Зарплата</strong>
+                          <span id="tgCategoryPreviewKindPill" class="tg-category-preview-pill tg-category-preview-pill--income">Доход</span>
+                        </div>
+                        <p id="tgCategoryPreviewDesc" class="tg-category-preview-desc muted"></p>
+                      </div>
+                      <span class="tg-category-preview-chevron" aria-hidden="true">›</span>
+                    </div>
                   </div>
 
                   <div class="web-categories-form-actions">
