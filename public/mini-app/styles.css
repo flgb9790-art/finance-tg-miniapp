@@ -4158,16 +4158,40 @@ body.web-mode .web-op-native-kind-field {
   display: none;
 }
 
-body:not(.web-mode) .web-activity-compose,
+body:not(.web-mode) .web-activity-compose {
+  display: none !important;
+}
+
+body:not(.web-mode) #screen-activity > .web-activity-compose {
+  display: block !important;
+}
+
 body:not(.web-mode) .web-activity-tip {
   display: none !important;
+}
+
+body:not(.web-mode) #screen-activity > .web-activity-tip {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 14px;
+  margin: 0 0 12px;
+  border-radius: 14px;
+  background: rgb(248 250 252);
+  border: 1px solid rgb(15 23 42 / 0.06);
+}
+
+body:not(.web-mode) #screen-activity > .activity-form-card:not(.web-transfer-card) {
+  display: block !important;
 }
 
 body:not(.web-mode) #entryFormResetWeb {
   display: none !important;
 }
 
-/* --- Telegram: экран «Операции» (макет ленты + сводка) --- */
+/* --- Telegram: лента операций (отдельный экран «История») --- */
 body.web-mode .tg-ops-activity-root {
   display: none !important;
 }
@@ -4176,15 +4200,70 @@ body:not(.web-mode) #screen-activity > .activity-ledger-card {
   display: none !important;
 }
 
-body:not(.web-mode) #screen-activity > .web-activity-compose,
-body:not(.web-mode) #screen-activity > .activity-form-card,
-body:not(.web-mode) #screen-activity > .web-activity-tip {
-  display: none !important;
-}
-
 body:not(.web-mode) #screen-activity {
   min-width: 0;
   max-width: 100%;
+}
+
+body:not(.web-mode) #screen-ledger {
+  min-width: 0;
+  max-width: 100%;
+}
+
+body:not(.web-mode) .web-op-kind-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+body:not(.web-mode) #screen-activity .web-op-kind-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 2px solid rgb(226 232 240);
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
+body:not(.web-mode) #screen-activity .web-op-kind-card.is-selected {
+  border-color: #24ad7c;
+  box-shadow: 0 0 0 1px rgb(36 173 124 / 0.22);
+}
+
+body:not(.web-mode) #screen-activity .web-op-kind-card--expense.is-selected {
+  border-color: rgb(239 68 68);
+  box-shadow: 0 0 0 1px rgb(239 68 68 / 0.2);
+}
+
+.tg-instruction-root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+}
+
+.tg-instruction-head {
+  align-items: flex-start;
+}
+
+.tg-instruction-kicker {
+  margin: 0 0 4px;
+}
+
+.tg-instruction-scroll {
+  padding-bottom: 8px;
+}
+
+body:not(.web-mode) .bottom-nav .nav-label {
+  font-size: 9px;
 }
 
 .tg-ops-activity-root {

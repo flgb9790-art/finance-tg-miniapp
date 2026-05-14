@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260514tg-header-instruction-viewport";
+        var BALANCY_CLIENT_ASSET_REV = "20260514tg-ledger-ops-instruction-tab";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -183,7 +183,7 @@
                   Расход
                 </button>
                 <button type="button" class="web-new-entry-option web-new-entry-transfer" data-web-new-entry="transfer" role="menuitem">
-                  Обмен между счетами
+                  Перевод между счетами
                 </button>
                 <p class="web-new-entry-group-label">Сначала настройте</p>
                 <button type="button" class="web-new-entry-option web-new-entry-setup" data-web-new-entry="account" role="menuitem">
@@ -526,14 +526,14 @@
               </div>
             </div>
             <p class="muted tg-more-screen-lead">
-              Дополнительные разделы и быстрые действия. Полное руководство — в инструкции.
+              Дополнительные разделы и быстрые действия. Инструкция — отдельная вкладка внизу.
             </p>
             <div class="tg-more-screen-actions">
               <button type="button" class="primary-button" data-open-screen="accounts">Счета</button>
               <button type="button" class="ghost-button" id="tgMoreOpenEntryModalButton">
                 Новая операция
               </button>
-              <button type="button" class="ghost-button" id="tgMoreInstructionButton">Инструкция</button>
+              <button type="button" class="ghost-button" data-open-screen="instruction">Инструкция</button>
             </div>
           </section>
         </section>
@@ -766,149 +766,6 @@
         </section>
 
         <section id="screen-activity" class="screen" data-screen="activity">
-          <div id="tgOpsActivityRoot" class="tg-ops-activity-root">
-            <header class="tg-ops-head">
-              <h1 class="tg-ops-title">Операции</h1>
-              <div class="tg-ops-head-actions">
-                <button
-                  type="button"
-                  class="tg-home-icon-btn"
-                  id="tgOpsActivityRefreshButton"
-                  title="Обновить"
-                  aria-label="Обновить данные"
-                >
-                  <svg class="tg-home-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path
-                      d="M21 12a9 9 0 1 1-2.64-6.36"
-                      stroke="currentColor"
-                      stroke-width="1.75"
-                      stroke-linecap="round"
-                    />
-                    <path
-                      d="M21 3v6h-6"
-                      stroke="currentColor"
-                      stroke-width="1.75"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  id="tgActivityNewEntryButton"
-                  class="tg-ops-btn tg-ops-btn--plus"
-                  aria-label="Новая операция"
-                >
-                  <span aria-hidden="true">+</span>
-                </button>
-              </div>
-            </header>
-
-            <div class="tg-ops-stats tg-ops-stats--single" role="region" aria-label="Сводка за месяц">
-              <div class="tg-ops-stat tg-ops-stat--net tg-ops-stat--solo">
-                <p class="tg-ops-stat-label">Чистый поток</p>
-                <strong id="tgOpsStatNet" class="tg-ops-stat-value tg-ops-stat-value--net">+0</strong>
-                <span class="tg-ops-stat-sub muted">за этот месяц</span>
-              </div>
-            </div>
-
-            <div class="tg-ops-search-wrap">
-              <span class="tg-ops-search-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.7" />
-                  <path d="M16 16l5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-                </svg>
-              </span>
-              <input
-                id="tgOpsSearchInput"
-                class="tg-ops-search-input"
-                type="search"
-                placeholder="Поиск операций…"
-                autocomplete="off"
-                aria-label="Поиск по операциям"
-              />
-            </div>
-
-            <div id="tgOpsFiltersPanel" class="tg-ops-filters-panel">
-              <div class="tg-ops-dates-grid">
-                <label class="tg-ops-field-block tg-ops-field-block--date">
-                  <span class="tg-ops-field-label muted">Период с</span>
-                  <span class="tg-ops-date-input-shell">
-                    <input id="tgOpsDateFrom" class="tg-ops-control" type="date" aria-label="Дата с" />
-                  </span>
-                </label>
-                <label class="tg-ops-field-block tg-ops-field-block--date">
-                  <span class="tg-ops-field-label muted">По</span>
-                  <span class="tg-ops-date-input-shell">
-                    <input id="tgOpsDateTo" class="tg-ops-control" type="date" aria-label="Дата по" />
-                  </span>
-                </label>
-              </div>
-              <div class="tg-ops-selects-grid">
-                <select id="tgOpsFilterAccount" class="tg-ops-control tg-ops-control--select" aria-label="Счёт">
-                  <option value="">Все счета</option>
-                </select>
-                <select id="tgOpsFilterKind" class="tg-ops-control tg-ops-control--select" aria-label="Тип операции">
-                  <option value="all">Все</option>
-                  <option value="income">Доход</option>
-                  <option value="expense">Расход</option>
-                  <option value="transfer">Перевод</option>
-                </select>
-                <select id="tgOpsFilterCategory" class="tg-ops-control tg-ops-control--select" aria-label="Категория">
-                  <option value="">Все категории</option>
-                </select>
-              </div>
-              <div class="tg-ops-filter-actions">
-                <button
-                  type="button"
-                  id="tgOpsResetFilters"
-                  class="tg-ops-sort-btn"
-                  title="Сбросить фильтры"
-                  aria-label="Сбросить фильтры"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path
-                      d="M4.5 9.5a7.5 7.5 0 0 1 12.88-2.12M19.5 14.5a7.5 7.5 0 0 1-12.88 2.12"
-                      stroke="currentColor"
-                      stroke-width="1.7"
-                      stroke-linecap="round"
-                    />
-                    <path
-                      d="M3 5v4h4M21 19v-4h-4"
-                      stroke="currentColor"
-                      stroke-width="1.7"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </button>
-                <button type="button" id="tgOpsApplyFilters" class="primary-button tg-ops-apply-btn">
-                  Показать
-                </button>
-              </div>
-            </div>
-
-            <section class="card tg-ops-list-card">
-              <div id="tgActivityCombinedList" class="tg-ops-feed" aria-live="polite"></div>
-              <nav id="tgOpsPaginationNav" class="tg-ops-pagination" aria-label="Страницы операций" hidden></nav>
-            </section>
-
-            <div id="tgActivityOpsTip" class="tg-ops-tip" role="status">
-              <span class="tg-ops-tip-icon" aria-hidden="true">💡</span>
-              <div class="tg-ops-tip-copy">
-                <strong class="tg-ops-tip-title">Подсказка</strong>
-                <p class="tg-ops-tip-text muted">Выберите период и фильтры, затем нажмите «Показать». Поиск учитывается при показе.</p>
-              </div>
-              <button type="button" id="tgActivityOpsTipClose" class="tg-ops-tip-close" aria-label="Закрыть подсказку">
-                ×
-              </button>
-            </div>
-
-            <button type="button" id="tgActivityNewOperationFooter" class="primary-button tg-ops-footer-new-btn">
-              Новая операция
-            </button>
-          </div>
-
           <div class="web-activity-compose">
             <div class="web-op-kind-cards" role="group" aria-label="Тип операции">
               <button
@@ -1185,6 +1042,256 @@
             </div>
             <div id="recentTransfersList" class="entries-list"></div>
           </section>
+        </section>
+
+        <section id="screen-ledger" class="screen tg-only-block" data-screen="ledger">
+          <div id="tgOpsActivityRoot" class="tg-ops-activity-root">
+            <header class="tg-ops-head">
+              <h1 class="tg-ops-title">История</h1>
+              <div class="tg-ops-head-actions">
+                <button
+                  type="button"
+                  class="tg-home-icon-btn"
+                  id="tgOpsActivityRefreshButton"
+                  title="Обновить"
+                  aria-label="Обновить данные"
+                >
+                  <svg class="tg-home-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M21 12a9 9 0 1 1-2.64-6.36"
+                      stroke="currentColor"
+                      stroke-width="1.75"
+                      stroke-linecap="round"
+                    />
+                    <path
+                      d="M21 3v6h-6"
+                      stroke="currentColor"
+                      stroke-width="1.75"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  id="tgActivityNewEntryButton"
+                  class="tg-ops-btn tg-ops-btn--plus"
+                  aria-label="Новая операция"
+                >
+                  <span aria-hidden="true">+</span>
+                </button>
+              </div>
+            </header>
+
+            <div class="tg-ops-stats tg-ops-stats--single" role="region" aria-label="Сводка за месяц">
+              <div class="tg-ops-stat tg-ops-stat--net tg-ops-stat--solo">
+                <p class="tg-ops-stat-label">Чистый поток</p>
+                <strong id="tgOpsStatNet" class="tg-ops-stat-value tg-ops-stat-value--net">+0</strong>
+                <span class="tg-ops-stat-sub muted">за этот месяц</span>
+              </div>
+            </div>
+
+            <div class="tg-ops-search-wrap">
+              <span class="tg-ops-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.7" />
+                  <path d="M16 16l5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                </svg>
+              </span>
+              <input
+                id="tgOpsSearchInput"
+                class="tg-ops-search-input"
+                type="search"
+                placeholder="Поиск операций…"
+                autocomplete="off"
+                aria-label="Поиск по операциям"
+              />
+            </div>
+
+            <div id="tgOpsFiltersPanel" class="tg-ops-filters-panel">
+              <div class="tg-ops-dates-grid">
+                <label class="tg-ops-field-block tg-ops-field-block--date">
+                  <span class="tg-ops-field-label muted">Период с</span>
+                  <span class="tg-ops-date-input-shell">
+                    <input id="tgOpsDateFrom" class="tg-ops-control" type="date" aria-label="Дата с" />
+                  </span>
+                </label>
+                <label class="tg-ops-field-block tg-ops-field-block--date">
+                  <span class="tg-ops-field-label muted">По</span>
+                  <span class="tg-ops-date-input-shell">
+                    <input id="tgOpsDateTo" class="tg-ops-control" type="date" aria-label="Дата по" />
+                  </span>
+                </label>
+              </div>
+              <div class="tg-ops-selects-grid">
+                <select id="tgOpsFilterAccount" class="tg-ops-control tg-ops-control--select" aria-label="Счёт">
+                  <option value="">Все счета</option>
+                </select>
+                <select id="tgOpsFilterKind" class="tg-ops-control tg-ops-control--select" aria-label="Тип операции">
+                  <option value="all">Все</option>
+                  <option value="income">Доход</option>
+                  <option value="expense">Расход</option>
+                </select>
+                <select id="tgOpsFilterCategory" class="tg-ops-control tg-ops-control--select" aria-label="Категория">
+                  <option value="">Все категории</option>
+                </select>
+              </div>
+              <div class="tg-ops-filter-actions">
+                <button
+                  type="button"
+                  id="tgOpsResetFilters"
+                  class="tg-ops-sort-btn"
+                  title="Сбросить фильтры"
+                  aria-label="Сбросить фильтры"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M4.5 9.5a7.5 7.5 0 0 1 12.88-2.12M19.5 14.5a7.5 7.5 0 0 1-12.88 2.12"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                    />
+                    <path
+                      d="M3 5v4h4M21 19v-4h-4"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button type="button" id="tgOpsApplyFilters" class="primary-button tg-ops-apply-btn">
+                  Показать
+                </button>
+              </div>
+            </div>
+
+            <section class="card tg-ops-list-card">
+              <div id="tgActivityCombinedList" class="tg-ops-feed" aria-live="polite"></div>
+              <nav id="tgOpsPaginationNav" class="tg-ops-pagination" aria-label="Страницы операций" hidden></nav>
+            </section>
+
+            <div id="tgActivityOpsTip" class="tg-ops-tip" role="status">
+              <span class="tg-ops-tip-icon" aria-hidden="true">💡</span>
+              <div class="tg-ops-tip-copy">
+                <strong class="tg-ops-tip-title">Подсказка</strong>
+                <p class="tg-ops-tip-text muted">Выберите период и фильтры, затем нажмите «Показать». Поиск учитывается при показе.</p>
+              </div>
+              <button type="button" id="tgActivityOpsTipClose" class="tg-ops-tip-close" aria-label="Закрыть подсказку">
+                ×
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section id="screen-instruction" class="screen tg-only-block" data-screen="instruction">
+          <div class="tg-instruction-root">
+            <header class="tg-ops-head tg-instruction-head">
+              <div>
+                <p class="section-label tg-instruction-kicker">Balancy · Telegram</p>
+                <h1 class="tg-ops-title">Инструкция</h1>
+              </div>
+            </header>
+            <div class="help-doc-scroll tg-instruction-scroll">
+              <p class="help-doc-lede muted">
+                Ниже — пошагово, как пользоваться мини-приложением Balancy: от первого входа до отчётов и переводов.
+              </p>
+
+              <article class="help-doc-section card help-doc-callout">
+                <h3 class="help-doc-h3">1. С чего начать</h3>
+                <p class="muted">
+                  Откройте приложение из бота в Telegram. После загрузки вы попадёте на <strong>Главную</strong> — там
+                  общий баланс по всем счетам в выбранной валюте отображения и краткая сводка за месяц.
+                </p>
+                <ul class="help-doc-list">
+                  <li>Сначала создайте хотя бы один <strong>счёт</strong> (вкладка «Счета» или кнопка в блоке быстрых действий на главной).</li>
+                  <li>Затем добавьте <strong>категории</strong> доходов и расходов (вкладка «Категории») — они понадобятся при записи операций.</li>
+                  <li>Курсы валют для пересчёта баланса и отчётов подтягиваются с сервера; при необходимости обновите данные жестом «потянуть вниз» на главной или откройте приложение заново из бота.</li>
+                </ul>
+              </article>
+
+              <article class="help-doc-section card help-doc-callout">
+                <h3 class="help-doc-h3">2. Навигация</h3>
+                <p class="muted">Внизу экрана — вкладки:</p>
+                <ul class="help-doc-list">
+                  <li><strong>Главная</strong> — баланс, остатки по валютам, списки счетов и последних движений, быстрые действия.</li>
+                  <li><strong>История</strong> — лента операций с фильтрами по периоду, типу, счёту и категории.</li>
+                  <li><strong>Операции</strong> — форма новой записи: доход или расход.</li>
+                  <li><strong>Отчёты</strong> — период, фильтры, графики и выгрузка CSV (если доступно в вашей версии).</li>
+                  <li><strong>Категории</strong> — списки категорий доходов и расходов, создание и редактирование.</li>
+                  <li><strong>Инструкция</strong> — этот раздел.</li>
+                  <li><strong>Ещё</strong> — переход к счетам и меню «Новая операция».</li>
+                </ul>
+                <p class="muted">
+                  Вверху слева — логотип Balancy, справа кнопка <strong>+</strong>: меню выбора (доход, расход или перевод между счетами), как «Новая операция» на главной или в «Ещё».
+                </p>
+              </article>
+
+              <article class="help-doc-section card help-doc-callout">
+                <h3 class="help-doc-h3">3. Счета</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Откройте вкладку <strong>Счета</strong> (с главной через «Все счета» или из раздела «Ещё»).</li>
+                  <li>Нажмите <strong>+ Добавить счёт</strong>, заполните название, тип (удобная метка), валюту и стартовый баланс.</li>
+                  <li>Сохраните. Счёт появится в списке; общий баланс на главной пересчитается с учётом курсов.</li>
+                </ol>
+                <p class="muted">
+                  Чтобы изменить или удалить счёт, в списке на телефоне сделайте <strong>свайп строки влево</strong> — появятся действия.
+                  Удаление безвозвратно затрагивает связанные данные в рамках приложения — подтверждайте осознанно.
+                </p>
+              </article>
+
+              <article class="help-doc-section card help-doc-callout">
+                <h3 class="help-doc-h3">4. Категории</h3>
+                <p class="muted">
+                  На вкладке «Категории» переключайте вид доходов/расходов, добавляйте статьи с понятными названиями (например «Продукты», «Транспорт»).
+                  Редактирование и удаление — также через свайп влево по строке в списке.
+                </p>
+              </article>
+
+              <article class="help-doc-section card help-doc-callout">
+                <h3 class="help-doc-h3">5. Операции: доход и расход</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Нажмите <strong>+</strong> вверху или «Новая операция» на главной / в «Ещё».</li>
+                  <li>Выберите <strong>Доход</strong> или <strong>Расход</strong> — откроется вкладка «Операции» с формой.</li>
+                  <li>Укажите счёт, категорию, сумму, дату и время; при необходимости — комментарий. Сохраните.</li>
+                </ol>
+              </article>
+
+              <article class="help-doc-section card help-doc-callout">
+                <h3 class="help-doc-h3">6. Перевод между счетами</h3>
+                <p class="muted">
+                  В меню «Новая операция» выберите <strong>Перевод между счетами</strong>. Укажите счёт списания и зачисления, суммы и дату.
+                  Переводы между вашими счетами не меняют <strong>общий</strong> баланс в одной валюте, но обновляют остатки по каждому счёту.
+                  При разных валютах можно задать сумму зачисления вручную или оставить расчёт по курсу — как подсказывает форма.
+                </p>
+              </article>
+
+              <article class="help-doc-section card help-doc-callout">
+                <h3 class="help-doc-h3">7. Лента операций</h3>
+                <p class="muted">
+                  На вкладке <strong>История</strong> задайте период, тип, счёт, категорию или поисковую строку и нажмите <strong>Показать</strong>.
+                  Ниже — постраничная лента; пагинация внизу списка.
+                </p>
+              </article>
+
+              <article class="help-doc-section card help-doc-callout">
+                <h3 class="help-doc-h3">8. Отчёты</h3>
+                <p class="muted">
+                  Выберите период (неделя, месяц, квартал, год или свои даты), при необходимости фильтры по счёту, категории и типу.
+                  Нажмите <strong>Построить отчёт</strong>. После расчёта доступны таблицы, графики и при наличии прав — выгрузка CSV.
+                </p>
+              </article>
+
+              <article class="help-doc-section card help-doc-callout">
+                <h3 class="help-doc-h3">9. Полезные приёмы</h3>
+                <ul class="help-doc-list">
+                  <li>Валюта отображения на главной — в карточке баланса; отчёты используют валюту отчёта из формы отчёта.</li>
+                  <li>Остатки по валютам на главной — горизонтальная полоса «чипов» или раскрывающийся блок в веб-версии.</li>
+                  <li>Если что-то не обновилось, закройте мини-приложение полностью и откройте снова из бота.</li>
+                </ul>
+              </article>
+            </div>
+          </div>
         </section>
 
         <section id="screen-history" class="screen" data-screen="history">
@@ -1976,6 +2083,15 @@
           </span>
           <span class="nav-label">Главная</span>
         </button>
+        <button class="bottom-nav-button tg-only-block" data-open-screen="ledger" type="button">
+          <span class="nav-icon" aria-hidden="true">
+            <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none">
+              <path d="M4 6H20M4 12H20M4 18H14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M17 16V20M15 18H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">История</span>
+        </button>
         <button class="bottom-nav-button" data-open-screen="activity" type="button">
           <span class="nav-icon" aria-hidden="true">
             <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none">
@@ -2002,6 +2118,15 @@
             </svg>
           </span>
           <span class="nav-label">Категории</span>
+        </button>
+        <button class="bottom-nav-button tg-only-block" data-open-screen="instruction" type="button">
+          <span class="nav-icon" aria-hidden="true">
+            <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none">
+              <path d="M8 6H21M8 12H21M8 18H21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M4 6H5M4 12H5M4 18H5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Инструкция</span>
         </button>
         <button class="bottom-nav-button tg-only-block" data-open-screen="more" type="button">
           <span class="nav-icon" aria-hidden="true">
@@ -2065,142 +2190,12 @@
             </button>
           </div>
           <button id="entryTypeOpenTransferButton" class="entry-type-action entry-type-transfer-wide" type="button">
-            Обмен между счетами
+            Перевод между счетами
           </button>
         </div>
         <button id="entryTypeModalClose" class="text-link-button entry-type-close" type="button">
           Отмена
         </button>
-      </div>
-    </div>
-
-    <div
-      id="tgInstructionModal"
-      class="help-doc-modal tg-only-block"
-      hidden
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="tgInstructionTitle"
-    >
-      <button
-        id="tgInstructionModalBackdrop"
-        type="button"
-        class="help-doc-backdrop"
-        aria-label="Закрыть инструкцию"
-      ></button>
-      <div class="help-doc-sheet">
-        <div class="help-doc-sheet-bar" aria-hidden="true"></div>
-        <header class="help-doc-header">
-          <div>
-            <p class="section-label">Balancy · Telegram</p>
-            <h2 id="tgInstructionTitle">Инструкция</h2>
-          </div>
-          <button type="button" id="tgInstructionCloseTop" class="help-doc-close-corner" title="Закрыть">
-            Закрыть
-          </button>
-        </header>
-        <div class="help-doc-scroll">
-          <p class="help-doc-lede muted">
-            Ниже — пошагово, как пользоваться мини-приложением Balancy: от первого входа до отчётов и переводов.
-          </p>
-
-          <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">1. С чего начать</h3>
-            <p class="muted">
-              Откройте приложение из бота в Telegram. После загрузки вы попадёте на <strong>Главную</strong> — там
-              общий баланс по всем счетам в выбранной валюте отображения и краткая сводка за месяц.
-            </p>
-            <ul class="help-doc-list">
-              <li>Сначала создайте хотя бы один <strong>счёт</strong> (вкладка «Счета» или кнопка в блоке быстрых действий на главной).</li>
-              <li>Затем добавьте <strong>категории</strong> доходов и расходов (вкладка «Категории») — они понадобятся при записи операций.</li>
-              <li>Курсы валют для пересчёта баланса и отчётов подтягиваются с сервера; при необходимости обновите данные жестом «потянуть вниз» на главной или откройте приложение заново из бота.</li>
-            </ul>
-          </article>
-
-          <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">2. Навигация</h3>
-            <p class="muted">Внизу экрана — вкладки:</p>
-            <ul class="help-doc-list">
-              <li><strong>Главная</strong> — баланс, остатки по валютам, списки счетов и последних движений, быстрые действия.</li>
-              <li><strong>Операции</strong> — форма новой записи (доход/расход) и лента операций с фильтрами.</li>
-              <li><strong>Отчёты</strong> — период, фильтры, графики и выгрузка CSV (если доступно в вашей версии).</li>
-              <li><strong>Категории</strong> — списки категорий доходов и расходов, создание и редактирование.</li>
-              <li><strong>Ещё</strong> — переход к счетам, новая операция из меню, эта инструкция.</li>
-            </ul>
-            <p class="muted">
-              Вверху слева — логотип Balancy, справа кнопка <strong>+</strong>: то же меню выбора, что и «Новая операция» в быстрых действиях (доход, расход или обмен между счетами).
-            </p>
-          </article>
-
-          <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">3. Счета</h3>
-            <ol class="help-doc-list help-doc-numbered">
-              <li>Откройте вкладку <strong>Счета</strong> (с главной через «Все счета» или из раздела «Ещё»).</li>
-              <li>Нажмите <strong>+ Добавить счёт</strong>, заполните название, тип (удобная метка), валюту и стартовый баланс.</li>
-              <li>Сохраните. Счёт появится в списке; общий баланс на главной пересчитается с учётом курсов.</li>
-            </ol>
-            <p class="muted">
-              Чтобы изменить или удалить счёт, в списке на телефоне сделайте <strong>свайп строки влево</strong> — появятся действия.
-              Удаление безвозвратно затрагивает связанные данные в рамках приложения — подтверждайте осознанно.
-            </p>
-          </article>
-
-          <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">4. Категории</h3>
-            <p class="muted">
-              На вкладке «Категории» переключайте вид доходов/расходов, добавляйте статьи с понятными названиями (например «Продукты», «Транспорт»).
-              Редактирование и удаление — также через свайп влево по строке в списке.
-            </p>
-          </article>
-
-          <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">5. Операции: доход и расход</h3>
-            <ol class="help-doc-list help-doc-numbered">
-              <li>Нажмите <strong>+</strong> вверху или «Новая операция» на главной / в «Ещё».</li>
-              <li>Выберите <strong>Доход</strong> или <strong>Расход</strong> — откроется вкладка «Операции» с формой.</li>
-              <li>Укажите счёт, категорию, сумму, дату и время; при необходимости — комментарий. Сохраните.</li>
-            </ol>
-          </article>
-
-          <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">6. Перевод между счетами</h3>
-            <p class="muted">
-              В меню «Новая операция» выберите <strong>Обмен между счетами</strong>. Укажите счёт списания и зачисления, суммы и дату.
-              Переводы между вашими счетами не меняют <strong>общий</strong> баланс в одной валюте, но обновляют остатки по каждому счёту.
-              При разных валютах можно задать сумму зачисления вручную или оставить расчёт по курсу — как подсказывает форма.
-            </p>
-          </article>
-
-          <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">7. Лента операций</h3>
-            <p class="muted">
-              На вкладке «Операции» вверху задайте период, тип, счёт, категорию или поисковую строку и нажмите <strong>Показать</strong>.
-              Ниже — постраничная лента; пагинация внизу списка.
-            </p>
-          </article>
-
-          <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">8. Отчёты</h3>
-            <p class="muted">
-              Выберите период (неделя, месяц, квартал, год или свои даты), при необходимости фильтры по счёту, категории и типу.
-              Нажмите <strong>Построить отчёт</strong>. После расчёта доступны таблицы, графики и при наличии прав — выгрузка CSV.
-            </p>
-          </article>
-
-          <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">9. Полезные приёмы</h3>
-            <ul class="help-doc-list">
-              <li>Валюта отображения на главной — в карточке баланса; отчёты используют валюту отчёта из формы отчёта.</li>
-              <li>Остатки по валютам на главной — горизонтальная полоса «чипов» или раскрывающийся блок в веб-версии.</li>
-              <li>Если что-то не обновилось, закройте мини-приложение полностью и откройте снова из бота.</li>
-            </ul>
-          </article>
-        </div>
-        <footer class="help-doc-footer">
-          <button type="button" id="tgInstructionCloseBottom" class="ghost-button help-doc-footer-btn">
-            Закрыть
-          </button>
-        </footer>
       </div>
     </div>
 
@@ -2331,7 +2326,7 @@
 
           <article id="helpDocTransferSection" class="help-doc-section card help-doc-callout">
             <ol class="help-doc-list help-doc-numbered">
-              <li>Снова <strong>+</strong>, затем <strong>Обмен между счетами</strong> (перевод).</li>
+              <li>Снова <strong>+</strong>, затем <strong>Перевод между счетами</strong>.</li>
               <li>В форме перевода выберите счёт «откуда» и «куда», суммы; при переводе в другую валюту вторую сумму
                 можно указать явно или оставить расчёт по курсу — как настроено в форме.</li>
               <li>Сохраните: балансы обоих счетов изменятся согласованно.</li>

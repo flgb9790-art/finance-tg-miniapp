@@ -24,8 +24,10 @@ let globalBusyDepth = 0;
 
 const WEB_PAGE_TITLES = {
   home: "Главная",
+  ledger: "История",
   activity: "Операции",
   history: "История",
+  instruction: "Инструкция",
   reports: "Отчёты",
   categories: "Категории",
   accounts: "Счета",
@@ -166,10 +168,6 @@ const helpDocumentationBackdrop = document.getElementById("helpDocumentationBack
 const helpDocumentationCloseTopButton = document.getElementById("helpDocumentationCloseTop");
 const helpDocumentationCloseBottomButton = document.getElementById("helpDocumentationCloseBottom");
 const openHelpDocumentationButton = document.getElementById("openHelpDocumentationButton");
-const tgInstructionModalElement = document.getElementById("tgInstructionModal");
-const tgInstructionModalBackdrop = document.getElementById("tgInstructionModalBackdrop");
-const tgInstructionCloseTopButton = document.getElementById("tgInstructionCloseTop");
-const tgInstructionCloseBottomButton = document.getElementById("tgInstructionCloseBottom");
 const entryTypeActionButtons = Array.from(document.querySelectorAll("[data-entry-kind]"));
 const screenElements = Array.from(document.querySelectorAll(".screen"));
 const navButtons = Array.from(document.querySelectorAll(".bottom-nav-button"));
@@ -1297,7 +1295,7 @@ function openScreen(screenName, options = {}) {
   navButtons.forEach((button) => {
     const target = button.dataset.openScreen ?? "";
     let active = target === nextScreen;
-    if (!isWebMode && target === "more" && (nextScreen === "history" || nextScreen === "accounts")) {
+    if (!isWebMode && target === "more" && nextScreen === "accounts") {
       active = true;
     }
     button.classList.toggle("is-active", active);
@@ -1340,14 +1338,19 @@ function openScreen(screenName, options = {}) {
     destroyReportCharts();
   }
 
-  if (!isWebMode && nextScreen === "activity") {
+  if (!isWebMode && nextScreen === "ledger") {
     populateTgActivityFilterSelects();
     ensureTgOpsDefaultDates();
     Object.assign(tgOpsAppliedFilter, readTgOpsFilterFromDom());
     tgOpsFilterSnapshotInitialized = true;
     tgOpsPageOffset = 0;
+    void refreshTgOperationsBoard();
+  }
+
+  if (!isWebMode && nextScreen === "activity") {
+    populateTgActivityFilterSelects();
     if (document.body.dataset.tgTransferOnly !== "1") {
-      void refreshTgOperationsBoard();
+      syncWebEntryKindCardsFromSelect();
     }
   }
 
@@ -1658,7 +1661,6 @@ async function refreshWebOperationsBoard() {
 }
 
 function openEntryTypeModal() {
-  closeTgInstructionModal();
   if (entryTypeModalElement) {
     entryTypeModalElement.hidden = false;
   }
@@ -1676,7 +1678,6 @@ function openHelpDocumentationModal() {
   }
 
   closeEntryTypeModal();
-  closeTgInstructionModal();
   helpDocumentationModalElement.hidden = false;
 }
 
@@ -1686,24 +1687,6 @@ function closeHelpDocumentationModal() {
   }
 
   helpDocumentationModalElement.hidden = true;
-}
-
-function openTgInstructionModal() {
-  if (!tgInstructionModalElement || isWebMode) {
-    return;
-  }
-
-  closeEntryTypeModal();
-  closeHelpDocumentationModal();
-  tgInstructionModalElement.hidden = false;
-}
-
-function closeTgInstructionModal() {
-  if (!tgInstructionModalElement) {
-    return;
-  }
-
-  tgInstructionModalElement.hidden = true;
 }
 
 function openEntryScreenForKind(kind) {
@@ -1798,7 +1781,9 @@ function syncWebPageTitle(screenName) {
 
   const subtitleByScreen = {
     activity: "Создайте новую операцию дохода или расхода.",
+    ledger: "Лента операций: фильтры по датам, типу, счёту и категории, затем «Показать».",
     history: "Лента операций: фильтры по датам, типу, счёту и категории, затем «Показать».",
+    instruction: "Пошаговое руководство по мини-приложению в Telegram.",
     reports: "Сводка за период, графики и выгрузка CSV в валюте отчёта.",
     categories: "Создавайте, редактируйте и управляйте категориями доходов и расходов.",
     accounts: "Управляйте своими счетами: создавайте, редактируйте и удаляйте."
@@ -1815,11 +1800,11 @@ function syncWebPageTitle(screenName) {
 }
 
 function syncWebEntryKindCardsFromSelect() {
-  if (!isWebMode) {
+  if (!entryKindInput) {
     return;
   }
 
-  const kind = entryKindInput?.value ?? "expense";
+  const kind = entryKindInput.value ?? "expense";
 
   document.querySelectorAll("[data-web-set-entry-kind]").forEach((button) => {
     const cardKind = button.dataset.webSetEntryKind;
@@ -3328,7 +3313,7 @@ function renderCategories(categories) {
 function renderRecentEntries(entries) {
   if (!isWebMode && document.getElementById("tgActivityCombinedList")) {
     populateTgActivityFilterSelects();
-    if (document.body.dataset.appActiveScreen === "activity" && tgOpsFilterSnapshotInitialized) {
+    if (document.body.dataset.appActiveScreen === "ledger" && tgOpsFilterSnapshotInitialized) {
       void refreshTgOperationsBoard();
     }
     return;
@@ -3794,7 +3779,7 @@ async function refreshTgOperationsBoard() {
   if (!root) {
     return;
   }
-  if (document.body.dataset.appActiveScreen !== "activity") {
+  if (document.body.dataset.appActiveScreen !== "ledger") {
     return;
   }
   if (!tgOpsFilterSnapshotInitialized) {
@@ -6088,6 +6073,15 @@ async function loadApp(options = {}) {
     syncHomeWelcomeLine(user);
 
     renderAll();
+    if (document.body.dataset.appActiveScreen === "ledger" && !isWebMode) {
+      populateTgActivityFilterSelects();
+      ensureTgOpsDefaultDates();
+      if (!tgOpsFilterSnapshotInitialized) {
+        Object.assign(tgOpsAppliedFilter, readTgOpsFilterFromDom());
+        tgOpsFilterSnapshotInitialized = true;
+      }
+      void refreshTgOperationsBoard();
+    }
     if (document.body.dataset.appActiveScreen === "history") {
       populateWebOperationsFilterSelects();
       if (options.syncWebOperationsHistory) {
@@ -6825,18 +6819,6 @@ if (isWebMode) {
     }
   });
 
-  document.querySelectorAll("[data-web-set-entry-kind]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const nextKind = button.dataset.webSetEntryKind;
-      if (!nextKind || !entryKindInput) {
-        return;
-      }
-      entryKindInput.value = nextKind;
-      populateCategoryOptions();
-      syncWebEntryKindCardsFromSelect();
-    });
-  });
-
   document.querySelectorAll("[data-web-nav]").forEach((button) => {
     button.addEventListener("click", () => {
       openScreen(button.dataset.webNav ?? "home");
@@ -6890,6 +6872,18 @@ if (isWebMode) {
     }
   });
 }
+
+document.querySelectorAll("[data-web-set-entry-kind]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const nextKind = button.dataset.webSetEntryKind;
+    if (!nextKind || !entryKindInput) {
+      return;
+    }
+    entryKindInput.value = nextKind;
+    populateCategoryOptions();
+    syncWebEntryKindCardsFromSelect();
+  });
+});
 
 document.getElementById("tgTransferScreenBackButton")?.addEventListener("click", () => {
   exitTransferScreen();
@@ -7000,12 +6994,6 @@ if (helpDocumentationCloseBottomButton) {
 
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") {
-    return;
-  }
-
-  if (tgInstructionModalElement && !tgInstructionModalElement.hidden) {
-    closeTgInstructionModal();
-    event.preventDefault();
     return;
   }
 
@@ -7244,22 +7232,6 @@ document.addEventListener("click", (event) => {
 
 document.getElementById("tgMoreOpenEntryModalButton")?.addEventListener("click", () => {
   openEntryTypeModal();
-});
-
-document.getElementById("tgMoreInstructionButton")?.addEventListener("click", () => {
-  openTgInstructionModal();
-});
-
-tgInstructionModalBackdrop?.addEventListener("click", () => {
-  closeTgInstructionModal();
-});
-
-tgInstructionCloseTopButton?.addEventListener("click", () => {
-  closeTgInstructionModal();
-});
-
-tgInstructionCloseBottomButton?.addEventListener("click", () => {
-  closeTgInstructionModal();
 });
 
 openScreenButtons.forEach((button) => {
