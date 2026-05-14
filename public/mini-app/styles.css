@@ -3013,6 +3013,17 @@ body.web-mode #webTopNav.web-desktop-shell {
 
 body.web-mode .web-page-header {
   align-items: flex-start;
+  padding: 15px 24px 15px;
+  box-sizing: border-box;
+}
+
+body.web-mode .web-page-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 750;
+  line-height: 1.22;
+  letter-spacing: -0.03em;
+  color: var(--text);
 }
 
 .web-page-title {
@@ -3319,6 +3330,31 @@ body.web-mode .web-dash-hero select {
   background: rgb(255 255 255 / 0.12);
   border-color: rgb(255 255 255 / 0.28);
   color: #fff;
+}
+
+/* Веб: компактное поле валюты, код по центру, без лишней «белой» обводки */
+body.web-mode .web-dash-hero .hero-currency-select.fx-board-base-select--toolbar {
+  width: auto;
+  min-width: 4.75rem;
+  max-width: min(96px, 32vw);
+  padding: 6px 26px 6px 10px;
+  text-align: center;
+  text-align-last: center;
+  box-shadow: none;
+  outline: none;
+  border: 1px solid rgb(255 255 255 / 0.32);
+  background-image: linear-gradient(45deg, transparent 50%, rgb(255 255 255 / 0.55) 50%),
+    linear-gradient(135deg, rgb(255 255 255 / 0.55) 50%, transparent 50%);
+  background-position:
+    calc(100% - 9px) 51%,
+    calc(100% - 5px) 51%;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+
+body.web-mode .web-dash-hero .hero-currency-select.fx-board-base-select--toolbar:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(199 210 254 / 0.42);
 }
 
 .web-dash-stat-value {
@@ -5735,8 +5771,10 @@ body.web-mode[data-app-active-screen="home"] .web-day-tip-text {
 
 body.web-mode #screen-home .balancy-home-currencies-card {
   margin: 0;
-  padding: 16px 18px 14px;
-  border-radius: 20px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 12px 14px 12px;
+  border-radius: 18px;
   border: 1px solid rgb(18 18 43 / 0.08);
   background: #fff;
   box-shadow: 0 4px 22px rgb(18 18 43 / 0.07);
@@ -5754,23 +5792,14 @@ body.web-mode #screen-home .balancy-home-currencies-label {
 body.web-mode #screen-home .balancy-home-currencies-scroll {
   overflow-x: auto;
   overflow-y: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: rgb(148 163 184 / 0.85) rgb(241 245 249 / 0.95);
-  padding-bottom: 4px;
+  scrollbar-width: none;
+  padding-bottom: 2px;
 }
 
 body.web-mode #screen-home .balancy-home-currencies-scroll::-webkit-scrollbar {
-  height: 6px;
-}
-
-body.web-mode #screen-home .balancy-home-currencies-scroll::-webkit-scrollbar-thumb {
-  background: rgb(148 163 184 / 0.75);
-  border-radius: 999px;
-}
-
-body.web-mode #screen-home .balancy-home-currencies-scroll::-webkit-scrollbar-track {
-  background: rgb(241 245 249 / 0.95);
-  border-radius: 999px;
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 body.web-mode #screen-home .balancy-home-currencies-strip {
