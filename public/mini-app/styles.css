@@ -7485,6 +7485,20 @@ body.web-mode .web-accounts-layout {
   min-width: 0;
 }
 
+/* Telegram: список и блок «Новый / Добавить счёт» на всю ширину (без сужения колонки). */
+body:not(.web-mode) #screen-accounts .web-accounts-page,
+body:not(.web-mode) #screen-accounts .web-accounts-layout,
+body:not(.web-mode) #screen-accounts .web-accounts-main,
+body:not(.web-mode) #screen-accounts #webAccountsSidePanel {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+}
+
+body:not(.web-mode) #screen-accounts #webAccountsSidePanel.web-categories-panel {
+  align-self: stretch;
+}
+
 body.web-mode .web-accounts-panel {
   width: 100%;
   min-width: 0;
