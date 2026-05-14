@@ -4964,6 +4964,22 @@ body.web-mode .web-op-cancel-btn {
   width: 100%;
 }
 
+/* Telegram: кнопки «Сохранить операцию» / «Отмена» на всю ширину карточки */
+body:not(.web-mode) #screen-activity .web-op-form-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+body:not(.web-mode) #screen-activity .web-op-form-actions .primary-button,
+body:not(.web-mode) #screen-activity .web-op-form-actions .ghost-button {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 body.web-mode .web-op-req {
   color: rgb(239 68 68);
 }

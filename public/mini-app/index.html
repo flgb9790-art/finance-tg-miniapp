@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260514tg-accounts-form-width";
+        var BALANCY_CLIENT_ASSET_REV = "20260514tg-home-hints-op-save-width";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -258,10 +258,50 @@
             <div class="balancy-hint-copy">
               <strong class="balancy-hint-title">С чего начать</strong>
               <p class="balancy-hint-text muted">
-                Для начала работы создайте хотя бы один счёт и категории доходов и расходов — они нужны, чтобы записывать операции и видеть сводки.
+                Чтобы начать вести учёт, сначала создайте хотя бы один счёт и категории доходов и расходов — без них нельзя сохранять операции и видеть сводки на главной.
               </p>
             </div>
             <button type="button" class="balancy-hint-close" data-balancy-hint-close="homeStart" aria-label="Закрыть подсказку">
+              ×
+            </button>
+          </div>
+
+          <div class="balancy-hint-card" data-balancy-hint="homeMoreInstruction" role="status" hidden>
+            <span class="balancy-hint-icon" aria-hidden="true">📖</span>
+            <div class="balancy-hint-copy">
+              <strong class="balancy-hint-title">Инструкция</strong>
+              <p class="balancy-hint-text muted">
+                <span class="tg-only-inline"
+                  >Пошаговая инструкция по приложению — во вкладке «Ещё» внизу экрана, кнопка «Инструкция».</span
+                ><span class="web-only-inline"
+                  >Справка по использованию — кнопка «Справка: как пользоваться» внизу этой страницы; полный текст также в «Ещё» → «Инструкция».</span
+                >
+              </p>
+            </div>
+            <button
+              type="button"
+              class="balancy-hint-close"
+              data-balancy-hint-close="homeMoreInstruction"
+              aria-label="Закрыть подсказку"
+            >
+              ×
+            </button>
+          </div>
+
+          <div class="balancy-hint-card" data-balancy-hint="homeHintsSettings" role="status" hidden>
+            <span class="balancy-hint-icon" aria-hidden="true">⚙️</span>
+            <div class="balancy-hint-copy">
+              <strong class="balancy-hint-title">Подсказки</strong>
+              <p class="balancy-hint-text muted">
+                Отключить подсказки по всему приложению можно в «Настройках»: вкладка «Ещё» → «Настройки», переключатель «Подсказки в интерфейсе».
+              </p>
+            </div>
+            <button
+              type="button"
+              class="balancy-hint-close"
+              data-balancy-hint-close="homeHintsSettings"
+              aria-label="Закрыть подсказку"
+            >
               ×
             </button>
           </div>
