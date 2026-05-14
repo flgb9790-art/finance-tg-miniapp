@@ -4319,6 +4319,32 @@ body:not(.web-mode) #screen-ledger {
   max-width: 100%;
 }
 
+/* Telegram «История»: при обновлении списка не даём цепочке flex/grid сжать ширину контента */
+body:not(.web-mode) #screen-ledger.screen-active {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+body:not(.web-mode) #screen-ledger .tg-ops-activity-root {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  align-self: stretch;
+}
+
+body:not(.web-mode) #screen-ledger .tg-ops-list-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+body:not(.web-mode) #screen-ledger #tgActivityCombinedList.tg-ops-feed {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 body:not(.web-mode) .web-op-kind-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5542,14 +5568,6 @@ body.web-mode[data-app-active-screen="home"] #screen-home.screen-active {
   grid-template-rows: auto auto auto auto auto;
 }
 
-body.web-mode[data-app-active-screen="home"] .web-page-header {
-  padding: 10px 18px 8px;
-}
-
-body.web-mode[data-app-active-screen="home"] .web-page-title {
-  font-size: 19px;
-}
-
 body.web-mode[data-app-active-screen="home"] .web-dash-summary-grid {
   gap: 10px;
 }
@@ -5771,8 +5789,9 @@ body.web-mode[data-app-active-screen="home"] .web-day-tip-text {
 
 body.web-mode #screen-home .balancy-home-currencies-card {
   margin: 0;
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
   padding: 12px 14px 12px;
   border-radius: 18px;
   border: 1px solid rgb(18 18 43 / 0.08);
