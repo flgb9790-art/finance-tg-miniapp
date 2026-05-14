@@ -286,7 +286,10 @@ body.web-mode .pull-refresh-host {
 
 .screen-active {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
   min-width: 0;
+  align-content: start;
 }
 
 #screen-home {
@@ -3707,6 +3710,9 @@ body.web-mode #screen-reports .card:last-child {
 
 body.web-mode #screen-history .web-operations-root {
   display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   margin-bottom: 8px;
 }
 
@@ -4020,6 +4026,8 @@ body.web-mode .web-ops-summary-grid {
 .web-ops-table-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  width: 100%;
+  min-width: 0;
 }
 
 .web-ops-table {
