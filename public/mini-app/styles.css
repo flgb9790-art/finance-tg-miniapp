@@ -7928,7 +7928,70 @@ body.web-mode .tg-only-block {
   display: none !important;
 }
 
+body.web-mode #miniTopbar {
+  display: none !important;
+}
+
 body:not(.web-mode) #miniTopbar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  padding: max(6px, env(safe-area-inset-top, 0px)) 0 8px;
+  margin: 0 0 4px;
+  background: linear-gradient(180deg, rgb(238 242 247 / 0.98) 0%, rgb(238 242 247 / 0.92) 72%, rgb(238 242 247 / 0) 100%);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgb(15 23 42 / 0.06);
+}
+
+body:not(.web-mode) .tg-mini-topbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+}
+
+body:not(.web-mode) .tg-mini-topbar-brand .brand-wordmark {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+}
+
+body:not(.web-mode) .tg-mini-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+body:not(.web-mode) .tg-mini-topbar-icon-btn {
+  width: 44px;
+  height: 44px;
+}
+
+body:not(.web-mode) .tg-mini-topbar-plus {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+}
+
+body:not(.web-mode) .tg-app-screen-title {
+  margin: 4px 0 0;
+  font-size: 22px;
+  font-weight: 780;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: #0f172a;
+}
+
+body:not(.web-mode) .tg-mini-topbar-legacy-refresh {
   display: none !important;
 }
 
@@ -8001,11 +8064,14 @@ body:not(.web-mode) .tg-home-screen-title {
 }
 
 body:not(.web-mode) .tg-home-welcome {
-  margin: 6px 0 0;
   font-size: 15px;
   line-height: 1.35;
   color: #64748b;
   font-weight: 500;
+}
+
+body:not(.web-mode) .tg-home-screen-head--welcome-only .tg-home-welcome {
+  margin: 0 0 6px;
 }
 
 body:not(.web-mode) .tg-home-screen-head-actions {
@@ -8432,8 +8498,82 @@ body:not(.web-mode) #screen-home .web-home-dash-top {
   box-sizing: border-box;
 }
 
-body:not(.web-mode) #screen-more {
-  gap: 12px;
+body:not(.web-mode) #screen-home .web-home-dash-top > .tg-home-quick-actions {
+  margin-top: 4px;
+}
+
+body:not(.web-mode) .tg-ops-head {
+  display: none !important;
+}
+
+body:not(.web-mode) #reportTitle {
+  display: none !important;
+}
+
+body:not(.web-mode) .tg-accounts-screen-title {
+  display: none !important;
+}
+
+body:not(.web-mode) #screen-more .section-header {
+  display: none !important;
+}
+
+.entry-type-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+  box-sizing: border-box;
+}
+
+.entry-type-modal[hidden] {
+  display: none !important;
+}
+
+.entry-type-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: rgb(15 23 42 / 0.45);
+  cursor: pointer;
+}
+
+.entry-type-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(360px, 100%);
+  max-height: min(520px, calc(100dvh - 48px));
+  overflow: auto;
+  border-radius: 18px;
+  padding: 18px 18px 16px;
+  background: #fff;
+  box-shadow: 0 22px 60px rgb(15 23 42 / 0.22);
+  border: 1px solid rgb(15 23 42 / 0.08);
+}
+
+.entry-type-dialog .section-label {
+  margin: 0 0 6px;
+}
+
+.entry-type-dialog > h2 {
+  margin: 0 0 14px;
+  font-size: 20px;
+  font-weight: 780;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.entry-type-dialog .entry-type-close {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  text-align: center;
+  font-weight: 600;
 }
 
 body:not(.web-mode) #screen-more .tg-more-screen-card {

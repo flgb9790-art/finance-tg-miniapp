@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260514accounts-transfer-autofill";
+        var BALANCY_CLIENT_ASSET_REV = "20260514tg-global-chrome-scroll-modal";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -222,58 +222,55 @@
         </header>
 
     <div class="app-shell">
-      <header id="miniTopbar" class="topbar topbar-compact">
-        <div class="brand-lockup" aria-label="Balancy">
-          <span class="brand-wordmark">Balancy</span>
+      <header id="miniTopbar" class="topbar topbar-compact tg-mini-topbar" aria-label="Balancy">
+        <div class="tg-mini-topbar-row">
+          <div class="brand-lockup tg-mini-topbar-brand" aria-label="Balancy">
+            <span class="brand-wordmark">Balancy</span>
+          </div>
+          <div class="tg-mini-topbar-actions">
+            <button
+              type="button"
+              id="tgGlobalRefreshButton"
+              class="tg-home-icon-btn tg-mini-topbar-icon-btn"
+              title="Обновить"
+              aria-label="Обновить данные"
+            >
+              <svg class="tg-home-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M21 12a9 9 0 1 1-2.64-6.36"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M21 3v6h-6"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <button
+              type="button"
+              id="tgGlobalNewEntryButton"
+              class="tg-ops-btn tg-ops-btn--plus tg-mini-topbar-plus"
+              aria-label="Новая операция"
+            >
+              <span aria-hidden="true">+</span>
+            </button>
+          </div>
         </div>
-        <button id="refreshButton" class="refresh-text-btn" type="button">Обновить</button>
+        <h1 id="tgGlobalScreenTitle" class="tg-app-screen-title">Главная</h1>
+        <button id="refreshButton" class="refresh-text-btn tg-mini-topbar-legacy-refresh" type="button" hidden>
+          Обновить
+        </button>
       </header>
 
       <main class="content tabbed-content">
         <section id="screen-home" class="screen screen-active" data-screen="home">
-          <header class="tg-home-screen-head" aria-label="Главная">
-            <div class="tg-home-screen-head-main">
-              <h1 class="tg-home-screen-title">Главная</h1>
-              <p id="homeWelcomeLine" class="tg-home-welcome muted"></p>
-            </div>
-            <div class="tg-home-screen-head-actions">
-              <button
-                type="button"
-                class="tg-home-icon-btn"
-                id="tgHomeRefreshButton"
-                title="Обновить"
-                aria-label="Обновить данные"
-              >
-                <svg class="tg-home-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path
-                    d="M21 12a9 9 0 1 1-2.64-6.36"
-                    stroke="currentColor"
-                    stroke-width="1.75"
-                    stroke-linecap="round"
-                  />
-                  <path d="M21 3v6h-6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                class="tg-home-icon-btn tg-home-icon-btn--notify"
-                disabled
-                title="Скоро"
-                aria-label="Уведомления (скоро)"
-              >
-                <svg class="tg-home-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path
-                    d="M6 8a6 6 0 1 1 12 0c0 7 3 7 3 7H3s3 0 3-7"
-                    stroke="currentColor"
-                    stroke-width="1.75"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                  <path d="M10 21h4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-                </svg>
-                <span class="tg-home-notify-dot" aria-hidden="true"></span>
-              </button>
-            </div>
+          <header class="tg-home-screen-head tg-home-screen-head--welcome-only" aria-label="Приветствие">
+            <p id="homeWelcomeLine" class="tg-home-welcome muted"></p>
           </header>
 
           <div class="web-home-dash-top">
@@ -317,6 +314,69 @@
                   <div id="homeBalancesByCurrencyListWeb" class="currency-breakdown-strip"></div>
                 </div>
               </details>
+            </section>
+
+            <section class="card tg-home-quick-actions tg-only-block" aria-label="Быстрые действия">
+              <h2 class="tg-home-quick-actions-title">Быстрые действия</h2>
+              <div class="tg-home-quick-actions-grid">
+                <button type="button" class="tg-home-quick-action" data-tg-quick-action="transfer">
+                  <span class="tg-home-quick-action-icon tg-home-quick-action-icon--transfer" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M7 8H17M7 16H17"
+                        stroke="currentColor"
+                        stroke-width="1.75"
+                        stroke-linecap="round"
+                      />
+                      <path
+                        d="M14 5L17 8L14 11M10 19L7 16L10 13"
+                        stroke="currentColor"
+                        stroke-width="1.75"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  <span class="tg-home-quick-action-label">Перевод между счетами</span>
+                </button>
+                <button type="button" class="tg-home-quick-action" data-tg-quick-action="entry">
+                  <span class="tg-home-quick-action-icon tg-home-quick-action-icon--entry" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.75" />
+                      <path d="M12 8V16M8 12H16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <span class="tg-home-quick-action-label">Новая операция</span>
+                </button>
+                <button type="button" class="tg-home-quick-action" data-tg-quick-action="category">
+                  <span class="tg-home-quick-action-icon tg-home-quick-action-icon--category" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M7 7H17L20 10V17A1 1 0 0 1 19 18H7A2 2 0 0 1 5 16V9A2 2 0 0 1 7 7Z"
+                        stroke="currentColor"
+                        stroke-width="1.75"
+                        stroke-linejoin="round"
+                      />
+                      <circle cx="16.5" cy="10.5" r="1.2" fill="currentColor" />
+                    </svg>
+                  </span>
+                  <span class="tg-home-quick-action-label">Новая категория</span>
+                </button>
+                <button type="button" class="tg-home-quick-action" data-tg-quick-action="account">
+                  <span class="tg-home-quick-action-icon tg-home-quick-action-icon--account" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M4 8.5C4 7.67 4.67 7 5.5 7H18.5C19.33 7 20 7.67 20 8.5V15.5C20 16.33 19.33 17 18.5 17H5.5C4.67 17 4 16.33 4 15.5V8.5Z"
+                        stroke="currentColor"
+                        stroke-width="1.75"
+                      />
+                      <path d="M7 12H11" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                      <circle cx="16.5" cy="12" r="1.5" fill="currentColor" />
+                    </svg>
+                  </span>
+                  <span class="tg-home-quick-action-label">Новый счёт</span>
+                </button>
+              </div>
             </section>
 
             <div class="web-dash-summary-grid">
@@ -459,69 +519,6 @@
             </section>
           </aside>
           </div>
-
-          <section class="card tg-home-quick-actions tg-only-block" aria-label="Быстрые действия">
-            <h2 class="tg-home-quick-actions-title">Быстрые действия</h2>
-            <div class="tg-home-quick-actions-grid">
-              <button type="button" class="tg-home-quick-action" data-tg-quick-action="transfer">
-                <span class="tg-home-quick-action-icon tg-home-quick-action-icon--transfer" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M7 8H17M7 16H17"
-                      stroke="currentColor"
-                      stroke-width="1.75"
-                      stroke-linecap="round"
-                    />
-                    <path
-                      d="M14 5L17 8L14 11M10 19L7 16L10 13"
-                      stroke="currentColor"
-                      stroke-width="1.75"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </span>
-                <span class="tg-home-quick-action-label">Перевод между счетами</span>
-              </button>
-              <button type="button" class="tg-home-quick-action" data-tg-quick-action="entry">
-                <span class="tg-home-quick-action-icon tg-home-quick-action-icon--entry" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.75" />
-                    <path d="M12 8V16M8 12H16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-                  </svg>
-                </span>
-                <span class="tg-home-quick-action-label">Новая операция</span>
-              </button>
-              <button type="button" class="tg-home-quick-action" data-tg-quick-action="category">
-                <span class="tg-home-quick-action-icon tg-home-quick-action-icon--category" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M7 7H17L20 10V17A1 1 0 0 1 19 18H7A2 2 0 0 1 5 16V9A2 2 0 0 1 7 7Z"
-                      stroke="currentColor"
-                      stroke-width="1.75"
-                      stroke-linejoin="round"
-                    />
-                    <circle cx="16.5" cy="10.5" r="1.2" fill="currentColor" />
-                  </svg>
-                </span>
-                <span class="tg-home-quick-action-label">Новая категория</span>
-              </button>
-              <button type="button" class="tg-home-quick-action" data-tg-quick-action="account">
-                <span class="tg-home-quick-action-icon tg-home-quick-action-icon--account" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M4 8.5C4 7.67 4.67 7 5.5 7H18.5C19.33 7 20 7.67 20 8.5V15.5C20 16.33 19.33 17 18.5 17H5.5C4.67 17 4 16.33 4 15.5V8.5Z"
-                      stroke="currentColor"
-                      stroke-width="1.75"
-                    />
-                    <path d="M7 12H11" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-                    <circle cx="16.5" cy="12" r="1.5" fill="currentColor" />
-                  </svg>
-                </span>
-                <span class="tg-home-quick-action-label">Новый счёт</span>
-              </button>
-            </div>
-          </section>
 
           <div id="webDayTipBanner" class="web-day-tip" role="status">
             <span class="web-day-tip-icon" aria-hidden="true">💡</span>
@@ -2089,36 +2086,28 @@
     </div>
     </div>
 
-    <div id="entryTypeModal" class="entry-type-modal" hidden>
-      <button id="entryTypeModalBackdrop" class="entry-type-backdrop" type="button"></button>
-        <div class="entry-type-sheet">
-          <p class="section-label">Новая операция</p>
-          <h2>Что добавить?</h2>
-          <div class="entry-type-modal-grid">
-            <div class="entry-type-actions">
-              <button
-                class="entry-type-action income"
-                data-entry-kind="income"
-                type="button"
-              >
-                Доход
-              </button>
-              <button
-                class="entry-type-action expense"
-                data-entry-kind="expense"
-                type="button"
-              >
-                Расход
-              </button>
-            </div>
-            <button id="entryTypeOpenTransferButton" class="entry-type-action entry-type-transfer-wide" type="button">
-              Обмен между счетами
+    <div id="entryTypeModal" class="entry-type-modal" hidden role="dialog" aria-modal="true" aria-labelledby="entryTypeModalHeading">
+      <button id="entryTypeModalBackdrop" class="entry-type-backdrop" type="button" aria-label="Закрыть"></button>
+      <div class="entry-type-dialog">
+        <p class="section-label">Новая операция</p>
+        <h2 id="entryTypeModalHeading">Что добавить?</h2>
+        <div class="entry-type-modal-grid">
+          <div class="entry-type-actions">
+            <button class="entry-type-action income" data-entry-kind="income" type="button">
+              Доход
+            </button>
+            <button class="entry-type-action expense" data-entry-kind="expense" type="button">
+              Расход
             </button>
           </div>
-          <button id="entryTypeModalClose" class="text-link-button entry-type-close" type="button">
-            Отмена
+          <button id="entryTypeOpenTransferButton" class="entry-type-action entry-type-transfer-wide" type="button">
+            Обмен между счетами
           </button>
         </div>
+        <button id="entryTypeModalClose" class="text-link-button entry-type-close" type="button">
+          Отмена
+        </button>
+      </div>
     </div>
 
     <div

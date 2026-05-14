@@ -37,6 +37,9 @@ const recentEntriesListElement = document.getElementById("recentEntriesList");
 const recentTransfersListElement = document.getElementById("recentTransfersList");
 const homeRecentActivityListElement = document.getElementById("homeRecentActivityList");
 const refreshButton = document.getElementById("refreshButton");
+const tgGlobalScreenTitleElement = document.getElementById("tgGlobalScreenTitle");
+const tgGlobalRefreshButton = document.getElementById("tgGlobalRefreshButton");
+const tgGlobalNewEntryButton = document.getElementById("tgGlobalNewEntryButton");
 const webTopNav = document.getElementById("webTopNav");
 const webRefreshButton = document.getElementById("webRefreshButton");
 const webTopNavAddButton = document.getElementById("webTopNavAddButton");
@@ -1194,6 +1197,55 @@ function formatCurrencyOption(currency) {
   return `${currency.code} — ${currency.name}`;
 }
 
+function scrollTelegramAppShellToTop() {
+  if (isWebMode) {
+    return;
+  }
+
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+
+  const main = document.querySelector("main.tabbed-content");
+  if (main instanceof HTMLElement) {
+    main.scrollTop = 0;
+  }
+
+  document.querySelectorAll(".screen.screen-active").forEach((el) => {
+    if (el instanceof HTMLElement) {
+      el.scrollTop = 0;
+    }
+  });
+
+  const opsRoot = document.getElementById("tgOpsActivityRoot");
+  if (opsRoot instanceof HTMLElement) {
+    opsRoot.scrollTop = 0;
+  }
+}
+
+function resolveTgGlobalScreenTitle(screenName) {
+  if (screenName === "activity" && document.body.dataset.tgTransferOnly === "1") {
+    return WEB_PAGE_TITLES.transfer;
+  }
+
+  if (screenName === "reports" && reportTitleElement) {
+    const t = (reportTitleElement.textContent ?? "").trim();
+    if (t) {
+      return t;
+    }
+  }
+
+  return WEB_PAGE_TITLES[screenName] ?? WEB_PAGE_TITLES.home;
+}
+
+function syncTgGlobalScreenChrome(screenName) {
+  if (isWebMode || !tgGlobalScreenTitleElement) {
+    return;
+  }
+
+  tgGlobalScreenTitleElement.textContent = resolveTgGlobalScreenTitle(screenName);
+}
+
 function openScreen(screenName, options = {}) {
   const prevScreen = document.body.dataset.appActiveScreen || "home";
   const nextScreen = screenName || "home";
@@ -1283,6 +1335,11 @@ function openScreen(screenName, options = {}) {
     if (!overlayEnter) {
       telegramGestureBackTarget = prevScreen;
     }
+  }
+
+  if (!isWebMode) {
+    syncTgGlobalScreenChrome(nextScreen);
+    scrollTelegramAppShellToTop();
   }
 }
 
@@ -4503,6 +4560,10 @@ function renderReport(report) {
   if (reportCsvStatementButton) {
     reportCsvStatementButton.disabled = !canExport;
   }
+
+  if (!isWebMode && document.body.dataset.appActiveScreen === "reports") {
+    syncTgGlobalScreenChrome("reports");
+  }
 }
 
 function readTransferOptionCurrency(opt) {
@@ -6619,12 +6680,16 @@ if (refreshButton) {
   });
 }
 
-document.getElementById("tgHomeRefreshButton")?.addEventListener("click", () => {
+tgGlobalRefreshButton?.addEventListener("click", () => {
   if (refreshButton) {
     refreshButton.click();
   } else {
     void loadApp({ globalBusy: true, busyMessage: "Обновляем данные…" });
   }
+});
+
+tgGlobalNewEntryButton?.addEventListener("click", () => {
+  openEntryTypeModal();
 });
 
 const webDayTipBanner = document.getElementById("webDayTipBanner");
