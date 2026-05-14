@@ -412,15 +412,59 @@ function attachTelegramPullToRefresh() {
   }
   balancyPullRefreshAttached = true;
   let startY = 0;
+  let startX = 0;
   let armed = false;
   let pulling = false;
+  let ptrGestureVertical = false;
+  /** @type {Element | null} */
+  let ptrStartTarget = null;
   let lastPullRefreshAt = 0;
   const COOLDOWN_MS = 2000;
   const THRESH = 76;
   const host = document.getElementById("pullRefreshHost");
   const label = document.getElementById("pullRefreshLabel");
 
-  const scrollTop = () => window.scrollY || document.documentElement.scrollTop || 0;
+  const getDocumentScrollTop = () =>
+    window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+
+  const hidePullHost = () => {
+    if (!host) {
+      return;
+    }
+    host.hidden = true;
+    host.classList.remove("pull-refresh-host--ready");
+    host.style.transform = "";
+    host.setAttribute("aria-hidden", "true");
+  };
+
+  const isPageScrollAwayFromTop = () => {
+    if (getDocumentScrollTop() > 6) {
+      return true;
+    }
+    const main = document.querySelector("main.tabbed-content");
+    if (main && main.scrollTop > 6) {
+      return true;
+    }
+    const active = document.querySelector(".screen.screen-active");
+    if (active && active.scrollTop > 6) {
+      return true;
+    }
+    return false;
+  };
+
+  const isAnyScrollChainAwayFromTop = (startEl) => {
+    if (isPageScrollAwayFromTop()) {
+      return true;
+    }
+    let n = startEl instanceof Element ? startEl : null;
+    while (n) {
+      if (n.scrollTop > 6) {
+        return true;
+      }
+      n = n.parentElement;
+    }
+    return false;
+  };
 
   window.addEventListener(
     "touchstart",
@@ -428,19 +472,22 @@ function attachTelegramPullToRefresh() {
       if (globalBusyDepth > 0) {
         return;
       }
-      if (scrollTop() > 6) {
-        return;
-      }
       const t = e.target;
       if (!(t instanceof Element)) {
         return;
       }
-      if (t.closest(".swipe-row") || t.closest(".entry-type-modal") || t.closest(".help-documentation-modal")) {
+      if (t.closest(".entry-type-modal") || t.closest(".help-documentation-modal")) {
+        return;
+      }
+      if (isAnyScrollChainAwayFromTop(t)) {
         return;
       }
       armed = true;
       pulling = false;
+      ptrGestureVertical = false;
+      ptrStartTarget = t;
       startY = e.touches[0]?.clientY ?? 0;
+      startX = e.touches[0]?.clientX ?? 0;
     },
     { passive: true }
   );
@@ -451,17 +498,31 @@ function attachTelegramPullToRefresh() {
       if (!armed || globalBusyDepth > 0) {
         return;
       }
-      if (scrollTop() > 6) {
+      if (ptrStartTarget && isAnyScrollChainAwayFromTop(ptrStartTarget)) {
         armed = false;
-        if (host) {
-          host.hidden = true;
-          host.classList.remove("pull-refresh-host--ready");
-          host.style.transform = "";
-        }
+        ptrStartTarget = null;
+        hidePullHost();
         return;
       }
+      if (isPageScrollAwayFromTop()) {
+        armed = false;
+        ptrStartTarget = null;
+        hidePullHost();
+        return;
+      }
+      const x = e.touches[0]?.clientX ?? 0;
       const y = e.touches[0]?.clientY ?? 0;
       const dy = y - startY;
+      const dx = x - startX;
+      if (!ptrGestureVertical && Math.abs(dx) + Math.abs(dy) >= 10) {
+        if (Math.abs(dx) > Math.abs(dy) * 1.12) {
+          armed = false;
+          ptrStartTarget = null;
+          hidePullHost();
+          return;
+        }
+        ptrGestureVertical = true;
+      }
       if (dy <= 4) {
         return;
       }
@@ -485,6 +546,8 @@ function attachTelegramPullToRefresh() {
       return;
     }
     armed = false;
+    ptrStartTarget = null;
+    ptrGestureVertical = false;
     let didPull = false;
     if (pulling && host && !host.hidden) {
       const ready = host.classList.contains("pull-refresh-host--ready");
@@ -503,12 +566,10 @@ function attachTelegramPullToRefresh() {
       host.style.transform = "";
       host.classList.remove("pull-refresh-host--ready");
       if (!didPull) {
-        host.hidden = true;
-        host.setAttribute("aria-hidden", "true");
+        hidePullHost();
       } else {
         window.setTimeout(() => {
-          host.hidden = true;
-          host.setAttribute("aria-hidden", "true");
+          hidePullHost();
         }, 280);
       }
     }
@@ -1983,6 +2044,29 @@ const CATEGORY_UI_META_STORAGE_KEY = "balancyCategoryUiMetaV1";
 
 const DEFAULT_CATEGORY_ICON_KEY = "briefcase";
 
+/** Соответствует `data-category-icon` в `#webCategoryIconGrid` (index.html). */
+const CATEGORY_ICON_GLYPHS = {
+  briefcase: "💼",
+  laptop: "💻",
+  building: "🏢",
+  gift: "🎁",
+  house: "🏠",
+  cart: "🛒",
+  car: "🚗",
+  food: "🍽",
+  heart: "❤️",
+  sport: "💪",
+  plane: "✈️",
+  study: "🎓",
+  pet: "🐾",
+  more: "⋯"
+};
+
+function getCategoryIconGlyph(iconKey) {
+  const k = String(iconKey ?? "").trim();
+  return CATEGORY_ICON_GLYPHS[k] || CATEGORY_ICON_GLYPHS.briefcase;
+}
+
 let categoryFormSharedChromeAttached = false;
 
 const ACCOUNT_ACCENT_STORAGE_KEY = "balancyAccountAccentsV1";
@@ -2286,7 +2370,7 @@ function syncTgCategoryPreview() {
   const descInput = document.getElementById("categoryDescriptionInput");
   const kindInput = document.getElementById("categoryKindInput");
   const accentHidden = document.getElementById("categoryAccentInput");
-  const selectedIconBtn = document.querySelector("#webCategoryIconGrid .web-category-icon-btn.is-selected");
+  const iconKeyInput = document.getElementById("categoryIconKeyInput");
 
   if (!nameEl || !pill || !glyph || !ring) {
     return;
@@ -2300,8 +2384,13 @@ function syncTgCategoryPreview() {
   pill.classList.toggle("tg-category-preview-pill--income", kind === "income");
   pill.classList.toggle("tg-category-preview-pill--expense", kind === "expense");
 
-  const iconSpan = selectedIconBtn?.querySelector("span[aria-hidden='true']");
-  glyph.textContent = iconSpan?.textContent?.trim() || "💼";
+  const selectedIconBtn = document.querySelector("#webCategoryIconGrid .web-category-icon-btn.is-selected");
+
+  const iconKey =
+    iconKeyInput instanceof HTMLInputElement && String(iconKeyInput.value ?? "").trim()
+      ? String(iconKeyInput.value).trim()
+      : selectedIconBtn?.dataset?.categoryIcon?.trim() || DEFAULT_CATEGORY_ICON_KEY;
+  glyph.textContent = getCategoryIconGlyph(iconKey);
 
   const accentHex = (accentHidden?.value || "#28b473").trim() || "#28b473";
   ring.style.background = rgbaFromHex(accentHex, 0.16);
@@ -2463,11 +2552,15 @@ function renderWebCategoriesTable(categories) {
   tbody.innerHTML = items
     .map((category) => {
       const dot = resolveCategoryDotColor(category);
+      const meta = readCategoryUiMeta(category.id);
+      const glyph = getCategoryIconGlyph(meta.iconKey);
       const kindSlug = category.kind === "income" ? "income" : "expense";
+      const tileBg = escapeHtml(rgbaFromHex(dot, 0.14));
+      const tileRing = escapeHtml(rgbaFromHex(dot, 0.28));
       return `<tr>
         <td>
           <div class="web-categories-name-cell">
-            <span class="web-categories-dot" style="background:${escapeHtml(dot)}"></span>
+            <span class="web-categories-icon-emoji-tile" style="background:${tileBg};box-shadow:inset 0 0 0 1px ${tileRing}" aria-hidden="true">${glyph}</span>
             <span class="web-categories-name-text">${escapeHtml(category.name)}</span>
           </div>
         </td>
@@ -2652,6 +2745,11 @@ function renderCategories(categories) {
     targetElement.innerHTML = items
       .map((category) => {
         const kindSlug = category.kind === "income" ? "income" : "expense";
+        const meta = readCategoryUiMeta(category.id);
+        const glyph = getCategoryIconGlyph(meta.iconKey);
+        const dot = resolveCategoryDotColor(category);
+        const tileBg = escapeHtml(rgbaFromHex(dot, 0.14));
+        const tileRing = escapeHtml(rgbaFromHex(dot, 0.28));
 
         return `
           <div class="category-item swipe-row">
@@ -2665,10 +2763,13 @@ function renderCategories(categories) {
             </div>
             <div class="swipe-row-sheet">
               <div class="category-strip-content">
-                <strong class="category-strip-name">${escapeHtml(category.name)}</strong>
-                <span class="category-strip-kind category-strip-kind--${kindSlug}">${escapeHtml(
-                  formatKind(category.kind)
-                )}</span>
+                <span class="category-strip-icon-tile" style="background:${tileBg};box-shadow:inset 0 0 0 1px ${tileRing}" aria-hidden="true">${glyph}</span>
+                <div class="category-strip-text">
+                  <strong class="category-strip-name">${escapeHtml(category.name)}</strong>
+                  <span class="category-strip-kind category-strip-kind--${kindSlug}">${escapeHtml(
+                    formatKind(category.kind)
+                  )}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -2904,10 +3005,10 @@ function populateTgActivityFilterSelects() {
   }
 
   catSel.innerHTML = `<option value="">${escapeHtml("Все категории")}</option>${state.categories
-    .map(
-      (c) =>
-        `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)} (${escapeHtml(formatKind(c.kind))})</option>`
-    )
+    .map((c) => {
+      const g = getCategoryIconGlyph(readCategoryUiMeta(c.id).iconKey);
+      return `<option value="${escapeHtml(c.id)}">${g} ${escapeHtml(c.name)} (${escapeHtml(formatKind(c.kind))})</option>`;
+    })
     .join("")}`;
 
   if (prevCat && Array.from(catSel.options).some((o) => o.value === prevCat)) {
@@ -4518,10 +4619,10 @@ function populateCategoryOptions() {
   }
 
   entryCategoryInput.innerHTML = filteredCategories
-    .map(
-      (category) =>
-        `<option value="${escapeHtml(category.id)}">${escapeHtml(category.name)}</option>`
-    )
+    .map((category) => {
+      const g = getCategoryIconGlyph(readCategoryUiMeta(category.id).iconKey);
+      return `<option value="${escapeHtml(category.id)}">${g} ${escapeHtml(category.name)}</option>`;
+    })
     .join("");
 }
 

@@ -77,6 +77,10 @@ body {
   overscroll-behavior-y: contain;
 }
 
+body:not(.web-mode) {
+  touch-action: manipulation;
+}
+
 button,
 input,
 select {
@@ -120,6 +124,14 @@ body:not(.web-mode) input:not([type="checkbox"]):not([type="radio"]):not([type="
 body:not(.web-mode) textarea,
 body:not(.web-mode) select {
   font-size: 16px;
+}
+
+/* Telegram / iOS WebView: поля <16px при фокусе вызывают авто-zoom страницы */
+body:not(.web-mode) .tg-ops-search-input,
+body:not(.web-mode) .tg-ops-control,
+body:not(.web-mode) .tg-ops-control--select,
+body:not(.web-mode) .tg-ops-date-input-shell .tg-ops-control[type="date"] {
+  font-size: 16px !important;
 }
 
 .global-busy-overlay {
@@ -6500,8 +6512,20 @@ body.web-mode .web-categories-toolbar.web-categories-toolbar--web {
 .web-categories-name-cell {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
+}
+
+.web-categories-icon-emoji-tile {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 22px;
+  line-height: 1;
 }
 
 .web-categories-dot {
@@ -6774,7 +6798,7 @@ body:not(.web-mode) .tg-category-desc-input {
   border-radius: 12px;
   border: 1px solid rgb(226 232 240);
   background: #fff;
-  font-size: 15px;
+  font-size: 16px !important;
   color: rgb(15 23 42);
   font-family: inherit;
 }
@@ -6795,6 +6819,57 @@ body:not(.web-mode) .tg-category-desc-input:focus {
   outline: none;
   border-color: rgb(40 180 115 / 0.55);
   box-shadow: 0 0 0 3px rgb(40 180 115 / 0.12);
+}
+
+body:not(.web-mode) .category-strip-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+body:not(.web-mode) .category-strip-icon-tile {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 22px;
+  line-height: 1;
+}
+
+body:not(.web-mode) .category-strip-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+body:not(.web-mode) .category-strip-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgb(15 23 42);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body:not(.web-mode) .category-strip-kind {
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.2;
+  align-self: flex-start;
+}
+
+body:not(.web-mode) .category-strip-kind--income {
+  color: #047857;
+}
+
+body:not(.web-mode) .category-strip-kind--expense {
+  color: #b91c1c;
 }
 
 body:not(.web-mode) .web-categories-color-hint {
