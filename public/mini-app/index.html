@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260514tg-global-chrome-scroll-modal";
+        var BALANCY_CLIENT_ASSET_REV = "20260514tg-header-instruction-viewport";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -227,41 +227,16 @@
           <div class="brand-lockup tg-mini-topbar-brand" aria-label="Balancy">
             <span class="brand-wordmark">Balancy</span>
           </div>
-          <div class="tg-mini-topbar-actions">
-            <button
-              type="button"
-              id="tgGlobalRefreshButton"
-              class="tg-home-icon-btn tg-mini-topbar-icon-btn"
-              title="Обновить"
-              aria-label="Обновить данные"
-            >
-              <svg class="tg-home-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M21 12a9 9 0 1 1-2.64-6.36"
-                  stroke="currentColor"
-                  stroke-width="1.75"
-                  stroke-linecap="round"
-                />
-                <path
-                  d="M21 3v6h-6"
-                  stroke="currentColor"
-                  stroke-width="1.75"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </button>
-            <button
-              type="button"
-              id="tgGlobalNewEntryButton"
-              class="tg-ops-btn tg-ops-btn--plus tg-mini-topbar-plus"
-              aria-label="Новая операция"
-            >
-              <span aria-hidden="true">+</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            id="tgGlobalNewEntryButton"
+            class="tg-ops-btn tg-ops-btn--plus tg-mini-topbar-plus"
+            aria-label="Новая операция"
+          >
+            <span aria-hidden="true">+</span>
+          </button>
         </div>
-        <h1 id="tgGlobalScreenTitle" class="tg-app-screen-title">Главная</h1>
+        <p id="tgGlobalScreenTitle" class="tg-app-screen-caption">Главная</p>
         <button id="refreshButton" class="refresh-text-btn tg-mini-topbar-legacy-refresh" type="button" hidden>
           Обновить
         </button>
@@ -528,7 +503,7 @@
             <button type="button" id="webDayTipClose" class="web-day-tip-close" aria-label="Закрыть совет">×</button>
           </div>
 
-          <div class="home-help-footer">
+          <div class="home-help-footer web-only-block">
             <button type="button" id="openHelpDocumentationButton" class="home-help-doc-trigger">
               Справка: как пользоваться
             </button>
@@ -551,16 +526,14 @@
               </div>
             </div>
             <p class="muted tg-more-screen-lead">
-              История и счета доступны здесь. Ниже можно быстро добавить операцию.
+              Дополнительные разделы и быстрые действия. Полное руководство — в инструкции.
             </p>
             <div class="tg-more-screen-actions">
-              <button type="button" class="primary-button" data-open-screen="history">
-                История операций
-              </button>
-              <button type="button" class="ghost-button" data-open-screen="accounts">Счета</button>
+              <button type="button" class="primary-button" data-open-screen="accounts">Счета</button>
               <button type="button" class="ghost-button" id="tgMoreOpenEntryModalButton">
                 Новая операция
               </button>
+              <button type="button" class="ghost-button" id="tgMoreInstructionButton">Инструкция</button>
             </div>
           </section>
         </section>
@@ -574,15 +547,6 @@
                     <h1 class="tg-accounts-screen-title">Счета</h1>
                     <p class="tg-accounts-screen-sub muted">Управляйте своими счетами: создавайте, редактируйте и удаляйте.</p>
                   </div>
-                  <button
-                    type="button"
-                    class="tg-accounts-head-plus"
-                    id="tgAccountsHeadPlusButton"
-                    aria-label="Добавить счёт"
-                    title="Добавить счёт"
-                  >
-                    +
-                  </button>
                 </header>
 
                 <div class="web-accounts-list-shell web-accounts-surface">
@@ -2107,6 +2071,136 @@
         <button id="entryTypeModalClose" class="text-link-button entry-type-close" type="button">
           Отмена
         </button>
+      </div>
+    </div>
+
+    <div
+      id="tgInstructionModal"
+      class="help-doc-modal tg-only-block"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="tgInstructionTitle"
+    >
+      <button
+        id="tgInstructionModalBackdrop"
+        type="button"
+        class="help-doc-backdrop"
+        aria-label="Закрыть инструкцию"
+      ></button>
+      <div class="help-doc-sheet">
+        <div class="help-doc-sheet-bar" aria-hidden="true"></div>
+        <header class="help-doc-header">
+          <div>
+            <p class="section-label">Balancy · Telegram</p>
+            <h2 id="tgInstructionTitle">Инструкция</h2>
+          </div>
+          <button type="button" id="tgInstructionCloseTop" class="help-doc-close-corner" title="Закрыть">
+            Закрыть
+          </button>
+        </header>
+        <div class="help-doc-scroll">
+          <p class="help-doc-lede muted">
+            Ниже — пошагово, как пользоваться мини-приложением Balancy: от первого входа до отчётов и переводов.
+          </p>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">1. С чего начать</h3>
+            <p class="muted">
+              Откройте приложение из бота в Telegram. После загрузки вы попадёте на <strong>Главную</strong> — там
+              общий баланс по всем счетам в выбранной валюте отображения и краткая сводка за месяц.
+            </p>
+            <ul class="help-doc-list">
+              <li>Сначала создайте хотя бы один <strong>счёт</strong> (вкладка «Счета» или кнопка в блоке быстрых действий на главной).</li>
+              <li>Затем добавьте <strong>категории</strong> доходов и расходов (вкладка «Категории») — они понадобятся при записи операций.</li>
+              <li>Курсы валют для пересчёта баланса и отчётов подтягиваются с сервера; при необходимости обновите данные жестом «потянуть вниз» на главной или откройте приложение заново из бота.</li>
+            </ul>
+          </article>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">2. Навигация</h3>
+            <p class="muted">Внизу экрана — вкладки:</p>
+            <ul class="help-doc-list">
+              <li><strong>Главная</strong> — баланс, остатки по валютам, списки счетов и последних движений, быстрые действия.</li>
+              <li><strong>Операции</strong> — форма новой записи (доход/расход) и лента операций с фильтрами.</li>
+              <li><strong>Отчёты</strong> — период, фильтры, графики и выгрузка CSV (если доступно в вашей версии).</li>
+              <li><strong>Категории</strong> — списки категорий доходов и расходов, создание и редактирование.</li>
+              <li><strong>Ещё</strong> — переход к счетам, новая операция из меню, эта инструкция.</li>
+            </ul>
+            <p class="muted">
+              Вверху слева — логотип Balancy, справа кнопка <strong>+</strong>: то же меню выбора, что и «Новая операция» в быстрых действиях (доход, расход или обмен между счетами).
+            </p>
+          </article>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">3. Счета</h3>
+            <ol class="help-doc-list help-doc-numbered">
+              <li>Откройте вкладку <strong>Счета</strong> (с главной через «Все счета» или из раздела «Ещё»).</li>
+              <li>Нажмите <strong>+ Добавить счёт</strong>, заполните название, тип (удобная метка), валюту и стартовый баланс.</li>
+              <li>Сохраните. Счёт появится в списке; общий баланс на главной пересчитается с учётом курсов.</li>
+            </ol>
+            <p class="muted">
+              Чтобы изменить или удалить счёт, в списке на телефоне сделайте <strong>свайп строки влево</strong> — появятся действия.
+              Удаление безвозвратно затрагивает связанные данные в рамках приложения — подтверждайте осознанно.
+            </p>
+          </article>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">4. Категории</h3>
+            <p class="muted">
+              На вкладке «Категории» переключайте вид доходов/расходов, добавляйте статьи с понятными названиями (например «Продукты», «Транспорт»).
+              Редактирование и удаление — также через свайп влево по строке в списке.
+            </p>
+          </article>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">5. Операции: доход и расход</h3>
+            <ol class="help-doc-list help-doc-numbered">
+              <li>Нажмите <strong>+</strong> вверху или «Новая операция» на главной / в «Ещё».</li>
+              <li>Выберите <strong>Доход</strong> или <strong>Расход</strong> — откроется вкладка «Операции» с формой.</li>
+              <li>Укажите счёт, категорию, сумму, дату и время; при необходимости — комментарий. Сохраните.</li>
+            </ol>
+          </article>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">6. Перевод между счетами</h3>
+            <p class="muted">
+              В меню «Новая операция» выберите <strong>Обмен между счетами</strong>. Укажите счёт списания и зачисления, суммы и дату.
+              Переводы между вашими счетами не меняют <strong>общий</strong> баланс в одной валюте, но обновляют остатки по каждому счёту.
+              При разных валютах можно задать сумму зачисления вручную или оставить расчёт по курсу — как подсказывает форма.
+            </p>
+          </article>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">7. Лента операций</h3>
+            <p class="muted">
+              На вкладке «Операции» вверху задайте период, тип, счёт, категорию или поисковую строку и нажмите <strong>Показать</strong>.
+              Ниже — постраничная лента; пагинация внизу списка.
+            </p>
+          </article>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">8. Отчёты</h3>
+            <p class="muted">
+              Выберите период (неделя, месяц, квартал, год или свои даты), при необходимости фильтры по счёту, категории и типу.
+              Нажмите <strong>Построить отчёт</strong>. После расчёта доступны таблицы, графики и при наличии прав — выгрузка CSV.
+            </p>
+          </article>
+
+          <article class="help-doc-section card help-doc-callout">
+            <h3 class="help-doc-h3">9. Полезные приёмы</h3>
+            <ul class="help-doc-list">
+              <li>Валюта отображения на главной — в карточке баланса; отчёты используют валюту отчёта из формы отчёта.</li>
+              <li>Остатки по валютам на главной — горизонтальная полоса «чипов» или раскрывающийся блок в веб-версии.</li>
+              <li>Если что-то не обновилось, закройте мини-приложение полностью и откройте снова из бота.</li>
+            </ul>
+          </article>
+        </div>
+        <footer class="help-doc-footer">
+          <button type="button" id="tgInstructionCloseBottom" class="ghost-button help-doc-footer-btn">
+            Закрыть
+          </button>
+        </footer>
       </div>
     </div>
 

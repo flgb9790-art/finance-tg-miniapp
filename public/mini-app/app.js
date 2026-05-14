@@ -1,6 +1,25 @@
 const tg = window.Telegram?.WebApp;
 const isWebMode = new URLSearchParams(window.location.search).get("web") === "1";
 
+/** В TG: клавиатура не сжимает layout — нижняя навигация не «подпрыгивает» над клавиатурой. Веб-версия meta не трогается. */
+function applyTelegramMiniAppViewportFix() {
+  if (isWebMode) {
+    return;
+  }
+
+  const m = document.querySelector('meta[name="viewport"]');
+  if (!m) {
+    return;
+  }
+
+  m.setAttribute(
+    "content",
+    "width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=overlays-content"
+  );
+}
+
+applyTelegramMiniAppViewportFix();
+
 let globalBusyDepth = 0;
 
 const WEB_PAGE_TITLES = {
@@ -38,7 +57,6 @@ const recentTransfersListElement = document.getElementById("recentTransfersList"
 const homeRecentActivityListElement = document.getElementById("homeRecentActivityList");
 const refreshButton = document.getElementById("refreshButton");
 const tgGlobalScreenTitleElement = document.getElementById("tgGlobalScreenTitle");
-const tgGlobalRefreshButton = document.getElementById("tgGlobalRefreshButton");
 const tgGlobalNewEntryButton = document.getElementById("tgGlobalNewEntryButton");
 const webTopNav = document.getElementById("webTopNav");
 const webRefreshButton = document.getElementById("webRefreshButton");
@@ -148,6 +166,10 @@ const helpDocumentationBackdrop = document.getElementById("helpDocumentationBack
 const helpDocumentationCloseTopButton = document.getElementById("helpDocumentationCloseTop");
 const helpDocumentationCloseBottomButton = document.getElementById("helpDocumentationCloseBottom");
 const openHelpDocumentationButton = document.getElementById("openHelpDocumentationButton");
+const tgInstructionModalElement = document.getElementById("tgInstructionModal");
+const tgInstructionModalBackdrop = document.getElementById("tgInstructionModalBackdrop");
+const tgInstructionCloseTopButton = document.getElementById("tgInstructionCloseTop");
+const tgInstructionCloseBottomButton = document.getElementById("tgInstructionCloseBottom");
 const entryTypeActionButtons = Array.from(document.querySelectorAll("[data-entry-kind]"));
 const screenElements = Array.from(document.querySelectorAll(".screen"));
 const navButtons = Array.from(document.querySelectorAll(".bottom-nav-button"));
@@ -1636,11 +1658,16 @@ async function refreshWebOperationsBoard() {
 }
 
 function openEntryTypeModal() {
-  entryTypeModalElement.hidden = false;
+  closeTgInstructionModal();
+  if (entryTypeModalElement) {
+    entryTypeModalElement.hidden = false;
+  }
 }
 
 function closeEntryTypeModal() {
-  entryTypeModalElement.hidden = true;
+  if (entryTypeModalElement) {
+    entryTypeModalElement.hidden = true;
+  }
 }
 
 function openHelpDocumentationModal() {
@@ -1649,6 +1676,7 @@ function openHelpDocumentationModal() {
   }
 
   closeEntryTypeModal();
+  closeTgInstructionModal();
   helpDocumentationModalElement.hidden = false;
 }
 
@@ -1658,6 +1686,24 @@ function closeHelpDocumentationModal() {
   }
 
   helpDocumentationModalElement.hidden = true;
+}
+
+function openTgInstructionModal() {
+  if (!tgInstructionModalElement || isWebMode) {
+    return;
+  }
+
+  closeEntryTypeModal();
+  closeHelpDocumentationModal();
+  tgInstructionModalElement.hidden = false;
+}
+
+function closeTgInstructionModal() {
+  if (!tgInstructionModalElement) {
+    return;
+  }
+
+  tgInstructionModalElement.hidden = true;
 }
 
 function openEntryScreenForKind(kind) {
@@ -6244,7 +6290,6 @@ function attachTgAccountsScreenChrome() {
     }, 280);
   };
 
-  document.getElementById("tgAccountsHeadPlusButton")?.addEventListener("click", scrollToAccountForm);
   document.getElementById("tgAccountsAddOutlineButton")?.addEventListener("click", scrollToAccountForm);
 
   document.getElementById("tgAccountFormBackButton")?.addEventListener("click", () => {
@@ -6680,14 +6725,6 @@ if (refreshButton) {
   });
 }
 
-tgGlobalRefreshButton?.addEventListener("click", () => {
-  if (refreshButton) {
-    refreshButton.click();
-  } else {
-    void loadApp({ globalBusy: true, busyMessage: "Обновляем данные…" });
-  }
-});
-
 tgGlobalNewEntryButton?.addEventListener("click", () => {
   openEntryTypeModal();
 });
@@ -6966,6 +7003,12 @@ document.addEventListener("keydown", (event) => {
     return;
   }
 
+  if (tgInstructionModalElement && !tgInstructionModalElement.hidden) {
+    closeTgInstructionModal();
+    event.preventDefault();
+    return;
+  }
+
   if (!helpDocumentationModalElement || helpDocumentationModalElement.hidden) {
     return;
   }
@@ -7201,6 +7244,22 @@ document.addEventListener("click", (event) => {
 
 document.getElementById("tgMoreOpenEntryModalButton")?.addEventListener("click", () => {
   openEntryTypeModal();
+});
+
+document.getElementById("tgMoreInstructionButton")?.addEventListener("click", () => {
+  openTgInstructionModal();
+});
+
+tgInstructionModalBackdrop?.addEventListener("click", () => {
+  closeTgInstructionModal();
+});
+
+tgInstructionCloseTopButton?.addEventListener("click", () => {
+  closeTgInstructionModal();
+});
+
+tgInstructionCloseBottomButton?.addEventListener("click", () => {
+  closeTgInstructionModal();
 });
 
 openScreenButtons.forEach((button) => {
