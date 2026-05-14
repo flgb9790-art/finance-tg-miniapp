@@ -167,9 +167,9 @@ const state = {
 let webOpsOffset = 0;
 let webOpsDatesInitialized = false;
 
-/** Лента «Операции» в Telegram: сортировка и сколько строк показывать до «Показать ещё» */
-let tgOpsSortDesc = true;
-let tgOpsFeedVisibleCount = 14;
+/** Лента «Операции» в Telegram: пагинация и запрос к /api/operations */
+const TG_OPS_PAGE_SIZE = 12;
+let tgOpsPageOffset = 0;
 /** Снимок фильтров ленты TG (обновляется по «Показать» и при первом рендере) */
 let tgOpsAppliedFilter = {
   q: "",
@@ -810,9 +810,11 @@ function openScreen(screenName, options = {}) {
 
   if (!isWebMode && nextScreen === "activity") {
     populateTgActivityFilterSelects();
-    tgOpsFeedVisibleCount = 14;
-    tgOpsFilterSnapshotInitialized = false;
-    renderTgActivityOpsFeed(state.recentEntries, state.recentTransfers);
+    ensureTgOpsDefaultDates();
+    Object.assign(tgOpsAppliedFilter, readTgOpsFilterFromDom());
+    tgOpsFilterSnapshotInitialized = true;
+    tgOpsPageOffset = 0;
+    void refreshTgOperationsBoard();
   }
 }
 
@@ -925,6 +927,36 @@ function buildWebOperationsApiUrl() {
 
   params.set("limit", String(getWebOpsPageSizeValue()));
   params.set("offset", String(webOpsOffset));
+  return `/api/operations?${params.toString()}`;
+}
+
+function buildTgOperationsApiUrl() {
+  const reportingCurrency = state.summary?.reportingCurrency ?? currentReportingCurrencySelection();
+  const params = new URLSearchParams();
+  params.set("reportingCurrency", reportingCurrency);
+  params.set("scope", "history");
+  const f = tgOpsAppliedFilter;
+  if (f.fromY) {
+    params.set("from", f.fromY);
+  }
+  if (f.toY) {
+    params.set("to", f.toY);
+  }
+  params.set("kind", (f.kind || "all").trim() || "all");
+  const accId = (f.accId ?? "").trim();
+  if (accId) {
+    params.set("accountId", accId);
+  }
+  const catId = (f.catId ?? "").trim();
+  if (catId) {
+    params.set("categoryId", catId);
+  }
+  const q = (f.q ?? "").trim();
+  if (q) {
+    params.set("q", q);
+  }
+  params.set("limit", String(TG_OPS_PAGE_SIZE));
+  params.set("offset", String(tgOpsPageOffset));
   return `/api/operations?${params.toString()}`;
 }
 
@@ -2263,7 +2295,10 @@ function renderCategories(categories) {
 
 function renderRecentEntries(entries) {
   if (!isWebMode && document.getElementById("tgActivityCombinedList")) {
-    renderTgActivityOpsFeed(entries, state.recentTransfers);
+    populateTgActivityFilterSelects();
+    if (document.body.dataset.appActiveScreen === "activity" && tgOpsFilterSnapshotInitialized) {
+      void refreshTgOperationsBoard();
+    }
     return;
   }
 
@@ -2486,29 +2521,6 @@ function populateTgActivityFilterSelects() {
   }
 }
 
-function buildTgOpsCombinedItems(entries, transfers) {
-  const items = [
-    ...(Array.isArray(entries) ? entries : []).map((entry) => ({
-      type: "entry",
-      occurredAt: entry.occurred_at,
-      payload: entry
-    })),
-    ...(Array.isArray(transfers) ? transfers : []).map((transfer) => ({
-      type: "transfer",
-      occurredAt: transfer.occurred_at,
-      payload: transfer
-    }))
-  ];
-
-  items.sort((a, b) => {
-    const ta = new Date(a.occurredAt).getTime();
-    const tb = new Date(b.occurredAt).getTime();
-    return tgOpsSortDesc ? tb - ta : ta - tb;
-  });
-
-  return items;
-}
-
 function readTgOpsFilterFromDom() {
   const searchEl = document.getElementById("tgOpsSearchInput");
   const accEl = document.getElementById("tgOpsFilterAccount");
@@ -2532,81 +2544,44 @@ function applyTgOpsFiltersForTgList() {
     return;
   }
   Object.assign(tgOpsAppliedFilter, readTgOpsFilterFromDom());
-  tgOpsFeedVisibleCount = 14;
-  renderTgActivityOpsFeed(state.recentEntries, state.recentTransfers);
+  tgOpsFilterSnapshotInitialized = true;
+  tgOpsPageOffset = 0;
+  void refreshTgOperationsBoard();
 }
 
-function filterTgOpsCombinedItems(items) {
-  const q = (tgOpsAppliedFilter.q ?? "").trim().toLowerCase();
-  const accId = (tgOpsAppliedFilter.accId ?? "").trim();
-  const kind = (tgOpsAppliedFilter.kind ?? "all").trim() || "all";
-  const catId = (tgOpsAppliedFilter.catId ?? "").trim();
-  const fromY = (tgOpsAppliedFilter.fromY ?? "").trim();
-  const toY = (tgOpsAppliedFilter.toY ?? "").trim();
-
-  return items.filter((item) => {
-    const ymd = toLocalYmdFromIso(item.occurredAt);
-    if (fromY && ymd && ymd < fromY) {
-      return false;
-    }
-    if (toY && ymd && ymd > toY) {
-      return false;
-    }
-
-    if (kind !== "all" && item.type !== kind) {
-      return false;
-    }
-
-    if (item.type === "entry") {
-      const entry = item.payload;
-      if (accId && entry.account_id !== accId && entry.account?.id !== accId) {
-        return false;
-      }
-      if (catId && entry.category_id !== catId && entry.category?.id !== catId) {
-        return false;
-      }
-    } else if (item.type === "transfer") {
-      const t = item.payload;
-      if (catId) {
-        return false;
-      }
-      if (accId && t.from_account_id !== accId && t.to_account_id !== accId) {
-        return false;
-      }
-    }
-
-    if (!q) {
-      return true;
-    }
-
-    if (item.type === "entry") {
-      const entry = item.payload;
-      const hay = [
-        entry.category?.name,
-        entry.account?.name,
-        entry.note,
-        entry.kind,
-        String(entry.amount)
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return hay.includes(q);
-    }
-
-    const t = item.payload;
-    const hay = [
-      t.from_account?.name,
-      t.to_account?.name,
-      t.note,
-      String(t.from_amount),
-      String(t.to_amount)
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-    return hay.includes(q);
-  });
+function resetTgOpsFiltersToDefaults() {
+  if (isWebMode) {
+    return;
+  }
+  const fromEl = document.getElementById("tgOpsDateFrom");
+  const toEl = document.getElementById("tgOpsDateTo");
+  const searchEl = document.getElementById("tgOpsSearchInput");
+  const accEl = document.getElementById("tgOpsFilterAccount");
+  const kindEl = document.getElementById("tgOpsFilterKind");
+  const catEl = document.getElementById("tgOpsFilterCategory");
+  if (fromEl && toEl) {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 30);
+    fromEl.value = toLocalYmdFromDateValue(start);
+    toEl.value = toLocalYmdFromDateValue(end);
+  }
+  if (searchEl) {
+    searchEl.value = "";
+  }
+  if (accEl) {
+    accEl.value = "";
+  }
+  if (kindEl) {
+    kindEl.value = "all";
+  }
+  if (catEl) {
+    catEl.value = "";
+  }
+  Object.assign(tgOpsAppliedFilter, readTgOpsFilterFromDom());
+  tgOpsFilterSnapshotInitialized = true;
+  tgOpsPageOffset = 0;
+  void refreshTgOperationsBoard();
 }
 
 function formatTgOpsTransferAmountCell(transfer) {
@@ -2621,40 +2596,26 @@ function formatTgOpsTransferAmountCell(transfer) {
   </div>`;
 }
 
-function renderTgActivityOpsFeed(entries, transfers) {
-  const root = document.getElementById("tgActivityCombinedList");
-  if (!root || isWebMode) {
-    return;
+function operationsApiItemToFeedItem(row) {
+  if (!row || typeof row !== "object") {
+    return null;
   }
-
-  ensureTgOpsDefaultDates();
-
-  if (!tgOpsFilterSnapshotInitialized) {
-    Object.assign(tgOpsAppliedFilter, readTgOpsFilterFromDom());
-    tgOpsFilterSnapshotInitialized = true;
+  if (row.kind === "entry" && row.entry) {
+    return { type: "entry", occurredAt: row.entry.occurred_at, payload: row.entry };
   }
-
-  const items = filterTgOpsCombinedItems(buildTgOpsCombinedItems(entries, transfers));
-  const showMoreBtn = document.getElementById("tgActivityShowMore");
-
-  if (items.length === 0) {
-    root.innerHTML = `
-      <div class="empty-state" style="padding: 20px 16px 24px;">
-        <strong>Нет операций</strong>
-        <p class="account-meta">Нажмите «Показать» после выбора фильтров или добавьте операцию.</p>
-      </div>
-    `;
-    if (showMoreBtn) {
-      showMoreBtn.hidden = true;
-    }
-    return;
+  if (row.kind === "transfer" && row.transfer) {
+    return { type: "transfer", occurredAt: row.transfer.occurred_at, payload: row.transfer };
   }
+  return null;
+}
 
-  const slice = items.slice(0, tgOpsFeedVisibleCount);
-  const hasMore = items.length > slice.length;
+function buildTgOpsFeedHtmlFromItems(items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return "";
+  }
 
   const groups = new Map();
-  for (const item of slice) {
+  for (const item of items) {
     const key = toLocalYmdFromIso(item.occurredAt) || "—";
     if (!groups.has(key)) {
       groups.set(key, []);
@@ -2662,8 +2623,11 @@ function renderTgActivityOpsFeed(entries, transfers) {
     groups.get(key).push(item);
   }
 
+  const sortedKeys = [...groups.keys()].sort((a, b) => b.localeCompare(a));
   const parts = [];
-  for (const [ymd, groupItems] of groups) {
+
+  for (const ymd of sortedKeys) {
+    const groupItems = groups.get(ymd) ?? [];
     parts.push(`<div class="tg-ops-day-group"><p class="tg-ops-day-label">${escapeHtml(
       formatTgOpsDayHeading(ymd)
     )}</p></div>`);
@@ -2708,20 +2672,123 @@ function renderTgActivityOpsFeed(entries, transfers) {
     }
   }
 
-  root.innerHTML = parts.join("");
-
-  if (showMoreBtn) {
-    showMoreBtn.hidden = !hasMore;
-  }
+  return parts.join("");
 }
 
-function scheduleTgOpsFeedRefresh() {
+function renderTgOpsPaginationMarkup(total, offset, pageSize) {
+  const nav = document.getElementById("tgOpsPaginationNav");
+  if (!nav) {
+    return;
+  }
+
+  const totalRows = typeof total === "number" && Number.isFinite(total) ? Math.max(0, total) : 0;
+  if (totalRows === 0) {
+    nav.hidden = true;
+    nav.innerHTML = "";
+    return;
+  }
+
+  const pages = Math.max(1, Math.ceil(totalRows / pageSize));
+  const currentPage = Math.min(pages, Math.floor(offset / pageSize) + 1);
+  const prevDisabled = offset <= 0;
+  const nextDisabled = offset + pageSize >= totalRows;
+
+  const windowSize = 5;
+  let start = Math.min(Math.max(1, currentPage - 2), Math.max(1, pages - windowSize + 1));
+  let end = Math.min(pages, start + windowSize - 1);
+  start = Math.max(1, end - windowSize + 1);
+
+  const numButtons = [];
+  for (let p = start; p <= end; p++) {
+    const active = p === currentPage ? " is-active" : "";
+    numButtons.push(
+      `<button type="button" class="tg-ops-page-btn${active}" data-tg-ops-page="${p}" aria-label="Страница ${p}"${
+        active ? ' aria-current="page"' : ""
+      }>${p}</button>`
+    );
+  }
+
+  nav.hidden = false;
+  nav.innerHTML = `<div class="tg-ops-pagination-inner">
+    <button type="button" class="tg-ops-page-btn tg-ops-page-btn--edge" data-tg-ops-page="prev" aria-label="Назад"${
+      prevDisabled ? " disabled" : ""
+    }>Назад</button>
+    <div class="tg-ops-page-nums">${numButtons.join("")}</div>
+    <button type="button" class="tg-ops-page-btn tg-ops-page-btn--edge" data-tg-ops-page="next" aria-label="Далее"${
+      nextDisabled ? " disabled" : ""
+    }>Далее</button>
+  </div>`;
+}
+
+function renderTgOperationsRemotePayloadIntoDom(payload) {
+  const root = document.getElementById("tgActivityCombinedList");
+  if (!root) {
+    return;
+  }
+
+  const rawItems = Array.isArray(payload?.items) ? payload.items : [];
+  const feedItems = rawItems.map(operationsApiItemToFeedItem).filter(Boolean);
+  const total =
+    typeof payload?.total === "number" && Number.isFinite(payload.total) ? payload.total : feedItems.length;
+
+  if (feedItems.length === 0) {
+    if (tgOpsPageOffset > 0 && total > 0) {
+      tgOpsPageOffset = Math.max(0, Math.floor((total - 1) / TG_OPS_PAGE_SIZE) * TG_OPS_PAGE_SIZE);
+      void refreshTgOperationsBoard();
+      return;
+    }
+    root.innerHTML = `
+      <div class="empty-state" style="padding: 20px 16px 24px;">
+        <strong>Нет операций</strong>
+        <p class="account-meta">Измените фильтры или добавьте операцию.</p>
+      </div>
+    `;
+    renderTgOpsPaginationMarkup(0, 0, TG_OPS_PAGE_SIZE);
+    return;
+  }
+
+  root.innerHTML = buildTgOpsFeedHtmlFromItems(feedItems);
+  renderTgOpsPaginationMarkup(total, tgOpsPageOffset, TG_OPS_PAGE_SIZE);
+}
+
+async function refreshTgOperationsBoard() {
   if (isWebMode) {
     return;
   }
-  window.requestAnimationFrame(() => {
-    renderTgActivityOpsFeed(state.recentEntries, state.recentTransfers);
-  });
+  const root = document.getElementById("tgActivityCombinedList");
+  if (!root) {
+    return;
+  }
+  if (document.body.dataset.appActiveScreen !== "activity") {
+    return;
+  }
+  if (!tgOpsFilterSnapshotInitialized) {
+    return;
+  }
+
+  root.innerHTML = `<div class="empty-state muted tg-ops-loading" style="padding: 20px 16px 24px;">Загрузка…</div>`;
+  const nav = document.getElementById("tgOpsPaginationNav");
+  if (nav) {
+    nav.hidden = true;
+    nav.innerHTML = "";
+  }
+
+  try {
+    const payload = await apiFetch(buildTgOperationsApiUrl());
+    renderTgOperationsRemotePayloadIntoDom(payload);
+  } catch (error) {
+    console.error(error);
+    root.innerHTML = `<div class="empty-state" style="padding: 20px 16px 24px;">
+        <strong>Не удалось загрузить</strong>
+        <p class="account-meta inline-error">${escapeHtml(
+          error instanceof Error ? error.message : "Ошибка запроса"
+        )}</p>
+      </div>`;
+    if (nav) {
+      nav.hidden = true;
+      nav.innerHTML = "";
+    }
+  }
 }
 
 function attachTgActivityOpsChrome() {
@@ -2741,14 +2808,41 @@ function attachTgActivityOpsChrome() {
     applyTgOpsFiltersForTgList();
   });
 
-  document.getElementById("tgOpsSortToggle")?.addEventListener("click", () => {
-    tgOpsSortDesc = !tgOpsSortDesc;
-    scheduleTgOpsFeedRefresh();
+  document.getElementById("tgOpsActivityRefreshButton")?.addEventListener("click", () => {
+    if (refreshButton) {
+      refreshButton.click();
+    } else {
+      void loadApp();
+    }
   });
 
-  document.getElementById("tgActivityShowMore")?.addEventListener("click", () => {
-    tgOpsFeedVisibleCount += 14;
-    scheduleTgOpsFeedRefresh();
+  document.getElementById("tgOpsResetFilters")?.addEventListener("click", () => {
+    resetTgOpsFiltersToDefaults();
+  });
+
+  const opsRoot = document.getElementById("tgOpsActivityRoot");
+  opsRoot?.addEventListener("click", (event) => {
+    const t = event.target instanceof Element ? event.target.closest("[data-tg-ops-page]") : null;
+    if (!t || !opsRoot.contains(t) || t.hasAttribute("disabled")) {
+      return;
+    }
+    const raw = t.getAttribute("data-tg-ops-page") ?? "";
+    if (raw === "prev") {
+      tgOpsPageOffset = Math.max(0, tgOpsPageOffset - TG_OPS_PAGE_SIZE);
+      void refreshTgOperationsBoard();
+      return;
+    }
+    if (raw === "next") {
+      tgOpsPageOffset += TG_OPS_PAGE_SIZE;
+      void refreshTgOperationsBoard();
+      return;
+    }
+    const page = Number(raw);
+    if (!Number.isFinite(page) || page < 1) {
+      return;
+    }
+    tgOpsPageOffset = (page - 1) * TG_OPS_PAGE_SIZE;
+    void refreshTgOperationsBoard();
   });
 
   const tip = document.getElementById("tgActivityOpsTip");

@@ -4041,6 +4041,8 @@ body:not(.web-mode) #screen-activity > .web-transfer-sheet {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .tg-ops-head {
@@ -4202,13 +4204,17 @@ body:not(.web-mode) #screen-activity > .web-transfer-sheet {
   border: 1px solid rgb(226 232 240);
   background: #fff;
   box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .tg-ops-dates-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
   align-items: end;
+  min-width: 0;
 }
 
 .tg-ops-field-block {
@@ -4226,8 +4232,10 @@ body:not(.web-mode) #screen-activity > .web-transfer-sheet {
 
 .tg-ops-control {
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
   min-height: 44px;
+  min-width: 0;
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid rgb(226 232 240);
@@ -4235,6 +4243,13 @@ body:not(.web-mode) #screen-activity > .web-transfer-sheet {
   font: inherit;
   font-size: 15px;
   color: var(--text, #0f172a);
+}
+
+.tg-ops-field-block .tg-ops-control[type="date"] {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  display: block;
 }
 
 .tg-ops-control:focus {
@@ -4252,6 +4267,7 @@ body:not(.web-mode) #screen-activity > .web-transfer-sheet {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
+  min-width: 0;
 }
 
 .tg-ops-filter-actions {
@@ -4291,6 +4307,7 @@ body:not(.web-mode) #screen-activity > .web-transfer-sheet {
 .tg-ops-list-card {
   padding: 0 0 4px !important;
   overflow: hidden;
+  min-width: 0;
 }
 
 .tg-ops-feed {
@@ -4408,27 +4425,73 @@ body:not(.web-mode) #screen-activity > .web-transfer-sheet {
   margin-top: 2px;
 }
 
-.tg-ops-show-more {
+.tg-ops-pagination {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 12px 12px;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.tg-ops-pagination[hidden] {
+  display: none !important;
+}
+
+.tg-ops-pagination-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.tg-ops-page-nums {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  width: calc(100% - 32px);
-  margin: 8px 16px 12px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px dashed rgb(203 213 225);
-  background: rgb(248 250 252);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  color: rgb(71 85 105);
-  cursor: pointer;
+  min-width: 0;
 }
 
-.tg-ops-show-more-chevron {
+.tg-ops-page-btn {
+  appearance: none;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  color: rgb(51 65 85);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+.tg-ops-page-btn--edge {
+  padding: 0 10px;
   font-size: 12px;
-  opacity: 0.7;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.tg-ops-page-btn.is-active {
+  border-color: rgb(36 173 124 / 0.45);
+  background: rgb(13 159 110 / 0.14);
+  color: #047857;
+}
+
+.tg-ops-page-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+  box-shadow: none;
 }
 
 .tg-ops-tip {

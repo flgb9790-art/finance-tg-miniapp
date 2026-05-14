@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260514tg-bootfix";
+        var BALANCY_CLIENT_ASSET_REV = "20260514tg-ops-pages";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -703,6 +703,29 @@
               <div class="tg-ops-head-actions">
                 <button
                   type="button"
+                  class="tg-home-icon-btn"
+                  id="tgOpsActivityRefreshButton"
+                  title="Обновить"
+                  aria-label="Обновить данные"
+                >
+                  <svg class="tg-home-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M21 12a9 9 0 1 1-2.64-6.36"
+                      stroke="currentColor"
+                      stroke-width="1.75"
+                      stroke-linecap="round"
+                    />
+                    <path
+                      d="M21 3v6h-6"
+                      stroke="currentColor"
+                      stroke-width="1.75"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
                   id="tgActivityNewEntryButton"
                   class="tg-ops-btn tg-ops-btn--plus"
                   aria-label="Новая операция"
@@ -763,9 +786,27 @@
                 </select>
               </div>
               <div class="tg-ops-filter-actions">
-                <button type="button" id="tgOpsSortToggle" class="tg-ops-sort-btn" aria-label="Порядок по дате">
+                <button
+                  type="button"
+                  id="tgOpsResetFilters"
+                  class="tg-ops-sort-btn"
+                  title="Сбросить фильтры"
+                  aria-label="Сбросить фильтры"
+                >
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M8 6l4-4 4 4M8 18l4 4 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                    <path
+                      d="M4.5 9.5a7.5 7.5 0 0 1 12.88-2.12M19.5 14.5a7.5 7.5 0 0 1-12.88 2.12"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                    />
+                    <path
+                      d="M3 5v4h4M21 19v-4h-4"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
                   </svg>
                 </button>
                 <button type="button" id="tgOpsApplyFilters" class="primary-button tg-ops-apply-btn">
@@ -776,10 +817,7 @@
 
             <section class="card tg-ops-list-card">
               <div id="tgActivityCombinedList" class="tg-ops-feed" aria-live="polite"></div>
-              <button type="button" id="tgActivityShowMore" class="tg-ops-show-more" hidden>
-                Показать ещё
-                <span class="tg-ops-show-more-chevron" aria-hidden="true">⌄</span>
-              </button>
+              <nav id="tgOpsPaginationNav" class="tg-ops-pagination" aria-label="Страницы операций" hidden></nav>
             </section>
 
             <div id="tgActivityOpsTip" class="tg-ops-tip" role="status">
