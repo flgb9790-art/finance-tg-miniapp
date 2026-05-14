@@ -12,12 +12,17 @@
     <meta name="theme-color" content="#f3f5fa" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260515report-period-segment";
+        var BALANCY_CLIENT_ASSET_REV = "20260516balancy-brand-assets";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
         link.href = "/mini-app/styles.css?v=" + BALANCY_CLIENT_ASSET_REV;
         document.head.appendChild(link);
+        var icon = document.createElement("link");
+        icon.rel = "icon";
+        icon.type = "image/png";
+        icon.href = "/mini-app/assets/balancy-logo-mark.png?v=" + BALANCY_CLIENT_ASSET_REV;
+        document.head.appendChild(icon);
       })();
     </script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -26,8 +31,20 @@
     <div id="appSplash" class="app-splash" role="status" aria-live="polite" aria-label="Загрузка Balancy">
       <div class="app-splash-inner">
         <div class="app-splash-brand">
-          <span class="app-splash-wordmark">Balancy</span>
-          <div class="app-splash-tagline">Баланс и учёт в одном месте</div>
+          <div class="app-splash-lockup">
+            <img
+              class="app-splash-logo"
+              src="/mini-app/assets/balancy-logo-mark.png"
+              alt=""
+              width="56"
+              height="56"
+              decoding="async"
+            />
+            <div class="app-splash-names">
+              <span class="app-splash-wordmark">Balancy</span>
+              <div class="app-splash-tagline">Баланс и учёт в одном месте</div>
+            </div>
+          </div>
         </div>
         <div class="app-splash-footer">
           <div class="app-splash-spinner" aria-hidden="true"></div>
@@ -39,6 +56,14 @@
       <aside class="web-sidebar" aria-label="Меню Balancy">
         <div class="web-sidebar-top">
           <button type="button" class="web-sidebar-brand" data-web-nav="home" aria-label="Balancy — на главную">
+            <img
+              class="brand-mark"
+              src="/mini-app/assets/balancy-logo-mark.png"
+              alt=""
+              width="32"
+              height="32"
+              decoding="async"
+            />
             <span class="brand-wordmark">Balancy</span>
           </button>
         </div>
@@ -163,7 +188,17 @@
         <header class="web-page-header">
           <div class="web-page-title-block">
             <div class="web-page-title-copy">
-              <h1 id="webPageTitle" class="web-page-title">Главная</h1>
+              <div class="web-page-head-brand-row">
+                <img
+                  class="web-page-brand-mark"
+                  src="/mini-app/assets/balancy-logo-mark.png"
+                  alt=""
+                  width="40"
+                  height="40"
+                  decoding="async"
+                />
+                <h1 id="webPageTitle" class="web-page-title">Главная</h1>
+              </div>
               <p id="webPageSubtitle" class="web-page-subtitle muted" hidden></p>
             </div>
           </div>
@@ -229,6 +264,14 @@
       <header id="miniTopbar" class="topbar topbar-compact tg-mini-topbar" aria-label="Balancy">
         <div class="tg-mini-topbar-row">
           <div class="brand-lockup tg-mini-topbar-brand" aria-label="Balancy">
+            <img
+              class="brand-mark"
+              src="/mini-app/assets/balancy-logo-mark.png"
+              alt=""
+              width="34"
+              height="34"
+              decoding="async"
+            />
             <span class="brand-wordmark">Balancy</span>
           </div>
           <button

@@ -288,10 +288,13 @@ function renderWebLoginHtml(errorMessage?: string): string {
   if (!botUsername) {
     return `<!doctype html>
 <html lang="ru">
-<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Balancy Web</title></head>
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="icon" type="image/png" href="/mini-app/assets/balancy-logo-mark.png"/><title>Balancy Web</title></head>
 <body style="font-family:system-ui,Segoe UI,Arial,sans-serif;background:#f4f7fb;color:#111827;display:flex;justify-content:center;padding:40px;">
   <main style="max-width:720px;background:#fff;border-radius:16px;padding:24px;box-shadow:0 12px 30px rgba(15,23,42,.08);">
-    <h1 style="margin-top:0;">Balancy Web</h1>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
+      <img src="/mini-app/assets/balancy-logo-mark.png" alt="" width="44" height="44" style="height:44px;width:auto;border-radius:12px;mix-blend-mode:multiply;"/>
+      <h1 style="margin:0;">Balancy Web</h1>
+    </div>
     <p>Для входа на сайт нужен username бота в переменной <code>TELEGRAM_BOT_USERNAME</code>.</p>
     ${escapedError}
   </main>
@@ -301,10 +304,13 @@ function renderWebLoginHtml(errorMessage?: string): string {
 
   return `<!doctype html>
 <html lang="ru">
-<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Balancy Web</title></head>
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="icon" type="image/png" href="/mini-app/assets/balancy-logo-mark.png"/><title>Balancy Web</title></head>
 <body style="font-family:system-ui,Segoe UI,Arial,sans-serif;background:#f4f7fb;color:#111827;display:flex;justify-content:center;padding:40px;">
   <main style="max-width:720px;background:#fff;border-radius:16px;padding:24px;box-shadow:0 12px 30px rgba(15,23,42,.08);">
-    <h1 style="margin-top:0;">Balancy Web</h1>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
+      <img src="/mini-app/assets/balancy-logo-mark.png" alt="" width="44" height="44" style="height:44px;width:auto;border-radius:12px;mix-blend-mode:multiply;"/>
+      <h1 style="margin:0;">Balancy Web</h1>
+    </div>
     <p>Войдите через Telegram, чтобы открыть desktop-версию.</p>
     <script async src="https://telegram.org/js/telegram-widget.js?22"
       data-telegram-login="${botUsername}"

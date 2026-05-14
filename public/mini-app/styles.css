@@ -572,7 +572,7 @@ body.web-mode .pull-refresh-host {
 .brand-lockup {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -594,6 +594,16 @@ body.web-mode .pull-refresh-host {
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
+}
+
+.brand-mark {
+  display: block;
+  height: 30px;
+  width: auto;
+  flex-shrink: 0;
+  border-radius: 9px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
 }
 
 @supports not (background-clip: text) {
@@ -2814,7 +2824,7 @@ body.web-mode #webTopNav.web-desktop-shell {
 .web-sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 10px;
   width: 100%;
   border: none;
   background: transparent;
@@ -2829,6 +2839,11 @@ body.web-mode #webTopNav.web-desktop-shell {
 
 .web-sidebar-brand:hover {
   background: var(--fill-subtle);
+}
+
+.web-sidebar-brand .brand-mark {
+  height: 32px;
+  border-radius: 10px;
 }
 
 .web-sidebar-nav {
@@ -5051,6 +5066,28 @@ body.web-mode .web-page-title-copy {
   gap: 4px;
   min-width: 0;
   flex: 1;
+}
+
+body.web-mode .web-page-head-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+body.web-mode .web-page-brand-mark {
+  height: 40px;
+  width: auto;
+  flex-shrink: 0;
+  border-radius: 11px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+body.web-mode .web-page-head-brand-row .web-page-title {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 body.web-mode .tg-only-block {
@@ -8204,6 +8241,18 @@ body:not(.web-mode) .tg-mini-topbar-row {
   min-height: 44px;
 }
 
+body:not(.web-mode) .tg-mini-topbar-brand.brand-lockup {
+  gap: 10px;
+  min-width: 0;
+}
+
+body:not(.web-mode) .tg-mini-topbar-brand .brand-mark {
+  height: 34px;
+  width: auto;
+  border-radius: 10px;
+  mix-blend-mode: multiply;
+}
+
 body:not(.web-mode) .tg-mini-topbar-brand .brand-wordmark {
   font-size: 24px;
   font-weight: 800;
@@ -9070,6 +9119,32 @@ body.web-mode #screen-settings .tg-settings-card {
   min-height: 0;
 }
 
+.app-splash-lockup {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.app-splash-names {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  min-width: 0;
+}
+
+.app-splash-logo {
+  height: 56px;
+  width: auto;
+  flex-shrink: 0;
+  border-radius: 14px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
 .app-splash-wordmark {
   display: block;
   font-size: clamp(36px, 10vw, 48px);
@@ -9090,6 +9165,10 @@ body.web-mode #screen-settings .tg-settings-card {
   color: rgb(71 85 105);
   line-height: 1.45;
   max-width: 22em;
+}
+
+.app-splash-names .app-splash-tagline {
+  margin-top: 8px;
 }
 
 .app-splash-footer {
