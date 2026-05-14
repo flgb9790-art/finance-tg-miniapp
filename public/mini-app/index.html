@@ -9,10 +9,10 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta name="color-scheme" content="light" />
     <title>Balancy</title>
-    <meta name="theme-color" content="#eef2f7" />
+    <meta name="theme-color" content="#f3f5fa" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260514tg-transfer-swap-splash";
+        var BALANCY_CLIENT_ASSET_REV = "20260514balancy-premium-polish";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -336,21 +336,6 @@
                   </div>
                 </div>
               </div>
-              <div class="tg-hero-currency-band tg-only-block" aria-label="Остатки по валютам">
-                <p class="tg-hero-currency-band-label">Остатки по валютам</p>
-                <div class="tg-hero-currency-scroll">
-                  <div id="homeBalancesByCurrencyListTg" class="currency-breakdown-strip tg-hero-currency-strip"></div>
-                </div>
-              </div>
-              <details class="currency-breakdown">
-                <summary class="currency-breakdown-summary">
-                  <span class="currency-breakdown-title">Остатки по валютам</span>
-                  <span class="currency-breakdown-hint muted"></span>
-                </summary>
-                <div class="currency-breakdown-inner">
-                  <div id="homeBalancesByCurrencyListWeb" class="currency-breakdown-strip"></div>
-                </div>
-              </details>
             </section>
 
             <section class="card tg-home-quick-actions tg-only-block" aria-label="Быстрые действия">
@@ -436,6 +421,22 @@
               </article>
             </div>
           </div>
+
+          <section class="card balancy-home-currencies-card" aria-label="Остатки по валютам">
+            <p class="balancy-home-currencies-label">Остатки по валютам</p>
+            <div class="balancy-home-currencies-scroll tg-only-block">
+              <div
+                id="homeBalancesByCurrencyListTg"
+                class="currency-breakdown-strip balancy-home-currencies-strip"
+              ></div>
+            </div>
+            <div class="balancy-home-currencies-scroll web-only-block">
+              <div
+                id="homeBalancesByCurrencyListWeb"
+                class="currency-breakdown-strip balancy-home-currencies-strip"
+              ></div>
+            </div>
+          </section>
 
           <div class="web-home-mid-grid">
           <div class="web-home-columns">
