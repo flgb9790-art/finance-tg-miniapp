@@ -170,8 +170,16 @@ let webOpsDatesInitialized = false;
 /** Лента «Операции» в Telegram: сортировка и сколько строк показывать до «Показать ещё» */
 let tgOpsSortDesc = true;
 let tgOpsFeedVisibleCount = 14;
-let tgActivityOpsChromeAttached = false;
-let tgOpsDefaultDatesInitialized = false;
+/** Снимок фильтров ленты TG (обновляется по «Показать» и при первом рендере) */
+let tgOpsAppliedFilter = {
+  q: "",
+  fromY: "",
+  toY: "",
+  accId: "",
+  kind: "all",
+  catId: ""
+};
+let tgOpsFilterSnapshotInitialized = false;
 
 /** Активная вкладка списка категорий в веб-режиме */
 let webCategoriesActiveKind = "income";
@@ -801,6 +809,7 @@ function openScreen(screenName, options = {}) {
   if (!isWebMode && nextScreen === "activity") {
     populateTgActivityFilterSelects();
     tgOpsFeedVisibleCount = 14;
+    tgOpsFilterSnapshotInitialized = false;
     renderTgActivityOpsFeed(state.recentEntries, state.recentTransfers);
   }
 }
@@ -2347,27 +2356,6 @@ function renderRecentTransfers(transfers) {
     .join("");
 }
 
-function hexToRgbParts(hex) {
-  const raw = String(hex ?? "").trim();
-  if (!/^#[0-9a-fA-F]{6}$/.test(raw)) {
-    return null;
-  }
-  const h = raw.slice(1);
-  return {
-    r: Number.parseInt(h.slice(0, 2), 16),
-    g: Number.parseInt(h.slice(2, 4), 16),
-    b: Number.parseInt(h.slice(4, 6), 16)
-  };
-}
-
-function rgbaFromHex(hex, alpha) {
-  const p = hexToRgbParts(hex);
-  if (!p) {
-    return null;
-  }
-  return `rgba(${p.r}, ${p.g}, ${p.b}, ${alpha})`;
-}
-
 function toLocalYmdFromIso(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) {
@@ -2420,20 +2408,13 @@ function getMonthlyNetFromSummary(summary) {
 }
 
 function syncTgOpsStatsFromSummary(summary) {
-  const incEl = document.getElementById("tgOpsStatIncome");
-  const expEl = document.getElementById("tgOpsStatExpense");
   const netEl = document.getElementById("tgOpsStatNet");
-  if (!incEl || !expEl || !netEl) {
+  if (!netEl) {
     return;
   }
 
   const ccy = summary?.reportingCurrency ?? "";
-  const monthlyIncome = Number(summary?.monthlyIncome ?? 0);
-  const monthlyExpense = Number(summary?.monthlyExpense ?? 0);
   const net = getMonthlyNetFromSummary(summary);
-
-  incEl.textContent = `+${formatMoney(monthlyIncome, ccy)}`;
-  expEl.textContent = `−${formatMoney(monthlyExpense, ccy)}`;
   const sign = net >= 0 ? "+" : "−";
   netEl.textContent = `${sign}${formatMoney(Math.abs(net), ccy)}`;
 }
@@ -2526,7 +2507,7 @@ function buildTgOpsCombinedItems(entries, transfers) {
   return items;
 }
 
-function filterTgOpsCombinedItems(items) {
+function readTgOpsFilterFromDom() {
   const searchEl = document.getElementById("tgOpsSearchInput");
   const accEl = document.getElementById("tgOpsFilterAccount");
   const kindEl = document.getElementById("tgOpsFilterKind");
@@ -2534,12 +2515,32 @@ function filterTgOpsCombinedItems(items) {
   const fromEl = document.getElementById("tgOpsDateFrom");
   const toEl = document.getElementById("tgOpsDateTo");
 
-  const q = (searchEl?.value ?? "").trim().toLowerCase();
-  const accId = (accEl?.value ?? "").trim();
-  const kind = (kindEl?.value ?? "all").trim();
-  const catId = (catEl?.value ?? "").trim();
-  const fromY = (fromEl?.value ?? "").trim();
-  const toY = (toEl?.value ?? "").trim();
+  return {
+    q: (searchEl?.value ?? "").trim(),
+    fromY: (fromEl?.value ?? "").trim(),
+    toY: (toEl?.value ?? "").trim(),
+    accId: (accEl?.value ?? "").trim(),
+    kind: (kindEl?.value ?? "all").trim() || "all",
+    catId: (catEl?.value ?? "").trim()
+  };
+}
+
+function applyTgOpsFiltersForTgList() {
+  if (isWebMode) {
+    return;
+  }
+  Object.assign(tgOpsAppliedFilter, readTgOpsFilterFromDom());
+  tgOpsFeedVisibleCount = 14;
+  renderTgActivityOpsFeed(state.recentEntries, state.recentTransfers);
+}
+
+function filterTgOpsCombinedItems(items) {
+  const q = (tgOpsAppliedFilter.q ?? "").trim().toLowerCase();
+  const accId = (tgOpsAppliedFilter.accId ?? "").trim();
+  const kind = (tgOpsAppliedFilter.kind ?? "all").trim() || "all";
+  const catId = (tgOpsAppliedFilter.catId ?? "").trim();
+  const fromY = (tgOpsAppliedFilter.fromY ?? "").trim();
+  const toY = (tgOpsAppliedFilter.toY ?? "").trim();
 
   return items.filter((item) => {
     const ymd = toLocalYmdFromIso(item.occurredAt);
@@ -2626,6 +2627,11 @@ function renderTgActivityOpsFeed(entries, transfers) {
 
   ensureTgOpsDefaultDates();
 
+  if (!tgOpsFilterSnapshotInitialized) {
+    Object.assign(tgOpsAppliedFilter, readTgOpsFilterFromDom());
+    tgOpsFilterSnapshotInitialized = true;
+  }
+
   const items = filterTgOpsCombinedItems(buildTgOpsCombinedItems(entries, transfers));
   const showMoreBtn = document.getElementById("tgActivityShowMore");
 
@@ -2633,7 +2639,7 @@ function renderTgActivityOpsFeed(entries, transfers) {
     root.innerHTML = `
       <div class="empty-state" style="padding: 20px 16px 24px;">
         <strong>Нет операций</strong>
-        <p class="account-meta">Измените фильтры или добавьте операцию кнопкой «+».</p>
+        <p class="account-meta">Нажмите «Показать» после выбора фильтров или добавьте операцию.</p>
       </div>
     `;
     if (showMoreBtn) {
@@ -2665,13 +2671,6 @@ function renderTgActivityOpsFeed(entries, transfers) {
         const entry = item.payload;
         const cat = entry.category;
         const catName = cat?.name ?? "Без категории";
-        const cid = cat?.id ?? entry.category_id;
-        const resolvedCat =
-          state.categories.find((c) => c.id === cid) ??
-          (cid ? { id: cid, name: catName, kind: entry.kind || "expense" } : null);
-        const accent = resolvedCat ? resolveCategoryDotColor(resolvedCat) : "#94a3b8";
-        const bg = rgbaFromHex(accent, 0.16) ?? "rgb(241 245 249)";
-        const border = rgbaFromHex(accent, 0.35) ?? "rgb(226 232 240)";
         const iconClass = entry.kind === "income" ? "tg-ops-row-icon--income" : "tg-ops-row-icon--expense";
         const amountClass = entry.kind === "income" ? "tg-ops-amount-val--income" : "tg-ops-amount-val--expense";
         const prefix = entry.kind === "income" ? "+" : "−";
@@ -2686,11 +2685,6 @@ function renderTgActivityOpsFeed(entries, transfers) {
               formatDateTime(entry.occurred_at)
             )}</span>
           </div>
-          <div class="tg-ops-row-mid">
-            <span class="tg-ops-pill" style="background:${escapeHtml(bg)};color:${escapeHtml(accent)};border:1px solid ${escapeHtml(
-              border
-            )}">${escapeHtml(catName)}</span>
-          </div>
           <div class="tg-ops-amount-stack">
             <span class="tg-ops-amount-val ${amountClass}">${amt}</span>
             <span class="tg-ops-amount-ccy">${ccy}</span>
@@ -2699,20 +2693,12 @@ function renderTgActivityOpsFeed(entries, transfers) {
       } else {
         const transfer = item.payload;
         const title = `${transfer.from_account?.name ?? "Счёт"} → ${transfer.to_account?.name ?? "Счёт"}`;
-        const accent = "#6366f1";
-        const bg = rgbaFromHex(accent, 0.14) ?? "rgb(238 242 255)";
-        const border = rgbaFromHex(accent, 0.35) ?? "rgb(199 210 254)";
 
         parts.push(`<div class="tg-ops-row" role="listitem">
           <div class="tg-ops-row-icon tg-ops-row-icon--transfer" aria-hidden="true">${getEntryIcon("transfer")}</div>
           <div class="tg-ops-row-main">
             <span class="tg-ops-row-title">${escapeHtml(title)}</span>
             <span class="tg-ops-row-meta">${escapeHtml(formatDateTime(transfer.occurred_at))}</span>
-          </div>
-          <div class="tg-ops-row-mid">
-            <span class="tg-ops-pill" style="background:${escapeHtml(bg)};color:${escapeHtml(accent)};border:1px solid ${escapeHtml(
-              border
-            )}">Перевод</span>
           </div>
           ${formatTgOpsTransferAmountCell(transfer)}
         </div>`);
@@ -2742,33 +2728,20 @@ function attachTgActivityOpsChrome() {
   }
   tgActivityOpsChromeAttached = true;
 
-  document.getElementById("tgActivityNewEntryButton")?.addEventListener("click", () => {
+  const openNewModal = () => {
     openEntryTypeModal();
-  });
+  };
 
-  const filterToggle = document.getElementById("tgActivityFilterToggle");
-  const filterPanel = document.getElementById("tgOpsFiltersPanel");
-  filterToggle?.addEventListener("click", () => {
-    if (!filterPanel) {
-      return;
-    }
-    filterPanel.hidden = !filterPanel.hidden;
-    filterToggle.setAttribute("aria-expanded", String(!filterPanel.hidden));
+  document.getElementById("tgActivityNewEntryButton")?.addEventListener("click", openNewModal);
+  document.getElementById("tgActivityNewOperationFooter")?.addEventListener("click", openNewModal);
+
+  document.getElementById("tgOpsApplyFilters")?.addEventListener("click", () => {
+    applyTgOpsFiltersForTgList();
   });
 
   document.getElementById("tgOpsSortToggle")?.addEventListener("click", () => {
     tgOpsSortDesc = !tgOpsSortDesc;
     scheduleTgOpsFeedRefresh();
-  });
-
-  let searchTimer = null;
-  document.getElementById("tgOpsSearchInput")?.addEventListener("input", () => {
-    window.clearTimeout(searchTimer);
-    searchTimer = window.setTimeout(() => scheduleTgOpsFeedRefresh(), 220);
-  });
-
-  ["tgOpsFilterAccount", "tgOpsFilterKind", "tgOpsFilterCategory", "tgOpsDateFrom", "tgOpsDateTo"].forEach((id) => {
-    document.getElementById(id)?.addEventListener("change", () => scheduleTgOpsFeedRefresh());
   });
 
   document.getElementById("tgActivityShowMore")?.addEventListener("click", () => {
@@ -4070,6 +4043,7 @@ function renderAll() {
   safeRenderStep("summary", () => renderSummary(state.summary));
   safeRenderStep("accounts", () => renderAccounts(state.accounts));
   safeRenderStep("categories", () => renderCategories(state.categories));
+  safeRenderStep("tgActivityFilters", () => populateTgActivityFilterSelects());
   safeRenderStep("recentEntries", () => renderRecentEntries(state.recentEntries));
   safeRenderStep("recentTransfers", () => renderRecentTransfers(state.recentTransfers));
   safeRenderStep("homeActivity", () =>
@@ -4084,7 +4058,6 @@ function renderAll() {
   safeRenderStep("categoryOptions", () => populateCategoryOptions());
   safeRenderStep("fxReferencePanel", () => syncFxReferencePanel());
   safeRenderStep("webProfile", () => syncWebProfile());
-  safeRenderStep("tgActivityFilters", () => populateTgActivityFilterSelects());
 }
 
 function syncWebProfile() {
