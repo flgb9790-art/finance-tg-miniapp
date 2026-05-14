@@ -106,4 +106,4 @@ MVP-проект для учета личных финансов через Tele
 5. После первого успешного деплоя откройте домен сервиса, убедитесь что `GET /health` отвечает `{"ok":true}`.
 6. В Telegram бот должен принимать webhook на `https://<ваш-домен>/api/telegram/webhook` — это настраивается автоматически при старте, если задан `APP_URL`.
 
-В репозитории лежит `railway.json`: сборка `npm run build`, старт `npm run start`, healthcheck `/health`. Версия Node для Railpack: **`engines.node`** и файл **`.nvmrc`** (22) — на Node 22+ у runtime есть встроенный WebSocket для Supabase; для Node 20 в коде остаётся полифилл `ws`.
+В репозитории лежит `railway.json`: сборка `npm ci --include=dev && npm run build` (так `typescript` из devDependencies точно есть при `NODE_ENV=production` на этапе установки), старт `HOST=0.0.0.0 node dist/index.js`, healthcheck `/health`. Версия Node: **`engines.node`** и **`.nvmrc`** (22) — на Node 22+ у runtime есть встроенный WebSocket для Supabase; для Node 20 в коде остаётся полифилл `ws`.
