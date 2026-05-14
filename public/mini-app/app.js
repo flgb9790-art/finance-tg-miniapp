@@ -192,6 +192,8 @@ let webCategoriesChromeAttached = false;
 
 /** Экран, на который вернёмся после «Назад» / отмены с формы перевода */
 let transferReturnScreen = "home";
+/** Предыдущий экран для жеста «назад» с левого края (Telegram) */
+let telegramGestureBackTarget = "home";
 let transferRateHintTimer = null;
 let transferRateHintRequestId = 0;
 
@@ -411,6 +413,7 @@ function bindTelegramViewportListeners() {
 }
 
 let balancyPullRefreshAttached = false;
+let balancyEdgeSwipeBackAttached = false;
 
 function attachTelegramPullToRefresh() {
   if (balancyPullRefreshAttached || isWebMode || typeof window === "undefined") {
@@ -604,6 +607,131 @@ function attachTelegramPullToRefresh() {
 
   window.addEventListener("touchend", finish, { passive: true });
   window.addEventListener("touchcancel", finish, { passive: true });
+}
+
+function performTelegramGestureBack() {
+  if (isWebMode) {
+    return false;
+  }
+
+  if (helpDocumentationModalElement && !helpDocumentationModalElement.hidden) {
+    closeHelpDocumentationModal();
+    return true;
+  }
+
+  if (entryTypeModalElement && !entryTypeModalElement.hidden) {
+    closeEntryTypeModal();
+    return true;
+  }
+
+  if (document.body.dataset.tgTransferOnly === "1") {
+    exitTransferScreen();
+    return true;
+  }
+
+  const cur = document.body.dataset.appActiveScreen || "home";
+  if (cur === "home") {
+    return false;
+  }
+
+  const dest = telegramGestureBackTarget || "home";
+  openScreen(dest === cur ? "home" : dest);
+  return true;
+}
+
+function attachTelegramEdgeSwipeBack() {
+  if (balancyEdgeSwipeBackAttached || isWebMode || typeof window === "undefined") {
+    return;
+  }
+  balancyEdgeSwipeBackAttached = true;
+
+  const EDGE = 34;
+  const MIN_TRAVEL = 76;
+  const MAX_VERTICAL = 120;
+  let sx = 0;
+  let sy = 0;
+  let armed = false;
+  let lastFire = 0;
+
+  window.addEventListener(
+    "touchstart",
+    (e) => {
+      if (globalBusyDepth > 0) {
+        return;
+      }
+      const t = e.touches[0];
+      if (!t) {
+        return;
+      }
+      if (t.clientX > EDGE) {
+        armed = false;
+        return;
+      }
+      armed = true;
+      sx = t.clientX;
+      sy = t.clientY;
+    },
+    { passive: true }
+  );
+
+  window.addEventListener(
+    "touchmove",
+    (e) => {
+      if (!armed) {
+        return;
+      }
+      const t = e.touches[0];
+      if (!t) {
+        return;
+      }
+      const dy = Math.abs(t.clientY - sy);
+      const dx = t.clientX - sx;
+      if (dy > 48 && dx < 28) {
+        armed = false;
+      }
+    },
+    { passive: true }
+  );
+
+  window.addEventListener(
+    "touchend",
+    (e) => {
+      if (!armed) {
+        return;
+      }
+      armed = false;
+      const t = e.changedTouches[0];
+      if (!t) {
+        return;
+      }
+      const dx = t.clientX - sx;
+      const dy = Math.abs(t.clientY - sy);
+      if (dx < MIN_TRAVEL || dy > MAX_VERTICAL) {
+        return;
+      }
+      if (Date.now() - lastFire < 450) {
+        return;
+      }
+      if (!performTelegramGestureBack()) {
+        return;
+      }
+      lastFire = Date.now();
+      try {
+        tg?.HapticFeedback?.impactOccurred?.("light");
+      } catch {
+        //
+      }
+    },
+    { passive: true }
+  );
+
+  window.addEventListener(
+    "touchcancel",
+    () => {
+      armed = false;
+    },
+    { passive: true }
+  );
 }
 
 function dismissAppSplash(options = {}) {
@@ -1013,6 +1141,7 @@ function formatCurrencyOption(currency) {
 }
 
 function openScreen(screenName, options = {}) {
+  const prevScreen = document.body.dataset.appActiveScreen || "home";
   const nextScreen = screenName || "home";
   const enteringTgTransfer = nextScreen === "activity" && options.tgTransferOnly === true;
   const enteringWebTransfer = nextScreen === "activity" && options.webTransferView === true;
@@ -1091,6 +1220,14 @@ function openScreen(screenName, options = {}) {
     tgOpsPageOffset = 0;
     if (document.body.dataset.tgTransferOnly !== "1") {
       void refreshTgOperationsBoard();
+    }
+  }
+
+  if (!isWebMode && prevScreen !== nextScreen) {
+    const overlayEnter =
+      nextScreen === "activity" && (options.tgTransferOnly === true || options.webTransferView === true);
+    if (!overlayEnter) {
+      telegramGestureBackTarget = prevScreen;
     }
   }
 }
@@ -6606,6 +6743,7 @@ try {
 
   attachTgActivityOpsChrome();
   attachTelegramPullToRefresh();
+  attachTelegramEdgeSwipeBack();
 
   void loadApp({ globalBusy: true, busyMessage: "Загрузка…" });
 } catch (error) {

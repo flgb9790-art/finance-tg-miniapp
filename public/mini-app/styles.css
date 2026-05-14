@@ -1781,7 +1781,7 @@ details.currency-breakdown[open] .currency-breakdown-hint::before {
   transform: translateX(-50%);
   width: min(100%, calc(100% - 32px));
   max-width: min(560px, 100%);
-  z-index: 95;
+  z-index: 220;
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
@@ -5092,7 +5092,7 @@ body:not(.web-mode)[data-tg-transfer-only="1"] .web-transfer-foot-tip {
   font-size: 15px;
   font-weight: 650;
   color: rgb(15 23 42);
-  padding: 8px 22px 8px 0;
+  padding: 8px 30px 8px 0;
   appearance: none;
   cursor: pointer;
 }
@@ -5104,7 +5104,7 @@ body:not(.web-mode)[data-tg-transfer-only="1"] .web-transfer-foot-tip {
 .web-transfer-select-shell::after {
   content: "";
   position: absolute;
-  right: 12px;
+  right: 22px;
   top: 50%;
   width: 7px;
   height: 7px;
@@ -5173,6 +5173,7 @@ body:not(.web-mode)[data-tg-transfer-only="1"] .web-transfer-foot-tip {
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   background: transparent;
+  border-radius: 16px 0 0 16px;
 }
 
 .web-transfer-amount-input:focus {
@@ -5189,6 +5190,7 @@ body:not(.web-mode)[data-tg-transfer-only="1"] .web-transfer-foot-tip {
   color: rgb(51 65 85);
   background: rgb(248 250 252);
   border-left: 1px solid rgb(15 23 42 / 0.08);
+  border-radius: 0 16px 16px 0;
 }
 
 .web-transfer-secondary-amount {
