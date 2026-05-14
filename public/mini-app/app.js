@@ -196,6 +196,8 @@ let transferReturnScreen = "home";
 let telegramGestureBackTarget = "home";
 let transferRateHintTimer = null;
 let transferRateHintRequestId = 0;
+let transferToPreviewTimer = null;
+let transferToPreviewRequestId = 0;
 
 /** @type {{ trend?: object, category?: object }} */
 let reportChartInstances = { trend: null, category: null };
@@ -4244,6 +4246,18 @@ function renderReport(report) {
   }
 }
 
+function readTransferOptionCurrency(opt) {
+  if (!opt) {
+    return "";
+  }
+  const attr = opt.getAttribute("data-currency");
+  if (attr && String(attr).trim()) {
+    return String(attr).trim();
+  }
+  const ds = opt.dataset?.currency;
+  return ds && String(ds).trim() ? String(ds).trim() : "";
+}
+
 function syncTransferAccountAvailabilityLines() {
   const fromLine = document.getElementById("transferFromAvailableLine");
   const toLine = document.getElementById("transferToAvailableLine");
@@ -4284,8 +4298,8 @@ async function refreshTransferRateHint() {
     return;
   }
 
-  const fromCur = (transferFromAccountInput.selectedOptions[0]?.dataset?.currency ?? "").trim();
-  const toCur = (transferToAccountInput.selectedOptions[0]?.dataset?.currency ?? "").trim();
+  const fromCur = readTransferOptionCurrency(transferFromAccountInput.selectedOptions[0]);
+  const toCur = readTransferOptionCurrency(transferToAccountInput.selectedOptions[0]);
 
   if (!fromCur || !toCur || fromCur === toCur) {
     hintWrap.hidden = true;
@@ -4337,8 +4351,8 @@ function syncWebTransferAmountCurrencyUi() {
 
   const fromOpt = transferFromAccountInput.selectedOptions[0];
   const toOpt = transferToAccountInput.selectedOptions[0];
-  const fromCur = (fromOpt?.dataset?.currency ?? "").trim();
-  const toCur = (toOpt?.dataset?.currency ?? "").trim();
+  const fromCur = readTransferOptionCurrency(fromOpt);
+  const toCur = readTransferOptionCurrency(toOpt);
 
   badge.textContent = fromCur || "—";
   if (toBadge) {
@@ -4353,6 +4367,84 @@ function syncWebTransferAmountCurrencyUi() {
 
   syncTransferAccountAvailabilityLines();
   scheduleTransferRateHintRefresh();
+  scheduleTransferToAmountPreview();
+}
+
+async function refreshTransferToAmountPreview() {
+  const line = document.getElementById("transferToAmountPreviewLine");
+  const fromInput = document.getElementById("transferFromAmountInput");
+  const toInput = document.getElementById("transferToAmountInput");
+  if (!line || !fromInput || !toInput || !transferForm) {
+    return;
+  }
+
+  if (!transferForm.classList.contains("transfer-is-cross-currency")) {
+    line.hidden = true;
+    line.textContent = "";
+    return;
+  }
+
+  if (String(toInput.value ?? "").trim() !== "") {
+    line.hidden = true;
+    line.textContent = "";
+    return;
+  }
+
+  const fromCur = readTransferOptionCurrency(transferFromAccountInput?.selectedOptions[0]);
+  const toCur = readTransferOptionCurrency(transferToAccountInput?.selectedOptions[0]);
+  if (!fromCur || !toCur || fromCur === toCur) {
+    line.hidden = true;
+    line.textContent = "";
+    return;
+  }
+
+  const raw = String(fromInput.value ?? "")
+    .replace(",", ".")
+    .trim();
+  const amt = Number(raw);
+  if (!Number.isFinite(amt) || amt <= 0) {
+    line.hidden = true;
+    line.textContent = "";
+    return;
+  }
+
+  const requestId = ++transferToPreviewRequestId;
+
+  try {
+    const params = new URLSearchParams({
+      amount: String(amt),
+      from: fromCur,
+      to: toCur
+    });
+    const payload = await apiFetch(`/api/exchange-rates/convert-preview?${params.toString()}`);
+
+    if (requestId !== transferToPreviewRequestId) {
+      return;
+    }
+
+    const converted = Number(payload?.converted);
+    if (!Number.isFinite(converted)) {
+      line.hidden = true;
+      line.textContent = "";
+      return;
+    }
+
+    line.textContent = `≈ ${formatMoneyAmount(converted)} ${toCur}`;
+    line.hidden = false;
+  } catch {
+    if (requestId !== transferToPreviewRequestId) {
+      return;
+    }
+    line.hidden = true;
+    line.textContent = "";
+  }
+}
+
+function scheduleTransferToAmountPreview() {
+  window.clearTimeout(transferToPreviewTimer);
+  transferToPreviewTimer = window.setTimeout(() => {
+    void refreshTransferToAmountPreview();
+  }, 320);
 }
 
 function swapWebTransferAccounts() {
@@ -4399,8 +4491,6 @@ function openTransferScreen() {
     transferDateInput.value = getCurrentLocalDateTimeValue();
   }
   syncWebTransferAmountCurrencyUi();
-  syncTransferAccountAvailabilityLines();
-  scheduleTransferRateHintRefresh();
 
   window.requestAnimationFrame(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -6382,6 +6472,9 @@ document.getElementById("webTransferSwapAccounts")?.addEventListener("click", ()
 
 transferFromAccountInput?.addEventListener("change", syncWebTransferAmountCurrencyUi);
 transferToAccountInput?.addEventListener("change", syncWebTransferAmountCurrencyUi);
+
+document.getElementById("transferFromAmountInput")?.addEventListener("input", scheduleTransferToAmountPreview);
+document.getElementById("transferToAmountInput")?.addEventListener("input", scheduleTransferToAmountPreview);
 
 document.getElementById("webTransferTipMore")?.addEventListener("click", () => {
   openHelpDocumentationModal();
