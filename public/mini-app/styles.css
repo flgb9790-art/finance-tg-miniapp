@@ -4039,7 +4039,6 @@ body:not(.web-mode) #screen-activity > .web-transfer-sheet {
 body:not(.web-mode) #screen-activity {
   min-width: 0;
   max-width: 100%;
-  overflow-x: hidden;
 }
 
 .tg-ops-activity-root {
@@ -4212,7 +4211,6 @@ body:not(.web-mode) #screen-activity {
   box-sizing: border-box;
   min-width: 0;
   max-width: 100%;
-  overflow: hidden;
 }
 
 .tg-ops-dates-grid {
@@ -4227,6 +4225,7 @@ body:not(.web-mode) #screen-activity {
 body:not(.web-mode) .tg-ops-dates-grid {
   grid-template-columns: minmax(0, 1fr);
   gap: 12px;
+  width: 100%;
 }
 
 @media (min-width: 560px) {
@@ -4236,23 +4235,26 @@ body:not(.web-mode) .tg-ops-dates-grid {
   }
 }
 
+body:not(.web-mode) .tg-ops-dates-grid > .tg-ops-field-block {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .tg-ops-field-block {
   display: flex;
   flex-direction: column;
   gap: 6px;
   min-width: 0;
   max-width: 100%;
-}
-
-body:not(.web-mode) .tg-ops-field-block--date {
-  overflow: hidden;
+  align-self: stretch;
 }
 
 .tg-ops-date-input-shell {
-  display: block;
+  display: flex;
+  width: 100%;
   min-width: 0;
   max-width: 100%;
-  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .tg-ops-field-label {
@@ -4278,23 +4280,16 @@ body:not(.web-mode) .tg-ops-field-block--date {
 
 .tg-ops-field-block .tg-ops-control[type="date"],
 .tg-ops-date-input-shell .tg-ops-control[type="date"] {
+  flex: 1 1 0%;
   min-width: 0;
   width: 100%;
   max-width: 100%;
   display: block;
   margin: 0;
-}
-
-/* Chromium/WebKit: ограничить внутреннюю разметку даты, чтобы не раздувала сетку */
-.tg-ops-date-input-shell .tg-ops-control[type="date"]::-webkit-datetime-edit,
-.tg-ops-date-input-shell .tg-ops-control[type="date"]::-webkit-datetime-edit-fields-wrapper {
-  max-width: 100%;
-  padding: 0;
+  box-sizing: border-box;
 }
 
 body:not(.web-mode) .tg-ops-date-input-shell .tg-ops-control[type="date"] {
-  padding-left: 8px;
-  padding-right: 8px;
   font-size: 14px;
 }
 
