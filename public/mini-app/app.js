@@ -1,6 +1,8 @@
 const tg = window.Telegram?.WebApp;
 const isWebMode = new URLSearchParams(window.location.search).get("web") === "1";
 
+let globalBusyDepth = 0;
+
 const WEB_PAGE_TITLES = {
   home: "Главная",
   activity: "Операции",
@@ -339,6 +341,183 @@ function syncViewportMetrics() {
   syncFxCalcKeyboardAccessory();
 }
 
+function beginGlobalBusy(message = "Загружаем…") {
+  const root = document.getElementById("globalBusyOverlay");
+  const label = document.getElementById("globalBusyMessage");
+  globalBusyDepth += 1;
+  if (root) {
+    root.hidden = false;
+    if (label) {
+      label.textContent = message;
+    }
+    root.setAttribute("aria-busy", "true");
+  }
+}
+
+function endGlobalBusy() {
+  globalBusyDepth = Math.max(0, globalBusyDepth - 1);
+  if (globalBusyDepth > 0) {
+    return;
+  }
+  const root = document.getElementById("globalBusyOverlay");
+  if (root) {
+    root.hidden = true;
+    root.removeAttribute("aria-busy");
+  }
+}
+
+let balancyTgViewportListenersBound = false;
+
+function syncTelegramLayoutViewportVar() {
+  if (isWebMode || !tg) {
+    return;
+  }
+  const stable = Number(tg.viewportStableHeight);
+  const current = Number(tg.viewportHeight);
+  const h =
+    Number.isFinite(stable) && stable > 0
+      ? stable
+      : Number.isFinite(current) && current > 0
+        ? current
+        : 0;
+  if (h > 0) {
+    document.documentElement.style.setProperty("--balancy-tg-vh", `${h}px`);
+  }
+}
+
+function bindTelegramViewportListeners() {
+  if (balancyTgViewportListenersBound || isWebMode || !tg) {
+    return;
+  }
+  balancyTgViewportListenersBound = true;
+  syncTelegramLayoutViewportVar();
+  try {
+    if (typeof tg.onEvent === "function") {
+      tg.onEvent("viewport_changed", syncTelegramLayoutViewportVar);
+    }
+  } catch {
+    //
+  }
+  const vv = window.visualViewport;
+  if (vv && typeof vv.addEventListener === "function") {
+    vv.addEventListener("resize", syncTelegramLayoutViewportVar, { passive: true });
+  }
+}
+
+let balancyPullRefreshAttached = false;
+
+function attachTelegramPullToRefresh() {
+  if (balancyPullRefreshAttached || isWebMode || typeof window === "undefined") {
+    return;
+  }
+  balancyPullRefreshAttached = true;
+  let startY = 0;
+  let armed = false;
+  let pulling = false;
+  let lastPullRefreshAt = 0;
+  const COOLDOWN_MS = 2000;
+  const THRESH = 76;
+  const host = document.getElementById("pullRefreshHost");
+  const label = document.getElementById("pullRefreshLabel");
+
+  const scrollTop = () => window.scrollY || document.documentElement.scrollTop || 0;
+
+  window.addEventListener(
+    "touchstart",
+    (e) => {
+      if (globalBusyDepth > 0) {
+        return;
+      }
+      if (scrollTop() > 6) {
+        return;
+      }
+      const t = e.target;
+      if (!(t instanceof Element)) {
+        return;
+      }
+      if (t.closest(".swipe-row") || t.closest(".entry-type-modal") || t.closest(".help-documentation-modal")) {
+        return;
+      }
+      armed = true;
+      pulling = false;
+      startY = e.touches[0]?.clientY ?? 0;
+    },
+    { passive: true }
+  );
+
+  window.addEventListener(
+    "touchmove",
+    (e) => {
+      if (!armed || globalBusyDepth > 0) {
+        return;
+      }
+      if (scrollTop() > 6) {
+        armed = false;
+        if (host) {
+          host.hidden = true;
+          host.classList.remove("pull-refresh-host--ready");
+          host.style.transform = "";
+        }
+        return;
+      }
+      const y = e.touches[0]?.clientY ?? 0;
+      const dy = y - startY;
+      if (dy <= 4) {
+        return;
+      }
+      pulling = true;
+      if (host) {
+        host.hidden = false;
+        host.removeAttribute("aria-hidden");
+        const offset = Math.min(52, dy * 0.38);
+        host.style.transform = `translateY(${offset}px)`;
+        host.classList.toggle("pull-refresh-host--ready", dy > THRESH);
+      }
+      if (label) {
+        label.textContent = dy > THRESH ? "Отпустите для обновления" : "Потяните для обновления";
+      }
+    },
+    { passive: true }
+  );
+
+  const finish = () => {
+    if (!armed) {
+      return;
+    }
+    armed = false;
+    let didPull = false;
+    if (pulling && host && !host.hidden) {
+      const ready = host.classList.contains("pull-refresh-host--ready");
+      if (ready && Date.now() - lastPullRefreshAt > COOLDOWN_MS) {
+        lastPullRefreshAt = Date.now();
+        didPull = true;
+        void loadApp({
+          globalBusy: true,
+          busyMessage: "Обновляем данные…",
+          syncWebOperationsHistory: true
+        });
+      }
+    }
+    pulling = false;
+    if (host) {
+      host.style.transform = "";
+      host.classList.remove("pull-refresh-host--ready");
+      if (!didPull) {
+        host.hidden = true;
+        host.setAttribute("aria-hidden", "true");
+      } else {
+        window.setTimeout(() => {
+          host.hidden = true;
+          host.setAttribute("aria-hidden", "true");
+        }, 280);
+      }
+    }
+  };
+
+  window.addEventListener("touchend", finish, { passive: true });
+  window.addEventListener("touchcancel", finish, { passive: true });
+}
+
 function dismissAppSplash(options = {}) {
   const el = document.getElementById("appSplash");
 
@@ -382,9 +561,10 @@ function scheduleScrollFieldIntoView(element) {
   }
 
   const run = () => {
+    const useNearest = !isWebMode;
     element.scrollIntoView({
-      block: "center",
-      behavior: "smooth",
+      block: useNearest ? "nearest" : "center",
+      behavior: useNearest ? "auto" : "smooth",
       inline: "nearest"
     });
   };
@@ -4927,6 +5107,12 @@ async function loadApp(options = {}) {
     return;
   }
 
+  const bgRefresh = options.backgroundRefresh === true;
+  const showGlobalOverlay = options.globalBusy === true && !bgRefresh;
+  if (showGlobalOverlay) {
+    beginGlobalBusy(options.busyMessage ?? "Загружаем данные…");
+  }
+
   try {
     try {
       if (typeof tg.ready === "function") {
@@ -4965,6 +5151,7 @@ async function loadApp(options = {}) {
     }
 
     syncViewportMetrics();
+    bindTelegramViewportListeners();
 
     if (!getInitData() && !isWebMode) {
       if (userNameElement) {
@@ -5071,6 +5258,10 @@ async function loadApp(options = {}) {
 
     setStatus(message, "error");
     dismissAppSplash({ fast: true });
+  } finally {
+    if (showGlobalOverlay) {
+      endGlobalBusy();
+    }
   }
 }
 
@@ -5087,6 +5278,7 @@ async function handleCreateAccount(event) {
 
   submitButton.disabled = true;
   setAccountsStatus(state.editingAccountId ? "Сохраняем счет..." : "Создаем счет...");
+  beginGlobalBusy(state.editingAccountId ? "Сохраняем счёт…" : "Создаём счёт…");
 
   try {
     const isEditing = Boolean(state.editingAccountId);
@@ -5125,7 +5317,7 @@ async function handleCreateAccount(event) {
     resetAccountForm();
     setAccountsStatus(isEditing ? "Счет обновлен." : "Счет создан.", "success");
     renderAll();
-    await loadApp();
+    await loadApp({ backgroundRefresh: true });
   } catch (error) {
     console.error(error);
     setAccountsStatus(
@@ -5133,12 +5325,14 @@ async function handleCreateAccount(event) {
       "error"
     );
   } finally {
+    endGlobalBusy();
     submitButton.disabled = false;
   }
 }
 
 async function handleDeleteAccount(accountId) {
   setAccountsStatus("Удаляем счет...");
+  beginGlobalBusy("Удаляем счёт…");
 
   try {
     await apiFetch(`/api/accounts/${encodeURIComponent(accountId)}`, {
@@ -5155,13 +5349,15 @@ async function handleDeleteAccount(accountId) {
 
     setAccountsStatus("Счет удален.", "success");
     renderAll();
-    await loadApp();
+    await loadApp({ backgroundRefresh: true });
   } catch (error) {
     console.error(error);
     setAccountsStatus(
       error instanceof Error ? error.message : "Не удалось удалить счет",
       "error"
     );
+  } finally {
+    endGlobalBusy();
   }
 }
 
@@ -5260,6 +5456,7 @@ async function handleCategorySubmit(event) {
 
   categorySubmitButton.disabled = true;
   setStatus(isEditing ? "Сохраняем категорию..." : "Создаем категорию...");
+  beginGlobalBusy(isEditing ? "Сохраняем категорию…" : "Создаём категорию…");
 
   try {
     /** @type {{ category?: { id: string } }} */
@@ -5294,7 +5491,7 @@ async function handleCategorySubmit(event) {
 
     resetCategoryForm();
     setStatus(isEditing ? "Категория обновлена." : "Категория создана.", "success");
-    await loadApp();
+    await loadApp({ backgroundRefresh: true });
   } catch (error) {
     console.error(error);
     setStatus(
@@ -5302,12 +5499,14 @@ async function handleCategorySubmit(event) {
       "error"
     );
   } finally {
+    endGlobalBusy();
     categorySubmitButton.disabled = false;
   }
 }
 
 async function handleDeleteCategory(categoryId) {
   setStatus("Удаляем категорию...");
+  beginGlobalBusy("Удаляем категорию…");
 
   try {
     await apiFetch(`/api/categories/${encodeURIComponent(categoryId)}`, {
@@ -5328,13 +5527,15 @@ async function handleDeleteCategory(categoryId) {
       "success"
     );
     renderAll();
-    await loadApp();
+    await loadApp({ backgroundRefresh: true });
   } catch (error) {
     console.error(error);
     setStatus(
       error instanceof Error ? error.message : "Не удалось удалить категорию",
       "error"
     );
+  } finally {
+    endGlobalBusy();
   }
 }
 
@@ -5360,6 +5561,7 @@ async function handleCreateEntry(event) {
     entrySubmitButton.disabled = true;
   }
   setStatus("Сохраняем операцию...");
+  beginGlobalBusy("Сохраняем операцию…");
 
   try {
     await apiFetch("/api/entries", {
@@ -5369,11 +5571,12 @@ async function handleCreateEntry(event) {
 
     resetEntryFormToDefaults();
     setStatus("Операция сохранена.", "success");
-    await loadApp();
+    await loadApp({ backgroundRefresh: true });
   } catch (error) {
     console.error(error);
     setStatus(error instanceof Error ? error.message : "Не удалось сохранить операцию", "error");
   } finally {
+    endGlobalBusy();
     if (entrySubmitButton) {
       entrySubmitButton.disabled = false;
     }
@@ -5397,6 +5600,7 @@ async function handleCreateTransfer(event) {
 
   transferSubmitButton.disabled = true;
   setStatus("Сохраняем перевод...");
+  beginGlobalBusy("Сохраняем перевод…");
 
   try {
     await apiFetch("/api/transfers", {
@@ -5407,11 +5611,12 @@ async function handleCreateTransfer(event) {
     transferForm.reset();
     transferDateInput.value = getCurrentLocalDateTimeValue();
     setStatus("Перевод сохранен.", "success");
-    await loadApp();
+    await loadApp({ backgroundRefresh: true });
   } catch (error) {
     console.error(error);
     setStatus(error instanceof Error ? error.message : "Не удалось сохранить перевод", "error");
   } finally {
+    endGlobalBusy();
     transferSubmitButton.disabled = false;
   }
 }
@@ -5419,6 +5624,7 @@ async function handleCreateTransfer(event) {
 async function handleSyncRates() {
   syncRatesButton.disabled = true;
   setStatus("Обновляем курсы валют...");
+  beginGlobalBusy("Синхронизируем курсы…");
 
   try {
     await apiFetch("/api/exchange-rates/sync", {
@@ -5426,11 +5632,12 @@ async function handleSyncRates() {
       body: JSON.stringify({})
     });
     setStatus("Курсы валют обновлены.", "success");
-    await loadApp();
+    await loadApp({ backgroundRefresh: true });
   } catch (error) {
     console.error(error);
     setStatus(error instanceof Error ? error.message : "Не удалось обновить курсы", "error");
   } finally {
+    endGlobalBusy();
     syncRatesButton.disabled = false;
   }
 }
@@ -5585,7 +5792,7 @@ function attachCategoryListsListener() {
 
 if (refreshButton) {
   refreshButton.addEventListener("click", () => {
-    void loadApp();
+    void loadApp({ globalBusy: true, busyMessage: "Обновляем данные…" });
   });
 }
 
@@ -5593,7 +5800,7 @@ document.getElementById("tgHomeRefreshButton")?.addEventListener("click", () => 
   if (refreshButton) {
     refreshButton.click();
   } else {
-    void loadApp();
+    void loadApp({ globalBusy: true, busyMessage: "Обновляем данные…" });
   }
 });
 
@@ -5659,7 +5866,7 @@ if (isWebMode) {
 
   if (webRefreshButton) {
     webRefreshButton.addEventListener("click", () => {
-      void loadApp({ syncWebOperationsHistory: true });
+      void loadApp({ globalBusy: true, busyMessage: "Обновляем данные…", syncWebOperationsHistory: true });
     });
   }
 
@@ -5822,7 +6029,7 @@ document.querySelectorAll("[data-web-new-entry]").forEach((button) => {
 
 Array.from(document.querySelectorAll("[data-refresh-action]")).forEach((button) => {
   button.addEventListener("click", () => {
-    void loadApp({ syncWebOperationsHistory: true });
+    void loadApp({ globalBusy: true, busyMessage: "Обновляем данные…", syncWebOperationsHistory: true });
   });
 });
 
@@ -5916,12 +6123,12 @@ attachWebAccountColorChrome();
 attachFxReferencePanelListeners();
 
 window.addEventListener("focus", () => {
-  void loadApp();
+  void loadApp({ backgroundRefresh: true });
 });
 
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
-    void loadApp();
+    void loadApp({ backgroundRefresh: true });
   }
 });
 
@@ -6154,8 +6361,9 @@ try {
   syncReportPeriodSegmented();
 
   attachTgActivityOpsChrome();
+  attachTelegramPullToRefresh();
 
-  void loadApp();
+  void loadApp({ globalBusy: true, busyMessage: "Загрузка…" });
 } catch (error) {
   console.error("Mini app boot failed before loadApp", error);
   if (userNameElement) {
