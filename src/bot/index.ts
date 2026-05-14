@@ -36,16 +36,37 @@ const welcomeBannerPngPath = path.join(
   "../../public/mini-app/assets/balancy-welcome-16x9.png"
 );
 
-/** URL для кнопки Web App в приветствии (стабильный продакшен). */
-const WELCOME_WEB_APP_OPEN_URL =
-  "https://finance-tg-miniapp-production.up.railway.app/mini-app/";
-
-const WELCOME_PHOTO_CAPTION_HTML = [
+const WELCOME_PHOTO_CAPTION_LINES = [
   "<b>Balancy</b> — личные финансы в одном месте.",
   "",
-  "Следите за балансами и курсами, ведите доходы и расходы по категориям, переводите между счетами и выгружайте отчёты.",
-  "Нажмите <b>«Открыть приложение»</b> под этим постером."
-].join("\n");
+  "Следите за балансами и курсами, ведите доходы и расходы по категориям, переводите между счетами и выгружайте отчёты."
+];
+
+function welcomePhotoCaptionHtml(hasOpenAppButton: boolean): string {
+  const cta = hasOpenAppButton
+    ? "Нажмите <b>«Открыть приложение»</b> под этим постером."
+    : "Откройте мини-приложение через меню бота (кнопка рядом с полем ввода) или задайте переменную <code>APP_URL</code> на сервере, чтобы появилась кнопка здесь.";
+
+  return [...WELCOME_PHOTO_CAPTION_LINES, "", cta].join("\n");
+}
+
+function buildWelcomeOpenAppMarkup(): TelegramBot.InlineKeyboardMarkup {
+  const base = (env.appUrl ?? "").trim().replace(/\/+$/, "");
+
+  if (!base) {
+    return { inline_keyboard: [] };
+  }
+
+  return {
+    inline_keyboard: [
+      [{ text: "Открыть приложение", web_app: { url: `${base}/mini-app/` } }]
+    ]
+  };
+}
+
+function welcomeHasOpenAppButton(): boolean {
+  return Boolean((env.appUrl ?? "").trim());
+}
 
 function buildHelpHtml(): string {
   return [
@@ -59,12 +80,6 @@ function buildHelpHtml(): string {
   ].join("\n");
 }
 
-const welcomeOpenAppMarkup: TelegramBot.InlineKeyboardMarkup = {
-  inline_keyboard: [
-    [{ text: "Открыть приложение", web_app: { url: WELCOME_WEB_APP_OPEN_URL } }]
-  ]
-};
-
 async function sendWelcomeBannerPhoto(
   bot: TelegramBot,
   chatId: number
@@ -75,18 +90,18 @@ async function sendWelcomeBannerPhoto(
       welcomeBannerPngPath
     );
 
-    await bot.sendMessage(chatId, WELCOME_PHOTO_CAPTION_HTML, {
+    await bot.sendMessage(chatId, welcomePhotoCaptionHtml(welcomeHasOpenAppButton()), {
       parse_mode: "HTML",
-      reply_markup: welcomeOpenAppMarkup
+      reply_markup: buildWelcomeOpenAppMarkup()
     });
 
     return;
   }
 
   await bot.sendPhoto(chatId, welcomeBannerPngPath, {
-    caption: WELCOME_PHOTO_CAPTION_HTML,
+    caption: welcomePhotoCaptionHtml(welcomeHasOpenAppButton()),
     parse_mode: "HTML",
-    reply_markup: welcomeOpenAppMarkup
+    reply_markup: buildWelcomeOpenAppMarkup()
   });
 }
 
