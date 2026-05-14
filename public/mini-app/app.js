@@ -10,7 +10,8 @@ const WEB_PAGE_TITLES = {
   reports: "Отчёты",
   categories: "Категории",
   accounts: "Счета",
-  more: "Ещё"
+  more: "Ещё",
+  transfer: "Перевод между счетами"
 };
 
 const userNameElement = document.getElementById("userName");
@@ -188,6 +189,11 @@ let tgOpsDefaultDatesInitialized = false;
 /** Активная вкладка списка категорий в веб-режиме */
 let webCategoriesActiveKind = "income";
 let webCategoriesChromeAttached = false;
+
+/** Экран, на который вернёмся после «Назад» / отмены с формы перевода */
+let transferReturnScreen = "home";
+let transferRateHintTimer = null;
+let transferRateHintRequestId = 0;
 
 /** @type {{ trend?: object, category?: object }} */
 let reportChartInstances = { trend: null, category: null };
@@ -990,14 +996,6 @@ function openScreen(screenName, options = {}) {
 
   document.body.dataset.appActiveScreen = nextScreen;
 
-  if (isWebMode) {
-    if (nextScreen !== "activity") {
-      document.body.dataset.webTransferView = "";
-    } else {
-      document.body.dataset.webTransferView = options.transferView ? "1" : "";
-    }
-  }
-
   screenElements.forEach((screenElement) => {
     const isActive = screenElement.dataset.screen === nextScreen;
     screenElement.classList.toggle("screen-active", isActive);
@@ -1014,14 +1012,13 @@ function openScreen(screenName, options = {}) {
 
   document.querySelectorAll("[data-web-nav]").forEach((button) => {
     const nav = button.dataset.webNav ?? "";
-    const transferView = document.body.dataset.webTransferView === "1";
-    const isActivityOps = nav === "activity" && nextScreen === "activity" && !transferView;
+    const isActivityOps = nav === "activity" && nextScreen === "activity";
     const isOtherNav = nav !== "activity" && nav === nextScreen;
     button.classList.toggle("is-active", isActivityOps || isOtherNav);
   });
 
   document.querySelectorAll('[data-web-sidebar-action="transfer"]').forEach((button) => {
-    button.classList.toggle("is-active", nextScreen === "activity" && document.body.dataset.webTransferView === "1");
+    button.classList.toggle("is-active", nextScreen === "transfer");
   });
 
   if (isWebMode) {
@@ -1047,6 +1044,19 @@ function openScreen(screenName, options = {}) {
   } else if (webReportsBodyEl) {
     webReportsBodyEl.hidden = true;
     destroyReportCharts();
+  }
+
+  if (nextScreen === "transfer") {
+    populateAccountOptions();
+    if (transferDateInput && !String(transferDateInput.value ?? "").trim()) {
+      transferDateInput.value = getCurrentLocalDateTimeValue();
+    }
+    syncWebTransferAmountCurrencyUi();
+    syncTransferAccountAvailabilityLines();
+    scheduleTransferRateHintRefresh();
+    window.requestAnimationFrame(() => {
+      document.getElementById("transferFromAmountInput")?.focus({ preventScroll: true });
+    });
   }
 
   if (!isWebMode && nextScreen === "activity") {
@@ -1440,10 +1450,10 @@ function syncWebPageTitle(screenName) {
 
   const key = screenName || "home";
 
-  if (key === "activity" && document.body.dataset.webTransferView === "1") {
-    webPageTitleElement.textContent = "Перевод между счетами";
+  if (key === "transfer") {
+    webPageTitleElement.textContent = WEB_PAGE_TITLES.transfer ?? "Перевод между счетами";
     if (webPageSubtitleElement) {
-      webPageSubtitleElement.textContent = "Переведите средства с одного счета на другой.";
+      webPageSubtitleElement.textContent = "Переведите средства с одного счёта на другой.";
       webPageSubtitleElement.hidden = false;
     }
     return;
@@ -4068,8 +4078,93 @@ function renderReport(report) {
   }
 }
 
+function syncTransferAccountAvailabilityLines() {
+  const fromLine = document.getElementById("transferFromAvailableLine");
+  const toLine = document.getElementById("transferToAvailableLine");
+
+  const apply = (selectEl, lineEl) => {
+    if (!selectEl || !lineEl) {
+      return;
+    }
+
+    const id = String(selectEl.value ?? "").trim();
+    const account = state.accounts.find((a) => String(a.id) === id);
+
+    if (!account) {
+      lineEl.textContent = "Доступно: —";
+      return;
+    }
+
+    const cur = String(account.currency_code ?? "").trim();
+    const bal = Number(account.balance ?? 0);
+    lineEl.textContent = `Доступно: ${formatMoney(bal, cur)}`;
+  };
+
+  apply(transferFromAccountInput, fromLine);
+  apply(transferToAccountInput, toLine);
+}
+
+function scheduleTransferRateHintRefresh() {
+  window.clearTimeout(transferRateHintTimer);
+  transferRateHintTimer = window.setTimeout(() => {
+    void refreshTransferRateHint();
+  }, 300);
+}
+
+async function refreshTransferRateHint() {
+  const hintWrap = document.getElementById("transferRateHint");
+  const hintText = document.getElementById("transferRateHintText");
+  if (!hintWrap || !hintText || !transferFromAccountInput || !transferToAccountInput) {
+    return;
+  }
+
+  const fromCur = (transferFromAccountInput.selectedOptions[0]?.dataset?.currency ?? "").trim();
+  const toCur = (transferToAccountInput.selectedOptions[0]?.dataset?.currency ?? "").trim();
+
+  if (!fromCur || !toCur || fromCur === toCur) {
+    hintWrap.hidden = true;
+    hintText.textContent = "";
+    return;
+  }
+
+  const requestId = ++transferRateHintRequestId;
+
+  try {
+    const params = new URLSearchParams({
+      amount: "1",
+      from: fromCur,
+      to: toCur
+    });
+    const payload = await apiFetch(`/api/exchange-rates/convert-preview?${params.toString()}`);
+
+    if (requestId !== transferRateHintRequestId) {
+      return;
+    }
+
+    const rateNum = Number(payload?.rate);
+    if (!Number.isFinite(rateNum)) {
+      hintWrap.hidden = true;
+      hintText.textContent = "";
+      return;
+    }
+
+    const ratePretty = formatFxReferenceNumeric(rateNum, 2, 6);
+    hintText.textContent = `Курс: 1 ${fromCur} = ${ratePretty} ${toCur}`;
+    hintWrap.hidden = false;
+  } catch {
+    if (requestId !== transferRateHintRequestId) {
+      return;
+    }
+    hintWrap.hidden = true;
+    hintText.textContent = "";
+  }
+}
+
 function syncWebTransferAmountCurrencyUi() {
   const badge = document.getElementById("webTransferAmountCurrencyBadge");
+  const toBadge = document.getElementById("webTransferToAmountCurrencyBadge");
+  const minHint = document.getElementById("transferFromMinHint");
+
   if (!badge || !transferFromAccountInput || !transferToAccountInput || !transferForm) {
     return;
   }
@@ -4080,8 +4175,18 @@ function syncWebTransferAmountCurrencyUi() {
   const toCur = (toOpt?.dataset?.currency ?? "").trim();
 
   badge.textContent = fromCur || "—";
+  if (toBadge) {
+    toBadge.textContent = toCur || "—";
+  }
 
-  transferForm.classList.toggle("web-transfer-is-cross-currency", Boolean(fromCur && toCur && fromCur !== toCur));
+  transferForm.classList.toggle("transfer-is-cross-currency", Boolean(fromCur && toCur && fromCur !== toCur));
+
+  if (minHint) {
+    minHint.textContent = fromCur ? `Минимальная сумма: ${formatMoney(1, fromCur)}` : "";
+  }
+
+  syncTransferAccountAvailabilityLines();
+  scheduleTransferRateHintRefresh();
 }
 
 function swapWebTransferAccounts() {
@@ -4096,7 +4201,7 @@ function swapWebTransferAccounts() {
   syncWebTransferAmountCurrencyUi();
 }
 
-function exitWebTransferView() {
+function exitTransferScreen() {
   if (transferForm) {
     transferForm.reset();
   }
@@ -4105,8 +4210,22 @@ function exitWebTransferView() {
     transferDateInput.value = getCurrentLocalDateTimeValue();
   }
 
-  openScreen("activity", { transferView: false });
+  const back = transferReturnScreen || "home";
+  openScreen(back);
   populateAccountOptions();
+}
+
+function openTransferScreen() {
+  transferReturnScreen = document.body.dataset.appActiveScreen || "home";
+  closeEntryTypeModal();
+  if (isWebMode) {
+    closeWebNewEntryMenu();
+    closeWebProfileDropdown();
+  }
+  openScreen("transfer");
+  window.requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  });
 }
 
 function populateAccountOptions() {
@@ -5713,6 +5832,8 @@ async function handleCreateTransfer(event) {
     transferDateInput.value = getCurrentLocalDateTimeValue();
     setStatus("Перевод сохранен.", "success");
     await loadApp({ backgroundRefresh: true });
+    const back = transferReturnScreen || "home";
+    openScreen(back);
   } catch (error) {
     console.error(error);
     setStatus(error instanceof Error ? error.message : "Не удалось сохранить перевод", "error");
@@ -5922,10 +6043,7 @@ document.querySelector("#screen-home .tg-home-quick-actions")?.addEventListener(
   const action = target.dataset.tgQuickAction ?? "";
 
   if (action === "transfer") {
-    openScreen("activity");
-    window.setTimeout(() => {
-      (entryAmountInput ?? document.getElementById("entryAmountInput"))?.focus({ preventScroll: true });
-    }, 120);
+    openTransferScreen();
     return;
   }
 
@@ -6039,29 +6157,9 @@ if (isWebMode) {
         closeWebNewEntryMenu();
         closeWebProfileDropdown();
         closeEntryTypeModal();
-        openScreen("activity", { transferView: true });
-        window.requestAnimationFrame(() => {
-          window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-        });
+        openTransferScreen();
+        return;
       }
-    });
-  });
-
-  document.getElementById("webTransferCancelButton")?.addEventListener("click", () => {
-    exitWebTransferView();
-  });
-
-  document.getElementById("webTransferSwapAccounts")?.addEventListener("click", () => {
-    swapWebTransferAccounts();
-  });
-
-  transferFromAccountInput?.addEventListener("change", syncWebTransferAmountCurrencyUi);
-  transferToAccountInput?.addEventListener("change", syncWebTransferAmountCurrencyUi);
-
-  document.getElementById("webTransferTipMore")?.addEventListener("click", () => {
-    openHelpDocumentationModal();
-    window.requestAnimationFrame(() => {
-      document.getElementById("helpDocTransferSection")?.scrollIntoView({ block: "start", behavior: "smooth" });
     });
   });
 
@@ -6090,6 +6188,28 @@ if (isWebMode) {
   });
 }
 
+document.getElementById("transferScreenBackButton")?.addEventListener("click", () => {
+  exitTransferScreen();
+});
+
+document.getElementById("webTransferCancelButton")?.addEventListener("click", () => {
+  exitTransferScreen();
+});
+
+document.getElementById("webTransferSwapAccounts")?.addEventListener("click", () => {
+  swapWebTransferAccounts();
+});
+
+transferFromAccountInput?.addEventListener("change", syncWebTransferAmountCurrencyUi);
+transferToAccountInput?.addEventListener("change", syncWebTransferAmountCurrencyUi);
+
+document.getElementById("webTransferTipMore")?.addEventListener("click", () => {
+  openHelpDocumentationModal();
+  window.requestAnimationFrame(() => {
+    document.getElementById("helpDocTransferSection")?.scrollIntoView({ block: "start", behavior: "smooth" });
+  });
+});
+
 document.querySelectorAll("[data-web-new-entry]").forEach((button) => {
   button.addEventListener("click", () => {
     const kind = button.dataset.webNewEntry;
@@ -6098,17 +6218,7 @@ document.querySelectorAll("[data-web-new-entry]").forEach((button) => {
     }
     if (kind === "transfer") {
       closeEntryTypeModal();
-      if (isWebMode) {
-        openScreen("activity", { transferView: true });
-        window.requestAnimationFrame(() => {
-          window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-        });
-      } else {
-        openScreen("activity");
-        window.setTimeout(() => {
-          (entryAmountInput ?? document.getElementById("entryAmountInput"))?.focus({ preventScroll: true });
-        }, 120);
-      }
+      openTransferScreen();
     } else if (kind === "income" || kind === "expense") {
       openEntryScreenForKind(kind);
     } else if (kind === "account") {
@@ -6202,17 +6312,7 @@ entryTypeActionButtons.forEach((button) => {
 
 document.getElementById("entryTypeOpenTransferButton")?.addEventListener("click", () => {
   closeEntryTypeModal();
-  if (isWebMode) {
-    openScreen("activity", { transferView: true });
-    window.requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    });
-  } else {
-    openScreen("activity");
-    window.setTimeout(() => {
-      (entryAmountInput ?? document.getElementById("entryAmountInput"))?.focus({ preventScroll: true });
-    }, 120);
-  }
+  openTransferScreen();
 });
 
 attachAccountsListListener();
