@@ -5410,20 +5410,28 @@ body:not(.web-mode) #reportPeriodSegmented.report-segmented,
 body:not(.web-mode) .report-segmented {
   width: 100%;
   max-width: none;
-  display: flex;
-  flex-wrap: nowrap;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 3px;
+  padding: 3px;
   box-sizing: border-box;
 }
 
 body:not(.web-mode) .report-segment {
-  flex: 1 1 0;
   min-width: 0;
+  width: auto;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-size: 12px;
-  padding: 9px 6px;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  padding: 7px 2px;
+  border-radius: 8px;
+  hyphens: auto;
+  overflow-wrap: anywhere;
 }
 
 body:not(.web-mode) .report-web-body {
@@ -5435,9 +5443,56 @@ body:not(.web-mode) .report-stats-strip {
   gap: 10px;
 }
 
+body:not(.web-mode) .report-stat-card-inner {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+body:not(.web-mode) .report-stat-copy {
+  order: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+body:not(.web-mode) .report-stat-spark {
+  order: 2;
+  width: 100%;
+  height: 40px;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+}
+
+body:not(.web-mode) .report-stat-spark canvas {
+  width: 100% !important;
+  max-width: 100%;
+  height: 40px !important;
+  display: block;
+}
+
+body:not(.web-mode) .report-stat-label {
+  font-size: 11px;
+}
+
+body:not(.web-mode) .report-stat-value {
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+body:not(.web-mode) .report-stat-sub {
+  font-size: 11px;
+  line-height: 1.3;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
 body:not(.web-mode) .report-stat-card {
-  min-height: 104px;
-  padding: 12px 12px 10px;
+  min-height: auto;
+  padding: 10px 10px 10px;
 }
 
 body:not(.web-mode) .report-charts-row {
