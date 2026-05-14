@@ -128,6 +128,14 @@ body:not(.web-mode).keyboard-open .bottom-nav {
   transform: translateY(calc(100% + 12px));
 }
 
+/* Экран «Счета»: таббар остаётся на месте при фокусе в форме (добавление/редактирование). */
+body:not(.web-mode).keyboard-open[data-app-active-screen="accounts"] .bottom-nav {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+}
+
 body:not(.web-mode) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]),
 body:not(.web-mode) textarea,
 body:not(.web-mode) select {

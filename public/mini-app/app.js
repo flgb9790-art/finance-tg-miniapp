@@ -6308,9 +6308,6 @@ function attachTgAccountsScreenChrome() {
   const scrollToAccountForm = () => {
     const anchor = document.getElementById("accountFormTitle");
     scrollTgContentToElement(anchor instanceof HTMLElement ? anchor : accountForm);
-    window.setTimeout(() => {
-      document.getElementById("nameInput")?.focus({ preventScroll: true });
-    }, 160);
   };
 
   document.getElementById("tgAccountsAddOutlineButton")?.addEventListener("click", scrollToAccountForm);
@@ -6945,11 +6942,26 @@ document.querySelectorAll("[data-web-new-entry]").forEach((button) => {
       openEntryScreenForKind(kind);
     } else if (kind === "account") {
       closeEntryTypeModal();
-      openScreen("accounts");
-      window.setTimeout(() => {
-        accountForm?.scrollIntoView({ behavior: "smooth", block: "start" });
-        document.getElementById("nameInput")?.focus({ preventScroll: true });
-      }, 120);
+      if (isWebMode) {
+        openScreen("accounts");
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            accountForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+            window.setTimeout(() => {
+              document.getElementById("nameInput")?.focus({ preventScroll: true });
+            }, 120);
+          });
+        });
+      } else {
+        resetAccountForm();
+        openScreen("accounts");
+        const anchor = document.getElementById("accountFormTitle");
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            scrollTgContentToElement(anchor instanceof HTMLElement ? anchor : accountForm);
+          });
+        });
+      }
     } else if (kind === "category") {
       closeEntryTypeModal();
       openScreen("categories");
