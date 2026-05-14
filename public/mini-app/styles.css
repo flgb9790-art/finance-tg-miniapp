@@ -5054,7 +5054,7 @@ body:not(.web-mode)[data-app-active-screen="transfer"] .web-transfer-foot-tip {
 
 .tg-transfer-top {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 1fr;
   gap: 10px 14px;
   align-items: start;
   padding: 4px 0 2px;
@@ -5084,6 +5084,13 @@ body:not(.web-mode)[data-app-active-screen="transfer"] .web-transfer-foot-tip {
 .tg-transfer-back-btn:focus-visible {
   outline: 2px solid rgb(36 173 124 / 0.45);
   outline-offset: 2px;
+}
+
+/* Кнопки «назад»: в разметке [hidden], но классы .tg-* задают display — перекрывают скрытие */
+#tgTransferScreenBackButton,
+#tgAccountFormBackButton,
+#tgCategoryFormBackButton {
+  display: none !important;
 }
 
 .tg-transfer-title {
