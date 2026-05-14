@@ -5305,23 +5305,156 @@ body:not(.web-mode) .report-web-only-csv-tab {
   display: none !important;
 }
 
-body:not(.web-mode) #reportPeriodSegmented {
+.report-period-native-wrap {
   display: none !important;
 }
 
-body.web-mode .report-period-native-wrap {
+.report-telegram-balance,
+.report-telegram-categories {
   display: none !important;
 }
 
-body:not(.web-mode) .report-web-body,
-body:not(.web-mode) .report-day-tip,
+body.web-mode .report-screen-subtitle {
+  display: none;
+}
+
+/* --- Telegram: отчёты — те же блоки, что в веб-версии, компоновка под узкий экран --- */
+body:not(.web-mode) #screen-reports.screen-active {
+  min-width: 0;
+  max-width: 100%;
+}
+
+body:not(.web-mode) #screen-reports .report-layout-card {
+  padding: 12px 12px 16px !important;
+}
+
+body:not(.web-mode) .report-filters-telegram-title {
+  display: none;
+}
+
+body:not(.web-mode) .report-web-toolbar {
+  gap: 12px;
+}
+
+body:not(.web-mode) .report-web-toolbar-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 12px;
+}
+
+body:not(.web-mode) .report-web-toolbar-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 220px;
+}
+
+body:not(.web-mode) .report-screen-title {
+  order: 1;
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+
+body:not(.web-mode) .report-screen-subtitle {
+  order: 2;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+body:not(.web-mode) .report-toolbar-period {
+  order: 3;
+  margin-top: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+body:not(.web-mode) .report-toolbar-period-label {
+  display: none;
+}
+
+body:not(.web-mode) .report-toolbar-period-range {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 650;
+  color: rgb(15 23 42);
+}
+
 body:not(.web-mode) .report-export-actions {
-  display: none !important;
+  flex-shrink: 0;
 }
 
-body.web-mode .report-telegram-balance,
-body.web-mode .report-telegram-categories {
-  display: none !important;
+body:not(.web-mode) .report-export-btn {
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+
+body:not(.web-mode) .report-period-controls {
+  grid-template-columns: 1fr;
+}
+
+body:not(.web-mode) #reportPeriodSegmented.report-segmented,
+body:not(.web-mode) .report-segmented {
+  width: 100%;
+  max-width: none;
+  display: flex;
+  flex-wrap: nowrap;
+  box-sizing: border-box;
+}
+
+body:not(.web-mode) .report-segment {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 12px;
+  padding: 9px 6px;
+}
+
+body:not(.web-mode) .report-web-body {
+  margin-top: 14px;
+}
+
+body:not(.web-mode) .report-stats-strip {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px;
+}
+
+body:not(.web-mode) .report-stat-card {
+  min-height: 104px;
+  padding: 12px 12px 10px;
+}
+
+body:not(.web-mode) .report-charts-row {
+  grid-template-columns: 1fr !important;
+  gap: 12px;
+}
+
+body:not(.web-mode) .report-chart-panel {
+  min-height: 220px;
+}
+
+body:not(.web-mode) .report-day-tip {
+  margin-top: 2px;
+}
+
+body:not(.web-mode) .report-stat-card--net:not(.report-stat-card--net-negative) .report-stat-value {
+  color: #3b82f6;
 }
 
 .web-reports-root {

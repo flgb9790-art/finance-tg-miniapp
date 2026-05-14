@@ -799,11 +799,11 @@ function openScreen(screenName, options = {}) {
 
   if (nextScreen === "reports") {
     populateReportFilterAccounts();
-    if (isWebMode && webReportsBodyEl) {
+    if (webReportsBodyEl) {
       webReportsBodyEl.hidden = false;
     }
     void loadReport();
-  } else if (isWebMode && webReportsBodyEl) {
+  } else if (webReportsBodyEl) {
     webReportsBodyEl.hidden = true;
     destroyReportCharts();
   }
@@ -3296,7 +3296,7 @@ function destroyReportCharts() {
 }
 
 function renderReportChartsFromReport(report) {
-  if (!isWebMode || typeof window.Chart === "undefined") {
+  if (typeof window.Chart === "undefined") {
     return;
   }
 
@@ -3427,7 +3427,10 @@ function renderReportChartsFromReport(report) {
       maintainAspectRatio: false,
       cutout: "62%",
       plugins: {
-        legend: { position: "right", labels: { boxWidth: 10, font: { size: 11 } } },
+        legend: {
+          position: isWebMode ? "right" : "bottom",
+          labels: { boxWidth: 10, font: { size: isWebMode ? 11 : 10 }, padding: isWebMode ? 12 : 8 }
+        },
         tooltip: {
           callbacks: {
             label(ctx) {
@@ -3449,9 +3452,6 @@ function renderReportChartsFromReport(report) {
 }
 
 function renderReportWebVisuals(report) {
-  if (!isWebMode) {
-    return;
-  }
   renderReportCategoryMatrix(report);
   renderReportPeriodSummary(report);
   drawAllReportSparks(report);
@@ -3570,10 +3570,6 @@ function renderReport(report) {
 
   if (reportCsvStatementButton) {
     reportCsvStatementButton.disabled = !canExport;
-  }
-
-  if (!isWebMode) {
-    destroyReportCharts();
   }
 }
 
@@ -4145,7 +4141,12 @@ function renderAll() {
   safeRenderStep("homeActivity", () =>
     renderHomeRecentActivity(state.recentEntries, state.recentTransfers)
   );
-  safeRenderStep("report", () => renderReport(state.report));
+  safeRenderStep("report", () => {
+    renderReport(state.report);
+    if (!isWebMode && document.body.dataset.appActiveScreen === "reports" && state.report) {
+      renderReportWebVisuals(state.report);
+    }
+  });
   safeRenderStep("accountOptions", () => populateAccountOptions());
   safeRenderStep("currencyOptions", () => populateCurrencyOptions());
   safeRenderStep("reportingCurrencyOptions", () => populateReportingCurrencyOptions());
