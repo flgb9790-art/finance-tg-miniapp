@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#eef2f7" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260514tg-ops-pages";
+        var BALANCY_CLIENT_ASSET_REV = "20260514tg-dates-layout";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -762,13 +762,17 @@
 
             <div id="tgOpsFiltersPanel" class="tg-ops-filters-panel">
               <div class="tg-ops-dates-grid">
-                <label class="tg-ops-field-block">
+                <label class="tg-ops-field-block tg-ops-field-block--date">
                   <span class="tg-ops-field-label muted">Период с</span>
-                  <input id="tgOpsDateFrom" class="tg-ops-control" type="date" aria-label="Дата с" />
+                  <span class="tg-ops-date-input-shell">
+                    <input id="tgOpsDateFrom" class="tg-ops-control" type="date" aria-label="Дата с" />
+                  </span>
                 </label>
-                <label class="tg-ops-field-block">
+                <label class="tg-ops-field-block tg-ops-field-block--date">
                   <span class="tg-ops-field-label muted">По</span>
-                  <input id="tgOpsDateTo" class="tg-ops-control" type="date" aria-label="Дата по" />
+                  <span class="tg-ops-date-input-shell">
+                    <input id="tgOpsDateTo" class="tg-ops-control" type="date" aria-label="Дата по" />
+                  </span>
                 </label>
               </div>
               <div class="tg-ops-selects-grid">

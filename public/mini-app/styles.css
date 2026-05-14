@@ -4036,6 +4036,12 @@ body:not(.web-mode) #screen-activity > .web-transfer-sheet {
   display: none !important;
 }
 
+body:not(.web-mode) #screen-activity {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 .tg-ops-activity-root {
   padding: 4px 0 calc(12px + env(safe-area-inset-bottom, 0px));
   display: flex;
@@ -4217,11 +4223,36 @@ body:not(.web-mode) #screen-activity > .web-transfer-sheet {
   min-width: 0;
 }
 
+/* В Telegram WebView у type=date часто огромный intrinsic min-width — в портрете держим одну колонку */
+body:not(.web-mode) .tg-ops-dates-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 560px) {
+  body:not(.web-mode) .tg-ops-dates-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+  }
+}
+
 .tg-ops-field-block {
   display: flex;
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+  max-width: 100%;
+}
+
+body:not(.web-mode) .tg-ops-field-block--date {
+  overflow: hidden;
+}
+
+.tg-ops-date-input-shell {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .tg-ops-field-label {
@@ -4245,11 +4276,26 @@ body:not(.web-mode) #screen-activity > .web-transfer-sheet {
   color: var(--text, #0f172a);
 }
 
-.tg-ops-field-block .tg-ops-control[type="date"] {
+.tg-ops-field-block .tg-ops-control[type="date"],
+.tg-ops-date-input-shell .tg-ops-control[type="date"] {
   min-width: 0;
   width: 100%;
   max-width: 100%;
   display: block;
+  margin: 0;
+}
+
+/* Chromium/WebKit: ограничить внутреннюю разметку даты, чтобы не раздувала сетку */
+.tg-ops-date-input-shell .tg-ops-control[type="date"]::-webkit-datetime-edit,
+.tg-ops-date-input-shell .tg-ops-control[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  max-width: 100%;
+  padding: 0;
+}
+
+body:not(.web-mode) .tg-ops-date-input-shell .tg-ops-control[type="date"] {
+  padding-left: 8px;
+  padding-right: 8px;
+  font-size: 14px;
 }
 
 .tg-ops-control:focus {
