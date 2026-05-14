@@ -1889,6 +1889,8 @@ function syncWebPageTitle(screenName) {
     if (webPageSubtitleElement) {
       webPageSubtitleElement.textContent = "Переведите средства с одного счёта на другой.";
       webPageSubtitleElement.hidden = false;
+      webPageSubtitleElement.classList.remove("web-page-subtitle--empty");
+      webPageSubtitleElement.removeAttribute("aria-hidden");
     }
     return;
   }
@@ -1914,9 +1916,13 @@ function syncWebPageTitle(screenName) {
   if (subtitle) {
     webPageSubtitleElement.textContent = subtitle;
     webPageSubtitleElement.hidden = false;
+    webPageSubtitleElement.classList.remove("web-page-subtitle--empty");
+    webPageSubtitleElement.removeAttribute("aria-hidden");
   } else {
-    webPageSubtitleElement.textContent = "";
-    webPageSubtitleElement.hidden = true;
+    webPageSubtitleElement.textContent = "\u00a0";
+    webPageSubtitleElement.hidden = false;
+    webPageSubtitleElement.classList.add("web-page-subtitle--empty");
+    webPageSubtitleElement.setAttribute("aria-hidden", "true");
   }
 }
 
@@ -7056,11 +7062,9 @@ if (entryTypeModalCloseButton) {
   });
 }
 
-if (openHelpDocumentationButton) {
-  openHelpDocumentationButton.addEventListener("click", () => {
-    openHelpDocumentationModal();
-  });
-}
+openHelpDocumentationButton?.addEventListener("click", () => {
+  openHelpDocumentationModal();
+});
 
 if (helpDocumentationBackdrop) {
   helpDocumentationBackdrop.addEventListener("click", () => {

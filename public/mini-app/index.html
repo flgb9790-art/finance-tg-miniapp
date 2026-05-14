@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#f3f5fa" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260517history-layout-width";
+        var BALANCY_CLIENT_ASSET_REV = "20260515tg-home-all-to-ledger";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -164,7 +164,13 @@
           <div class="web-page-title-block">
             <div class="web-page-title-copy">
               <h1 id="webPageTitle" class="web-page-title">Главная</h1>
-              <p id="webPageSubtitle" class="web-page-subtitle muted" hidden></p>
+              <p
+                id="webPageSubtitle"
+                class="web-page-subtitle muted web-page-subtitle--empty"
+                aria-hidden="true"
+              >
+                &nbsp;
+              </p>
             </div>
           </div>
           <div class="web-page-header-actions">
@@ -278,7 +284,7 @@
                 <span class="tg-only-inline"
                   >Пошаговая инструкция по приложению — во вкладке «Ещё» внизу экрана, кнопка «Инструкция».</span
                 ><span class="web-only-inline"
-                  >Справка по использованию — кнопка «Справка: как пользоваться» внизу этой страницы; полный текст также в «Ещё» → «Инструкция».</span
+                  >Полный текст инструкции — в разделе «Ещё» → «Инструкция».</span
                 >
               </p>
             </div>
@@ -497,9 +503,16 @@
                     <span class="web-only-inline">История</span>
                   </h2>
                 </div>
-                <button class="text-link-button tg-home-section-link" data-open-screen="history" type="button">
-                  <span class="tg-only-inline">Все</span>
-                  <span class="web-only-inline">Все</span>
+                <button
+                  type="button"
+                  class="text-link-button tg-home-section-link tg-only-block"
+                  data-open-screen="ledger"
+                  data-scroll-screen-top="true"
+                >
+                  Все
+                </button>
+                <button type="button" class="text-link-button tg-home-section-link web-only-block" data-open-screen="history">
+                  Все
                 </button>
               </div>
               <div class="web-home-card-main">
@@ -556,12 +569,6 @@
               </div>
             </section>
           </aside>
-          </div>
-
-          <div class="home-help-footer web-only-block">
-            <button type="button" id="openHelpDocumentationButton" class="home-help-doc-trigger">
-              Справка: как пользоваться
-            </button>
           </div>
 
           <div class="hidden-summary">
