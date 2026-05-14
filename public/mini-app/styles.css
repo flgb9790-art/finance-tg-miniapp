@@ -8693,3 +8693,168 @@ body:not(.web-mode) #screen-more .tg-more-screen-actions .ghost-button {
   width: 100%;
   box-sizing: border-box;
 }
+
+/* --- Подсказки Balancy (закрытие до перезагрузки; глобальное отключение в «Настройки») --- */
+.balancy-hint-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgb(167 243 208);
+  background: rgb(236 253 245);
+  color: rgb(6 78 59);
+}
+
+.balancy-hint-card[hidden] {
+  display: none !important;
+}
+
+.balancy-hint-icon {
+  flex-shrink: 0;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.balancy-hint-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.balancy-hint-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 750;
+  margin-bottom: 4px;
+}
+
+.balancy-hint-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.balancy-hint-close {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: rgb(5 46 22);
+  font-size: 20px;
+  line-height: 1;
+  padding: 0 4px;
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.balancy-hint-close:hover {
+  opacity: 1;
+}
+
+#screen-home > .balancy-hint-card {
+  margin: 0 0 12px;
+}
+
+#screen-activity > .balancy-hint-card {
+  margin-top: 4px;
+}
+
+#tgActivityOpsTip.balancy-hint-card {
+  margin: 12px 0 6px;
+}
+
+.balancy-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 18px 0 8px;
+  padding: 14px 0;
+  border-top: 1px solid rgb(226 232 240);
+  border-bottom: 1px solid rgb(226 232 240);
+}
+
+.balancy-settings-row-text strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.balancy-settings-row-text p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.balancy-switch {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  cursor: pointer;
+}
+
+.balancy-switch-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.balancy-switch-track {
+  display: block;
+  width: 50px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgb(203 213 225);
+  position: relative;
+  transition: background 0.2s ease;
+  pointer-events: none;
+}
+
+.balancy-switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.18);
+  transition: transform 0.2s ease;
+  pointer-events: none;
+}
+
+.balancy-switch-input:checked + .balancy-switch-track {
+  background: linear-gradient(180deg, #2ecf84 0%, #28b473 100%);
+}
+
+.balancy-switch-input:checked + .balancy-switch-track .balancy-switch-thumb {
+  transform: translateX(20px);
+}
+
+.tg-settings-lead {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.tg-settings-back {
+  width: 100%;
+  margin-top: 16px;
+}
+
+body:not(.web-mode) #screen-settings .tg-settings-card {
+  border-radius: 18px;
+  padding: 16px 16px 18px;
+  box-shadow: 0 2px 12px rgb(15 23 42 / 0.06);
+}
+
+body.web-mode #screen-settings .tg-settings-card {
+  max-width: 560px;
+  margin: 0 auto;
+}

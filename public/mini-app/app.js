@@ -32,7 +32,8 @@ const WEB_PAGE_TITLES = {
   categories: "Категории",
   accounts: "Счета",
   more: "Ещё",
-  transfer: "Перевод между счетами"
+  transfer: "Перевод между счетами",
+  settings: "Настройки"
 };
 
 const userNameElement = document.getElementById("userName");
@@ -137,9 +138,6 @@ const reportOperationsCountValueElement = document.getElementById("reportOperati
 const reportCategoryMatrixBody = document.getElementById("reportCategoryMatrixBody");
 const reportPeriodSummaryDl = document.getElementById("reportPeriodSummaryDl");
 const reportDonutTotalElement = document.getElementById("reportDonutTotal");
-const reportDayTipBar = document.getElementById("reportDayTipBar");
-const reportDayTipText = document.getElementById("reportDayTipText");
-const reportDayTipClose = document.getElementById("reportDayTipClose");
 const webReportsBodyEl = document.getElementById("webReportsBody");
 const addOperationButton = document.getElementById("addOperationButton");
 const webOperationsRoot = document.getElementById("webOperationsRoot");
@@ -375,6 +373,90 @@ function syncViewportMetrics() {
     isFormTextField(document.activeElement)
   );
   syncFxCalcKeyboardAccessory();
+}
+
+const BALANCY_HINTS_ENABLED_STORAGE_KEY = "balancyHintsEnabled";
+const BALANCY_HINT_DISMISS_SESSION_PREFIX = "balancyHintDismissed_";
+
+function readHintsGloballyEnabled() {
+  try {
+    const raw = window.localStorage.getItem(BALANCY_HINTS_ENABLED_STORAGE_KEY);
+    if (raw === "0") {
+      return false;
+    }
+    if (raw === "1") {
+      return true;
+    }
+    return true;
+  } catch {
+    return true;
+  }
+}
+
+function writeHintsGloballyEnabled(on) {
+  try {
+    window.localStorage.setItem(BALANCY_HINTS_ENABLED_STORAGE_KEY, on ? "1" : "0");
+  } catch {
+    //
+  }
+}
+
+function isBalancyHintDismissedThisSession(id) {
+  try {
+    return window.sessionStorage.getItem(BALANCY_HINT_DISMISS_SESSION_PREFIX + id) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function dismissBalancyHintSession(id) {
+  try {
+    window.sessionStorage.setItem(BALANCY_HINT_DISMISS_SESSION_PREFIX + id, "1");
+  } catch {
+    //
+  }
+}
+
+function syncBalancyHintsEnabledToggleUi() {
+  const toggle = document.getElementById("balancyHintsEnabledToggle");
+  if (toggle instanceof HTMLInputElement) {
+    toggle.checked = readHintsGloballyEnabled();
+  }
+}
+
+function applyBalancyHintsFromState() {
+  const globallyOn = readHintsGloballyEnabled();
+  syncBalancyHintsEnabledToggleUi();
+
+  const accountsLen = Array.isArray(state.accounts) ? state.accounts.length : 0;
+  const categoriesLen = Array.isArray(state.categories) ? state.categories.length : 0;
+
+  document.querySelectorAll("[data-balancy-hint]").forEach((el) => {
+    if (!(el instanceof HTMLElement)) {
+      return;
+    }
+
+    const id = el.getAttribute("data-balancy-hint")?.trim();
+    if (!id) {
+      return;
+    }
+
+    let show = globallyOn && !isBalancyHintDismissedThisSession(id);
+
+    if (id === "homeStart" && accountsLen > 0 && categoriesLen > 0) {
+      show = false;
+    }
+
+    if ((id === "accountsSwipeTg" || id === "accountsSwipeWeb") && accountsLen === 0) {
+      show = false;
+    }
+
+    if ((id === "categoriesSwipeTg" || id === "categoriesSwipeWeb") && categoriesLen === 0) {
+      show = false;
+    }
+
+    el.hidden = !show;
+  });
 }
 
 function beginGlobalBusy(message = "Загружаем…") {
@@ -1306,7 +1388,7 @@ function openScreen(screenName) {
     if (
       !isWebMode &&
       target === "more" &&
-      (nextScreen === "ledger" || nextScreen === "reports" || nextScreen === "instruction")
+      (nextScreen === "ledger" || nextScreen === "reports" || nextScreen === "instruction" || nextScreen === "settings")
     ) {
       active = true;
     }
@@ -1374,6 +1456,8 @@ function openScreen(screenName) {
     syncTgGlobalScreenChrome(nextScreen);
     scrollTelegramAppShellToTop();
   }
+
+  applyBalancyHintsFromState();
 }
 
 function initWebOperationsChrome() {
@@ -1822,7 +1906,8 @@ function syncWebPageTitle(screenName) {
     instruction: "Пошаговое руководство по мини-приложению в Telegram.",
     reports: "Сводка за период, графики и выгрузка CSV в валюте отчёта.",
     categories: "Создавайте, редактируйте и управляйте категориями доходов и расходов.",
-    accounts: "Управляйте своими счетами: создавайте, редактируйте и удаляйте."
+    accounts: "Управляйте своими счетами: создавайте, редактируйте и удаляйте.",
+    settings: "Подсказки и отображение советов в интерфейсе."
   };
   const subtitle = subtitleByScreen[key];
 
@@ -3897,26 +3982,6 @@ function attachTgActivityOpsChrome() {
     tgOpsPageOffset = (page - 1) * TG_OPS_PAGE_SIZE;
     void refreshTgOperationsBoard();
   });
-
-  const tip = document.getElementById("tgActivityOpsTip");
-  const tipClose = document.getElementById("tgActivityOpsTipClose");
-  if (tip && tipClose) {
-    try {
-      if (window.sessionStorage.getItem("balancyHideTgOpsTip") === "1") {
-        tip.hidden = true;
-      }
-    } catch {
-      //
-    }
-    tipClose.addEventListener("click", () => {
-      tip.hidden = true;
-      try {
-        window.sessionStorage.setItem("balancyHideTgOpsTip", "1");
-      } catch {
-        //
-      }
-    });
-  }
 }
 
 function renderHomeRecentActivity(entries, transfers) {
@@ -4307,33 +4372,6 @@ function drawAllReportSparks(report) {
   drawReportSparkline(document.getElementById("reportSparkOps"), opsSpark, "#3498DB");
 }
 
-function updateReportDayTip(report) {
-  if (!reportDayTipText || !report) {
-    return;
-  }
-  const cmp = report.compareToPrevious;
-  const expCats = report.expenseByCategory ?? [];
-  const top = expCats[0];
-  if (top && top.total > 0 && cmp && typeof cmp.expensePct === "number" && Number.isFinite(cmp.expensePct)) {
-    const pct = cmp.expensePct;
-    const cat = top.categoryName ?? "крупнейшей статье";
-    if (pct <= -0.5) {
-      reportDayTipText.textContent = `Расходы по «${cat}» ниже на ${Math.abs(pct).toFixed(0)}%, чем в прошлом периоде. Отличная динамика.`;
-      return;
-    }
-    if (pct >= 0.5) {
-      reportDayTipText.textContent = `Расходы по «${cat}» выше на ${pct.toFixed(0)}%, чем в прошлом периоде — присмотритесь к этой статье.`;
-      return;
-    }
-  }
-  if (top && top.total > 0) {
-    reportDayTipText.textContent = `Крупнейшая статья расходов: «${top.categoryName}» — ${formatMoneyAmount(top.total)} ${report.reportingCurrency ?? ""}.`;
-    return;
-  }
-  reportDayTipText.textContent =
-    "Добавьте категории расходов и операции — отчёт станет нагляднее, а подсказки точнее.";
-}
-
 function destroyReportCharts() {
   ["trend", "category"].forEach((key) => {
     const chart = reportChartInstances[key];
@@ -4508,7 +4546,6 @@ function renderReportWebVisuals(report) {
   renderReportCategoryMatrix(report);
   renderReportPeriodSummary(report);
   drawAllReportSparks(report);
-  updateReportDayTip(report);
   renderReportChartsFromReport(report);
 }
 
@@ -5426,6 +5463,7 @@ function renderAll() {
   safeRenderStep("categoryOptions", () => populateCategoryOptions());
   safeRenderStep("fxReferencePanel", () => syncFxReferencePanel());
   safeRenderStep("webProfile", () => syncWebProfile());
+  applyBalancyHintsFromState();
 }
 
 function syncWebProfile() {
@@ -6318,13 +6356,6 @@ function attachTgAccountsScreenChrome() {
     document.querySelector("#screen-accounts .web-accounts-main")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  document.getElementById("tgAccountsReorderTipClose")?.addEventListener("click", () => {
-    const tip = document.getElementById("tgAccountsReorderTip");
-    if (tip) {
-      tip.hidden = true;
-    }
-  });
-
   const iconGrid = document.getElementById("webAccountIconGrid");
   iconGrid?.addEventListener("click", (event) => {
     const t = event.target instanceof Element ? event.target.closest("[data-account-icon]") : null;
@@ -6749,13 +6780,31 @@ tgGlobalNewEntryButton?.addEventListener("click", () => {
   openEntryTypeModal();
 });
 
-const webDayTipBanner = document.getElementById("webDayTipBanner");
-const webDayTipClose = document.getElementById("webDayTipClose");
-if (webDayTipBanner && webDayTipClose) {
-  webDayTipClose.addEventListener("click", () => {
-    webDayTipBanner.hidden = true;
-  });
-}
+document.addEventListener("click", (event) => {
+  const closeBtn =
+    event.target instanceof Element ? event.target.closest("[data-balancy-hint-close]") : null;
+  if (!closeBtn) {
+    return;
+  }
+  const id = closeBtn.getAttribute("data-balancy-hint-close")?.trim();
+  if (!id) {
+    return;
+  }
+  dismissBalancyHintSession(id);
+  const host = document.querySelector(`[data-balancy-hint="${id}"]`);
+  if (host instanceof HTMLElement) {
+    host.hidden = true;
+  }
+});
+
+document.getElementById("balancyHintsEnabledToggle")?.addEventListener("change", (event) => {
+  const el = event.target;
+  if (!(el instanceof HTMLInputElement)) {
+    return;
+  }
+  writeHintsGloballyEnabled(el.checked);
+  applyBalancyHintsFromState();
+});
 
 document.querySelector("#screen-home .tg-home-quick-actions")?.addEventListener("click", (event) => {
   const target = event.target instanceof Element ? event.target.closest("[data-tg-quick-action]") : null;
@@ -7172,31 +7221,6 @@ document.getElementById("entryFormResetWeb")?.addEventListener("click", () => {
   resetEntryFormToDefaults();
 });
 
-(function initTgEntryOperationHint() {
-  const hint = document.getElementById("tgEntryHint");
-  const closeBtn = document.getElementById("tgEntryHintClose");
-  if (!hint || !closeBtn || isWebMode) {
-    return;
-  }
-
-  try {
-    if (window.sessionStorage.getItem("balancyHideTgEntryHint") === "1") {
-      hint.hidden = true;
-    }
-  } catch {
-    //
-  }
-
-  closeBtn.addEventListener("click", () => {
-    hint.hidden = true;
-    try {
-      window.sessionStorage.setItem("balancyHideTgEntryHint", "1");
-    } catch {
-      //
-    }
-  });
-})();
-
 reportPeriodInput?.addEventListener("change", () => {
   toggleReportDateInputs();
   syncReportPeriodSegmented();
@@ -7212,12 +7236,6 @@ document.querySelectorAll("[data-report-period]").forEach((button) => {
     toggleReportDateInputs();
     syncReportPeriodSegmented();
   });
-});
-
-reportDayTipClose?.addEventListener("click", () => {
-  if (reportDayTipBar) {
-    reportDayTipBar.hidden = true;
-  }
 });
 
 document.addEventListener("click", (event) => {
