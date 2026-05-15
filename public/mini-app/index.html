@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260515web-categories-ui";
+        var BALANCY_CLIENT_ASSET_REV = "20260515web-categories-cols";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -1586,6 +1586,11 @@
                     </header>
                     <div class="web-categories-table-shell">
                       <table class="web-categories-table" aria-label="Категории доходов">
+                        <colgroup>
+                          <col class="web-categories-col-name" />
+                          <col class="web-categories-col-type" />
+                          <col class="web-categories-col-actions" />
+                        </colgroup>
                         <thead>
                           <tr>
                             <th scope="col">Название</th>
@@ -1609,6 +1614,11 @@
                     </header>
                     <div class="web-categories-table-shell">
                       <table class="web-categories-table" aria-label="Категории расходов">
+                        <colgroup>
+                          <col class="web-categories-col-name" />
+                          <col class="web-categories-col-type" />
+                          <col class="web-categories-col-actions" />
+                        </colgroup>
                         <thead>
                           <tr>
                             <th scope="col">Название</th>

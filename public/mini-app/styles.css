@@ -7061,13 +7061,19 @@ body:not(.web-mode) .report-transfers-fallback:not([hidden]) {
 
 body.web-mode .web-categories-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
-  gap: 22px 24px;
+  grid-template-columns: minmax(0, 460px) minmax(440px, 1fr);
+  gap: 24px 28px;
   align-items: start;
 }
 
 body.web-mode .web-categories-main {
   min-width: 0;
+  max-width: 460px;
+}
+
+body.web-mode .web-categories-panel {
+  min-width: 0;
+  max-width: none;
 }
 
 body.web-mode .web-categories-legacy-wrap {
@@ -7227,6 +7233,29 @@ body.web-mode .web-categories-section .web-categories-table-shell {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+}
+
+body.web-mode .web-categories-table {
+  table-layout: fixed;
+}
+
+body.web-mode .web-categories-col-type {
+  width: 148px;
+}
+
+body.web-mode .web-categories-col-actions {
+  width: 96px;
+}
+
+body.web-mode .web-categories-table thead th:nth-child(2),
+body.web-mode .web-categories-table tbody td:nth-child(2) {
+  width: 148px;
+  white-space: nowrap;
+}
+
+body.web-mode .web-categories-table thead th:nth-child(3),
+body.web-mode .web-categories-table tbody td:nth-child(3) {
+  width: 96px;
 }
 
 .web-categories-table thead th {
