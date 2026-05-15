@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260515web-invite-mobile-web1-redirect-v1";
+        var BALANCY_CLIENT_ASSET_REV = "20260516web-login-telegram-invite-hint-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -68,6 +68,10 @@
           Войдите через Telegram, чтобы открыть веб-версию Balancy и синхронизировать данные с ботом.
         </p>
         <div id="webLoginWidgetHost" class="web-login-widget-host"></div>
+        <p id="webLoginInviteTelegramHint" class="web-login-telegram-app-hint muted" hidden>
+          <a id="webLoginOpenInTelegramLink" class="web-login-open-in-tg" href="#">Открыть в приложении Telegram</a>
+          — удобнее для входа по приглашению с телефона.
+        </p>
         <p id="webLoginGateError" class="web-login-error inline-error" hidden></p>
         <p class="web-login-footnote muted">После входа вы вернётесь в приложение автоматически.</p>
       </div>
@@ -801,7 +805,9 @@
             </div>
             <div class="web-team-invite-block">
               <p class="web-team-field-label">Приглашение</p>
-              <p class="muted web-team-invite-hint">Ссылка многоразовая. До 5 участников включая вас.</p>
+              <p class="muted web-team-invite-hint">
+                Ссылка откроет приложение Telegram и Balancy. Можно также вставить ссылку в браузер на ПК. До 5 участников включая вас.
+              </p>
               <button type="button" id="webTeamCopyInviteButton" class="primary-button web-team-copy-invite">
                 Скопировать ссылку-приглашение
               </button>

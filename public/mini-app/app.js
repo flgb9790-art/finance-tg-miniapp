@@ -53,6 +53,31 @@ function parseWebInviteTokenFromLocation() {
 
 parseWebInviteTokenFromLocation();
 
+function captureInviteFromTelegramStartParam() {
+  try {
+    const existing = sessionStorage.getItem(WEB_INVITE_TOKEN_SESSION_KEY)?.trim();
+    if (existing) {
+      return;
+    }
+
+    const sp = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+    if (typeof sp !== "string" || !sp.trim()) {
+      return;
+    }
+
+    const cleaned = sp.trim();
+    if (cleaned.length < 8) {
+      return;
+    }
+
+    sessionStorage.setItem(WEB_INVITE_TOKEN_SESSION_KEY, cleaned);
+  } catch {
+    //
+  }
+}
+
+captureInviteFromTelegramStartParam();
+
 
 /** В TG: клавиатура не сжимает layout — нижняя навигация не «подпрыгивает» над клавиатурой. Веб-версия meta не трогается. */
 function applyTelegramMiniAppViewportFix() {
@@ -122,6 +147,9 @@ const webProfileToggleButton = document.getElementById("webProfileToggleButton")
 const webProfileDropdown = document.getElementById("webProfileDropdown");
 const webProfileMeta = document.getElementById("webProfileMeta");
 const webSwitchUserButton = document.getElementById("webSwitchUserButton");
+const webLoginGateDescElement = document.getElementById("webLoginGateDesc");
+const webLoginInviteTelegramHintElement = document.getElementById("webLoginInviteTelegramHint");
+const webLoginOpenInTelegramLinkElement = document.getElementById("webLoginOpenInTelegramLink");
 const webLoginGateElement = document.getElementById("webLoginGate");
 const webLoginWidgetHost = document.getElementById("webLoginWidgetHost");
 const webLoginGateErrorElement = document.getElementById("webLoginGateError");
@@ -6438,19 +6466,30 @@ async function fetchWebLoginConfig() {
 }
 
 /**
- * Короткая ссылка для приглашения. В TG mini app `window.location.href` бывает длинным (tgWebApp… и т.д.),
- * из‑за этого копировался мусор и переход мог вести «не туда». Берём APP_URL с сервера + `/mini-app/`.
+ * Ссылка приглашения: в приоритете t.me/?startapp= — на телефоне открывается приложение Telegram и mini app.
+ * Иначе — веб-URL с ?web=1 (браузер без Telegram).
  */
 async function buildWorkspaceInviteClipboardUrl(token) {
-  const raw = (await fetchWebLoginConfig()).publicAppUrl;
+  const cfg = await fetchWebLoginConfig();
+  const cleanToken = String(token).trim();
+
+  const botRaw =
+    typeof cfg.botUsername === "string" && cfg.botUsername.trim()
+      ? cfg.botUsername.trim().replace(/^@+/, "")
+      : "";
+
+  if (botRaw) {
+    return `https://t.me/${botRaw}?startapp=${encodeURIComponent(cleanToken)}`;
+  }
+
+  const raw = cfg.publicAppUrl;
   const base =
     typeof raw === "string" && raw.trim().length > 0
       ? raw.replace(/\/+$/, "")
       : window.location.origin;
 
   const url = new URL("/mini-app/", `${base}/`);
-  url.searchParams.set("invite", String(token).trim());
-  /* Вне Telegram Mini App вход только через веб (?web=1 + Login Widget). Иначе моб. браузер не авторизуется. */
+  url.searchParams.set("invite", cleanToken);
   url.searchParams.set("web", "1");
 
   return url.toString();
@@ -7481,6 +7520,37 @@ function attachWorkspaceUi() {
 }
 
 
+async function syncWebLoginTelegramAppHint() {
+  if (!webLoginInviteTelegramHintElement || !webLoginOpenInTelegramLinkElement) {
+    return;
+  }
+
+  const token = getPendingWebInviteToken();
+
+  if (!token) {
+    webLoginInviteTelegramHintElement.hidden = true;
+    return;
+  }
+
+  try {
+    const cfg = await fetchWebLoginConfig();
+    const bot =
+      typeof cfg.botUsername === "string" && cfg.botUsername.trim()
+        ? cfg.botUsername.trim().replace(/^@+/, "")
+        : "";
+
+    if (!bot) {
+      webLoginInviteTelegramHintElement.hidden = true;
+      return;
+    }
+
+    webLoginOpenInTelegramLinkElement.href = `https://t.me/${bot}?startapp=${encodeURIComponent(token)}`;
+    webLoginInviteTelegramHintElement.hidden = false;
+  } catch {
+    webLoginInviteTelegramHintElement.hidden = true;
+  }
+}
+
 function showWebLoginGate(errorMessage = "") {
   if (!isWebMode || !webLoginGateElement) {
     return;
@@ -7496,6 +7566,7 @@ function showWebLoginGate(errorMessage = "") {
   }
 
   void mountWebTelegramLoginWidget();
+  void syncWebLoginTelegramAppHint();
 }
 
 function hideWebLoginGate() {
@@ -7509,6 +7580,10 @@ function hideWebLoginGate() {
   if (webLoginGateErrorElement) {
     webLoginGateErrorElement.hidden = true;
     webLoginGateErrorElement.textContent = "";
+  }
+
+  if (webLoginInviteTelegramHintElement) {
+    webLoginInviteTelegramHintElement.hidden = true;
   }
 }
 

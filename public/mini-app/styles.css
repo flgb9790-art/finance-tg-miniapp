@@ -10957,6 +10957,30 @@ body.web-mode.web-login-gate-open .app-shell {
   margin-bottom: 14px;
 }
 
+.web-login-telegram-app-hint {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.web-login-telegram-app-hint[hidden] {
+  display: none !important;
+}
+
+.web-login-open-in-tg {
+  color: var(--balancy-indigo);
+  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-color: rgb(55 48 163 / 0.35);
+  text-underline-offset: 2px;
+}
+
+.web-login-open-in-tg:hover {
+  color: var(--balancy-violet);
+  text-decoration-color: rgb(91 33 182 / 0.45);
+}
+
 .web-login-error {
   margin: 0 0 10px;
   font-size: 13px;
