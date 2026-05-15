@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260515web-teams-phase3-v2";
+        var BALANCY_CLIENT_ASSET_REV = "20260515web-teams-phase3-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -37,11 +37,11 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
   <body>
-    <div id="appSplash" class="app-splash" role="status" aria-live="polite" aria-label="Загрузка Balancy">
+    <div id="appSplash" class="app-splash" role="status" aria-live="polite" aria-label="??????????? Balancy">
       <div class="app-splash-inner">
         <div class="app-splash-brand">
           <span class="app-splash-wordmark">Balancy</span>
-          <div class="app-splash-tagline">Баланс и учёт в одном месте</div>
+          <div class="app-splash-tagline">??????? ? ???????? ? ????? ??????</div>
         </div>
         <div class="app-splash-footer">
           <div class="app-splash-spinner" aria-hidden="true"></div>
@@ -61,19 +61,19 @@
       <div class="web-login-card">
         <header class="web-login-brand">
           <span class="web-login-wordmark brand-wordmark">Balancy</span>
-          <p class="web-login-tagline">Баланс и учёт в одном месте</p>
+          <p class="web-login-tagline">??????? ? ???????? ? ????? ??????</p>
         </header>
-        <h1 id="webLoginGateTitle" class="web-login-title">Добро пожаловать</h1>
+        <h1 id="webLoginGateTitle" class="web-login-title">??????? ????????????</h1>
         <p id="webLoginGateDesc" class="web-login-lede muted">
-          Войдите через Telegram, чтобы открыть веб-версию Balancy и синхронизировать данные с ботом.
+          ????????? ??????? Telegram, ???????? ???????????? ???-???????? Balancy ? ????????????????????? ??????? ? ??????.
         </p>
         <div id="webLoginWidgetHost" class="web-login-widget-host"></div>
         <p id="webLoginGateError" class="web-login-error inline-error" hidden></p>
-        <p class="web-login-footnote muted">После входа вы вернётесь в приложение автоматически.</p>
+        <p class="web-login-footnote muted">?????? ?????? ??? ????????????? ? ??????????? ????????????????.</p>
       </div>
     </div>
 
-        <div
+    <div
       id="webModeChoice"
       class="web-mode-choice-gate"
       hidden
@@ -85,32 +85,32 @@
         <header class="web-mode-choice-brand">
           <span class="web-mode-choice-wordmark brand-wordmark">Balancy</span>
         </header>
-        <h1 id="webModeChoiceTitle" class="web-mode-choice-title">Как будете пользоваться?</h1>
-        <p class="web-mode-choice-lede muted">Выберите режим. Позже можно переключиться в профиле внизу меню.</p>
+        <h1 id="webModeChoiceTitle" class="web-mode-choice-title">╨Ъ╨░╨║ ╨▒╤Г╨┤╨╡╤В╨╡ ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╤М╤Б╤П?</h1>
+        <p class="web-mode-choice-lede muted">╨Т╤Л╨▒╨╡╤А╨╕╤В╨╡ ╤А╨╡╨╢╨╕╨╝. ╨Я╨╛╨╖╨╢╨╡ ╨╝╨╛╨╢╨╜╨╛ ╨┐╨╡╤А╨╡╨║╨╗╤О╤З╨╕╤В╤М╤Б╤П ╨▓ ╨┐╤А╨╛╤Д╨╕╨╗╨╡ ╨▓╨╜╨╕╨╖╤Г ╨╝╨╡╨╜╤О.</p>
         <div class="web-mode-choice-grid">
           <button type="button" id="webModeChoicePersonal" class="web-mode-choice-option">
-            <span class="web-mode-choice-option-icon" aria-hidden="true">👤</span>
-            <strong>Для себя</strong>
-            <span class="muted">Личные счета и операции</span>
+            <span class="web-mode-choice-option-icon" aria-hidden="true">ЁЯСд</span>
+            <strong>╨Ф╨╗╤П ╤Б╨╡╨▒╤П</strong>
+            <span class="muted">╨Ы╨╕╤З╨╜╤Л╨╡ ╤Б╤З╨╡╤В╨░ ╨╕ ╨╛╨┐╨╡╤А╨░╤Ж╨╕╨╕</span>
           </button>
           <button type="button" id="webModeChoiceTeam" class="web-mode-choice-option">
-            <span class="web-mode-choice-option-icon" aria-hidden="true">👥</span>
-            <strong>Команда</strong>
-            <span class="muted">До 5 человек, одна общая книга</span>
+            <span class="web-mode-choice-option-icon" aria-hidden="true">ЁЯСе</span>
+            <strong>╨Ъ╨╛╨╝╨░╨╜╨┤╨░</strong>
+            <span class="muted">╨Ф╨╛ 5 ╤З╨╡╨╗╨╛╨▓╨╡╨║, ╨╛╨┤╨╜╨░ ╨╛╨▒╤Й╨░╤П ╨║╨╜╨╕╨│╨░</span>
           </button>
         </div>
         <div id="webModeChoiceTeamPanel" class="web-mode-choice-team-panel" hidden>
-          <label class="web-mode-choice-team-label" for="webModeChoiceTeamName">Название команды</label>
+          <label class="web-mode-choice-team-label" for="webModeChoiceTeamName">╨Э╨░╨╖╨▓╨░╨╜╨╕╨╡ ╨║╨╛╨╝╨░╨╜╨┤╤Л</label>
           <input
             id="webModeChoiceTeamName"
             class="web-mode-choice-team-input"
             type="text"
             maxlength="80"
-            placeholder="Например: Семья"
+            placeholder="╨Э╨░╨┐╤А╨╕╨╝╨╡╤А: ╨б╨╡╨╝╤М╤П"
             autocomplete="organization"
           />
           <button type="button" id="webModeChoiceTeamSubmit" class="primary-button web-mode-choice-team-submit">
-            Создать команду и войти
+            ╨б╨╛╨╖╨┤╨░╤В╤М ╨║╨╛╨╝╨░╨╜╨┤╤Г ╨╕ ╨▓╨╛╨╣╤В╨╕
           </button>
         </div>
         <p id="webModeChoiceError" class="web-mode-choice-error inline-error" hidden></p>
@@ -118,14 +118,14 @@
     </div>
     <div id="webTopNav" class="web-desktop-shell">
       <div id="webNavDrawerBackdrop" class="web-nav-drawer-backdrop" hidden aria-hidden="true"></div>
-      <aside class="web-sidebar" aria-label="Меню Balancy">
+      <aside class="web-sidebar" aria-label="?????? Balancy">
         <div class="web-sidebar-top">
-          <button type="button" class="web-sidebar-brand" data-web-nav="home" aria-label="Balancy — на главную">
+          <button type="button" class="web-sidebar-brand" data-web-nav="home" aria-label="Balancy ??? ?? ?????????">
             <span class="brand-wordmark">Balancy</span>
           </button>
         </div>
         <div class="web-sidebar-nav-scroll">
-        <nav class="web-sidebar-nav" aria-label="Разделы">
+        <nav class="web-sidebar-nav" aria-label="????????">
           <button type="button" class="web-sidebar-link is-active" data-web-nav="home">
             <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path
@@ -136,7 +136,7 @@
               />
               <path d="M9 20V13H15V20" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
             </svg>
-            <span>Главная</span>
+            <span>????????</span>
           </button>
           <button type="button" class="web-sidebar-link" data-web-nav="accounts">
             <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -144,7 +144,7 @@
               <path d="M4 10H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
               <path d="M8 14H10.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
             </svg>
-            <span>Счета</span>
+            <span>???????</span>
           </button>
           <button type="button" class="web-sidebar-link" data-web-nav="categories">
             <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -156,28 +156,28 @@
               />
               <circle cx="16.5" cy="10.5" r="1.2" fill="currentColor" />
             </svg>
-            <span>Категории</span>
+            <span>????????????</span>
           </button>
           <button type="button" class="web-sidebar-link" data-web-nav="activity">
             <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M5 5H19V19H5V5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
               <path d="M8 9H16M8 13H13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
             </svg>
-            <span>Операции</span>
+            <span>???????????</span>
           </button>
           <button type="button" class="web-sidebar-link" data-web-nav="transfer">
             <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M7 8H17M7 16H17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
               <path d="M14 5L17 8L14 11M10 19L7 16L10 13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            <span>Переводы</span>
+            <span>???????????</span>
           </button>
           <button type="button" class="web-sidebar-link" data-web-nav="reports">
             <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M5 19V5M5 19H19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
               <path d="M8 15L11 11L14 13L18 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            <span>Отчёты</span>
+            <span>????????????</span>
           </button>
           <button type="button" class="web-sidebar-link" data-web-nav="history">
             <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -186,7 +186,7 @@
               <path d="M4 18H14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
               <path d="M17 16V20M15 18H19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
             </svg>
-            <span>История</span>
+            <span>??????????</span>
           </button>
           <button type="button" class="web-sidebar-link web-sidebar-link--instruction" data-web-nav="instruction">
             <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -198,17 +198,17 @@
               />
               <path d="M10 17.5h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
             </svg>
-            <span>Инструкция</span>
+            <span>???????????????</span>
           </button>
         </nav>
         </div>
         <div class="web-sidebar-upsell">
-          <div class="web-sidebar-upsell-icon" aria-hidden="true">◇</div>
+          <div class="web-sidebar-upsell-icon" aria-hidden="true">???</div>
           <div class="web-sidebar-upsell-copy">
             <strong>Premium</strong>
-            <span class="muted">Расширенные отчёты — скоро</span>
+            <span class="muted">?????????????? ??????????? ??? ??????</span>
           </div>
-          <button type="button" class="web-sidebar-upsell-btn" disabled>Оформить</button>
+          <button type="button" class="web-sidebar-upsell-btn" disabled>?????????????</button>
         </div>
         <div class="web-sidebar-footer">
           <div id="webProfileMenu" class="web-profile-menu web-profile-menu--sidebar">
@@ -216,7 +216,7 @@
               type="button"
               id="webProfileToggleButton"
               class="web-sidebar-user"
-              aria-label="Аккаунт"
+              aria-label="?????????"
               aria-expanded="false"
             >
               <span class="web-sidebar-user-avatar" aria-hidden="true">
@@ -237,8 +237,8 @@
                 </svg>
               </span>
               <span class="web-sidebar-user-meta">
-                <span id="webSidebarUserName" class="web-sidebar-user-name">Профиль</span>
-                <span class="muted web-sidebar-user-hint">Настройки</span>
+                <span id="webSidebarUserName" class="web-sidebar-user-name">???????????</span>
+                <span class="muted web-sidebar-user-hint">???????????</span>
               </span>
               <svg class="web-sidebar-user-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
@@ -246,15 +246,15 @@
             </button>
             <div id="webProfileDropdown" class="web-profile-dropdown" hidden>
               <p id="webProfileMeta" class="web-profile-meta muted"></p>
-                            <div id="webWorkspaceSwitcher" class="web-workspace-switcher" hidden>
-                <p class="web-workspace-switcher-label muted">Рабочее пространство</p>
+                                          <div id="webWorkspaceSwitcher" class="web-workspace-switcher" hidden>
+                <p class="web-workspace-switcher-label muted">╨а╨░╨▒╨╛╤З╨╡╨╡ ╨┐╤А╨╛╤Б╤В╤А╨░╨╜╤Б╤В╨▓╨╛</p>
                 <div id="webWorkspaceSwitcherList" class="web-workspace-switcher-list" role="list"></div>
               </div>
               <button type="button" id="webOpenSettingsButton" class="web-profile-settings-btn">
-                Настройки
+                ???????????
               </button>
               <button type="button" id="webSwitchUserButton" class="web-profile-logout">
-                Сменить пользователя
+                ????????? ??????????????
               </button>
             </div>
           </div>
@@ -266,7 +266,7 @@
             type="button"
             id="webSidebarBurgerBtn"
             class="web-sidebar-burger"
-            aria-label="Открыть меню"
+            aria-label="????????????? ?????"
             aria-expanded="false"
             aria-controls="webTopNav"
           >
@@ -276,7 +276,7 @@
           </button>
           <div class="web-page-title-block">
             <div class="web-page-title-copy">
-              <h1 id="webPageTitle" class="web-page-title">Главная</h1>
+              <h1 id="webPageTitle" class="web-page-title">????????</h1>
               <p id="webPageSubtitle" class="web-page-subtitle muted">
                 <span class="web-page-subtitle-line web-page-subtitle-line--full"></span>
                 <span class="web-page-subtitle-line web-page-subtitle-line--compact"></span>
@@ -291,32 +291,32 @@
                 id="webTopNavAddButton"
                 aria-expanded="false"
                 aria-haspopup="true"
-                aria-label="Новая запись"
+                aria-label="????? ???????"
               >
                 <span class="web-page-btn-glyph" aria-hidden="true">+</span>
-                <span class="web-page-btn-text">Новая запись</span>
+                <span class="web-page-btn-text">????? ???????</span>
               </button>
               <div id="webNewEntryMenu" class="web-new-entry-menu" role="menu" hidden>
-                <p class="web-new-entry-group-label">Операции</p>
+                <p class="web-new-entry-group-label">???????????</p>
                 <button type="button" class="web-new-entry-option web-new-entry-income" data-web-new-entry="income" role="menuitem">
-                  Доход
+                  ???????
                 </button>
                 <button type="button" class="web-new-entry-option web-new-entry-expense" data-web-new-entry="expense" role="menuitem">
-                  Расход
+                  ???????
                 </button>
                 <button type="button" class="web-new-entry-option web-new-entry-transfer" data-web-new-entry="transfer" role="menuitem">
-                  Перевод между счетами
+                  ????????? ?????? ?????????
                 </button>
-                <p class="web-new-entry-group-label">Сначала настройте</p>
+                <p class="web-new-entry-group-label">???????? ????????????</p>
                 <button type="button" class="web-new-entry-option web-new-entry-setup" data-web-new-entry="account" role="menuitem">
-                  Новый счёт
+                  ?????? ???????
                 </button>
                 <button type="button" class="web-new-entry-option web-new-entry-setup" data-web-new-entry="category" role="menuitem">
-                  Новая категория
+                  ????? ???????????
                 </button>
               </div>
             </div>
-            <button type="button" class="web-page-ghost-btn web-page-header-action-btn" id="webRefreshButton" aria-label="Обновить">
+            <button type="button" class="web-page-ghost-btn web-page-header-action-btn" id="webRefreshButton" aria-label="???????????">
               <svg class="web-page-refresh-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path
                   d="M21 12a9 9 0 1 1-2.64-6.36"
@@ -326,7 +326,7 @@
                 />
                 <path d="M21 3v6h-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
-              <span class="web-page-btn-text">Обновить</span>
+              <span class="web-page-btn-text">???????????</span>
             </button>
           </div>
         </header>
@@ -341,20 +341,20 @@
             type="button"
             id="tgGlobalNewEntryButton"
             class="tg-ops-btn tg-ops-btn--plus tg-mini-topbar-plus"
-            aria-label="Новая операция"
+            aria-label="????? ??????????"
           >
             <span aria-hidden="true">+</span>
           </button>
         </div>
-        <p id="tgGlobalScreenTitle" class="tg-app-screen-caption">Главная</p>
+        <p id="tgGlobalScreenTitle" class="tg-app-screen-caption">????????</p>
         <button id="refreshButton" class="refresh-text-btn tg-mini-topbar-legacy-refresh" type="button" hidden>
-          Обновить
+          ???????????
         </button>
       </header>
 
       <main class="content tabbed-content">
         <section id="screen-home" class="screen screen-active" data-screen="home">
-          <header class="tg-home-screen-head tg-home-screen-head--welcome-only" aria-label="Приветствие">
+          <header class="tg-home-screen-head tg-home-screen-head--welcome-only" aria-label="???????????????">
             <p id="homeWelcomeLine" class="tg-home-welcome muted"></p>
           </header>
 
@@ -364,27 +364,27 @@
             role="status"
             hidden
           >
-            <span class="balancy-hint-icon" aria-hidden="true">💡</span>
+            <span class="balancy-hint-icon" aria-hidden="true">????</span>
             <div class="balancy-hint-copy">
-              <strong class="balancy-hint-title">С чего начать</strong>
+              <strong class="balancy-hint-title">? ????? ?????????</strong>
               <p class="balancy-hint-text muted">
-                Чтобы начать вести учёт, сначала создайте хотя бы один счёт и категории доходов и расходов — без них нельзя сохранять операции и видеть сводки на главной.
+                ??????? ????????? ?????? ????????, ???????? ????????? ?????? ??? ???? ??????? ? ??????????? ???????? ? ?????????? ??? ??? ???? ??????? ????????????? ?????????? ? ???????? ?????? ?? ???????.
               </p>
             </div>
-            <button type="button" class="balancy-hint-close" data-balancy-hint-close="homeStart" aria-label="Закрыть подсказку">
-              ×
+            <button type="button" class="balancy-hint-close" data-balancy-hint-close="homeStart" aria-label="???????????? ??????????">
+              ??
             </button>
           </div>
 
           <div class="balancy-hint-card" data-balancy-hint="homeMoreInstruction" role="status" hidden>
-            <span class="balancy-hint-icon" aria-hidden="true">📖</span>
+            <span class="balancy-hint-icon" aria-hidden="true">????</span>
             <div class="balancy-hint-copy">
-              <strong class="balancy-hint-title">Инструкция</strong>
+              <strong class="balancy-hint-title">???????????????</strong>
               <p class="balancy-hint-text muted">
                 <span class="tg-only-inline"
-                  >Пошаговая инструкция по приложению — во вкладке «Ещё» внизу экрана, кнопка «Инструкция».</span
+                  >??????????? ?????????????? ?? ???????????? ??? ?? ??????? я┐╜??????я┐╜ ?????? ???????, ?????? я┐╜???????????????я┐╜.</span
                 ><span class="web-only-inline"
-                  >Полный текст инструкции — в разделе «Ещё» → «Инструкция».</span
+                  >???????? ??????? ?????????????? ??? ? ???????? я┐╜??????я┐╜ ??? я┐╜???????????????я┐╜.</span
                 >
               </p>
             </div>
@@ -392,27 +392,27 @@
               type="button"
               class="balancy-hint-close"
               data-balancy-hint-close="homeMoreInstruction"
-              aria-label="Закрыть подсказку"
+              aria-label="???????????? ??????????"
             >
-              ×
+              ??
             </button>
           </div>
 
           <div class="balancy-hint-card" data-balancy-hint="homeHintsSettings" role="status" hidden>
-            <span class="balancy-hint-icon" aria-hidden="true">⚙️</span>
+            <span class="balancy-hint-icon" aria-hidden="true">????</span>
             <div class="balancy-hint-copy">
-              <strong class="balancy-hint-title">Подсказки</strong>
+              <strong class="balancy-hint-title">??????????</strong>
               <p class="balancy-hint-text muted">
-                Отключить подсказки по всему приложению можно в «Настройках»: вкладка «Ещё» → «Настройки», переключатель «Подсказки в интерфейсе».
+                ??????????????? ????????? ?? ?????? ???????????? ????? ? я┐╜?????????????я┐╜: ??????? я┐╜??????я┐╜ ??? я┐╜???????????я┐╜, ?????????????????? я┐╜?????????? ? ?????????????я┐╜.
               </p>
             </div>
             <button
               type="button"
               class="balancy-hint-close"
               data-balancy-hint-close="homeHintsSettings"
-              aria-label="Закрыть подсказку"
+              aria-label="???????????? ??????????"
             >
-              ×
+              ??
             </button>
           </div>
 
@@ -420,32 +420,32 @@
             <section class="card hero-card hero-balance-card web-dash-hero">
               <div class="hero-balance-top">
                 <div>
-                  <p class="section-label">Общий баланс</p>
-                  <h2 id="userName" class="hero-home-user-name">Загрузка...</h2>
+                  <p class="section-label">??????? ??????</p>
+                  <h2 id="userName" class="hero-home-user-name">???????????...</h2>
                 </div>
                 <label class="hero-currency-field">
-                  <span class="hero-currency-label">Валюта</span>
+                  <span class="hero-currency-label">?????????</span>
                   <select
                     id="homeReportingCurrencyInput"
                     class="hero-currency-select fx-board-base-select fx-board-base-select--toolbar"
-                    aria-label="Валюта отображения баланса"
+                    aria-label="????????? ????????????? ???????"
                   ></select>
                 </label>
               </div>
               <div class="hero-balance-main">
                 <div class="hero-balance-copy">
                   <strong id="totalBalanceConverted">0</strong>
-                  <p id="statusText" class="muted">Подключаем приложение...</p>
+                  <p id="statusText" class="muted">????????????? ???????????...</p>
                   <div class="balance-trend">
                     <span class="balance-trend-positive" id="monthlyIncomeInline">+0.00 USD</span>
-                    <span class="muted">за этот месяц</span>
+                    <span class="muted">?? ?????? ??????</span>
                   </div>
                 </div>
               </div>
             </section>
 
-            <section class="card tg-home-quick-actions tg-only-block" aria-label="Быстрые действия">
-              <h2 class="tg-home-quick-actions-title">Быстрые действия</h2>
+            <section class="card tg-home-quick-actions tg-only-block" aria-label="???????????? ?????????">
+              <h2 class="tg-home-quick-actions-title">???????????? ?????????</h2>
               <div class="tg-home-quick-actions-grid">
                 <button type="button" class="tg-home-quick-action" data-tg-quick-action="transfer">
                   <span class="tg-home-quick-action-icon tg-home-quick-action-icon--transfer" aria-hidden="true">
@@ -465,7 +465,7 @@
                       />
                     </svg>
                   </span>
-                  <span class="tg-home-quick-action-label">Перевод между счетами</span>
+                  <span class="tg-home-quick-action-label">????????? ?????? ?????????</span>
                 </button>
                 <button type="button" class="tg-home-quick-action" data-tg-quick-action="entry">
                   <span class="tg-home-quick-action-icon tg-home-quick-action-icon--entry" aria-hidden="true">
@@ -474,7 +474,7 @@
                       <path d="M12 8V16M8 12H16" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
                     </svg>
                   </span>
-                  <span class="tg-home-quick-action-label">Новая операция</span>
+                  <span class="tg-home-quick-action-label">????? ??????????</span>
                 </button>
                 <button type="button" class="tg-home-quick-action" data-tg-quick-action="category">
                   <span class="tg-home-quick-action-icon tg-home-quick-action-icon--category" aria-hidden="true">
@@ -488,7 +488,7 @@
                       <circle cx="16.5" cy="10.5" r="1.2" fill="currentColor" />
                     </svg>
                   </span>
-                  <span class="tg-home-quick-action-label">Новая категория</span>
+                  <span class="tg-home-quick-action-label">????? ???????????</span>
                 </button>
                 <button type="button" class="tg-home-quick-action" data-tg-quick-action="account">
                   <span class="tg-home-quick-action-icon tg-home-quick-action-icon--account" aria-hidden="true">
@@ -502,35 +502,35 @@
                       <circle cx="16.5" cy="12" r="1.5" fill="currentColor" />
                     </svg>
                   </span>
-                  <span class="tg-home-quick-action-label">Новый счёт</span>
+                  <span class="tg-home-quick-action-label">?????? ???????</span>
                 </button>
               </div>
             </section>
 
             <div class="web-dash-summary-grid">
               <article class="web-dash-stat-card web-dash-stat-card-income">
-                <p class="section-label">Доходы за месяц</p>
+                <p class="section-label">????????? ?? ??????</p>
                 <strong id="webDashIncomeValue" class="web-dash-stat-value">+0</strong>
-                <span class="muted web-dash-stat-sub">в валюте отчёта</span>
+                <span class="muted web-dash-stat-sub">? ???????? ??????????</span>
                 <div class="web-dash-spark web-dash-spark-income" aria-hidden="true"></div>
               </article>
               <article class="web-dash-stat-card web-dash-stat-card-expense">
-                <p class="section-label">Расходы за месяц</p>
-                <strong id="webDashExpenseValue" class="web-dash-stat-value">−0</strong>
-                <span class="muted web-dash-stat-sub">в валюте отчёта</span>
+                <p class="section-label">????????? ?? ??????</p>
+                <strong id="webDashExpenseValue" class="web-dash-stat-value">???0</strong>
+                <span class="muted web-dash-stat-sub">? ???????? ??????????</span>
                 <div class="web-dash-spark web-dash-spark-expense" aria-hidden="true"></div>
               </article>
               <article class="web-dash-stat-card web-dash-stat-card-net">
-                <p class="section-label">Чистый поток</p>
+                <p class="section-label">???????? ??????</p>
                 <strong id="webDashNetValue" class="web-dash-stat-value">+0</strong>
-                <span class="muted web-dash-stat-sub">доходы минус расходы</span>
+                <span class="muted web-dash-stat-sub">???????? ?????? ??????????</span>
                 <div class="web-dash-spark web-dash-spark-net" aria-hidden="true"></div>
               </article>
             </div>
           </div>
 
-          <section class="card balancy-home-currencies-card" aria-label="Остатки по валютам">
-            <p class="balancy-home-currencies-label">Остатки по валютам</p>
+          <section class="card balancy-home-currencies-card" aria-label="?????????? ?? ?????????">
+            <p class="balancy-home-currencies-label">?????????? ?? ?????????</p>
             <div class="balancy-home-currencies-scroll tg-only-block">
               <div
                 id="homeBalancesByCurrencyListTg"
@@ -550,8 +550,8 @@
             <section class="card compact-section-card web-home-col-card">
               <div class="section-header">
                 <div>
-                  <p class="section-label web-only-home-eyebrow">Счета</p>
-                  <h2>Ваши счета</h2>
+                  <p class="section-label web-only-home-eyebrow">???????</p>
+                  <h2>?????? ???????</h2>
                 </div>
                 <button
                   class="text-link-button tg-home-section-link"
@@ -559,36 +559,36 @@
                   data-scroll-screen-top="true"
                   type="button"
                 >
-                  Все счета
+                  ???? ???????
                 </button>
               </div>
               <div class="web-home-card-main">
                 <div id="homeAccountsList" class="accounts-list web-home-list-fill"></div>
               </div>
               <button type="button" class="web-home-foot-cta web-home-foot-cta-ghost" data-web-new-entry="account">
-                + Добавить счёт
+                + ??????????? ???????
               </button>
               <div class="section-footer-note">
                 <div class="section-footer-actions">
                   <p id="ratesStatusText" class="muted secondary-status">
-                    Курсы валют еще не синхронизированы
+                    ????????? ??????? ???? ?? ????????????????????
                   </p>
                   <div class="toolbar-actions-row">
                     <button
                       id="syncRatesButton"
                       class="toolbar-text-btn"
                       type="button"
-                      title="Загрузить курсы валют"
+                      title="?????????????? ???????? ???????"
                     >
-                      Курсы
+                      ?????????
                     </button>
                     <button
                       class="toolbar-text-btn"
                       data-refresh-action="true"
                       type="button"
-                      title="Обновить данные приложения"
+                      title="??????????? ??????? ???????????"
                     >
-                      Обновить
+                      ???????????
                     </button>
                   </div>
                 </div>
@@ -598,10 +598,10 @@
             <section class="card compact-section-card web-home-col-card">
               <div class="section-header">
                 <div>
-                  <p class="section-label web-only-home-eyebrow">Последние операции</p>
+                  <p class="section-label web-only-home-eyebrow">?????????? ??????????</p>
                   <h2 class="web-home-activity-h2">
-                    <span class="tg-only-inline">Последние операции</span>
-                    <span class="web-only-inline">История</span>
+                    <span class="tg-only-inline">?????????? ??????????</span>
+                    <span class="web-only-inline">??????????</span>
                   </h2>
                 </div>
                 <button
@@ -610,34 +610,34 @@
                   data-open-screen="ledger"
                   data-scroll-screen-top="true"
                 >
-                  Все
+                  ????
                 </button>
                 <button type="button" class="text-link-button tg-home-section-link web-only-block" data-open-screen="history">
-                  Все
+                  ????
                 </button>
               </div>
               <div class="web-home-card-main">
                 <div id="homeRecentActivityList" class="accounts-list web-home-list-fill"></div>
               </div>
               <button type="button" class="web-home-foot-cta" data-web-new-entry="expense">
-                + Новая операция
+                + ????? ??????????
               </button>
             </section>
           </div>
 
-          <aside class="web-home-rail" aria-label="Сводки">
+          <aside class="web-home-rail" aria-label="??????">
             <section class="card web-dash-donut-card">
               <div class="section-header">
                 <div>
-                  <p class="section-label web-only-home-eyebrow">Расходы</p>
+                  <p class="section-label web-only-home-eyebrow">?????????</p>
                   <h2 class="web-dash-donut-heading">
-                    <span class="tg-only-inline">Расходы по категориям</span>
-                    <span class="web-only-inline">По категориям</span>
+                    <span class="tg-only-inline">????????? ?? ????????????</span>
+                    <span class="web-only-inline">??? ????????????</span>
                   </h2>
                 </div>
                 <button type="button" class="text-link-button tg-home-section-link" data-web-nav="categories">
-                  <span class="tg-only-inline">Месяц</span>
-                  <span class="web-only-inline">Все категории</span>
+                  <span class="tg-only-inline">???????</span>
+                  <span class="web-only-inline">???? ???????????</span>
                 </button>
               </div>
               <div class="web-donut-layout">
@@ -646,12 +646,12 @@
               </div>
             </section>
             <section class="card web-dash-plan-card web-rail-web-only">
-              <p class="section-label">Месяц</p>
-              <h2>Расходы и доходы</h2>
+              <p class="section-label">???????</p>
+              <h2>????????? ? ????????</h2>
               <div class="web-dash-plan-rows">
                 <div class="web-dash-plan-row">
                   <div class="web-dash-plan-label">
-                    <span>Расходы</span>
+                    <span>?????????</span>
                     <span id="webDashPlanExpensePct" class="muted">0%</span>
                   </div>
                   <div class="web-dash-plan-track">
@@ -660,7 +660,7 @@
                 </div>
                 <div class="web-dash-plan-row">
                   <div class="web-dash-plan-label">
-                    <span>Доходы</span>
+                    <span>?????????</span>
                     <span id="webDashPlanIncomePct" class="muted">0%</span>
                   </div>
                   <div class="web-dash-plan-track">
@@ -684,19 +684,19 @@
           <section class="card tg-more-screen-card">
             <div class="section-header">
               <div>
-                <p class="section-label">Раздел</p>
-                <h2>Ещё</h2>
+                <p class="section-label">??????</p>
+                <h2>??????</h2>
               </div>
             </div>
             <p class="muted tg-more-screen-lead">
-              Инструкция, история операций и отчёты. Счета, категории и новые записи — в нижнем меню.
+              ???????????????, ????????? ?????????? ? ???????????. ???????, ??????????? ? ?????? ?????? ??? ? ?????? ?????.
             </p>
             <div class="tg-more-screen-actions tg-more-screen-actions--stack">
-              <button type="button" class="ghost-button" data-open-screen="settings">Настройки</button>
-              <button type="button" class="ghost-button" data-open-screen="instruction">Инструкция</button>
-              <button type="button" class="ghost-button tg-only-block" data-open-screen="ledger">История</button>
-              <button type="button" class="ghost-button" data-open-screen="reports">Отчёты</button>
-              <button type="button" class="primary-button" id="tgMoreOpenEntryModalButton">Новая операция</button>
+              <button type="button" class="ghost-button" data-open-screen="settings">???????????</button>
+              <button type="button" class="ghost-button" data-open-screen="instruction">???????????????</button>
+              <button type="button" class="ghost-button tg-only-block" data-open-screen="ledger">??????????</button>
+              <button type="button" class="ghost-button" data-open-screen="reports">????????????</button>
+              <button type="button" class="primary-button" id="tgMoreOpenEntryModalButton">????? ??????????</button>
             </div>
           </section>
         </section>
@@ -705,51 +705,51 @@
           <section class="card tg-settings-card">
             <div class="section-header">
               <div>
-                <p class="section-label">Приложение</p>
-                <h2>Настройки</h2>
+                <p class="section-label">????????????</p>
+                <h2>???????????</h2>
               </div>
             </div>
             <p class="muted tg-settings-lead">
-              Подсказки и переключатели хранятся в этом браузере (или в WebView Telegram на этом устройстве).
+              ?????????? ? ????????????????? ??????????? ? ????? ??????????? (??? ? WebView Telegram ?? ????? ??????????????).
             </p>
             <div class="balancy-settings-row">
               <div class="balancy-settings-row-text">
-                <strong>Подсказки в интерфейсе</strong>
-                <p class="muted">Карточки с советами на главной, вкладках «Счета», «Категории», «Операции» и в «Истории».</p>
+                <strong>?????????? ? ?????????????</strong>
+                <p class="muted">???????????? ? ????????? ?? ???????, ????????? я┐╜???????я┐╜, я┐╜????????????я┐╜, я┐╜???????????я┐╜ ? ? я┐╜??????????я┐╜.</p>
               </div>
-              <label class="balancy-switch" title="Включить или отключить подсказки">
+              <label class="balancy-switch" title="????????????? ??? ?????????????? ?????????">
                 <input type="checkbox" id="balancyHintsEnabledToggle" class="balancy-switch-input" checked />
                 <span class="balancy-switch-track" aria-hidden="true">
                   <span class="balancy-switch-thumb"></span>
                 </span>
               </label>
             </div>
-            <button type="button" class="ghost-button tg-settings-back tg-only-block" data-open-screen="more">← Назад в «Ещё»</button>
+            <button type="button" class="ghost-button tg-settings-back tg-only-block" data-open-screen="more">??? ????? ? я┐╜??????я┐╜</button>
           </section>
 
           <section id="webTeamSettingsCard" class="card web-team-settings-card web-only-block" hidden>
             <div class="section-header">
               <div>
-                <p class="section-label">Команда</p>
-                <h2 id="webTeamSettingsTitle">Команда</h2>
+                <p class="section-label">????????</p>
+                <h2 id="webTeamSettingsTitle">????????</h2>
               </div>
             </div>
             <p id="webTeamSettingsMeta" class="muted web-team-settings-meta"></p>
-            <label class="web-team-field-label" for="webTeamNameInput">Название</label>
+            <label class="web-team-field-label" for="webTeamNameInput">????????</label>
             <div class="web-team-name-row">
               <input id="webTeamNameInput" class="web-team-name-input" type="text" maxlength="80" />
-              <button type="button" id="webTeamRenameButton" class="ghost-button">Сохранить</button>
+              <button type="button" id="webTeamRenameButton" class="ghost-button">?????????????</button>
             </div>
             <div class="web-team-invite-block">
-              <p class="web-team-field-label">Приглашение</p>
-              <p class="muted web-team-invite-hint">Ссылка многоразовая. До 5 участников включая вас.</p>
+              <p class="web-team-field-label">??????????????</p>
+              <p class="muted web-team-invite-hint">??????? ?????????????. ??? 5 ????????????? ????????? ???.</p>
               <button type="button" id="webTeamCopyInviteButton" class="primary-button web-team-copy-invite">
-                Скопировать ссылку-приглашение
+                ?????????????? ????????-?????????????
               </button>
               <p id="webTeamInviteStatus" class="muted web-team-invite-status" hidden></p>
             </div>
             <div class="web-team-members-block">
-              <p class="web-team-field-label">Участники</p>
+              <p class="web-team-field-label">???????????</p>
               <ul id="webTeamMembersList" class="web-team-members-list"></ul>
             </div>
             <p id="webTeamSettingsError" class="inline-error web-team-settings-error" hidden></p>
@@ -760,54 +760,54 @@
           <div class="web-accounts-page">
             <div class="web-accounts-layout">
               <div class="web-accounts-main">
-                <header class="tg-accounts-screen-head tg-only-block" aria-label="Счета">
+                <header class="tg-accounts-screen-head tg-only-block" aria-label="???????">
                   <div class="tg-accounts-screen-head-text">
-                    <h1 class="tg-accounts-screen-title">Счета</h1>
-                    <p class="tg-accounts-screen-sub muted">Управляйте своими счетами: создавайте, редактируйте и удаляйте.</p>
+                    <h1 class="tg-accounts-screen-title">???????</h1>
+                    <p class="tg-accounts-screen-sub muted">???????????? ?????? ?????????: ???????????, ????????????????? ? ??????????.</p>
                   </div>
                 </header>
 
                 <section class="web-accounts-list-shell web-accounts-surface">
-                  <p class="section-label web-accounts-telegram-label">Счета</p>
+                  <p class="section-label web-accounts-telegram-label">???????</p>
                   <header class="web-accounts-list-head">
-                    <h2 id="accountsTitle" class="web-accounts-title">Ваши счета</h2>
+                    <h2 id="accountsTitle" class="web-accounts-title">?????? ???????</h2>
                     <span id="webAccountsHeadBadge" class="web-accounts-head-badge">0</span>
                   </header>
                   <div class="web-accounts-list-body">
                     <div id="accountsList" class="accounts-list"></div>
                   </div>
                   <button type="button" class="web-categories-add-outline tg-accounts-add-btn tg-only-block" id="tgAccountsAddOutlineButton">
-                    + Добавить счёт
+                    + ??????????? ???????
                   </button>
                 </section>
 
                 <section id="tgAccountsSummaryCard" class="web-accounts-surface tg-accounts-summary tg-only-block" hidden>
-                  <h3 class="tg-accounts-summary-title">Сводка по счетам</h3>
+                  <h3 class="tg-accounts-summary-title">?????? ?? ????????</h3>
                   <dl class="tg-accounts-summary-dl" id="tgAccountsSummaryDl"></dl>
                 </section>
 
                 <div class="balancy-hint-card tg-only-block" data-balancy-hint="accountsSwipeTg" role="status" hidden>
-                  <span class="balancy-hint-icon" aria-hidden="true">💡</span>
+                  <span class="balancy-hint-icon" aria-hidden="true">????</span>
                   <div class="balancy-hint-copy">
-                    <strong class="balancy-hint-title">Счета</strong>
+                    <strong class="balancy-hint-title">???????</strong>
                     <p class="balancy-hint-text muted">
-                      Чтобы изменить или удалить счёт, смахните строку влево — появятся кнопки «Изменить» и «Удалить».
+                      ??????? ?????????? ??? ?????????? ???????, ?????????? ????????? ????? ??? ????????? ?????? я┐╜???????????я┐╜ ? я┐╜?????????я┐╜.
                     </p>
                   </div>
-                  <button type="button" class="balancy-hint-close" data-balancy-hint-close="accountsSwipeTg" aria-label="Закрыть подсказку">
-                    ×
+                  <button type="button" class="balancy-hint-close" data-balancy-hint-close="accountsSwipeTg" aria-label="???????????? ??????????">
+                    ??
                   </button>
                 </div>
                 <div class="balancy-hint-card web-accounts-toolbar--web" data-balancy-hint="accountsSwipeWeb" role="status" hidden>
-                  <span class="balancy-hint-icon" aria-hidden="true">💡</span>
+                  <span class="balancy-hint-icon" aria-hidden="true">????</span>
                   <div class="balancy-hint-copy">
-                    <strong class="balancy-hint-title">Счета</strong>
+                    <strong class="balancy-hint-title">???????</strong>
                     <p class="balancy-hint-text muted">
-                      В веб-версии действия со счётом доступны в таблице справа (карандаш и удаление).
+                      ?? ???-??????? ????????? ?? ????????? ??????????? ? ????????? ??????? (?????????? ? ?????????).
                     </p>
                   </div>
-                  <button type="button" class="balancy-hint-close" data-balancy-hint-close="accountsSwipeWeb" aria-label="Закрыть подсказку">
-                    ×
+                  <button type="button" class="balancy-hint-close" data-balancy-hint-close="accountsSwipeWeb" aria-label="???????????? ??????????">
+                    ??
                   </button>
                 </div>
               </div>
@@ -821,7 +821,7 @@
                     hidden
                     aria-hidden="true"
                     tabindex="-1"
-                    aria-label="Назад к списку счетов"
+                    aria-label="????? ? ??????? ????????"
                   >
                     <svg class="tg-category-back-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path
@@ -834,9 +834,9 @@
                     </svg>
                   </button>
                   <div class="tg-category-head-text">
-                    <h2 id="accountFormTitle" class="web-categories-panel-title">Новый счёт</h2>
+                    <h2 id="accountFormTitle" class="web-categories-panel-title">?????? ???????</h2>
                     <p id="accountFormSubtitle" class="web-categories-panel-subtitle muted">
-                      Заполните данные для создания счёта.
+                      ??????????? ??????? ??? ???????? ????????.
                     </p>
                   </div>
                 </div>
@@ -844,28 +844,28 @@
                 <form id="accountForm" class="stacked-form stacked-form--dense web-accounts-form web-categories-form">
                 <div class="web-accounts-form-grid">
                   <label class="web-accounts-field">
-                    <span>Название счёта <span class="web-op-req" aria-hidden="true">*</span></span>
-                    <input id="nameInput" name="name" placeholder="Например: TBC card" required type="text" />
+                    <span>???????? ???????? <span class="web-op-req" aria-hidden="true">*</span></span>
+                    <input id="nameInput" name="name" placeholder="??????????: TBC card" required type="text" />
                   </label>
 
                   <label class="web-accounts-field">
-                    <span>Тип счёта <span class="web-op-req" aria-hidden="true">*</span></span>
+                    <span>??? ???????? <span class="web-op-req" aria-hidden="true">*</span></span>
                     <select id="typeInput" name="type">
-                      <option value="cash">Наличные</option>
-                      <option value="card">Карта</option>
-                      <option value="crypto">Крипта</option>
-                      <option value="savings">Накопления</option>
-                      <option value="other">Другое</option>
+                      <option value="cash">??????????</option>
+                      <option value="card">????????</option>
+                      <option value="crypto">?????????</option>
+                      <option value="savings">??????????</option>
+                      <option value="other">?????????</option>
                     </select>
                   </label>
 
                   <label class="web-accounts-field">
-                    <span>Валюта <span class="web-op-req" aria-hidden="true">*</span></span>
+                    <span>????????? <span class="web-op-req" aria-hidden="true">*</span></span>
                     <select id="currencyInput" name="currencyCode"></select>
                   </label>
 
                   <label class="web-accounts-field web-accounts-field--balance">
-                    <span>Стартовый баланс</span>
+                    <span>????????????? ??????</span>
                     <input id="balanceInput" name="balance" placeholder="0.00" step="0.01" type="number" />
                   </label>
                 </div>
@@ -873,104 +873,104 @@
                 <div class="web-accounts-appearance-row">
                   <div class="web-accounts-appearance-pickers">
                 <div class="web-accounts-color-block">
-                  <span class="web-categories-field-label tg-color-label-web">Цвет (необязательно)</span>
-                  <span class="web-categories-field-label tg-color-label-tg">Цвет счёта</span>
-                  <div id="webAccountColorSwatches" class="web-cat-swatches" role="radiogroup" aria-label="Цвет счёта">
+                  <span class="web-categories-field-label tg-color-label-web">????? (???????????????)</span>
+                  <span class="web-categories-field-label tg-color-label-tg">????? ????????</span>
+                  <div id="webAccountColorSwatches" class="web-cat-swatches" role="radiogroup" aria-label="????? ????????">
                     <button
                       type="button"
                       class="web-cat-swatch"
                       data-accent-hex="#4338ca"
                       style="--swatch: #4338ca"
-                      aria-label="Индиго"
-                      title="Индиго"
+                      aria-label="???????"
+                      title="???????"
                     ></button>
                     <button
                       type="button"
                       class="web-cat-swatch"
                       data-accent-hex="#3b82f6"
                       style="--swatch: #3b82f6"
-                      aria-label="Синий"
-                      title="Синий"
+                      aria-label="?????"
+                      title="?????"
                     ></button>
                     <button
                       type="button"
                       class="web-cat-swatch"
                       data-accent-hex="#a855f7"
                       style="--swatch: #a855f7"
-                      aria-label="Фиолетовый"
-                      title="Фиолетовый"
+                      aria-label="????????????"
+                      title="????????????"
                     ></button>
                     <button
                       type="button"
                       class="web-cat-swatch"
                       data-accent-hex="#f97316"
                       style="--swatch: #f97316"
-                      aria-label="Оранжевый"
-                      title="Оранжевый"
+                      aria-label="????????????"
+                      title="????????????"
                     ></button>
                     <button
                       type="button"
                       class="web-cat-swatch"
                       data-accent-hex="#ef4444"
                       style="--swatch: #ef4444"
-                      aria-label="Красный"
-                      title="Красный"
+                      aria-label="??????????"
+                      title="??????????"
                     ></button>
                     <button
                       type="button"
                       class="web-cat-swatch"
                       data-accent-hex="#14b8a6"
                       style="--swatch: #14b8a6"
-                      aria-label="Бирюзовый"
-                      title="Бирюзовый"
+                      aria-label="?????????????"
+                      title="?????????????"
                     ></button>
                     <button
                       type="button"
                       class="web-cat-swatch"
                       data-accent-hex="#94a3b8"
                       style="--swatch: #94a3b8"
-                      aria-label="Серый"
-                      title="Серый"
+                      aria-label="???????"
+                      title="???????"
                     ></button>
                   </div>
                   <input type="hidden" id="accountAccentInput" value="" autocomplete="off" />
                 </div>
 
                 <div class="tg-account-icon-block">
-                  <span class="web-categories-field-label">Иконка (необязательно)</span>
-                  <div id="webAccountIconGrid" class="web-category-icon-grid" role="group" aria-label="Иконка счёта">
-                    <button type="button" class="web-category-icon-btn is-selected" data-account-icon="card" aria-label="Карта" title="Карта"><span aria-hidden="true">💳</span></button>
-                    <button type="button" class="web-category-icon-btn" data-account-icon="wallet" aria-label="Кошелёк" title="Кошелёк"><span aria-hidden="true">👛</span></button>
-                    <button type="button" class="web-category-icon-btn" data-account-icon="cashbill" aria-label="Наличные" title="Наличные"><span aria-hidden="true">💵</span></button>
-                    <button type="button" class="web-category-icon-btn" data-account-icon="piggy" aria-label="Накопления" title="Накопления"><span aria-hidden="true">🐷</span></button>
-                    <button type="button" class="web-category-icon-btn" data-account-icon="bank" aria-label="Банк" title="Банк"><span aria-hidden="true">🏦</span></button>
-                    <button type="button" class="web-category-icon-btn" data-account-icon="briefcase" aria-label="Портфель" title="Портфель"><span aria-hidden="true">💼</span></button>
-                    <button type="button" class="web-category-icon-btn" data-account-icon="cart" aria-label="Покупки" title="Покупки"><span aria-hidden="true">🛒</span></button>
-                    <button type="button" class="web-category-icon-btn" data-account-icon="gift" aria-label="Подарок" title="Подарок"><span aria-hidden="true">🎁</span></button>
-                    <button type="button" class="web-category-icon-btn" data-account-icon="house" aria-label="Дом" title="Дом"><span aria-hidden="true">🏠</span></button>
-                    <button type="button" class="web-category-icon-btn" data-account-icon="car" aria-label="Авто" title="Авто"><span aria-hidden="true">🚗</span></button>
-                    <button type="button" class="web-category-icon-btn" data-account-icon="plane" aria-label="Путешествия" title="Путешествия"><span aria-hidden="true">✈️</span></button>
-                    <button type="button" class="web-category-icon-btn" data-account-icon="heart" aria-label="Здоровье" title="Здоровье"><span aria-hidden="true">❤️</span></button>
-                    <button type="button" class="web-category-icon-btn" data-account-icon="sport" aria-label="Спорт" title="Спорт"><span aria-hidden="true">💪</span></button>
-                    <button type="button" class="web-category-icon-btn" data-account-icon="crypto" aria-label="Крипта" title="Крипта"><span aria-hidden="true">🪙</span></button>
-                    <button type="button" class="web-category-icon-btn" data-account-icon="more" aria-label="Другое" title="Другое"><span aria-hidden="true">⋯</span></button>
+                  <span class="web-categories-field-label">??????? (???????????????)</span>
+                  <div id="webAccountIconGrid" class="web-category-icon-grid" role="group" aria-label="??????? ????????">
+                    <button type="button" class="web-category-icon-btn is-selected" data-account-icon="card" aria-label="????????" title="????????"><span aria-hidden="true">????</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="wallet" aria-label="??????????" title="??????????"><span aria-hidden="true">????</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="cashbill" aria-label="??????????" title="??????????"><span aria-hidden="true">????</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="piggy" aria-label="??????????" title="??????????"><span aria-hidden="true">????</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="bank" aria-label="?????" title="?????"><span aria-hidden="true">????</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="briefcase" aria-label="?????????????" title="?????????????"><span aria-hidden="true">????</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="cart" aria-label="?????????" title="?????????"><span aria-hidden="true">????</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="gift" aria-label="?????????" title="?????????"><span aria-hidden="true">????</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="house" aria-label="????" title="????"><span aria-hidden="true">????</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="car" aria-label="?????" title="?????"><span aria-hidden="true">????</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="plane" aria-label="????????????????" title="????????????????"><span aria-hidden="true">????</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="heart" aria-label="???????????" title="???????????"><span aria-hidden="true">??</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="sport" aria-label="???????" title="???????"><span aria-hidden="true">????</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="crypto" aria-label="?????????" title="?????????"><span aria-hidden="true">????</span></button>
+                    <button type="button" class="web-category-icon-btn" data-account-icon="more" aria-label="?????????" title="?????????"><span aria-hidden="true">???</span></button>
                   </div>
                   <input type="hidden" id="accountIconKeyInput" value="card" autocomplete="off" />
                 </div>
                   </div>
 
                   <div class="tg-account-preview-block">
-                    <span class="web-categories-field-label">Предпросмотр</span>
+                    <span class="web-categories-field-label">?????????????????</span>
                     <div class="tg-account-preview-mobile tg-only-block">
                       <div class="tg-account-preview-mobile-sheet">
                         <div class="account-item-header">
                           <div class="item-leading">
                             <div class="account-icon account-icon-tg-tile" id="tgAccountPreviewMobileIcon">
-                              <span id="tgAccountPreviewMobileGlyph" class="account-leading-glyph">💳</span>
+                              <span id="tgAccountPreviewMobileGlyph" class="account-leading-glyph">????</span>
                             </div>
                             <div class="item-copy">
-                              <div id="tgAccountPreviewMobileName" class="account-name">Tinkoff · USD</div>
-                              <div id="tgAccountPreviewMobileMeta" class="account-meta">Наличные · USD — US Dollar</div>
+                              <div id="tgAccountPreviewMobileName" class="account-name">Tinkoff я┐╜ USD</div>
+                              <div id="tgAccountPreviewMobileMeta" class="account-meta">?????????? я┐╜ USD ??? US Dollar</div>
                             </div>
                           </div>
                           <div class="account-balance-stack">
@@ -983,15 +983,15 @@
                     <article class="tg-account-preview-card web-only-block" id="tgAccountPreviewCard">
                       <div class="tg-account-preview-top">
                         <div class="tg-account-preview-icon" id="tgAccountPreviewIcon" aria-hidden="true">
-                          <span id="tgAccountPreviewIconGlyph" class="account-leading-glyph">💳</span>
+                          <span id="tgAccountPreviewIconGlyph" class="account-leading-glyph">????</span>
                         </div>
                         <div class="tg-account-preview-names">
-                          <div id="tgAccountPreviewTitle" class="tg-account-preview-title">Tinkoff · USD</div>
-                          <div id="tgAccountPreviewMeta" class="tg-account-preview-meta muted">Карта · USD — US Dollar</div>
+                          <div id="tgAccountPreviewTitle" class="tg-account-preview-title">Tinkoff я┐╜ USD</div>
+                          <div id="tgAccountPreviewMeta" class="tg-account-preview-meta muted">???????? я┐╜ USD ??? US Dollar</div>
                         </div>
                       </div>
                       <div class="tg-account-preview-bottom">
-                        <div class="tg-account-preview-balance-label muted">Баланс</div>
+                        <div class="tg-account-preview-balance-label muted">???????</div>
                         <div id="tgAccountPreviewBalance" class="tg-account-preview-balance">0,00 USD</div>
                       </div>
                     </article>
@@ -999,21 +999,21 @@
                 </div>
 
                 <label class="tg-category-desc-label tg-only-block">
-                  <span class="web-categories-field-label">Описание (необязательно)</span>
+                  <span class="web-categories-field-label">????????? (???????????????)</span>
                   <textarea
                     id="accountDescriptionInput"
                     class="tg-category-desc-input"
                     rows="2"
                     maxlength="500"
-                    placeholder="Добавьте описание счёта"
+                    placeholder="??????????? ???????? ????????"
                   ></textarea>
                 </label>
 
                 <p id="accountsStatusText" class="muted form-status"></p>
                 <div class="web-accounts-form-actions">
-                  <button id="submitButton" class="primary-button web-accounts-submit" type="button">Создать счёт</button>
+                  <button id="submitButton" class="primary-button web-accounts-submit" type="button">????????? ???????</button>
                   <button id="cancelAccountEditButton" class="ghost-button web-accounts-cancel hidden-button" type="button">
-                    Отмена
+                    ????????
                   </button>
                 </div>
               </form>
@@ -1025,19 +1025,19 @@
 
         <section id="screen-activity" class="screen" data-screen="activity">
           <div class="web-activity-layout">
-          <section class="card compact-section-card web-activity-recent-card web-only-block" aria-label="Последние операции">
+          <section class="card compact-section-card web-activity-recent-card web-only-block" aria-label="?????????? ??????????">
             <div class="section-header">
               <div>
-                <h2 class="web-activity-recent-title">Последние операции</h2>
+                <h2 class="web-activity-recent-title">?????????? ??????????</h2>
               </div>
-              <button type="button" class="text-link-button" data-open-screen="history">Все</button>
+              <button type="button" class="text-link-button" data-open-screen="history">????</button>
             </div>
             <div id="webActivityRecentList" class="accounts-list web-activity-recent-list"></div>
           </section>
 
           <div class="web-activity-main">
           <div class="web-activity-compose">
-            <div class="web-op-kind-cards" role="group" aria-label="Тип операции">
+            <div class="web-op-kind-cards" role="group" aria-label="??? ??????????">
               <button
                 type="button"
                 class="web-op-kind-card web-op-kind-card--income"
@@ -1045,10 +1045,10 @@
                 aria-pressed="false"
               >
                 <span class="web-op-kind-card-copy">
-                  <span class="web-op-kind-card-title">Доход</span>
-                  <span class="web-op-kind-card-desc">Поступление средств</span>
+                  <span class="web-op-kind-card-title">???????</span>
+                  <span class="web-op-kind-card-desc">?????????????? ?????????</span>
                 </span>
-                <span class="web-op-kind-card-icon" aria-hidden="true">↑</span>
+                <span class="web-op-kind-card-icon" aria-hidden="true">???</span>
               </button>
               <button
                 type="button"
@@ -1057,10 +1057,10 @@
                 aria-pressed="true"
               >
                 <span class="web-op-kind-card-copy">
-                  <span class="web-op-kind-card-title">Расход</span>
-                  <span class="web-op-kind-card-desc">Списание средств</span>
+                  <span class="web-op-kind-card-title">???????</span>
+                  <span class="web-op-kind-card-desc">???????? ?????????</span>
                 </span>
-                <span class="web-op-kind-card-icon" aria-hidden="true">↓</span>
+                <span class="web-op-kind-card-icon" aria-hidden="true">???</span>
               </button>
             </div>
           </div>
@@ -1068,80 +1068,80 @@
           <section class="card activity-form-card web-op-entry-sheet">
             <div class="section-header section-header--telegram-only">
               <div>
-                <p class="section-label">Операции</p>
-                <h2>Доходы и расходы</h2>
+                <p class="section-label">???????????</p>
+                <h2>????????? ? ??????????</h2>
               </div>
             </div>
             <form id="entryForm" class="stacked-form web-op-entry-form">
               <label class="web-op-native-kind-field">
-                <span>Тип операции</span>
+                <span>??? ??????????</span>
                 <select id="entryKindInput" name="kind">
-                  <option value="expense">Расход</option>
-                  <option value="income">Доход</option>
+                  <option value="expense">???????</option>
+                  <option value="income">???????</option>
                 </select>
               </label>
 
               <label class="web-op-account-field">
-                <span>Счет <span class="web-op-req" aria-hidden="true">*</span></span>
+                <span>?????? <span class="web-op-req" aria-hidden="true">*</span></span>
                 <select id="entryAccountInput" name="accountId"></select>
-                <p id="entryAccountAvailableLine" class="web-op-field-hint web-transfer-available muted">Доступно: —</p>
+                <p id="entryAccountAvailableLine" class="web-op-field-hint web-transfer-available muted">???????????: ???</p>
               </label>
 
               <label class="web-op-category-field">
-                <span>Категория <span class="web-op-req" aria-hidden="true">*</span></span>
+                <span>???????????? <span class="web-op-req" aria-hidden="true">*</span></span>
                 <select id="entryCategoryInput" name="categoryId"></select>
                 <span class="web-op-field-hint web-op-field-hint--placeholder" aria-hidden="true">&#8203;</span>
               </label>
 
               <label class="web-op-currency-field web-op-field-span-2">
-                <span>Валюта операции <span class="web-op-req" aria-hidden="true">*</span></span>
+                <span>????????? ?????????? <span class="web-op-req" aria-hidden="true">*</span></span>
                 <select id="entryCurrencyInput" name="currencyCode"></select>
               </label>
 
               <p id="entryCurrencyHint" class="muted entry-currency-hint web-op-field-span-2" hidden></p>
 
               <label class="web-op-amount-field">
-                <span>Сумма <span class="web-op-req" aria-hidden="true">*</span></span>
+                <span>?????? <span class="web-op-req" aria-hidden="true">*</span></span>
                 <input id="entryAmountInput" min="0.01" name="amount" placeholder="0.00" required step="0.01" type="number" />
               </label>
 
               <label class="web-op-datetime-field">
-                <span>Дата и время <span class="web-op-req" aria-hidden="true">*</span></span>
+                <span>?????? ? ?????? <span class="web-op-req" aria-hidden="true">*</span></span>
                 <div class="native-datetime-shell">
                   <input id="entryDateInput" name="occurredAt" required type="datetime-local" />
                 </div>
               </label>
 
               <label class="web-op-field-span-2">
-                <span>Комментарий</span>
+                <span>??????????????</span>
                 <input
                   id="entryNoteInput"
                   name="note"
-                  placeholder="Добавьте комментарий (необязательно)"
+                  placeholder="??????????? ????????????? (???????????????)"
                   type="text"
                 />
               </label>
 
               <div class="web-op-form-actions">
-                <button id="entrySubmitButton" class="primary-button" type="button">Сохранить операцию</button>
+                <button id="entrySubmitButton" class="primary-button" type="button">????????????? ???????????</button>
                 <button id="entryFormResetWeb" class="ghost-button web-op-cancel-btn" type="button">
-                  Отмена
+                  ????????
                 </button>
               </div>
             </form>
           </section>
 
           <div class="balancy-hint-card" data-balancy-hint="activityForm" role="status" hidden>
-            <span class="balancy-hint-icon" aria-hidden="true">💡</span>
+            <span class="balancy-hint-icon" aria-hidden="true">????</span>
             <div class="balancy-hint-copy">
-              <strong class="balancy-hint-title">Операция</strong>
+              <strong class="balancy-hint-title">???????????</strong>
               <p class="balancy-hint-text muted">
-                Выберите счёт и категорию, укажите сумму и при необходимости время — комментарий по желанию. Перевод между
-                счетами доступен через кнопку «+» вверху или блок «Перевод» на главной.
+                ???????????? ??????? ? ????????????, ????????? ??????? ? ???? ??????????????? ?????? ??? ????????????? ?? ????????. ????????? ??????
+                ????????? ?????????? ??????? ??????? я┐╜+я┐╜ ????????? ??? ???? я┐╜?????????я┐╜ ?? ???????.
               </p>
             </div>
-            <button type="button" class="balancy-hint-close" data-balancy-hint-close="activityForm" aria-label="Закрыть подсказку">
-              ×
+            <button type="button" class="balancy-hint-close" data-balancy-hint-close="activityForm" aria-label="???????????? ??????????">
+              ??
             </button>
           </div>
 
@@ -1152,20 +1152,20 @@
 
         <section id="screen-transfer" class="screen" data-screen="transfer">
           <div class="web-transfer-layout">
-          <section class="card compact-section-card web-activity-recent-card web-only-block" aria-label="Последние переводы">
+          <section class="card compact-section-card web-activity-recent-card web-only-block" aria-label="?????????? ??????????">
             <div class="section-header">
               <div>
-                <h2 class="web-activity-recent-title">Последние переводы</h2>
+                <h2 class="web-activity-recent-title">?????????? ??????????</h2>
               </div>
-              <button type="button" class="text-link-button" data-open-screen="history">Все</button>
+              <button type="button" class="text-link-button" data-open-screen="history">????</button>
             </div>
             <div id="webTransferRecentList" class="accounts-list web-activity-recent-list"></div>
           </section>
 
           <div class="web-transfer-main">
           <div class="web-transfer-sheet">
-            <header class="tg-transfer-top tg-only-block" aria-label="Перевод между счетами">
-              <button type="button" id="tgTransferScreenBackButton" class="tg-transfer-back-btn" hidden aria-hidden="true" tabindex="-1" aria-label="Назад">
+            <header class="tg-transfer-top tg-only-block" aria-label="????????? ?????? ?????????">
+              <button type="button" id="tgTransferScreenBackButton" class="tg-transfer-back-btn" hidden aria-hidden="true" tabindex="-1" aria-label="?????">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path
                     d="M15 6L9 12L15 18"
@@ -1177,22 +1177,22 @@
                 </svg>
               </button>
               <div class="tg-transfer-top-text">
-                <h2 class="tg-transfer-title">Перевод между счетами</h2>
-                <p class="tg-transfer-sub muted">Переведите средства с одного счёта на другой.</p>
+                <h2 class="tg-transfer-title">????????? ?????? ?????????</h2>
+                <p class="tg-transfer-sub muted">????????????? ?????????? ? ?????? ???????? ?? ????????.</p>
               </div>
             </header>
 
             <section class="card activity-form-card web-transfer-card">
               <div class="section-header web-transfer-card-head">
                 <div>
-                  <p class="section-label">Перевод</p>
-                  <h2>Детали перевода</h2>
+                  <p class="section-label">?????????</p>
+                  <h2>???????? ?????????</h2>
                 </div>
               </div>
               <form id="transferForm" class="stacked-form web-transfer-form">
                 <div class="web-transfer-accounts-row">
                   <label class="web-transfer-field web-transfer-field--account">
-                    <span>Со счета <span class="web-op-req" aria-hidden="true">*</span></span>
+                    <span>?? ??????? <span class="web-op-req" aria-hidden="true">*</span></span>
                     <div class="web-transfer-select-shell">
                       <span class="web-transfer-select-icon web-transfer-select-icon--from" aria-hidden="true">
                         <svg viewBox="0 0 24 24" fill="none">
@@ -1202,13 +1202,13 @@
                       </span>
                       <select id="transferFromAccountInput" name="fromAccountId" class="web-transfer-select"></select>
                     </div>
-                    <p id="transferFromAvailableLine" class="web-transfer-available muted">Доступно: —</p>
+                    <p id="transferFromAvailableLine" class="web-transfer-available muted">???????????: ???</p>
                   </label>
                   <button
                     type="button"
                     id="webTransferSwapAccounts"
                     class="web-transfer-swap-btn"
-                    aria-label="Поменять счета местами"
+                    aria-label="??????????? ??????? ????????"
                   >
                     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path
@@ -1228,7 +1228,7 @@
                     </svg>
                   </button>
                   <label class="web-transfer-field web-transfer-field--account">
-                    <span>На счет <span class="web-op-req" aria-hidden="true">*</span></span>
+                    <span>?? ?????? <span class="web-op-req" aria-hidden="true">*</span></span>
                     <div class="web-transfer-select-shell">
                       <span class="web-transfer-select-icon web-transfer-select-icon--to" aria-hidden="true">
                         <svg viewBox="0 0 24 24" fill="none">
@@ -1238,12 +1238,12 @@
                       </span>
                       <select id="transferToAccountInput" name="toAccountId" class="web-transfer-select"></select>
                     </div>
-                    <p id="transferToAvailableLine" class="web-transfer-available muted">Доступно: —</p>
+                    <p id="transferToAvailableLine" class="web-transfer-available muted">???????????: ???</p>
                   </label>
                 </div>
 
                 <label class="web-transfer-field web-transfer-field--amount">
-                  <span>Сумма перевода <span class="web-op-req" aria-hidden="true">*</span></span>
+                  <span>?????? ????????? <span class="web-op-req" aria-hidden="true">*</span></span>
                   <div class="web-transfer-amount-row">
                     <input
                       id="transferFromAmountInput"
@@ -1261,13 +1261,13 @@
                 </label>
 
                 <label class="web-transfer-secondary-amount">
-                  <span>Сумма зачисления</span>
+                  <span>?????? ???????????</span>
                   <div class="web-transfer-amount-row web-transfer-amount-row--to">
                     <input
                       id="transferToAmountInput"
                       min="0.01"
                       name="toAmount"
-                      placeholder="Оставьте пустым для автоконвертации"
+                      placeholder="???????????? ????????? ??? ???????????????????"
                       step="0.01"
                       type="number"
                       class="web-transfer-amount-input"
@@ -1280,15 +1280,15 @@
                 </label>
 
                 <label class="web-transfer-field">
-                  <span>Дата и время <span class="web-op-req" aria-hidden="true">*</span></span>
+                  <span>?????? ? ?????? <span class="web-op-req" aria-hidden="true">*</span></span>
                   <div class="native-datetime-shell web-transfer-datetime">
                     <input id="transferDateInput" name="occurredAt" required type="datetime-local" />
                   </div>
                 </label>
 
                 <label class="web-transfer-field">
-                  <span>Комментарий</span>
-                  <input id="transferNoteInput" name="note" placeholder="Необязательно" type="text" />
+                  <span>??????????????</span>
+                  <input id="transferNoteInput" name="note" placeholder="???????????????" type="text" />
                 </label>
 
                 <div class="tg-transfer-security tg-only-block" role="status">
@@ -1304,14 +1304,14 @@
                     </svg>
                   </span>
                   <div>
-                    <strong class="tg-transfer-security-title">Безопасность перевода</strong>
-                    <p class="muted tg-transfer-security-text">Переводы между вашими счетами не влияют на общий баланс.</p>
+                    <strong class="tg-transfer-security-title">??????????????? ?????????</strong>
+                    <p class="muted tg-transfer-security-text">??????????? ?????? ??????? ????????? ?? ???????? ?? ?????? ??????.</p>
                   </div>
                 </div>
 
                 <div class="web-transfer-actions">
-                  <button id="transferSubmitButton" class="primary-button web-transfer-submit" type="button">Сохранить перевод</button>
-                  <button type="button" id="webTransferCancelButton" class="ghost-button web-transfer-cancel-btn tg-only-block">Отмена</button>
+                  <button id="transferSubmitButton" class="primary-button web-transfer-submit" type="button">????????????? ????????</button>
+                  <button type="button" id="webTransferCancelButton" class="ghost-button web-transfer-cancel-btn tg-only-block">????????</button>
                 </div>
               </form>
             </section>
@@ -1325,14 +1325,14 @@
         <section id="screen-ledger" class="screen tg-only-block" data-screen="ledger">
           <div id="tgOpsActivityRoot" class="tg-ops-activity-root">
             <header class="tg-ops-head">
-              <h1 class="tg-ops-title">История</h1>
+              <h1 class="tg-ops-title">??????????</h1>
               <div class="tg-ops-head-actions">
                 <button
                   type="button"
                   class="tg-home-icon-btn"
                   id="tgOpsActivityRefreshButton"
-                  title="Обновить"
-                  aria-label="Обновить данные"
+                  title="???????????"
+                  aria-label="??????????? ???????"
                 >
                   <svg class="tg-home-icon-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path
@@ -1354,18 +1354,18 @@
                   type="button"
                   id="tgActivityNewEntryButton"
                   class="tg-ops-btn tg-ops-btn--plus"
-                  aria-label="Новая операция"
+                  aria-label="????? ??????????"
                 >
                   <span aria-hidden="true">+</span>
                 </button>
               </div>
             </header>
 
-            <div class="tg-ops-stats tg-ops-stats--single" role="region" aria-label="Сводка за месяц">
+            <div class="tg-ops-stats tg-ops-stats--single" role="region" aria-label="?????? ?? ??????">
               <div class="tg-ops-stat tg-ops-stat--net tg-ops-stat--solo">
-                <p class="tg-ops-stat-label">Чистый поток</p>
+                <p class="tg-ops-stat-label">???????? ??????</p>
                 <strong id="tgOpsStatNet" class="tg-ops-stat-value tg-ops-stat-value--net">+0</strong>
-                <span class="tg-ops-stat-sub muted">за этот месяц</span>
+                <span class="tg-ops-stat-sub muted">?? ?????? ??????</span>
               </div>
             </div>
 
@@ -1380,38 +1380,38 @@
                 id="tgOpsSearchInput"
                 class="tg-ops-search-input"
                 type="search"
-                placeholder="Поиск операций…"
+                placeholder="?????? ?????????????"
                 autocomplete="off"
-                aria-label="Поиск по операциям"
+                aria-label="?????? ?? ???????????"
               />
             </div>
 
             <div id="tgOpsFiltersPanel" class="tg-ops-filters-panel">
               <div class="tg-ops-dates-grid">
                 <label class="tg-ops-field-block tg-ops-field-block--date">
-                  <span class="tg-ops-field-label muted">Период с</span>
+                  <span class="tg-ops-field-label muted">???????? ?</span>
                   <span class="tg-ops-date-input-shell">
-                    <input id="tgOpsDateFrom" class="tg-ops-control" type="date" aria-label="Дата с" />
+                    <input id="tgOpsDateFrom" class="tg-ops-control" type="date" aria-label="?????? ?" />
                   </span>
                 </label>
                 <label class="tg-ops-field-block tg-ops-field-block--date">
-                  <span class="tg-ops-field-label muted">По</span>
+                  <span class="tg-ops-field-label muted">???</span>
                   <span class="tg-ops-date-input-shell">
-                    <input id="tgOpsDateTo" class="tg-ops-control" type="date" aria-label="Дата по" />
+                    <input id="tgOpsDateTo" class="tg-ops-control" type="date" aria-label="?????? ??" />
                   </span>
                 </label>
               </div>
               <div class="tg-ops-selects-grid">
-                <select id="tgOpsFilterAccount" class="tg-ops-control tg-ops-control--select" aria-label="Счёт">
-                  <option value="">Все счета</option>
+                <select id="tgOpsFilterAccount" class="tg-ops-control tg-ops-control--select" aria-label="???????">
+                  <option value="">???? ???????</option>
                 </select>
-                <select id="tgOpsFilterKind" class="tg-ops-control tg-ops-control--select" aria-label="Тип операции">
-                  <option value="all">Все</option>
-                  <option value="income">Доход</option>
-                  <option value="expense">Расход</option>
+                <select id="tgOpsFilterKind" class="tg-ops-control tg-ops-control--select" aria-label="??? ??????????">
+                  <option value="all">????</option>
+                  <option value="income">???????</option>
+                  <option value="expense">???????</option>
                 </select>
-                <select id="tgOpsFilterCategory" class="tg-ops-control tg-ops-control--select" aria-label="Категория">
-                  <option value="">Все категории</option>
+                <select id="tgOpsFilterCategory" class="tg-ops-control tg-ops-control--select" aria-label="????????????">
+                  <option value="">???? ???????????</option>
                 </select>
               </div>
               <div class="tg-ops-filter-actions">
@@ -1419,8 +1419,8 @@
                   type="button"
                   id="tgOpsResetFilters"
                   class="tg-ops-sort-btn"
-                  title="Сбросить фильтры"
-                  aria-label="Сбросить фильтры"
+                  title="??????????? ????????????"
+                  aria-label="??????????? ????????????"
                 >
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path
@@ -1439,26 +1439,26 @@
                   </svg>
                 </button>
                 <button type="button" id="tgOpsApplyFilters" class="primary-button tg-ops-apply-btn">
-                  Показать
+                  ???????????
                 </button>
               </div>
             </div>
 
             <section class="card tg-ops-list-card">
               <div id="tgActivityCombinedList" class="tg-ops-feed" aria-live="polite"></div>
-              <nav id="tgOpsPaginationNav" class="tg-ops-pagination" aria-label="Страницы операций" hidden></nav>
+              <nav id="tgOpsPaginationNav" class="tg-ops-pagination" aria-label="???????????? ??????????" hidden></nav>
             </section>
 
             <div id="tgActivityOpsTip" class="balancy-hint-card" data-balancy-hint="historyFilters" role="status" hidden>
-              <span class="balancy-hint-icon" aria-hidden="true">💡</span>
+              <span class="balancy-hint-icon" aria-hidden="true">????</span>
               <div class="balancy-hint-copy">
-                <strong class="balancy-hint-title">История</strong>
+                <strong class="balancy-hint-title">??????????</strong>
                 <p class="balancy-hint-text muted">
-                  Задайте период и при необходимости фильтры, затем нажмите «Показать». Поиск учитывается при загрузке списка.
+                  ????????? ??????? ? ???? ??????????????? ????????????, ?????? ???????? я┐╜???????????я┐╜. ?????? ???????????????? ???? ?????????? ??????.
                 </p>
               </div>
-              <button type="button" id="tgActivityOpsTipClose" class="balancy-hint-close" data-balancy-hint-close="historyFilters" aria-label="Закрыть подсказку">
-                ×
+              <button type="button" id="tgActivityOpsTipClose" class="balancy-hint-close" data-balancy-hint-close="historyFilters" aria-label="???????????? ??????????">
+                ??
               </button>
             </div>
           </div>
@@ -1466,105 +1466,105 @@
 
         <section id="screen-instruction" class="screen" data-screen="instruction">
           <div class="web-instruction-root">
-            <nav class="web-instr-toc card" aria-label="Содержание инструкции">
-              <p class="web-instr-toc-title">Содержание</p>
+            <nav class="web-instr-toc card" aria-label="??????????? ??????????????">
+              <p class="web-instr-toc-title">???????????</p>
               <ol class="web-instr-toc-list">
-                <li><a href="#web-instr-start">С чего начать</a></li>
-                <li><a href="#web-instr-nav">Меню и навигация</a></li>
-                <li><a href="#web-instr-home">Главная</a></li>
-                <li><a href="#web-instr-accounts">Счета</a></li>
-                <li><a href="#web-instr-categories">Категории</a></li>
-                <li><a href="#web-instr-activity">Операции</a></li>
-                <li><a href="#web-instr-transfer">Переводы</a></li>
-                <li><a href="#web-instr-reports">Отчёты</a></li>
-                <li><a href="#web-instr-history">История</a></li>
+                <li><a href="#web-instr-start">? ????? ?????????</a></li>
+                <li><a href="#web-instr-nav">?????? ? ??????????</a></li>
+                <li><a href="#web-instr-home">????????</a></li>
+                <li><a href="#web-instr-accounts">???????</a></li>
+                <li><a href="#web-instr-categories">????????????</a></li>
+                <li><a href="#web-instr-activity">???????????</a></li>
+                <li><a href="#web-instr-transfer">???????????</a></li>
+                <li><a href="#web-instr-reports">????????????</a></li>
+                <li><a href="#web-instr-history">??????????</a></li>
               </ol>
             </nav>
             <p class="help-doc-lede muted">
-              Пошаговое руководство по веб-версии Balancy: порядок настройки, разделы в боковом меню и основные действия в шапке.
+              ??????????? ?????????????? ?? ???-??????? Balancy: ???????? ???????????, ????????? ? ??????? ????? ? ????????? ????????? ? ??????.
             </p>
             <article id="web-instr-start" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">1. С чего начать</h3>
+              <h3 class="help-doc-h3">1. ? ????? ?????????</h3>
               <p class="muted">
-                После входа откройте <strong>Главную</strong> — там общий баланс в выбранной валюте отображения и краткая сводка за месяц.
+                ?????? ?????? ??????????? <strong>??????????</strong> ??? ???? ?????? ?????? ? ??????????? ???????? ????????????? ? ????????? ?????? ?? ??????.
               </p>
               <ol class="help-doc-list help-doc-numbered">
-                <li>Создайте хотя бы один <strong>счёт</strong> в разделе «Счета».</li>
-                <li>Добавьте <strong>категории</strong> доходов и расходов в разделе «Категории».</li>
-                <li>Запишите первую операцию в «Операции» или через <strong>+ Новая запись</strong> в шапке.</li>
-                <li>Курсы валют подтягиваются с сервера; при необходимости нажмите обновление в шапке.</li>
+                <li>????????? ?????? ??? ???? <strong>???????</strong> ? ???????? я┐╜???????я┐╜.</li>
+                <li>??????????? <strong>???????????</strong> ???????? ? ?????????? ? ???????? я┐╜????????????я┐╜.</li>
+                <li>??????????? ????????? ??????????? ? я┐╜???????????я┐╜ ??? ??????? <strong>+ ????? ???????</strong> ? ??????.</li>
+                <li>????????? ??????? ???????????????? ? ?????????; ???? ??????????????? ???????? ?????????? ? ??????.</li>
               </ol>
             </article>
             <article id="web-instr-nav" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">2. Меню слева и шапка</h3>
-              <p class="muted">В боковом меню слева — основные разделы (сверху вниз):</p>
+              <h3 class="help-doc-h3">2. ?????? ????? ? ??????</h3>
+              <p class="muted">?? ??????? ????? ????? ??? ????????? ????????? (????????? ????):</p>
               <ul class="help-doc-list">
-                <li><strong>Главная</strong> — баланс, счета, последние операции, диаграммы.</li>
-                <li><strong>Счета</strong> — список и форма создания или редактирования.</li>
-                <li><strong>Категории</strong> — статьи доходов и расходов.</li>
-                <li><strong>Операции</strong> — форма дохода или расхода.</li>
-                <li><strong>Переводы</strong> — перевод между своими счетами.</li>
-                <li><strong>Отчёты</strong> — аналитика за период.</li>
-                <li><strong>История</strong> — лента операций с фильтрами.</li>
-                <li><strong>Инструкция</strong> — этот раздел.</li>
+                <li><strong>????????</strong> ??? ??????, ???????, ????????? ??????????, ???????????.</li>
+                <li><strong>???????</strong> ??? ?????? ? ??????? ???????? ??? ?????????????????.</li>
+                <li><strong>????????????</strong> ??? ????????? ???????? ? ??????????.</li>
+                <li><strong>???????????</strong> ??? ??????? ??????? ??? ?????????.</li>
+                <li><strong>???????????</strong> ??? ???????? ?????? ?????? ?????????.</li>
+                <li><strong>????????????</strong> ??? ?????????? ?? ???????.</li>
+                <li><strong>??????????</strong> ??? ?????? ?????????? ? ?????????????.</li>
+                <li><strong>???????????????</strong> ??? ?????? ???????.</li>
               </ul>
               <p class="muted">
-                В шапке справа: <strong>+ Новая запись</strong> (доход, расход или перевод) и кнопка обновления данных.
-                На узком экране откройте меню кнопкой «бургер» в шапке.
+                ?? ?????? ???????: <strong>+ ????? ???????</strong> (??????, ???????? ??? ????????) ? ?????? ?????????? ????????.
+                ?? ?????? ??????? ??????????? ????? ??????? я┐╜?????????я┐╜ ? ??????.
               </p>
             </article>
             <article id="web-instr-home" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">3. Главная</h3>
+              <h3 class="help-doc-h3">3. ????????</h3>
               <p class="muted">
-                Карточка баланса показывает общую сумму в валюте отображения; ниже — остатки по валютам, блоки «Ваши счета» и «История»,
-                расходы по категориям и сравнение доходов и расходов за месяц. Справа на широком экране — круговая диаграмма и план.
+                ???????????? ??????? ???????????? ???????? ??????? ? ???????? ?????????????; ???? ??? ????????? ?? ?????????, ????? я┐╜?????? ???????я┐╜ ? я┐╜??????????я┐╜,
+                ?????????? ?? ???????????? ? ?????????? ???????? ? ?????????? ?? ??????. ??????? ?? ????????? ??????? ??? ?????????? ?????????? ? ????.
               </p>
             </article>
             <article id="web-instr-accounts" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">4. Счета</h3>
+              <h3 class="help-doc-h3">4. ???????</h3>
               <ol class="help-doc-list help-doc-numbered">
-                <li>Откройте <strong>Счета</strong>: слева список, справа форма.</li>
-                <li>Укажите название, тип, валюту, стартовый баланс, цвет и иконку.</li>
-                <li>Нажмите <strong>Создать счёт</strong> или сохраните изменения при редактировании.</li>
-                <li>Редактирование — иконка карандаша в строке списка.</li>
+                <li>???????????? <strong>???????</strong>: ????? ??????, ??????? ???????.</li>
+                <li>???????? ????????, ????, ?????????, ????????????? ??????, ?????? ? ???????.</li>
+                <li>???????? <strong>????????? ???????</strong> ??? ???????????? ????????? ???? ?????????????????.</li>
+                <li>???????????????? ??? ?????? ??????????? ? ???????? ??????.</li>
               </ol>
             </article>
             <article id="web-instr-categories" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">5. Категории</h3>
+              <h3 class="help-doc-h3">5. ????????????</h3>
               <p class="muted">
-                Переключите <strong>Доход</strong> или <strong>Расход</strong>, задайте название, цвет и иконку, нажмите <strong>Сохранить</strong>.
-                Список слева, форма справа — как у счетов.
+                ???????????????? <strong>???????</strong> ??? <strong>???????</strong>, ???????? ????????, ?????? ? ???????, ???????? <strong>?????????????</strong>.
+                ?????? ?????, ??????? ??????? ??? ??? ?? ????????.
               </p>
             </article>
             <article id="web-instr-activity" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">6. Операции</h3>
+              <h3 class="help-doc-h3">6. ???????????</h3>
               <ol class="help-doc-list help-doc-numbered">
-                <li>Раздел <strong>Операции</strong> или <strong>+ Новая запись</strong> → доход или расход.</li>
-                <li>Выберите счёт и категорию; под счётом отображается строка «Доступно: …».</li>
-                <li>Укажите сумму, дату и при необходимости комментарий.</li>
-                <li>Нажмите <strong>Сохранить операцию</strong>.</li>
+                <li>?????? <strong>???????????</strong> ??? <strong>+ ????? ???????</strong> ??? ?????? ??? ????????.</li>
+                <li>???????????? ??????? ? ????????????; ??? ????????? ??????????????? ???????? я┐╜???????????: ???я┐╜.</li>
+                <li>???????? ???????, ?????? ? ???? ??????????????? ?????????????.</li>
+                <li>???????? <strong>????????????? ???????????</strong>.</li>
               </ol>
             </article>
             <article id="web-instr-transfer" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">7. Переводы</h3>
+              <h3 class="help-doc-h3">7. ???????????</h3>
               <p class="muted">
-                В меню <strong>Переводы</strong> укажите счёт списания и зачисления (кнопка ⇅ меняет их местами), сумму и дату.
-                Перевод между своими счетами не меняет общий баланс в одной валюте, но обновляет остатки по каждому счёту.
-                При разных валютах можно задать сумму зачисления вручную.
+                ?? ????? <strong>???????????</strong> ????????? ??????? ???????? ? ??????????? (?????? ??? ??????? ??? ????????), ??????? ? ??????.
+                ????????? ?????? ?????? ????????? ?? ??????? ?????? ?????? ? ????? ????????, ?? ?????????? ????????? ?? ???????? ?????????.
+                ????? ????????? ?????????? ????? ???????? ??????? ??????????? ????????????.
               </p>
             </article>
             <article id="web-instr-reports" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">8. Отчёты</h3>
+              <h3 class="help-doc-h3">8. ????????????</h3>
               <p class="muted">
-                Выберите период и фильтры, нажмите <strong>Показать</strong>. После расчёта доступны таблицы и графики;
-                при наличии прав — <strong>Скачать отчёт</strong> в CSV.
+                ???????????? ??????? ? ????????????, ???????? <strong>???????????</strong>. ?????? ??????????? ??????????? ?????????? ? ?????????;
+                ???? ???????? ????? ??? <strong>?????????? ?????????</strong> ? CSV.
               </p>
             </article>
             <article id="web-instr-history" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">9. История</h3>
+              <h3 class="help-doc-h3">9. ??????????</h3>
               <p class="muted">
-                Задайте период, тип, счёт, категорию или поисковую строку и нажмите <strong>Применить</strong>.
-                Листайте страницы внизу таблицы. Если запись не появилась — обновите данные в шапке.
+                ????????? ???????, ????, ???????, ???????????? ??? ??????????? ????????? ? ???????? <strong>?????????????</strong>.
+                ??????????? ???????????? ?????? ??????????. ????? ??????? ?? ?????????? ??? ????????? ??????? ? ??????.
               </p>
             </article>
           </div>
@@ -1572,106 +1572,106 @@
           <div class="tg-instruction-root">
             <header class="tg-ops-head tg-instruction-head">
               <div>
-                <p class="section-label tg-instruction-kicker">Balancy · Telegram</p>
-                <h1 class="tg-ops-title">Инструкция</h1>
+                <p class="section-label tg-instruction-kicker">Balancy я┐╜ Telegram</p>
+                <h1 class="tg-ops-title">???????????????</h1>
               </div>
             </header>
             <div class="help-doc-scroll tg-instruction-scroll">
               <p class="help-doc-lede muted">
-                Ниже — пошагово, как пользоваться мини-приложением Balancy: от первого входа до отчётов и переводов.
+                ???? ??? ?????????, ??? ??????????????? ????-???????????? Balancy: ??? ???????? ?????? ?? ??????????? ? ??????????.
               </p>
 
               <article class="help-doc-section card help-doc-callout">
-                <h3 class="help-doc-h3">1. С чего начать</h3>
+                <h3 class="help-doc-h3">1. ? ????? ?????????</h3>
                 <p class="muted">
-                  Откройте приложение из бота в Telegram. После загрузки вы попадёте на <strong>Главную</strong> — там
-                  общий баланс по всем счетам в выбранной валюте отображения и краткая сводка за месяц.
+                  ???????????? ??????????? ?? ????? ? Telegram. ?????? ?????????? ??? ?????????? ?? <strong>??????????</strong> ??? ????
+                  ?????? ?????? ?? ???? ???????? ? ??????????? ???????? ????????????? ? ????????? ?????? ?? ??????.
                 </p>
                 <ul class="help-doc-list">
-                  <li>Сначала создайте хотя бы один <strong>счёт</strong> (вкладка «Счета» или кнопка в блоке быстрых действий на главной).</li>
-                  <li>Затем добавьте <strong>категории</strong> доходов и расходов (вкладка «Категории») — они понадобятся при записи операций.</li>
-                  <li>Курсы валют для пересчёта баланса и отчётов подтягиваются с сервера; при необходимости обновите данные жестом «потянуть вниз» на главной или откройте приложение заново из бота.</li>
+                  <li>???????? ????????? ?????? ??? ???? <strong>???????</strong> (??????? я┐╜???????я┐╜ ??? ?????? ? ????? ???????????? ????????? ?? ???????).</li>
+                  <li>??????? ?????????? <strong>???????????</strong> ???????? ? ?????????? (??????? я┐╜????????????я┐╜) ??? ??? ???????????? ???? ?????? ??????????.</li>
+                  <li>????????? ??????? ??? ????????????? ??????? ? ??????????? ???????????????? ? ?????????; ???? ??????????????? ????????? ??????? ??????? я┐╜???????????? ????я┐╜ ?? ??????? ??? ??????????? ??????????? ?????? ?? ?????.</li>
                 </ul>
               </article>
 
               <article class="help-doc-section card help-doc-callout">
-                <h3 class="help-doc-h3">2. Навигация</h3>
-                <p class="muted">Внизу экрана пять вкладок:</p>
+                <h3 class="help-doc-h3">2. ??????????</h3>
+                <p class="muted">??????? ??????? ?????? ???????:</p>
                 <ul class="help-doc-list">
-                  <li><strong>Главная</strong> — баланс, остатки по валютам, списки счетов и последних движений, быстрые действия.</li>
-                  <li><strong>Счета</strong> — список счетов, добавление и редактирование.</li>
-                  <li><strong>Категории</strong> — статьи доходов и расходов.</li>
-                  <li><strong>Операции</strong> — форма новой записи: доход или расход.</li>
+                  <li><strong>????????</strong> ??? ??????, ????????? ?? ?????????, ?????? ???????? ? ?????????? ????????, ??????????? ?????????.</li>
+                  <li><strong>???????</strong> ??? ?????? ????????, ?????????? ? ?????????????????.</li>
+                  <li><strong>????????????</strong> ??? ????????? ???????? ? ??????????.</li>
+                  <li><strong>???????????</strong> ??? ??????? ????? ??????: ?????? ??? ????????.</li>
                   <li>
-                    <strong>Ещё</strong> — инструкция, <span class="tg-only-inline">история с фильтрами</span><span class="web-only-inline">раздел «История» в веб-версии через боковое меню</span>, отчёты и кнопка «Новая операция».
+                    <strong>??????</strong> ??? ??????????????, <span class="tg-only-inline">????????? ? ?????????????</span><span class="web-only-inline">??????? я┐╜??????????я┐╜ ? ???-??????? ??????? ??????? ?????</span>, ??????????? ? ?????? я┐╜????? ??????????я┐╜.
                   </li>
                 </ul>
                 <p class="muted">
-                  Вверху слева — логотип Balancy, справа кнопка <strong>+</strong>: меню выбора (доход, расход или перевод между счетами), как «Новая операция» на главной или в «Ещё».
+                  ?????????? ????? ??? ???????? Balancy, ??????? ?????? <strong>+</strong>: ????? ???????? (??????, ???????? ??? ???????? ?????? ?????????), ??? я┐╜????? ??????????я┐╜ ?? ??????? ??? ? я┐╜??????я┐╜.
                 </p>
               </article>
 
               <article class="help-doc-section card help-doc-callout">
-                <h3 class="help-doc-h3">3. Счета</h3>
+                <h3 class="help-doc-h3">3. ???????</h3>
                 <ol class="help-doc-list help-doc-numbered">
-                  <li>Откройте вкладку <strong>Счета</strong> (с главной через «Все счета» или из раздела «Ещё»).</li>
-                  <li>Нажмите <strong>+ Добавить счёт</strong>, заполните название, тип (удобная метка), валюту и стартовый баланс.</li>
-                  <li>Сохраните. Счёт появится в списке; общий баланс на главной пересчитается с учётом курсов.</li>
+                  <li>???????????? ???????? <strong>???????</strong> (? ??????? ??????? я┐╜???? ???????я┐╜ ??? ?? ???????? я┐╜??????я┐╜).</li>
+                  <li>???????? <strong>+ ??????????? ???????</strong>, ?????????? ????????, ???? (???????? ??????), ????????? ? ????????????? ??????.</li>
+                  <li>????????????. ??????? ????????? ? ??????; ?????? ?????? ?? ??????? ????????????????? ? ?????????? ????????.</li>
                 </ol>
                 <p class="muted">
-                  Чтобы изменить или удалить счёт, в списке на телефоне сделайте <strong>свайп строки влево</strong> — появятся действия.
-                  Удаление безвозвратно затрагивает связанные данные в рамках приложения — подтверждайте осознанно.
+                  ??????? ?????????? ??? ?????????? ???????, ? ?????? ?? ?????????? ????????? <strong>????? ???????? ?????</strong> ??? ????????? ?????????.
+                  ???????? ?????????????? ?????????????? ?????????? ??????? ? ???????? ??????????? ??? ???????????????? ?????????.
                 </p>
               </article>
 
               <article class="help-doc-section card help-doc-callout">
-                <h3 class="help-doc-h3">4. Категории</h3>
+                <h3 class="help-doc-h3">4. ????????????</h3>
                 <p class="muted">
-                  На вкладке «Категории» переключайте вид доходов/расходов, добавляйте статьи с понятными названиями (например «Продукты», «Транспорт»).
-                  Редактирование и удаление — также через свайп влево по строке в списке.
+                  ?? ??????? я┐╜????????????я┐╜ ???????????????? ??? ????????/??????????, ??????????? ????????? ? ??????????? ?????????? (?????????? я┐╜?????????????я┐╜, я┐╜????????????я┐╜).
+                  ???????????????? ? ????????? ??? ?????? ??????? ????? ????? ?? ???????? ? ??????.
                 </p>
               </article>
 
               <article class="help-doc-section card help-doc-callout">
-                <h3 class="help-doc-h3">5. Операции: доход и расход</h3>
+                <h3 class="help-doc-h3">5. ???????????: ?????? ? ????????</h3>
                 <ol class="help-doc-list help-doc-numbered">
-                  <li>Нажмите <strong>+</strong> вверху или «Новая операция» на главной / в «Ещё».</li>
-                  <li>Выберите <strong>Доход</strong> или <strong>Расход</strong> — откроется вкладка «Операции» с формой.</li>
-                  <li>Укажите счёт, категорию, сумму, дату и время; при необходимости — комментарий. Сохраните.</li>
+                  <li>???????? <strong>+</strong> ????????? ??? я┐╜????? ??????????я┐╜ ?? ??????? / ? я┐╜??????я┐╜.</li>
+                  <li>???????????? <strong>???????</strong> ??? <strong>???????</strong> ??? ???????????? ??????? я┐╜???????????я┐╜ ? ????????.</li>
+                  <li>???????? ???????, ????????????, ???????, ?????? ? ??????; ???? ??????????????? ??? ?????????????. ????????????.</li>
                 </ol>
               </article>
 
               <article class="help-doc-section card help-doc-callout">
-                <h3 class="help-doc-h3">6. Перевод между счетами</h3>
+                <h3 class="help-doc-h3">6. ????????? ?????? ?????????</h3>
                 <p class="muted">
-                  В меню «Новая операция» выберите <strong>Перевод между счетами</strong>. Укажите счёт списания и зачисления, суммы и дату.
-                  Переводы между вашими счетами не меняют <strong>общий</strong> баланс в одной валюте, но обновляют остатки по каждому счёту.
-                  При разных валютах можно задать сумму зачисления вручную или оставить расчёт по курсу — как подсказывает форма.
+                  ?? ????? я┐╜????? ??????????я┐╜ ??????????? <strong>????????? ?????? ?????????</strong>. ???????? ??????? ???????? ? ???????????, ??????? ? ??????.
+                  ??????????? ?????? ??????? ????????? ?? ???????? <strong>??????</strong> ?????? ? ????? ????????, ?? ??????????? ????????? ?? ???????? ?????????.
+                  ????? ????????? ?????????? ????? ???????? ??????? ??????????? ???????????? ??? ??????????? ?????????? ?? ???????? ??? ??? ?????????????? ???????.
                 </p>
               </article>
 
               <article class="help-doc-section card help-doc-callout">
-                <h3 class="help-doc-h3">7. Лента операций</h3>
+                <h3 class="help-doc-h3">7. ??????? ??????????</h3>
                 <p class="muted">
-                  На вкладке <strong>История</strong> задайте период, тип, счёт, категорию или поисковую строку и нажмите <strong>Показать</strong>.
-                  Ниже — постраничная лента; пагинация внизу списка.
+                  ?? ??????? <strong>??????????</strong> ???????? ???????, ????, ???????, ???????????? ??? ??????????? ????????? ? ???????? <strong>???????????</strong>.
+                  ???? ??? ??????????????? ??????; ?????????? ?????? ??????.
                 </p>
               </article>
 
               <article class="help-doc-section card help-doc-callout">
-                <h3 class="help-doc-h3">8. Отчёты</h3>
+                <h3 class="help-doc-h3">8. ????????????</h3>
                 <p class="muted">
-                  Выберите период (неделя, месяц, квартал, год или свои даты), при необходимости фильтры по счёту, категории и типу.
-                  Нажмите <strong>Построить отчёт</strong>. После расчёта доступны таблицы, графики и при наличии прав — выгрузка CSV.
+                  ???????????? ??????? (??????, ??????, ?????????, ??? ??? ???? ??????), ???? ??????????????? ???????????? ?? ?????????, ??????????? ? ??????.
+                  ???????? <strong>?????????????? ?????????</strong>. ?????? ??????????? ??????????? ??????????, ????????? ? ???? ???????? ????? ??? ??????????? CSV.
                 </p>
               </article>
 
               <article class="help-doc-section card help-doc-callout">
-                <h3 class="help-doc-h3">9. Полезные приёмы</h3>
+                <h3 class="help-doc-h3">9. ?????????? ?????????</h3>
                 <ul class="help-doc-list">
-                  <li>Валюта отображения на главной — в карточке баланса; отчёты используют валюту отчёта из формы отчёта.</li>
-                  <li>Остатки по валютам на главной — горизонтальная полоса «чипов» или раскрывающийся блок в веб-версии.</li>
-                  <li>Если что-то не обновилось, закройте мини-приложение полностью и откройте снова из бота.</li>
+                  <li>????????? ????????????? ?? ??????? ??? ? ??????????? ???????; ??????????? ?????????????? ????????? ?????????? ?? ???????? ??????????.</li>
+                  <li>?????????? ?? ????????? ?? ??????? ??? ????????????????? ?????? я┐╜??????я┐╜ ??? ??????????????????? ???? ? ???-???????.</li>
+                  <li>????? ?????-??? ?? ???????????, ?????????? ????-??????????? ???????????? ? ??????????? ????? ?? ?????.</li>
                 </ul>
               </article>
             </div>
@@ -1684,20 +1684,20 @@
               <div class="web-ops-filter-row">
                 <div class="web-ops-filter-cell web-ops-filter-cell--date">
                   <div class="balancy-filter-pill">
-                    <span class="balancy-filter-pill__prefix balancy-filter-pill__prefix--narrow" aria-hidden="true">С</span>
+                    <span class="balancy-filter-pill__prefix balancy-filter-pill__prefix--narrow" aria-hidden="true">?</span>
                     <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
                     <div class="balancy-filter-pill__body balancy-filter-pill__body--date">
                       <input
                         id="webOpsDateFrom"
                         class="web-ops-filter-date"
                         type="date"
-                        aria-label="С (дата начала периода)"
+                        aria-label="? (????? ??????? ????????)"
                       />
                       <button
                         type="button"
                         class="balancy-filter-pill__date-open"
-                        aria-label="Открыть календарь"
-                        title="Календарь"
+                        aria-label="????????????? ???????????"
+                        title="????????????"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                           <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" stroke-width="1.6" />
@@ -1709,20 +1709,20 @@
                 </div>
                 <div class="web-ops-filter-cell web-ops-filter-cell--date">
                   <div class="balancy-filter-pill">
-                    <span class="balancy-filter-pill__prefix balancy-filter-pill__prefix--narrow" aria-hidden="true">По</span>
+                    <span class="balancy-filter-pill__prefix balancy-filter-pill__prefix--narrow" aria-hidden="true">???</span>
                     <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
                     <div class="balancy-filter-pill__body balancy-filter-pill__body--date">
                       <input
                         id="webOpsDateTo"
                         class="web-ops-filter-date"
                         type="date"
-                        aria-label="По (дата окончания периода)"
+                        aria-label="??? (????? ?????????? ????????)"
                       />
                       <button
                         type="button"
                         class="balancy-filter-pill__date-open"
-                        aria-label="Открыть календарь"
-                        title="Календарь"
+                        aria-label="????????????? ???????????"
+                        title="????????????"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                           <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" stroke-width="1.6" />
@@ -1734,108 +1734,108 @@
                 </div>
                 <div class="web-ops-filter-cell web-ops-filter-cell--grow">
                   <div class="balancy-filter-pill">
-                    <span class="balancy-filter-pill__prefix" aria-hidden="true">Тип операции</span>
+                    <span class="balancy-filter-pill__prefix" aria-hidden="true">??? ??????????</span>
                     <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
                     <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
-                      <select id="webOpsKindFilter" class="web-ops-filter-select" aria-label="Тип операции">
-                        <option value="all">Все</option>
-                        <option value="income">Доход</option>
-                        <option value="expense">Расход</option>
-                        <option value="transfer">Перевод</option>
+                      <select id="webOpsKindFilter" class="web-ops-filter-select" aria-label="??? ??????????">
+                        <option value="all">????</option>
+                        <option value="income">???????</option>
+                        <option value="expense">???????</option>
+                        <option value="transfer">?????????</option>
                       </select>
                     </div>
                   </div>
                 </div>
                 <div class="web-ops-filter-cell web-ops-filter-cell--grow">
                   <div class="balancy-filter-pill">
-                    <span class="balancy-filter-pill__prefix" aria-hidden="true">Счёт</span>
+                    <span class="balancy-filter-pill__prefix" aria-hidden="true">???????</span>
                     <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
                     <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
-                      <select id="webOpsAccountFilter" class="web-ops-filter-select" aria-label="Счёт">
-                        <option value="">Все счета</option>
+                      <select id="webOpsAccountFilter" class="web-ops-filter-select" aria-label="???????">
+                        <option value="">???? ???????</option>
                       </select>
                     </div>
                   </div>
                 </div>
                 <div class="web-ops-filter-cell web-ops-filter-cell--grow">
                   <div class="balancy-filter-pill">
-                    <span class="balancy-filter-pill__prefix" aria-hidden="true">Категория</span>
+                    <span class="balancy-filter-pill__prefix" aria-hidden="true">????????????</span>
                     <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
                     <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
-                      <select id="webOpsCategoryFilter" class="web-ops-filter-select" aria-label="Категория">
-                        <option value="">Все категории</option>
+                      <select id="webOpsCategoryFilter" class="web-ops-filter-select" aria-label="????????????">
+                        <option value="">???? ???????????</option>
                       </select>
                     </div>
                   </div>
                 </div>
                 <div class="web-ops-filter-cell web-ops-filter-cell--search">
                   <div class="balancy-filter-pill">
-                    <span class="balancy-filter-pill__prefix" aria-hidden="true">Поиск</span>
+                    <span class="balancy-filter-pill__prefix" aria-hidden="true">??????</span>
                     <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
                     <div class="balancy-filter-pill__body balancy-filter-pill__body--search">
                       <input
                         id="webOpsSearchInput"
                         class="web-ops-filter-search"
                         type="search"
-                        placeholder="Найти в операциях…"
+                        placeholder="?????? ? ???????????????"
                         autocomplete="off"
-                        aria-label="Поиск по операциям"
+                        aria-label="?????? ?? ???????????"
                       />
                     </div>
                   </div>
                 </div>
                 <div class="web-ops-filter-cell web-ops-filter-cell--action">
                   <button id="webOpsApplyButton" class="primary-button web-ops-filter-apply" type="button">
-                    Показать
+                    ???????????
                   </button>
                 </div>
               </div>
             </div>
             <div class="web-ops-summary-grid">
               <article class="web-dash-stat-card">
-                <p class="section-label">Всего операций</p>
+                <p class="section-label">?????? ??????????</p>
                 <strong id="webOpsStatCount" class="web-dash-stat-value">0</strong>
-                <span class="muted web-dash-stat-sub">за выбранный период</span>
+                <span class="muted web-dash-stat-sub">?? ???????????? ???????</span>
               </article>
               <article class="web-dash-stat-card web-dash-stat-card-income">
-                <p class="section-label">Доходы</p>
+                <p class="section-label">?????????</p>
                 <strong id="webOpsStatIncome" class="web-dash-stat-value">+0</strong>
-                <span class="muted web-dash-stat-sub">в валюте отчёта</span>
+                <span class="muted web-dash-stat-sub">? ???????? ??????????</span>
               </article>
               <article class="web-dash-stat-card web-dash-stat-card-expense">
-                <p class="section-label">Расходы</p>
-                <strong id="webOpsStatExpense" class="web-dash-stat-value">−0</strong>
-                <span class="muted web-dash-stat-sub">в валюте отчёта</span>
+                <p class="section-label">?????????</p>
+                <strong id="webOpsStatExpense" class="web-dash-stat-value">???0</strong>
+                <span class="muted web-dash-stat-sub">? ???????? ??????????</span>
               </article>
               <article class="web-dash-stat-card web-dash-stat-card-net">
-                <p class="section-label">Чистый поток</p>
+                <p class="section-label">???????? ??????</p>
                 <strong id="webOpsStatNet" class="web-dash-stat-value">+0</strong>
-                <span class="muted web-dash-stat-sub">доходы минус расходы</span>
+                <span class="muted web-dash-stat-sub">???????? ?????? ??????????</span>
               </article>
             </div>
             <div class="web-ops-table-card card">
               <div class="web-ops-table-scroll">
-                <table class="web-ops-table" aria-label="История операций">
+                <table class="web-ops-table" aria-label="?????????? ??????????">
                   <thead>
                     <tr>
-                      <th>Дата</th>
-                      <th>Операция</th>
-                      <th>Счёт</th>
-                      <th>Категория</th>
-                      <th class="web-ops-col-num">Сумма</th>
-                      <th>Валюта</th>
+                      <th>??????</th>
+                      <th>???????????</th>
+                      <th>???????</th>
+                      <th>????????????</th>
+                      <th class="web-ops-col-num">??????</th>
+                      <th>?????????</th>
                     </tr>
                   </thead>
                   <tbody id="webOpsTableBody"></tbody>
                 </table>
               </div>
-              <p id="webOpsEmptyHint" class="muted web-ops-empty-hint" hidden>За выбранный период ничего не найдено.</p>
+              <p id="webOpsEmptyHint" class="muted web-ops-empty-hint" hidden>??? ???????????? ??????? ??????? ?? ???????.</p>
             </div>
             <div class="web-ops-pagination">
-              <p id="webOpsPageInfo" class="muted web-ops-page-info">Показано 0 из 0</p>
+              <p id="webOpsPageInfo" class="muted web-ops-page-info">????????? 0 ?? 0</p>
               <div class="web-ops-page-controls">
                 <label class="web-ops-page-size">
-                  <span class="muted">На странице</span>
+                  <span class="muted">?? ???????????</span>
                   <select id="webOpsPageSize" class="web-ops-select">
                     <option value="8">8</option>
                     <option value="15">15</option>
@@ -1844,10 +1844,10 @@
                   </select>
                 </label>
                 <button id="webOpsPagePrev" class="web-ops-page-btn" type="button" disabled>
-                  Назад
+                  ?????
                 </button>
                 <button id="webOpsPageNext" class="web-ops-page-btn" type="button" disabled>
-                  Вперёд
+                  ?????????
                 </button>
               </div>
             </div>
@@ -1861,11 +1861,11 @@
                 <div class="web-categories-list-stack web-categories-toolbar--web">
                   <section class="web-categories-section" aria-labelledby="webCategoriesIncomeHeading">
                     <header class="web-categories-section-head">
-                      <h2 id="webCategoriesIncomeHeading" class="web-categories-section-title">Категории доходов</h2>
+                      <h2 id="webCategoriesIncomeHeading" class="web-categories-section-title">???????????? ????????</h2>
                       <span id="webCategoriesIncomeBadge" class="web-categories-badge web-categories-badge--income">0</span>
                     </header>
                     <div class="web-categories-table-shell">
-                      <table class="web-categories-table" aria-label="Категории доходов">
+                      <table class="web-categories-table" aria-label="???????????? ????????">
                         <colgroup>
                           <col class="web-categories-col-name" />
                           <col class="web-categories-col-type" />
@@ -1873,27 +1873,27 @@
                         </colgroup>
                         <thead>
                           <tr>
-                            <th scope="col">Название</th>
-                            <th scope="col">Тип категории</th>
+                            <th scope="col">????????</th>
+                            <th scope="col">??? ???????????</th>
                             <th scope="col" class="web-categories-col-actions">
-                              <span class="visually-hidden">Действия</span>
+                              <span class="visually-hidden">??????????</span>
                             </th>
                           </tr>
                         </thead>
                         <tbody id="webCategoriesIncomeTableBody"></tbody>
                       </table>
                       <div id="webCategoriesIncomeEmptyState" class="web-categories-empty" hidden>
-                        <p class="muted">Пока нет категорий доходов.</p>
+                        <p class="muted">????? ???? ??????????? ????????.</p>
                       </div>
                     </div>
                   </section>
                   <section class="web-categories-section" aria-labelledby="webCategoriesExpenseHeading">
                     <header class="web-categories-section-head">
-                      <h2 id="webCategoriesExpenseHeading" class="web-categories-section-title">Категории расходов</h2>
+                      <h2 id="webCategoriesExpenseHeading" class="web-categories-section-title">???????????? ??????????</h2>
                       <span id="webCategoriesExpenseBadge" class="web-categories-badge web-categories-badge--expense">0</span>
                     </header>
                     <div class="web-categories-table-shell">
-                      <table class="web-categories-table" aria-label="Категории расходов">
+                      <table class="web-categories-table" aria-label="???????????? ??????????">
                         <colgroup>
                           <col class="web-categories-col-name" />
                           <col class="web-categories-col-type" />
@@ -1901,55 +1901,55 @@
                         </colgroup>
                         <thead>
                           <tr>
-                            <th scope="col">Название</th>
-                            <th scope="col">Тип категории</th>
+                            <th scope="col">????????</th>
+                            <th scope="col">??? ???????????</th>
                             <th scope="col" class="web-categories-col-actions">
-                              <span class="visually-hidden">Действия</span>
+                              <span class="visually-hidden">??????????</span>
                             </th>
                           </tr>
                         </thead>
                         <tbody id="webCategoriesExpenseTableBody"></tbody>
                       </table>
                       <div id="webCategoriesExpenseEmptyState" class="web-categories-empty" hidden>
-                        <p class="muted">Пока нет категорий расходов.</p>
+                        <p class="muted">????? ???? ??????????? ??????????.</p>
                       </div>
                     </div>
                   </section>
                 </div>
 
                 <div class="balancy-hint-card tg-only-block" data-balancy-hint="categoriesSwipeTg" role="status" hidden>
-                  <span class="balancy-hint-icon" aria-hidden="true">💡</span>
+                  <span class="balancy-hint-icon" aria-hidden="true">????</span>
                   <div class="balancy-hint-copy">
-                    <strong class="balancy-hint-title">Категории</strong>
+                    <strong class="balancy-hint-title">????????????</strong>
                     <p class="balancy-hint-text muted">
-                      Чтобы изменить или удалить категорию, смахните строку влево — появятся кнопки «Изменить» и «Удалить».
+                      ??????? ?????????? ??? ?????????? ????????????, ?????????? ????????? ????? ??? ????????? ?????? я┐╜???????????я┐╜ ? я┐╜?????????я┐╜.
                     </p>
                   </div>
-                  <button type="button" class="balancy-hint-close" data-balancy-hint-close="categoriesSwipeTg" aria-label="Закрыть подсказку">
-                    ×
+                  <button type="button" class="balancy-hint-close" data-balancy-hint-close="categoriesSwipeTg" aria-label="???????????? ??????????">
+                    ??
                   </button>
                 </div>
                 <div class="balancy-hint-card web-categories-toolbar--web" data-balancy-hint="categoriesSwipeWeb" role="status" hidden>
-                  <span class="balancy-hint-icon" aria-hidden="true">💡</span>
+                  <span class="balancy-hint-icon" aria-hidden="true">????</span>
                   <div class="balancy-hint-copy">
-                    <strong class="balancy-hint-title">Категории</strong>
+                    <strong class="balancy-hint-title">????????????</strong>
                     <p class="balancy-hint-text muted">
-                      В веб-версии действия с категорией — в колонке справа в таблице.
+                      ?? ???-??????? ????????? ? ???????????? ??? ? ??????? ??????? ? ?????????.
                     </p>
                   </div>
-                  <button type="button" class="balancy-hint-close" data-balancy-hint-close="categoriesSwipeWeb" aria-label="Закрыть подсказку">
-                    ×
+                  <button type="button" class="balancy-hint-close" data-balancy-hint-close="categoriesSwipeWeb" aria-label="???????????? ??????????">
+                    ??
                   </button>
                 </div>
 
                 <div class="web-categories-legacy-wrap">
                   <div class="category-columns">
                     <div>
-                      <p class="section-label">Доходы</p>
+                      <p class="section-label">?????????</p>
                       <div id="incomeCategoriesList" class="category-list"></div>
                     </div>
                     <div>
-                      <p class="section-label">Расходы</p>
+                      <p class="section-label">?????????</p>
                       <div id="expenseCategoriesList" class="category-list"></div>
                     </div>
                   </div>
@@ -1965,7 +1965,7 @@
                     hidden
                     aria-hidden="true"
                     tabindex="-1"
-                    aria-label="Назад"
+                    aria-label="?????"
                   >
                     <svg class="tg-category-back-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path
@@ -1978,171 +1978,171 @@
                     </svg>
                   </button>
                   <div class="tg-category-head-text">
-                    <h2 id="categoryFormTitle" class="web-categories-panel-title">Добавить категорию</h2>
+                    <h2 id="categoryFormTitle" class="web-categories-panel-title">??????????? ????????????</h2>
                     <p id="categoryFormSubtitle" class="web-categories-panel-subtitle muted">
-                      Создайте новую категорию доходов или расходов.
+                      ????????? ??????? ???????????? ???????? ??? ??????????.
                     </p>
                   </div>
                 </div>
                 <form id="categoryForm" class="web-categories-form stacked-form stacked-form--dense">
                   <label class="category-kind-native-wrap">
-                    <span>Тип категории</span>
+                    <span>??? ???????????</span>
                     <select id="categoryKindInput" name="kind">
-                      <option value="expense">Расход</option>
-                      <option value="income">Доход</option>
+                      <option value="expense">???????</option>
+                      <option value="income">???????</option>
                     </select>
                   </label>
 
-                  <div class="web-cat-kind-picks" role="group" aria-label="Тип категории">
+                  <div class="web-cat-kind-picks" role="group" aria-label="??? ???????????">
                     <button type="button" class="web-cat-kind-pick is-selected" data-set-category-kind="income">
                       <span class="web-cat-kind-pick-icon-ring web-cat-kind-pick-icon-ring--income" aria-hidden="true">
-                        <span class="web-cat-kind-pick-icon web-cat-kind-pick-icon--up">↑</span>
+                        <span class="web-cat-kind-pick-icon web-cat-kind-pick-icon--up">???</span>
                       </span>
-                      <span class="web-cat-kind-pick-title">Доход</span>
-                      <span class="web-cat-kind-pick-desc muted">Категория для доходов</span>
+                      <span class="web-cat-kind-pick-title">???????</span>
+                      <span class="web-cat-kind-pick-desc muted">???????????? ??? ????????</span>
                     </button>
                     <button type="button" class="web-cat-kind-pick" data-set-category-kind="expense">
                       <span class="web-cat-kind-pick-icon-ring web-cat-kind-pick-icon-ring--expense" aria-hidden="true">
-                        <span class="web-cat-kind-pick-icon web-cat-kind-pick-icon--down">↓</span>
+                        <span class="web-cat-kind-pick-icon web-cat-kind-pick-icon--down">???</span>
                       </span>
-                      <span class="web-cat-kind-pick-title">Расход</span>
-                      <span class="web-cat-kind-pick-desc muted">Категория для расходов</span>
+                      <span class="web-cat-kind-pick-title">???????</span>
+                      <span class="web-cat-kind-pick-desc muted">???????????? ??? ??????????</span>
                     </button>
                   </div>
 
                   <label>
                     <span class="web-categories-field-label">
-                      Название категории <abbr class="field-req-star" title="Обязательное поле">*</abbr>
+                      ???????? ??????????? <abbr class="field-req-star" title="??????????????? ????">*</abbr>
                     </span>
                     <input
                       id="categoryNameInput"
                       name="name"
-                      placeholder="Введите название категории"
+                      placeholder="????????? ???????? ???????????"
                       required
                       type="text"
                     />
                   </label>
                   <label class="tg-category-desc-label">
-                    <span class="web-categories-field-label">Описание (необязательно)</span>
+                    <span class="web-categories-field-label">????????? (???????????????)</span>
                     <textarea
                       id="categoryDescriptionInput"
                       class="tg-category-desc-input"
                       rows="2"
                       maxlength="500"
-                      placeholder="Добавьте описание категории"
+                      placeholder="??????????? ???????? ???????????"
                     ></textarea>
                   </label>
 
                   <div class="web-categories-color-block">
-                    <span class="web-categories-field-label tg-color-label-web">Цвет (необязательно)</span>
-                    <span class="web-categories-field-label tg-color-label-tg">Цвет категории</span>
-                    <div id="webCategoryColorSwatches" class="web-cat-swatches" role="radiogroup" aria-label="Цвет">
+                    <span class="web-categories-field-label tg-color-label-web">????? (???????????????)</span>
+                    <span class="web-categories-field-label tg-color-label-tg">????? ???????????</span>
+                    <div id="webCategoryColorSwatches" class="web-cat-swatches" role="radiogroup" aria-label="?????">
                       <button
                         type="button"
                         class="web-cat-swatch"
                         data-accent-hex="#4338ca"
                         style="--swatch: #4338ca"
-                        aria-label="Индиго"
-                        title="Индиго"
+                        aria-label="???????"
+                        title="???????"
                       ></button>
                       <button
                         type="button"
                         class="web-cat-swatch"
                         data-accent-hex="#3b82f6"
                         style="--swatch: #3b82f6"
-                        aria-label="Синий"
-                        title="Синий"
+                        aria-label="?????"
+                        title="?????"
                       ></button>
                       <button
                         type="button"
                         class="web-cat-swatch"
                         data-accent-hex="#a855f7"
                         style="--swatch: #a855f7"
-                        aria-label="Фиолетовый"
-                        title="Фиолетовый"
+                        aria-label="????????????"
+                        title="????????????"
                       ></button>
                       <button
                         type="button"
                         class="web-cat-swatch"
                         data-accent-hex="#f97316"
                         style="--swatch: #f97316"
-                        aria-label="Оранжевый"
-                        title="Оранжевый"
+                        aria-label="????????????"
+                        title="????????????"
                       ></button>
                       <button
                         type="button"
                         class="web-cat-swatch"
                         data-accent-hex="#ec4899"
                         style="--swatch: #ec4899"
-                        aria-label="Розовый"
-                        title="Розовый"
+                        aria-label="????????"
+                        title="????????"
                       ></button>
                       <button
                         type="button"
                         class="web-cat-swatch"
                         data-accent-hex="#14b8a6"
                         style="--swatch: #14b8a6"
-                        aria-label="Бирюзовый"
-                        title="Бирюзовый"
+                        aria-label="?????????????"
+                        title="?????????????"
                       ></button>
                       <button
                         type="button"
                         class="web-cat-swatch"
                         data-accent-hex="#94a3b8"
                         style="--swatch: #94a3b8"
-                        aria-label="Серый"
-                        title="Серый"
+                        aria-label="???????"
+                        title="???????"
                       ></button>
                     </div>
                     <input type="hidden" id="categoryAccentInput" value="" autocomplete="off" />
                   </div>
 
                   <div class="tg-category-icon-block">
-                    <span class="web-categories-field-label">Иконка (необязательно)</span>
-                    <div id="webCategoryIconGrid" class="web-category-icon-grid" role="group" aria-label="Иконка">
-                      <button type="button" class="web-category-icon-btn is-selected" data-category-icon="briefcase" aria-label="Портфель" title="Портфель"><span aria-hidden="true">💼</span></button>
-                      <button type="button" class="web-category-icon-btn" data-category-icon="laptop" aria-label="Ноутбук" title="Ноутбук"><span aria-hidden="true">💻</span></button>
-                      <button type="button" class="web-category-icon-btn" data-category-icon="building" aria-label="Офис" title="Офис"><span aria-hidden="true">🏢</span></button>
-                      <button type="button" class="web-category-icon-btn" data-category-icon="gift" aria-label="Подарок" title="Подарок"><span aria-hidden="true">🎁</span></button>
-                      <button type="button" class="web-category-icon-btn" data-category-icon="house" aria-label="Дом" title="Дом"><span aria-hidden="true">🏠</span></button>
-                      <button type="button" class="web-category-icon-btn" data-category-icon="cart" aria-label="Покупки" title="Покупки"><span aria-hidden="true">🛒</span></button>
-                      <button type="button" class="web-category-icon-btn" data-category-icon="car" aria-label="Авто" title="Авто"><span aria-hidden="true">🚗</span></button>
-                      <button type="button" class="web-category-icon-btn" data-category-icon="food" aria-label="Еда" title="Еда"><span aria-hidden="true">🍽</span></button>
-                      <button type="button" class="web-category-icon-btn" data-category-icon="heart" aria-label="Здоровье" title="Здоровье"><span aria-hidden="true">❤️</span></button>
-                      <button type="button" class="web-category-icon-btn" data-category-icon="sport" aria-label="Спорт" title="Спорт"><span aria-hidden="true">💪</span></button>
-                      <button type="button" class="web-category-icon-btn" data-category-icon="plane" aria-label="Путешествия" title="Путешествия"><span aria-hidden="true">✈️</span></button>
-                      <button type="button" class="web-category-icon-btn" data-category-icon="study" aria-label="Обучение" title="Обучение"><span aria-hidden="true">🎓</span></button>
-                      <button type="button" class="web-category-icon-btn" data-category-icon="pet" aria-label="Питомцы" title="Питомцы"><span aria-hidden="true">🐾</span></button>
-                      <button type="button" class="web-category-icon-btn" data-category-icon="more" aria-label="Другое" title="Другое"><span aria-hidden="true">⋯</span></button>
+                    <span class="web-categories-field-label">??????? (???????????????)</span>
+                    <div id="webCategoryIconGrid" class="web-category-icon-grid" role="group" aria-label="???????">
+                      <button type="button" class="web-category-icon-btn is-selected" data-category-icon="briefcase" aria-label="?????????????" title="?????????????"><span aria-hidden="true">????</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="laptop" aria-label="??????????" title="??????????"><span aria-hidden="true">????</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="building" aria-label="??????" title="??????"><span aria-hidden="true">????</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="gift" aria-label="?????????" title="?????????"><span aria-hidden="true">????</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="house" aria-label="????" title="????"><span aria-hidden="true">????</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="cart" aria-label="?????????" title="?????????"><span aria-hidden="true">????</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="car" aria-label="?????" title="?????"><span aria-hidden="true">????</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="food" aria-label="????" title="????"><span aria-hidden="true">????</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="heart" aria-label="???????????" title="???????????"><span aria-hidden="true">??</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="sport" aria-label="???????" title="???????"><span aria-hidden="true">????</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="plane" aria-label="????????????????" title="????????????????"><span aria-hidden="true">????</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="study" aria-label="???????????" title="???????????"><span aria-hidden="true">????</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="pet" aria-label="???????????" title="???????????"><span aria-hidden="true">????</span></button>
+                      <button type="button" class="web-category-icon-btn" data-category-icon="more" aria-label="?????????" title="?????????"><span aria-hidden="true">???</span></button>
                     </div>
                     <input type="hidden" id="categoryIconKeyInput" value="briefcase" autocomplete="off" />
                   </div>
 
                   <div class="tg-category-preview-block">
-                    <span class="web-categories-field-label">Предпросмотр</span>
+                    <span class="web-categories-field-label">?????????????????</span>
                     <div class="tg-category-preview-card" id="tgCategoryPreviewCard">
                       <div class="tg-category-preview-leading">
                         <span class="tg-category-preview-icon-ring" id="tgCategoryPreviewIconRing">
-                          <span id="tgCategoryPreviewIconGlyph" class="tg-category-preview-icon-glyph">💼</span>
+                          <span id="tgCategoryPreviewIconGlyph" class="tg-category-preview-icon-glyph">????</span>
                         </span>
                       </div>
                       <div class="tg-category-preview-copy">
                         <div class="tg-category-preview-title-row">
-                          <strong id="tgCategoryPreviewName" class="tg-category-preview-name">Зарплата</strong>
-                          <span id="tgCategoryPreviewKindPill" class="tg-category-preview-pill tg-category-preview-pill--income">Доход</span>
+                          <strong id="tgCategoryPreviewName" class="tg-category-preview-name">???????????</strong>
+                          <span id="tgCategoryPreviewKindPill" class="tg-category-preview-pill tg-category-preview-pill--income">???????</span>
                         </div>
                         <p id="tgCategoryPreviewDesc" class="tg-category-preview-desc muted"></p>
                       </div>
-                      <span class="tg-category-preview-chevron" aria-hidden="true">›</span>
+                      <span class="tg-category-preview-chevron" aria-hidden="true">???</span>
                     </div>
                   </div>
 
                   <div class="web-categories-form-actions">
                     <button id="categorySubmitButton" class="primary-button web-categories-save-btn" type="button">
-                      Сохранить
+                      ?????????????
                     </button>
                     <button id="cancelCategoryEditButton" class="ghost-button web-categories-cancel-btn" type="button">
-                      Отмена
+                      ????????
                     </button>
                   </div>
                 </form>
@@ -2154,17 +2154,17 @@
         <section id="screen-reports" class="screen" data-screen="reports">
           <div id="webReportsRoot" class="web-reports-root">
             <section class="card report-layout-card">
-              <p class="section-label report-filters-telegram-title">Отчёт</p>
+              <p class="section-label report-filters-telegram-title">??????????</p>
               <div class="report-web-toolbar">
                 <div class="report-web-toolbar-top">
                   <div class="report-web-toolbar-titles">
                     <div class="report-toolbar-period">
-                      <span class="report-toolbar-period-label">Период</span>
-                      <p id="reportRangeLabel" class="report-toolbar-period-range muted">—</p>
+                      <span class="report-toolbar-period-label">????????</span>
+                      <p id="reportRangeLabel" class="report-toolbar-period-range muted">???</p>
                     </div>
-                    <h2 id="reportTitle" class="report-screen-title">Отчёты</h2>
+                    <h2 id="reportTitle" class="report-screen-title">????????????</h2>
                     <p class="report-screen-subtitle muted">
-                      Анализируйте доходы, расходы и движение средств
+                      ??????????????? ????????, ?????????? ? ???????? ?????????
                     </p>
                   </div>
                   <div class="report-export-actions">
@@ -2173,7 +2173,7 @@
                         <path d="M12 4v12M8 12l4 4 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
                         <path d="M5 20h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
                       </svg>
-                      <span id="reportDownloadCsvLabel">Скачать отчёт</span>
+                      <span id="reportDownloadCsvLabel">?????????? ?????????</span>
                     </button>
                     <button
                       id="reportCsvStatementButton"
@@ -2185,7 +2185,7 @@
                         <path d="M7 3h8l4 4v14a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
                         <path d="M14 3v4h4M8 12h8M8 16h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
                       </svg>
-                      <span>Выписка (CSV)</span>
+                      <span>????????? (CSV)</span>
                     </button>
                   </div>
                 </div>
@@ -2193,97 +2193,97 @@
                 <form id="reportForm" class="report-main-form">
                   <div class="report-period-row">
                     <div class="report-period-controls">
-                      <div id="reportPeriodSegmented" class="report-segmented" role="tablist" aria-label="Период">
-                        <button type="button" class="report-segment" data-report-period="week">Неделя</button>
-                        <button type="button" class="report-segment is-active" data-report-period="month">Месяц</button>
-                        <button type="button" class="report-segment" data-report-period="quarter">3 месяца</button>
-                        <button type="button" class="report-segment" data-report-period="year">Год</button>
-                        <button type="button" class="report-segment" data-report-period="custom">Произвольный</button>
+                      <div id="reportPeriodSegmented" class="report-segmented" role="tablist" aria-label="????????">
+                        <button type="button" class="report-segment" data-report-period="week">??????</button>
+                        <button type="button" class="report-segment is-active" data-report-period="month">???????</button>
+                        <button type="button" class="report-segment" data-report-period="quarter">3 ???????</button>
+                        <button type="button" class="report-segment" data-report-period="year">????</button>
+                        <button type="button" class="report-segment" data-report-period="custom">????????????????</button>
                       </div>
                       <label class="report-inline-field report-period-native-wrap">
-                        <div class="balancy-filter-pill" title="Период">
-                          <span class="balancy-filter-pill__prefix" aria-hidden="true">Период</span>
+                        <div class="balancy-filter-pill" title="????????">
+                          <span class="balancy-filter-pill__prefix" aria-hidden="true">????????</span>
                           <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
                           <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
                             <select
                               id="reportPeriodInput"
                               name="period"
                               class="report-filter-select"
-                              aria-label="Период"
+                              aria-label="????????"
                             >
-                              <option value="week">Неделя</option>
-                              <option value="month" selected>Месяц</option>
-                              <option value="quarter">3 месяца</option>
-                              <option value="year">Год</option>
-                              <option value="custom">Произвольный период</option>
+                              <option value="week">??????</option>
+                              <option value="month" selected>???????</option>
+                              <option value="quarter">3 ???????</option>
+                              <option value="year">????</option>
+                              <option value="custom">???????????????? ???????</option>
                             </select>
                           </div>
                         </div>
                       </label>
 
                       <label class="report-inline-field report-filter-web-only">
-                        <div class="balancy-filter-pill" title="Счета">
-                          <span class="balancy-filter-pill__prefix" aria-hidden="true">Счета</span>
+                        <div class="balancy-filter-pill" title="???????">
+                          <span class="balancy-filter-pill__prefix" aria-hidden="true">???????</span>
                           <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
                           <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
                             <select
                               id="reportAccountFilterInput"
                               name="reportAccountFilter"
                               class="report-filter-select"
-                              aria-label="Счета"
+                              aria-label="???????"
                             >
-                              <option value="">Все счета</option>
+                              <option value="">???? ???????</option>
                             </select>
                           </div>
                         </div>
                       </label>
 
                       <label class="report-inline-field">
-                        <div class="balancy-filter-pill" title="Валюта">
-                          <span class="balancy-filter-pill__prefix" aria-hidden="true">Валюта</span>
+                        <div class="balancy-filter-pill" title="?????????">
+                          <span class="balancy-filter-pill__prefix" aria-hidden="true">?????????</span>
                           <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
                           <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
                             <select
                               id="reportingCurrencyInput"
                               name="reportingCurrency"
                               class="report-filter-select"
-                              aria-label="Валюта отчёта"
+                              aria-label="????????? ??????????"
                             ></select>
                           </div>
                         </div>
                       </label>
 
                       <label class="report-inline-field">
-                        <div class="balancy-filter-pill" title="Категория">
-                          <span class="balancy-filter-pill__prefix" aria-hidden="true">Категория</span>
+                        <div class="balancy-filter-pill" title="????????????">
+                          <span class="balancy-filter-pill__prefix" aria-hidden="true">????????????</span>
                           <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
                           <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
                             <select
                               id="reportCategoryFilterInput"
                               name="reportCategoryFilter"
                               class="report-filter-select"
-                              aria-label="Категория"
+                              aria-label="????????????"
                             >
-                              <option value="">Все статьи</option>
+                              <option value="">???? ?????????</option>
                             </select>
                           </div>
                         </div>
                       </label>
 
                       <label class="report-inline-field report-filter-web-only">
-                        <div class="balancy-filter-pill" title="Тип">
-                          <span class="balancy-filter-pill__prefix" aria-hidden="true">Тип</span>
+                        <div class="balancy-filter-pill" title="???">
+                          <span class="balancy-filter-pill__prefix" aria-hidden="true">???</span>
                           <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
                           <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
                             <select
                               id="reportKindFilterInput"
                               name="reportKindFilter"
                               class="report-filter-select"
-                              aria-label="Тип"
+                              aria-label="???"
                             >
-                              <option value="">Все</option>
-                              <option value="income">Доход</option>
-                              <option value="expense">Расход</option>
+                              <option value="">????</option>
+                              <option value="income">???????</option>
+                              <option value="expense">???????</option>
                             </select>
                           </div>
                         </div>
@@ -2294,7 +2294,7 @@
                           <span
                             class="balancy-filter-pill__prefix balancy-filter-pill__prefix--narrow"
                             aria-hidden="true"
-                            >С</span>
+                            >?</span>
                           <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
                           <div class="balancy-filter-pill__body balancy-filter-pill__body--date">
                             <input
@@ -2302,13 +2302,13 @@
                               name="startDate"
                               type="date"
                               class="report-filter-date"
-                              aria-label="С (дата начала произвольного периода)"
+                              aria-label="? (????? ??????? ??????????????? ????????)"
                             />
                             <button
                               type="button"
                               class="balancy-filter-pill__date-open"
-                              aria-label="Открыть календарь"
-                              title="Календарь"
+                              aria-label="????????????? ???????????"
+                              title="????????????"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                 <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" stroke-width="1.6" />
@@ -2323,7 +2323,7 @@
                           <span
                             class="balancy-filter-pill__prefix balancy-filter-pill__prefix--narrow"
                             aria-hidden="true"
-                            >По</span>
+                            >???</span>
                           <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
                           <div class="balancy-filter-pill__body balancy-filter-pill__body--date">
                             <input
@@ -2331,13 +2331,13 @@
                               name="endDate"
                               type="date"
                               class="report-filter-date"
-                              aria-label="По (дата окончания произвольного периода)"
+                              aria-label="??? (????? ?????????? ??????????????? ????????)"
                             />
                             <button
                               type="button"
                               class="balancy-filter-pill__date-open"
-                              aria-label="Открыть календарь"
-                              title="Календарь"
+                              aria-label="????????????? ???????????"
+                              title="????????????"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                 <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" stroke-width="1.6" />
@@ -2350,10 +2350,10 @@
                     </div>
                     <div class="report-period-actions">
                       <button type="button" id="reportResetFiltersButton" class="report-reset-btn">
-                        Сбросить
+                        ???????????
                       </button>
                       <button id="reportSubmitButton" class="primary-button report-apply-btn" type="button">
-                        Показать
+                        ???????????
                       </button>
                     </div>
                   </div>
@@ -2365,7 +2365,7 @@
                   <article class="report-stat-card report-stat-card--income">
                     <div class="report-stat-card-inner">
                       <div class="report-stat-copy">
-                        <p class="report-stat-label">Доходы</p>
+                        <p class="report-stat-label">?????????</p>
                         <strong class="report-stat-value" id="reportIncomeValue">+0</strong>
                         <p class="report-stat-sub muted" id="reportStatIncomeSub"></p>
                       </div>
@@ -2377,8 +2377,8 @@
                   <article class="report-stat-card report-stat-card--expense">
                     <div class="report-stat-card-inner">
                       <div class="report-stat-copy">
-                        <p class="report-stat-label">Расходы</p>
-                        <strong class="report-stat-value" id="reportExpenseValue">−0</strong>
+                        <p class="report-stat-label">?????????</p>
+                        <strong class="report-stat-value" id="reportExpenseValue">???0</strong>
                         <p class="report-stat-sub muted" id="reportStatExpenseSub"></p>
                       </div>
                       <div class="report-stat-spark">
@@ -2389,7 +2389,7 @@
                   <article class="report-stat-card report-stat-card--net">
                     <div class="report-stat-card-inner">
                       <div class="report-stat-copy">
-                        <p class="report-stat-label">Чистый поток</p>
+                        <p class="report-stat-label">???????? ??????</p>
                         <strong class="report-stat-value" id="reportNetValue">+0</strong>
                         <p class="report-stat-sub muted" id="reportStatNetSub"></p>
                       </div>
@@ -2401,7 +2401,7 @@
                   <article class="report-stat-card report-stat-card--ops">
                     <div class="report-stat-card-inner">
                       <div class="report-stat-copy">
-                        <p class="report-stat-label">Операции</p>
+                        <p class="report-stat-label">???????????</p>
                         <strong class="report-stat-value report-stat-value--plain" id="reportOperationsCountValue">0</strong>
                         <p class="report-stat-sub muted" id="reportStatOpsSub"></p>
                       </div>
@@ -2414,16 +2414,16 @@
 
                 <div id="webReportsCharts" class="report-charts-row">
                   <div class="card report-chart-panel report-chart-panel--main">
-                    <p class="section-label">Динамика доходов и расходов</p>
+                    <p class="section-label">????????? ???????? ? ??????????</p>
                     <div class="report-chart-canvas-wrap report-chart-canvas-wrap--trend">
-                      <canvas id="reportTrendChart" height="180" aria-label="График доходов, расходов и чистого потока"></canvas>
+                      <canvas id="reportTrendChart" height="180" aria-label="????????? ????????, ?????????? ? ????????? ???????"></canvas>
                     </div>
                   </div>
                   <div class="card report-chart-panel report-chart-panel--side">
-                    <p class="section-label">Расходы по категориям</p>
+                    <p class="section-label">????????? ?? ????????????</p>
                     <div class="report-chart-canvas-wrap report-chart-canvas-wrap--donut">
                       <div class="report-donut-stack">
-                        <canvas id="reportCategoryChart" height="200" aria-label="Диаграмма расходов по категориям"></canvas>
+                        <canvas id="reportCategoryChart" height="200" aria-label="??????????? ?????????? ?? ????????????"></canvas>
                       </div>
                       <p id="reportDonutTotal" class="report-donut-total report-donut-total--footer" aria-live="polite"></p>
                     </div>
@@ -2432,15 +2432,15 @@
 
                 <div class="report-bottom-row">
                   <div class="card report-matrix-card">
-                    <p class="section-label">Категории</p>
+                    <p class="section-label">????????????</p>
                     <div class="report-matrix-scroll">
-                      <table class="report-matrix-table" aria-label="Сводка по категориям">
+                      <table class="report-matrix-table" aria-label="?????? ?? ????????????">
                         <thead>
                           <tr>
-                            <th>Категории</th>
-                            <th class="report-matrix-num">Расходы</th>
-                            <th class="report-matrix-num">Доходы</th>
-                            <th class="report-matrix-num">Чистый поток</th>
+                            <th>????????????</th>
+                            <th class="report-matrix-num">?????????</th>
+                            <th class="report-matrix-num">?????????</th>
+                            <th class="report-matrix-num">???????? ??????</th>
                           </tr>
                         </thead>
                         <tbody id="reportCategoryMatrixBody"></tbody>
@@ -2448,7 +2448,7 @@
                     </div>
                   </div>
                   <aside class="card report-summary-aside">
-                    <p class="section-label">Сводка за период</p>
+                    <p class="section-label">?????? ?? ???????</p>
                     <dl class="report-summary-dl" id="reportPeriodSummaryDl"></dl>
                   </aside>
                 </div>
@@ -2456,12 +2456,12 @@
               </div>
 
               <div id="reportTransfersStatBox" class="report-transfers-fallback muted" hidden>
-                <span class="summary-label">Переводов</span>
+                <span class="summary-label">???????????</span>
                 <strong id="reportTransfersCountValue">0</strong>
               </div>
 
               <div class="report-balance-box report-telegram-balance">
-                <span class="summary-label">Текущий общий баланс</span>
+                <span class="summary-label">????????? ?????? ??????</span>
                 <div class="report-value-stack">
                   <strong class="report-value-amount" id="reportCurrentBalanceValue">0</strong>
                   <span class="report-value-currency" id="reportCurrentBalanceCurrency"></span>
@@ -2470,11 +2470,11 @@
 
               <div class="report-categories-blocks report-telegram-categories">
                 <div>
-                  <p class="section-label balance-label">Доходы по статьям</p>
+                  <p class="section-label balance-label">????????? ?? ??????????</p>
                   <div id="reportIncomeCategoriesList" class="category-list"></div>
                 </div>
                 <div>
-                  <p class="section-label balance-label">Расходы по статьям</p>
+                  <p class="section-label balance-label">????????? ?? ??????????</p>
                   <div id="reportExpenseCategoriesList" class="category-list"></div>
                 </div>
               </div>
@@ -2491,7 +2491,7 @@
               <path d="M9 20V13H15V20" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
             </svg>
           </span>
-          <span class="nav-label">Главная</span>
+          <span class="nav-label">????????</span>
         </button>
         <button class="bottom-nav-button" data-open-screen="accounts" type="button">
           <span class="nav-icon" aria-hidden="true">
@@ -2501,7 +2501,7 @@
               <path d="M8 14H10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
             </svg>
           </span>
-          <span class="nav-label">Счета</span>
+          <span class="nav-label">???????</span>
         </button>
         <button class="bottom-nav-button" data-open-screen="categories" type="button">
           <span class="nav-icon" aria-hidden="true">
@@ -2510,7 +2510,7 @@
               <circle cx="16.5" cy="10.5" r="1.2" fill="currentColor"/>
             </svg>
           </span>
-          <span class="nav-label">Категории</span>
+          <span class="nav-label">????????????</span>
         </button>
         <button class="bottom-nav-button" data-open-screen="activity" type="button">
           <span class="nav-icon" aria-hidden="true">
@@ -2519,7 +2519,7 @@
               <path d="M8 9H16M8 13H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
             </svg>
           </span>
-          <span class="nav-label">Операции</span>
+          <span class="nav-label">???????????</span>
         </button>
         <button class="bottom-nav-button" data-open-screen="more" type="button">
           <span class="nav-icon" aria-hidden="true">
@@ -2529,7 +2529,7 @@
               <path d="M7 18H17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
             </svg>
           </span>
-          <span class="nav-label">Ещё</span>
+          <span class="nav-label">??????</span>
         </button>
         <button class="bottom-nav-button bottom-nav-item--web-only" data-open-screen="history" type="button">
           <span class="nav-icon" aria-hidden="true">
@@ -2538,7 +2538,7 @@
               <path d="M17 16V20M15 18H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
             </svg>
           </span>
-          <span class="nav-label">История</span>
+          <span class="nav-label">??????????</span>
         </button>
         <button
           id="addOperationButton"
@@ -2551,7 +2551,7 @@
 
       <div id="fxCalcKeyboardAccessory" class="fx-calc-keyboard-accessory" hidden>
         <button type="button" class="fx-calc-keyboard-done" id="fxCalcKeyboardDone">
-          Готово
+          ????????
         </button>
       </div>
     </div>
@@ -2559,25 +2559,25 @@
     </div>
 
     <div id="entryTypeModal" class="entry-type-modal" hidden role="dialog" aria-modal="true" aria-labelledby="entryTypeModalHeading">
-      <button id="entryTypeModalBackdrop" class="entry-type-backdrop" type="button" aria-label="Закрыть"></button>
+      <button id="entryTypeModalBackdrop" class="entry-type-backdrop" type="button" aria-label="????????????"></button>
       <div class="entry-type-dialog">
-        <p class="section-label">Новая операция</p>
-        <h2 id="entryTypeModalHeading">Что добавить?</h2>
+        <p class="section-label">????? ??????????</p>
+        <h2 id="entryTypeModalHeading">???? ???????????</h2>
         <div class="entry-type-modal-grid">
           <div class="entry-type-actions">
             <button class="entry-type-action income" data-entry-kind="income" type="button">
-              Доход
+              ???????
             </button>
             <button class="entry-type-action expense" data-entry-kind="expense" type="button">
-              Расход
+              ???????
             </button>
           </div>
           <button id="entryTypeOpenTransferButton" class="entry-type-action entry-type-transfer-wide" type="button">
-            Перевод между счетами
+            ????????? ?????? ?????????
           </button>
         </div>
         <button id="entryTypeModalClose" class="text-link-button entry-type-close" type="button">
-          Отмена
+          ????????
         </button>
       </div>
     </div>
@@ -2594,162 +2594,162 @@
         id="helpDocumentationBackdrop"
         type="button"
         class="help-doc-backdrop"
-        aria-label="Закрыть справку"
+        aria-label="???????????? ?????????"
       ></button>
       <div class="help-doc-sheet">
         <div class="help-doc-sheet-bar" aria-hidden="true"></div>
         <header class="help-doc-header">
           <div>
             <p class="section-label">Balancy</p>
-            <h2 id="helpDocumentationTitle">Справка по приложению</h2>
+            <h2 id="helpDocumentationTitle">???????? ?? ????????????</h2>
           </div>
-          <button type="button" id="helpDocumentationCloseTop" class="help-doc-close-corner" title="Закрыть">
-            Закрыть
+          <button type="button" id="helpDocumentationCloseTop" class="help-doc-close-corner" title="????????????">
+            ????????????
           </button>
         </header>
         <div class="help-doc-scroll">
           <p class="help-doc-lede muted">
-            Ниже — как завести счета и категории, записать доход или расход, сделать перевод и собрать
-            отчёт. Серые блоки ниже текстом — упрощённые макеты экрана (не настоящие скриншоты), чтобы
-            было проще сопоставить с интерфейсом.
+            ???? ??? ??? ???????? ??????? ? ???????????, ?????????? ?????? ??? ????????, ????????? ???????? ? ??????????
+            ?????????. ??????? ????? ???? ????????? ??? ??????????????? ???????? ??????? (?? ??????????? ?????????????), ????????
+            ????? ??????? ?????????????? ? ??????????????.
           </p>
 
           <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">1. Общая идея</h3>
+            <h3 class="help-doc-h3">1. ??????? ????</h3>
             <ul class="help-doc-list">
               <li>
-                Вы заводите <strong>счета</strong> (карта, наличные, криптокошелёк и т.п.) каждый со своей
-                валютой.
+                ???? ????????? <strong>???????</strong> (???????, ??????????, ????????????????? ? ??.?.) ??????? ?? ?????
+                ?????????.
               </li>
               <li>
-                <strong>Операции</strong>: доход или расход по счёту и <strong>категории</strong>, либо
-                <strong>перевод</strong> между двумя счетами — тогда сумма списывается с одного и
-                зачисляется на другой (при желании можно указать сумму получения во второй валюте).
+                <strong>???????????</strong>: ?????? ??? ???????? ?? ????????? ? <strong>???????????</strong>, ????
+                <strong>????????</strong> ?????? ?????? ????????? ??? ?????? ?????? ????????????? ? ?????? ?
+                ????????????? ?? ???????? (???? ??????? ????? ?????????? ??????? ??????????? ?? ???????? ????????).
               </li>
-              <li>На главной показывается общий остаток в выбранной вами валюте отображения (пересчёт по курсам).</li>
+              <li>?? ??????? ?????????????? ?????? ????????? ? ??????????? ???? ???????? ????????????? (???????????? ?? ????????).</li>
             </ul>
-            <aside class="help-mock-caption muted">Пример: как выглядит заголовок карточки «Счета» на главной</aside>
+            <aside class="help-mock-caption muted">?????????: ??? ?????????? ????????? ??????????? я┐╜???????я┐╜ ?? ???????</aside>
             <div class="help-mock-mini" aria-hidden="true">
-              <span class="help-mock-pill muted">Все счета</span>
-              <div class="help-mock-line strong">Моя карта</div>
-              <div class="help-mock-line muted small">USD · Карта</div>
-              <div class="help-mock-line right">−120,40 USD</div>
+              <span class="help-mock-pill muted">???? ???????</span>
+              <div class="help-mock-line strong">???? ???????</div>
+              <div class="help-mock-line muted small">USD я┐╜ ????????</div>
+              <div class="help-mock-line right">???120,40 USD</div>
             </div>
           </article>
 
           <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">2. Счета: создание</h3>
+            <h3 class="help-doc-h3">2. ???????: ????????</h3>
             <ol class="help-doc-list help-doc-numbered">
-              <li>Внизу откройте вкладку <strong>Счета</strong>.</li>
+              <li>??????? ??????????? ???????? <strong>???????</strong>.</li>
               <li>
-                В блоке <strong>Новый счет</strong> укажите название — например
-                <code>Сбер основная</code> или <code>Нал USD в сейфе</code>.
+                ?? ????? <strong>?????? ??????</strong> ????????? ???????? ??? ??????????
+                <code>????? ????????</code> ??? <code>??? USD ? ??????</code>.
               </li>
               <li>
-                Выберите <strong>тип</strong> (карта, наличные, крипта, накопления, другое) — только для вашего удобства,
-                расчёт балансов от типа не меняется.
+                ???????????? <strong>????</strong> (???????, ??????????, ????????, ??????????, ????????) ??? ???????? ??? ??????? ??????????,
+                ?????????? ???????? ??? ????? ?? ?????????.
               </li>
-              <li>Задайте <strong>валюту</strong> счёта.</li>
-              <li>Стартовый баланс: например текущее сальдо <code>0</code> или <code>1500.50</code>.</li>
+              <li>????????? <strong>?????????</strong> ????????.</li>
+              <li>????????????? ??????: ?????????? ?????????? ??????? <code>0</code> ??? <code>1500.50</code>.</li>
               <li>
-                Нажмите <strong>Создать счет</strong>. Счёт появится в списке; на главном экране в блоке счетов можно
-                нажать <strong>Все счета</strong>, если видно не всё сразу.
+                ???????? <strong>????????? ??????</strong>. ??????? ????????? ? ??????; ?? ??????? ??????? ? ????? ???????? ?????
+                ???????? <strong>???? ???????</strong>, ???? ????? ?? ???? ???????.
               </li>
             </ol>
           </article>
 
           <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">3. Счета: редактирование и удаление</h3>
+            <h3 class="help-doc-h3">3. ???????: ????????????????? ? ?????????</h3>
             <ul class="help-doc-list">
               <li>
-                В списке счётов у строки есть <strong>свайп влево</strong>: появятся кнопки редактировать и удалить —
-                они справа «под» карточкой.
+                ?? ?????? ????????? ?? ???????? ?????? <strong>????? ?????</strong>: ????????? ?????? ?????????????????? ? ?????????? ???
+                ??? ??????? я┐╜???я┐╜ ????????????.
               </li>
               <li>
-                После редактирования сохраните форму; удаление приложение может запросить подтвердить действие.
+                ?????? ????????????????? ???????????? ????????; ????????? ??????????? ?????? ???????????? ??????????????? ?????????.
               </li>
-              <li>Удалённые счета и связанная история в MVP не восстанавливаются через интерфейс — будьте внимательны.</li>
+              <li>??????????? ??????? ? ????????? ????????? ? MVP ?? ???????????????????? ??????? ???????????? ??? ????????? ??????????????.</li>
             </ul>
-            <aside class="help-mock-caption muted">Подсказка по жесту: свайпните строку пальцем влево</aside>
+            <aside class="help-mock-caption muted">?????????? ?? ???????: ?????????? ????????? ????????? ?????</aside>
             <div class="help-mock-swipe help-mock-mini" aria-hidden="true">
               <div class="help-mock-swipe-face">
-                <div class="help-mock-line strong">Строка счёта</div>
-                <div class="help-mock-line muted small">свайп ←</div>
+                <div class="help-mock-line strong">???????? ????????</div>
+                <div class="help-mock-line muted small">????? ???</div>
               </div>
-              <span class="help-mock-chip">✎</span>
-              <span class="help-mock-chip danger">⌫</span>
+              <span class="help-mock-chip">???</span>
+              <span class="help-mock-chip danger">???</span>
             </div>
           </article>
 
           <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">4. Категории</h3>
+            <h3 class="help-doc-h3">4. ????????????</h3>
             <ol class="help-doc-list help-doc-numbered">
-              <li>Откройте вкладку <strong>Категории</strong>.</li>
-              <li>Вверху выберите, заводите вы категории для <strong>доходов</strong> или <strong>расходов</strong>.</li>
-              <li>Введите имя — примеры: <code>Продукты</code>, <code>Подработка</code>, <code>Транспорт</code>.</li>
-              <li>Сохраните. Категория понадобится при записи операции.</li>
+              <li>???????????? ???????? <strong>????????????</strong>.</li>
+              <li>?????????? ???????????, ????????? ??? ??????????? ??? <strong>????????</strong> ??? <strong>??????????</strong>.</li>
+              <li>????????? ??? ??? ??????????: <code>?????????????</code>, <code>?????????????</code>, <code>????????????</code>.</li>
+              <li>????????????. ???????????? ???????????? ???? ?????? ??????????.</li>
             </ol>
             <p class="muted help-doc-tip">
-              Редактирование и удаление категории — так же через <strong>свайп влево</strong> по строке в списке.
+              ???????????????? ? ????????? ??????????? ??? ???? ?? ??????? <strong>????? ?????</strong> ?? ???????? ? ??????.
             </p>
           </article>
 
           <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">5. Операции: доход или расход</h3>
+            <h3 class="help-doc-h3">5. ???????????: ?????? ??? ????????</h3>
             <ol class="help-doc-list help-doc-numbered">
-              <li>Внизу нажмите зелёную кнопку <strong>+</strong>.</li>
-              <li>Выберите <strong>Доход</strong> или <strong>Расход</strong> — приложение переключит вкладку на экран операций.</li>
-              <li>Заполните: счёт, категория, сумму, дату и время, при желании комментарий.</li>
-              <li>Сохраните операцию.</li>
+              <li>??????? ???????? ?????????? ??????? <strong>+</strong>.</li>
+              <li>???????????? <strong>???????</strong> ??? <strong>???????</strong> ??? ??????????? ?????????????? ???????? ?? ?????? ??????????.</li>
+              <li>???????????: ???????, ???????????, ???????, ?????? ? ??????, ???? ??????? ?????????????.</li>
+              <li>???????????? ???????????.</li>
             </ol>
             <div class="help-example mono">
-              Расход: счёт «Карта» · категория «Продукты» · сумма <code>45,30</code> · комментарий «Ужин в кафе».
+              ???????: ??????? я┐╜????????я┐╜ я┐╜ ??????????? я┐╜?????????????я┐╜ я┐╜ ?????? <code>45,30</code> я┐╜ ????????????? я┐╜???? ? ?????я┐╜.
             </div>
           </article>
 
           <article id="helpDocTransferSection" class="help-doc-section card help-doc-callout">
             <ol class="help-doc-list help-doc-numbered">
-              <li>Снова <strong>+</strong>, затем <strong>Перевод между счетами</strong>.</li>
-              <li>В форме перевода выберите счёт «откуда» и «куда», суммы; при переводе в другую валюту вторую сумму
-                можно указать явно или оставить расчёт по курсу — как настроено в форме.</li>
-              <li>Сохраните: балансы обоих счетов изменятся согласованно.</li>
+              <li>????? <strong>+</strong>, ?????? <strong>????????? ?????? ?????????</strong>.</li>
+              <li>?? ??????? ????????? ??????????? ??????? я┐╜????????я┐╜ ? я┐╜?????я┐╜, ???????; ???? ????????? ? ?????????? ????????? ?????????? ???????
+                ????? ?????????? ???? ??? ??????????? ?????????? ?? ???????? ??? ??? ??????????? ? ???????.</li>
+              <li>????????????: ???????? ?????? ???????? ?????????? ????????????.</li>
             </ol>
             <div class="help-example mono">
-              От USD-карты 100&nbsp;USD на счёт в EUR так, чтобы поступило 95&nbsp;EUR (если в форме есть поле второй суммы).
+              ???? USD-???????? 100&nbsp;USD ?? ??????? ? EUR ????, ???????? ??????????? 95&nbsp;EUR (???? ? ??????? ?????? ???? ???????? ???????).
             </div>
           </article>
 
           <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">7. Главная страница</h3>
+            <h3 class="help-doc-h3">7. ???????? ???????????</h3>
             <ul class="help-doc-list">
               <li>
-                Общий баланс считается пересчётом всех счетов в одну выбранную валюту (селект <strong>Валюта</strong> в блоке сверху).
+                ??????? ?????? ???????????? ?????????????? ????? ???????? ? ????? ????????????? ????????? (??????? <strong>?????????</strong> ? ????? ?????????).
               </li>
-              <li>Блок <strong>Остатки по валютам</strong> — раскройте строку или пролистайте «чипсы» с суммами по каждому коду без пересчёта.</li>
+              <li>????? <strong>?????????? ?? ?????????</strong> ??? ???????????? ????????? ??? ?????????????? я┐╜???????я┐╜ ? ???????? ?? ???????? ????? ??? ?????????????.</li>
               <li>
-                По необходимости нажмите <strong>Курсы</strong> под списком счетов на главной, чтобы синхронизировать
-                котировки для отчётов и пересчёта баланса.
+                ??? ??????????????? ???????? <strong>?????????</strong> ??? ??????? ???????? ?? ???????, ???????? ?????????????????????
+                ??????????? ??? ??????????? ? ????????????? ???????.
               </li>
             </ul>
           </article>
 
           <article class="help-doc-section card help-doc-callout">
-            <h3 class="help-doc-h3">8. Отчёты и выгрузка</h3>
+            <h3 class="help-doc-h3">8. ???????????? ? ???????????</h3>
             <ul class="help-doc-list">
-              <li>Вкладка <strong>Отчеты</strong>: выберите период (неделя, месяц, квартал или свои даты) и фильтры.</li>
-              <li>Сначала <strong>Построить отчёт</strong>, затем при необходимости <strong>Скачать CSV</strong>.</li>
-              <li>В файле есть сводные строки по категориям и построчно операции с датой, типом, счётом и суммами.</li>
+              <li>???????? <strong>???????????</strong>: ??????????? ??????? (??????, ??????, ????????? ??? ???? ??????) ? ????????????.</li>
+              <li>???????? <strong>?????????????? ?????????</strong>, ?????? ???? ??????????????? <strong>?????????? CSV</strong>.</li>
+              <li>?? ?????? ?????? ???????? ???????? ?? ???????????? ? ???????????? ?????????? ? ??????, ??????, ????????? ? ????????.</li>
             </ul>
           </article>
 
           <p class="help-doc-note muted">
-            Если в интерфейсе появится новое поле, логика останется прежней: сверху вниз — счёт, категории, сумма, дата;
-            ошибки сохранятся текстом над формой.
+            ????? ? ????????????? ????????? ????? ????, ?????? ??????????? ????????: ????????? ???? ??? ???????, ???????????, ??????, ?????;
+            ??????? ????????????? ????????? ??? ????????.
           </p>
         </div>
         <footer class="help-doc-footer">
           <button type="button" id="helpDocumentationCloseBottom" class="ghost-button help-doc-footer-btn">
-            Закрыть справку
+            ???????????? ?????????
           </button>
         </footer>
       </div>
@@ -2758,13 +2758,13 @@
     <div id="globalBusyOverlay" class="global-busy-overlay" hidden>
       <div class="global-busy-card" role="status">
         <div class="global-busy-spinner" aria-hidden="true"></div>
-        <p id="globalBusyMessage" class="global-busy-message">Загружаем…</p>
+        <p id="globalBusyMessage" class="global-busy-message">???????????????</p>
       </div>
     </div>
     <div id="pullRefreshHost" class="pull-refresh-host" hidden aria-hidden="true">
       <div class="pull-refresh-inner">
         <span class="pull-refresh-spinner" aria-hidden="true"></span>
-        <span id="pullRefreshLabel" class="pull-refresh-label">Потяните для обновления</span>
+        <span id="pullRefreshLabel" class="pull-refresh-label">??????????? ??? ??????????</span>
       </div>
     </div>
 
@@ -2785,12 +2785,12 @@
           var statusEl = document.getElementById("statusText");
           var nameEl = document.getElementById("userName");
           if (nameEl) {
-            nameEl.textContent = "Код приложения не загрузился";
+            nameEl.textContent = "???? ??????????? ?? ????????????";
           }
           if (statusEl) {
             statusEl.className = "inline-error";
             statusEl.textContent =
-              "Не удалось загрузить файл app.js по сети. Обычно это кэш Telegram, устаревший ngrok-предпросмотр или backend не того домена. Закройте мини-app полностью, проверьте APP_URL у бота, перезапустите сервер с последней версией кода.";
+              "?? ????????? ????????????? ????? app.js ?? ?????. ????????? ???? ???? Telegram, ?????????????? ngrok-???????????????? ??? backend ?? ????? ??????. ??????????? ????-app ????????????, ????????????? APP_URL ?? ?????, ????????????????? ???????? ? ????????? ???????? ????.";
           }
         }
 
@@ -2800,7 +2800,7 @@
             : "20260513web-minimal";
 
         var scriptEl = document.createElement("script");
-        /* Обычный скрипт: в app.js нет import/export; type=module на части WebView Telegram даёт пустой экран после сплэша. */
+        /* ??????????? ????????: ? app.js ???? import/export; type=module ?? ??????? WebView Telegram ?????? ???????? ?????? ????? ???????. */
         scriptEl.src = "/mini-app/app.js?v=" + CLIENT_ASSET_REV;
         scriptEl.onerror = showScriptLoadFailure;
         document.body.appendChild(scriptEl);
