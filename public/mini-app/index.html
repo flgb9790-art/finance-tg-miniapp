@@ -10,9 +10,23 @@
     <meta name="color-scheme" content="light" />
     <title>Balancy</title>
     <meta name="theme-color" content="#f3f5fa" />
+    <style id="balancyBootCritical">
+      html.balancy-boot-pending body > *:not(#appSplash) {
+        display: none !important;
+      }
+
+      html.balancy-boot-pending #appSplash {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+    </style>
+    <script>
+      document.documentElement.classList.add("balancy-boot-pending");
+    </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260515web-activity-currency-layout";
+        var BALANCY_CLIENT_ASSET_REV = "20260515boot-splash-activity-ui";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -2471,6 +2485,12 @@
     <script>
       (function () {
         function showScriptLoadFailure() {
+          document.documentElement.classList.remove("balancy-boot-pending");
+          document.documentElement.classList.add("balancy-app-ready");
+          var splash = document.getElementById("appSplash");
+          if (splash) {
+            splash.remove();
+          }
           var statusEl = document.getElementById("statusText");
           var nameEl = document.getElementById("userName");
           if (nameEl) {
@@ -2479,7 +2499,7 @@
           if (statusEl) {
             statusEl.className = "inline-error";
             statusEl.textContent =
-              "Не удалось загрузить файл app.js по сети. Обычно это кэш Telegram, устаревший ngrok-предпросмотр или backend не того домена. Закройте мини-приложение полностью, проверьте APP_URL у бота, перезапустите сервер с последней версией кода.";
+              "Не удалось загрузить файл app.js по сети. Обычно это кэш Telegram, устаревший ngrok-предпросмотр или backend не того домена. Закройте мини-app полностью, проверьте APP_URL у бота, перезапустите сервер с последней версией кода.";
           }
         }
 

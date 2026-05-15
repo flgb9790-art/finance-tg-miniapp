@@ -858,6 +858,8 @@ function dismissAppSplash(options = {}) {
   el.dataset.dismissed = "1";
   el.classList.add("app-splash--out");
   el.setAttribute("aria-hidden", "true");
+  document.documentElement.classList.remove("balancy-boot-pending");
+  document.documentElement.classList.add("balancy-app-ready");
 
   window.setTimeout(() => {
     if (el.isConnected) {

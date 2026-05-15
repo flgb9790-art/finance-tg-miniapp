@@ -3844,7 +3844,17 @@ body.web-mode #screen-activity .activity-form-card {
   border: 1px solid rgb(15 23 42 / 0.08);
   box-shadow: 0 4px 22px rgb(15 23 42 / 0.06);
   padding: 16px 16px 18px;
-  margin: 0 0 14px;
+  margin: 0;
+}
+
+body.web-mode #screen-activity .web-activity-recent-card.card,
+body.web-mode #screen-activity .activity-form-card.card {
+  background: #fff !important;
+  border: 1px solid rgb(15 23 42 / 0.08) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 4px 22px rgb(15 23 42 / 0.06) !important;
+  padding: 16px 16px 18px !important;
+  margin: 0 !important;
 }
 
 /* Пилюля фильтра: подпись | разделитель | поле — История + Отчёты */
@@ -4361,6 +4371,33 @@ body:not(.web-mode) #screen-activity {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+}
+
+body:not(.web-mode) #screen-activity.screen-active {
+  min-width: 100%;
+  width: 100%;
+  max-width: 100%;
+  grid-template-columns: minmax(100%, 1fr);
+  align-self: stretch;
+}
+
+body:not(.web-mode) main.content.tabbed-content > #screen-activity.screen-active {
+  min-width: 100%;
+  width: 100%;
+  max-width: 100%;
+}
+
+body:not(.web-mode) #screen-activity .activity-form-card,
+body:not(.web-mode) #screen-activity .card.activity-form-card {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 14px 13px;
+  box-shadow: var(--shadow);
 }
 
 body:not(.web-mode) #screen-activity .balancy-hint-card[data-balancy-hint="activityForm"][hidden] {
@@ -5062,9 +5099,10 @@ body:not(.web-mode) #screen-activity .web-activity-main {
 body:not(.web-mode) #screen-activity .activity-form-card:not(.web-transfer-card) {
   display: block !important;
   width: 100%;
-  max-width: 100%;
+  max-width: none;
   min-width: 0;
   box-sizing: border-box;
+  align-self: stretch;
 }
 
 body:not(.web-mode) #screen-activity .web-op-entry-form {
@@ -5099,12 +5137,6 @@ body.web-mode .web-activity-layout {
 }
 
 body.web-mode .web-activity-recent-card {
-  margin: 0;
-  padding: 16px 16px 14px;
-  border-radius: 18px;
-  border: 1px solid rgb(15 23 42 / 0.08);
-  background: #fff;
-  box-shadow: 0 4px 22px rgb(15 23 42 / 0.06);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -5124,24 +5156,30 @@ body.web-mode .web-activity-recent-list {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
-  padding: 10px;
-  border-radius: 14px;
-  background: rgb(248 250 252);
-  border: 1px solid rgb(226 232 240);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: #fff;
   display: flex;
   flex-direction: column;
   gap: 0;
 }
 
 body.web-mode .web-activity-recent-list .home-activity-row {
-  background: #fff;
-  border: 1px solid rgb(226 232 240);
-  border-radius: 12px;
-  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid rgb(226 232 240);
+  padding: 10px 0;
+  margin: 0;
+}
+
+body.web-mode .web-activity-recent-list .home-activity-row:last-child {
+  border-bottom: none;
 }
 
 body.web-mode .web-activity-recent-list .home-activity-row + .home-activity-row {
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 body.web-mode .web-activity-recent-list .empty-state {
@@ -5154,7 +5192,7 @@ body.web-mode .web-activity-main {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 14px;
   height: 100%;
   align-self: stretch;
 }
@@ -5163,6 +5201,7 @@ body.web-mode .web-activity-main .activity-form-card {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 body.web-mode .web-activity-main .web-op-entry-form {
