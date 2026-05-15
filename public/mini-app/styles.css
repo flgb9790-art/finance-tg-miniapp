@@ -8391,7 +8391,7 @@ body.web-mode #accountFormSubtitle {
   display: none !important;
 }
 
-body.web-mode .web-accounts-list-shell.web-accounts-toolbar--web {
+body.web-mode .web-accounts-list-shell {
   display: flex;
   flex-direction: column;
   padding: 0;
@@ -8400,8 +8400,33 @@ body.web-mode .web-accounts-list-shell.web-accounts-toolbar--web {
   box-shadow: none;
 }
 
-body.web-mode .web-accounts-list-shell .web-categories-section-head {
+body.web-mode .web-accounts-list-head {
+  align-items: center;
   margin-bottom: 0;
+  padding: 12px 16px 14px;
+  border: 1px solid rgb(15 23 42 / 0.08);
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  background: #fff;
+}
+
+body.web-mode .web-accounts-head-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--balancy-ui-1-soft);
+  color: var(--balancy-ui-1);
+  flex-shrink: 0;
+}
+
+body:not(.web-mode) .web-accounts-head-badge {
+  display: none;
 }
 
 body.web-mode .web-accounts-list-body {
@@ -8691,8 +8716,8 @@ body.web-mode .web-accounts-form-title {
 }
 
 body.web-mode .web-accounts-form-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px 16px;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
 .web-accounts-field {
@@ -8703,8 +8728,31 @@ body.web-mode .web-accounts-form-grid {
 }
 
 body.web-mode .web-accounts-field--balance {
-  grid-column: 1 / -1;
-  max-width: 360px;
+  max-width: none;
+}
+
+body.web-mode .web-accounts-form .web-accounts-field input,
+body.web-mode .web-accounts-form .web-accounts-field select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+body.web-mode .web-accounts-color-block,
+body.web-mode .tg-account-icon-block,
+body.web-mode .tg-account-preview-block {
+  width: 100%;
+  min-width: 0;
+}
+
+body.web-mode .web-accounts-form-actions {
+  margin-top: 16px;
+}
+
+body.web-mode .web-accounts-form-actions .primary-button,
+body.web-mode .web-accounts-form-actions .ghost-button {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .web-accounts-color-block {
