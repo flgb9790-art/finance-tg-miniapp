@@ -1,6 +1,7 @@
 /**
- * Run after applying 005_workspaces_mvp.sql in Supabase.
- * Usage: node scripts/verify-phase-1-workspaces.mjs
+ * Run after applying workspace migrations (005+, optional 006) in Supabase.
+ * Usage: npm run verify:workspaces
+ * Optional: node scripts/verify-phase-1-workspaces.mjs --full  (scan all rows for null workspace_id)
  */
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
@@ -38,7 +39,22 @@ async function tableExists(name) {
   );
 }
 
+const fullScan = process.argv.includes("--full");
+
 async function countNulls(table, column) {
+  if (fullScan) {
+    const { count, error } = await supabase
+      .from(table)
+      .select(column, { count: "exact", head: true })
+      .is(column, null);
+
+    if (error) {
+      throw new Error(`${table}: ${error.message}`);
+    }
+
+    return { total: "all", nulls: count ?? 0 };
+  }
+
   const { data, error } = await supabase.from(table).select(column).limit(5000);
 
   if (error) {
@@ -91,8 +107,10 @@ for (const table of ["accounts", "categories", "entries", "transfers"]) {
   if (nulls > 0) {
     fail(`${table}: ${nulls}/${total} rows with null workspace_id`);
   } else {
-    ok(`${table}: all sampled rows have workspace_id (${total} checked)`);
+    const scope = fullScan ? "full table" : `${total} sampled`;
+    ok(`${table}: no null workspace_id (${scope})`);
   }
 }
 
 console.log("\nDone. Fix any FAIL before deploying app changes.");
+console.log("Optional: apply 006_workspace_transfer_account_indexes.sql for transfer account filters.");

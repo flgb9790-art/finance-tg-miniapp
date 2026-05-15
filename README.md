@@ -112,9 +112,10 @@ MVP-проект для учета личных финансов через Tele
 
 После деплоя backend и mini app с поддержкой команд:
 
-1. В Supabase SQL Editor по порядку примените миграции из `supabase/migrations/` (минимум `001` … `005_workspaces_mvp.sql`).
-2. Проверьте базу: `npm run verify:workspaces` (нужны `SUPABASE_URL` и `SUPABASE_SERVICE_ROLE_KEY` в `.env`).
-3. Перезапустите сервис на Railway.
+1. В Supabase SQL Editor по порядку примените миграции из `supabase/migrations/` (минимум `001` … `005_workspaces_mvp.sql`, рекомендуется `006_workspace_transfer_account_indexes.sql`).
+2. Проверьте базу: `npm run verify:workspaces` (полный проход: `node scripts/verify-phase-1-workspaces.mjs --full`).
+3. Интеграционные тесты сервисов: `npm run test:workspaces` (создаёт и удаляет тестовых пользователей в Supabase).
+4. Перезапустите сервис на Railway.
 
 ### Поведение
 
