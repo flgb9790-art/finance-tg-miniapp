@@ -5815,6 +5815,54 @@ body.web-mode .web-op-entry-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px 16px;
+  align-items: start;
+}
+
+body.web-mode .web-op-entry-form > label.web-op-account-field,
+body.web-mode .web-op-entry-form > label.web-op-category-field {
+  align-self: start;
+}
+
+body.web-mode .web-op-entry-form > label.web-op-account-field select,
+body.web-mode .web-op-entry-form > label.web-op-category-field select {
+  min-height: var(--form-control-min-height);
+  height: var(--form-control-min-height);
+  max-height: var(--form-control-min-height);
+  flex-shrink: 0;
+}
+
+body.web-mode .web-op-field-hint {
+  margin: 8px 0 0 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  min-height: calc(12px * 1.4);
+}
+
+body.web-mode .web-op-field-hint--placeholder {
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+#screen-activity .web-op-account-field .web-op-field-hint,
+#screen-activity .web-op-category-field .web-op-field-hint--placeholder {
+  margin: 8px 0 0 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  min-height: calc(12px * 1.4);
+}
+
+#screen-activity .web-op-category-field .web-op-field-hint--placeholder {
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+#screen-activity .web-op-account-field select,
+#screen-activity .web-op-category-field select {
+  min-height: var(--form-control-min-height);
+  height: var(--form-control-min-height);
+  max-height: var(--form-control-min-height);
 }
 
 body.web-mode .web-op-entry-form > label.web-op-amount-field {
@@ -5948,13 +5996,6 @@ body.web-mode .web-activity-tip-text {
     grid-row: auto;
     justify-self: center;
     margin: 4px 0;
-  }
-}
-
-@media (max-width: 980px) {
-  body.web-mode #screen-categories .web-category-icon-grid {
-    width: 100%;
-    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
   }
 }
 
@@ -8042,9 +8083,17 @@ body.web-mode .tg-category-preview-block {
 
 body.web-mode .web-category-icon-grid {
   display: grid;
-  grid-template-columns: repeat(7, 36px);
   gap: 8px;
   margin-top: 8px;
+}
+
+body.web-mode #screen-categories .tg-category-icon-block {
+  width: 100%;
+}
+
+body.web-mode #screen-categories .web-category-icon-grid {
+  width: 100%;
+  grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
 }
 
 body.web-mode .web-category-icon-btn {

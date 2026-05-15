@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260515web-accounts-transfer-entry-v1";
+        var BALANCY_CLIENT_ASSET_REV = "20260515web-category-icons-op-fields-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -970,15 +970,16 @@
                 </select>
               </label>
 
-              <label>
+              <label class="web-op-account-field">
                 <span>Счет <span class="web-op-req" aria-hidden="true">*</span></span>
                 <select id="entryAccountInput" name="accountId"></select>
-                <p id="entryAccountAvailableLine" class="web-transfer-available muted">Доступно: —</p>
+                <p id="entryAccountAvailableLine" class="web-op-field-hint web-transfer-available muted">Доступно: —</p>
               </label>
 
-              <label>
+              <label class="web-op-category-field">
                 <span>Категория <span class="web-op-req" aria-hidden="true">*</span></span>
                 <select id="entryCategoryInput" name="categoryId"></select>
+                <span class="web-op-field-hint web-op-field-hint--placeholder" aria-hidden="true">&#8203;</span>
               </label>
 
               <label class="web-op-currency-field web-op-field-span-2">
