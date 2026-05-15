@@ -10968,3 +10968,245 @@ body.web-mode.web-login-gate-open .app-shell {
   font-size: 12px;
   line-height: 1.45;
 }
+
+/* --- Веб: выбор режима (личное / команда) --- */
+.web-mode-choice-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 10040;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(20px, env(safe-area-inset-top, 0px)) 20px max(20px, env(safe-area-inset-bottom, 0px));
+  background: #ffffff;
+}
+
+.web-mode-choice-gate[hidden] {
+  display: none !important;
+}
+
+body.web-mode.web-mode-choice-open #webTopNav,
+body.web-mode.web-mode-choice-open .app-shell {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.web-mode-choice-card {
+  width: min(100%, 460px);
+  padding: 34px 30px 28px;
+  border-radius: 24px;
+  border: 1px solid rgb(18 18 43 / 0.08);
+  background: #ffffff;
+  box-shadow:
+    0 24px 64px rgb(18 18 43 / 0.1),
+    0 2px 8px rgb(18 18 43 / 0.04);
+}
+
+.web-mode-choice-brand {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.web-mode-choice-title {
+  margin: 0 0 10px;
+  font-size: clamp(22px, 5vw, 26px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-align: center;
+}
+
+.web-mode-choice-lede {
+  margin: 0 0 20px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.web-mode-choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.web-mode-choice-option {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  text-align: center;
+  padding: 16px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--fill-subtle);
+  cursor: pointer;
+  font: inherit;
+  color: var(--text);
+}
+
+.web-mode-choice-option:hover {
+  border-color: rgb(67 56 202 / 0.35);
+  background: var(--balancy-ui-1-soft);
+}
+
+.web-mode-choice-option-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.web-mode-choice-team-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.web-mode-choice-team-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.web-mode-choice-team-input {
+  width: 100%;
+  min-height: var(--form-control-min-height);
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  padding: var(--form-control-padding-y) var(--form-control-padding-x);
+  font: inherit;
+}
+
+.web-mode-choice-team-submit {
+  width: 100%;
+}
+
+.web-mode-choice-error {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 13px;
+}
+
+.web-workspace-switcher {
+  display: grid;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+}
+
+.web-workspace-switcher-label {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.web-workspace-switcher-list {
+  display: grid;
+  gap: 6px;
+}
+
+.web-workspace-switcher-item {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text);
+}
+
+.web-workspace-switcher-item.is-active {
+  border-color: rgb(67 56 202 / 0.45);
+  background: var(--balancy-ui-1-soft);
+}
+
+.web-workspace-switcher-item-title {
+  font-weight: 650;
+  font-size: 14px;
+}
+
+.web-workspace-switcher-item-meta {
+  font-size: 12px;
+}
+
+.web-team-settings-card {
+  margin-top: 14px;
+}
+
+.web-team-settings-meta {
+  margin: 0 0 12px;
+}
+
+.web-team-field-label {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.web-team-name-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.web-team-name-input {
+  min-height: var(--form-control-min-height);
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  padding: var(--form-control-padding-y) var(--form-control-padding-x);
+  font: inherit;
+}
+
+.web-team-invite-block,
+.web-team-members-block {
+  margin-top: 14px;
+}
+
+.web-team-invite-hint {
+  margin: 0 0 10px;
+  font-size: 13px;
+}
+
+.web-team-copy-invite {
+  width: 100%;
+}
+
+.web-team-invite-status {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+.web-team-members-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.web-team-member-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--fill-subtle);
+}
+
+.web-team-member-role {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.web-team-settings-error {
+  margin-top: 10px;
+}
+
+@media (max-width: 520px) {
+  .web-mode-choice-grid {
+    grid-template-columns: 1fr;
+  }
+}
