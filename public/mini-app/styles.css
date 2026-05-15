@@ -3663,9 +3663,9 @@ body.web-mode .web-dash-hero .hero-currency-select.fx-board-base-select--toolbar
 
 body.web-mode .web-home-mid-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
   width: 100%;
   max-width: none;
   min-height: 0;
@@ -3673,16 +3673,21 @@ body.web-mode .web-home-mid-grid {
 
 body.web-mode .web-home-columns,
 body.web-mode .web-home-rail {
-  display: contents;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
 }
 
 body.web-mode .web-home-columns > .web-home-col-card,
 body.web-mode .web-home-rail > .web-dash-donut-card,
 body.web-mode .web-home-rail > .web-dash-plan-card,
 body.web-mode .web-home-rail > .card {
-  height: auto;
+  height: 100%;
   min-height: 0;
-  align-self: start;
+  align-self: stretch;
 }
 
 body.web-mode .web-home-rail {
@@ -4161,10 +4166,16 @@ body.web-mode .web-home-columns > .web-home-col-card {
   flex-direction: column;
   align-items: stretch;
   min-height: 0;
-  height: auto;
+  height: 100%;
   width: 100%;
   max-width: none;
   min-width: 0;
+}
+
+body.web-mode .web-home-rail > .web-dash-donut-card,
+body.web-mode .web-home-rail > .web-dash-plan-card {
+  display: flex;
+  flex-direction: column;
 }
 
 body.web-mode .web-home-columns > .web-home-col-card .web-home-card-main {
@@ -7750,9 +7761,9 @@ body.web-mode .web-categories-table tbody td:nth-child(3) {
 }
 
 .web-categories-icon-emoji-tile {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -7923,7 +7934,7 @@ body.web-mode .web-category-icon-grid {
 body.web-mode .web-category-icon-btn {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: 999px;
   border: 1px solid rgb(226 232 240);
   background: #fff;
   font-size: 18px;
@@ -7966,9 +7977,9 @@ body.web-mode .tg-category-preview-leading {
 }
 
 body.web-mode .tg-category-preview-icon-ring {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -8199,14 +8210,14 @@ body:not(.web-mode) .category-strip-content {
 }
 
 body:not(.web-mode) .category-strip-icon-tile {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 22px;
+  font-size: 18px;
   line-height: 1;
 }
 
@@ -8269,7 +8280,7 @@ body:not(.web-mode) .web-category-icon-grid {
 body:not(.web-mode) .web-category-icon-btn {
   aspect-ratio: 1;
   min-width: 0;
-  border-radius: 12px;
+  border-radius: 999px;
   border: 1px solid rgb(226 232 240);
   background: #fff;
   font-size: 20px;
@@ -8318,8 +8329,8 @@ body:not(.web-mode) .tg-category-preview-leading {
 }
 
 body:not(.web-mode) .tg-category-preview-icon-ring {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
   display: flex;
   align-items: center;
@@ -8827,15 +8838,15 @@ body.web-mode .web-accounts-panel {
 }
 
 .account-icon-tg-tile {
-  border-radius: 12px;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   color: #fff;
-  font-size: 22px;
+  font-size: 18px;
   line-height: 1;
   box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
 }
@@ -8974,9 +8985,9 @@ body.web-mode .tg-account-preview-top {
 }
 
 body.web-mode .tg-account-preview-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -9111,9 +9122,9 @@ body.web-mode .web-accounts-cards-grid {
 }
 
 .web-account-card-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
