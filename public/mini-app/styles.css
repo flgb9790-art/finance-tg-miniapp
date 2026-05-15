@@ -5978,7 +5978,7 @@ body.web-mode[data-app-active-screen="home"] .web-dash-hero #totalBalanceConvert
 
 body.web-mode[data-app-active-screen="home"] .web-dash-stat-card {
   min-height: 0;
-  padding: 10px 12px 10px;
+  padding: 10px 12px 68px;
   gap: 4px;
 }
 
