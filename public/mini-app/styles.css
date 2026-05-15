@@ -11198,6 +11198,53 @@ body.workspace-mode-choice-open .bottom-nav {
   background: var(--fill-subtle);
 }
 
+.web-team-invites-list-block {
+  margin-top: 12px;
+}
+
+.web-team-invites-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.web-team-invite-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.web-team-invite-item-label {
+  font-size: 13px;
+}
+
+.web-team-invite-revoke {
+  flex-shrink: 0;
+}
+
+.web-team-leave-block {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.web-team-leave {
+  width: 100%;
+}
+
+.web-team-leave-owner-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .web-team-member-role {
   font-size: 12px;
   white-space: nowrap;

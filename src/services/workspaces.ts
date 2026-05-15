@@ -647,6 +647,24 @@ export async function listWorkspaceMembersWithProfiles(
   }));
 }
 
+export async function listActiveWorkspaceInvites(
+  workspaceId: string
+): Promise<WorkspaceInviteRow[]> {
+  const { data, error } = await supabase
+    .from("workspace_invites")
+    .select("*")
+    .eq("workspace_id", workspaceId)
+    .is("revoked_at", null)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    logSupabaseError("listActiveWorkspaceInvites", error);
+    throw error;
+  }
+
+  return (data ?? []) as WorkspaceInviteRow[];
+}
+
 export async function leaveTeamWorkspace(
   workspaceId: string,
   userId: string
@@ -662,7 +680,7 @@ export async function leaveTeamWorkspace(
   if (membership.role === "owner") {
     throw new WorkspaceError(
       "forbidden",
-      "The team owner cannot leave; transfer ownership or delete the team first"
+      "Владелец не может покинуть команду"
     );
   }
 

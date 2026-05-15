@@ -116,6 +116,11 @@ const webTeamCopyInviteButtonElement = document.getElementById("webTeamCopyInvit
 const webTeamInviteStatusElement = document.getElementById("webTeamInviteStatus");
 const webTeamMembersListElement = document.getElementById("webTeamMembersList");
 const webTeamSettingsErrorElement = document.getElementById("webTeamSettingsError");
+const webTeamInvitesBlockElement = document.getElementById("webTeamInvitesBlock");
+const webTeamInvitesListElement = document.getElementById("webTeamInvitesList");
+const webTeamLeaveButtonElement = document.getElementById("webTeamLeaveButton");
+const webTeamLeaveOwnerHintElement = document.getElementById("webTeamLeaveOwnerHint");
+const webTeamInviteBlockElement = document.querySelector(".web-team-invite-block");
 const tgWorkspaceCardElement = document.getElementById("tgWorkspaceCard");
 const tgWorkspaceActiveMetaElement = document.getElementById("tgWorkspaceActiveMeta");
 const tgWorkspaceSwitcherListElement = document.getElementById("tgWorkspaceSwitcherList");
@@ -239,6 +244,8 @@ const openScreenButtons = Array.from(document.querySelectorAll("[data-open-scree
 
 const state = {
   user: null,
+  workspace: null,
+  workspaces: [],
   accounts: [],
   categories: [],
   currencies: [],
@@ -6409,6 +6416,8 @@ function applyWorkspacePayload(payload) {
 
   if (Array.isArray(payload?.workspaces)) {
     state.workspaces = payload.workspaces;
+  } else if (payload && "workspaces" in payload && payload.workspaces == null) {
+    state.workspaces = [];
   }
 
   syncWorkspaceChrome();
@@ -6709,6 +6718,28 @@ async function loadWebTeamSettings() {
     webTeamSettingsMetaElement.textContent = `${workspace.memberCount ?? 1} из ${workspace.maxMembers ?? 5} участников`;
   }
 
+  const isOwner = workspace.role === "owner";
+
+  if (webTeamInviteBlockElement) {
+    webTeamInviteBlockElement.hidden = !isOwner;
+  }
+
+  if (webTeamLeaveButtonElement) {
+    webTeamLeaveButtonElement.hidden = isOwner;
+  }
+
+  if (webTeamLeaveOwnerHintElement) {
+    webTeamLeaveOwnerHintElement.hidden = !isOwner;
+  }
+
+  if (webTeamRenameButtonElement) {
+    webTeamRenameButtonElement.hidden = !isOwner;
+  }
+
+  if (webTeamNameInputElement) {
+    webTeamNameInputElement.readOnly = !isOwner;
+  }
+
   try {
     const payload = await apiFetch("/api/workspaces/members");
     const members = Array.isArray(payload.members) ? payload.members : [];
@@ -6738,6 +6769,12 @@ async function loadWebTeamSettings() {
         });
       }
     }
+
+    if (isOwner) {
+      await loadWebTeamInvitesList();
+    } else if (webTeamInvitesBlockElement) {
+      webTeamInvitesBlockElement.hidden = true;
+    }
   } catch (error) {
     if (webTeamSettingsErrorElement) {
       webTeamSettingsErrorElement.hidden = false;
@@ -6745,6 +6782,92 @@ async function loadWebTeamSettings() {
         error instanceof Error ? error.message : "Не удалось загрузить участников";
     }
   }
+}
+
+function formatWorkspaceInviteCreatedAt(value) {
+  if (!value) {
+    return "Ссылка";
+  }
+
+  try {
+    return `Создана ${new Date(value).toLocaleString("ru-RU", {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit"
+    })}`;
+  } catch {
+    return "Ссылка";
+  }
+}
+
+async function loadWebTeamInvitesList() {
+  if (state.workspace?.role !== "owner" || !webTeamInvitesListElement) {
+    return;
+  }
+
+  try {
+    const payload = await apiFetch("/api/workspaces/invites");
+    const invites = Array.isArray(payload?.invites) ? payload.invites : [];
+
+    webTeamInvitesListElement.replaceChildren();
+
+    if (webTeamInvitesBlockElement) {
+      webTeamInvitesBlockElement.hidden = invites.length === 0;
+    }
+
+    invites.forEach((invite) => {
+      const item = document.createElement("li");
+      item.className = "web-team-invite-item";
+
+      const label = document.createElement("span");
+      label.className = "web-team-invite-item-label";
+      label.textContent = formatWorkspaceInviteCreatedAt(invite.createdAt);
+
+      const revokeButton = document.createElement("button");
+      revokeButton.type = "button";
+      revokeButton.className = "ghost-button web-team-invite-revoke";
+      revokeButton.textContent = "Отозвать";
+      revokeButton.addEventListener("click", () => {
+        void (async () => {
+          try {
+            await apiFetch(`/api/workspaces/invites/${encodeURIComponent(invite.id)}`, {
+              method: "DELETE"
+            });
+            await loadWebTeamInvitesList();
+            setStatus("Ссылка отозвана", "success");
+          } catch (error) {
+            if (webTeamSettingsErrorElement) {
+              webTeamSettingsErrorElement.hidden = false;
+              webTeamSettingsErrorElement.textContent =
+                error instanceof Error ? error.message : "Не удалось отозвать ссылку";
+            }
+          }
+        })();
+      });
+
+      item.append(label, revokeButton);
+      webTeamInvitesListElement.appendChild(item);
+    });
+  } catch (error) {
+    if (webTeamSettingsErrorElement) {
+      webTeamSettingsErrorElement.hidden = false;
+      webTeamSettingsErrorElement.textContent =
+        error instanceof Error ? error.message : "Не удалось загрузить приглашения";
+    }
+  }
+}
+
+async function leaveCurrentTeamWorkspace() {
+  const payload = await apiFetch("/api/workspaces/team/leave", { method: "POST" });
+  applyWorkspacePayload(payload);
+  state.webOperationsLastPayload = null;
+  await refreshAppData({
+    globalBusy: true,
+    busyMessage: "Переключаемся на личное…",
+    syncWebOperationsHistory: true
+  });
+  setStatus("Вы вышли из команды", "success");
 }
 
 function syncWorkspaceChrome() {
@@ -6903,11 +7026,45 @@ function attachWorkspaceUi() {
           webTeamInviteStatusElement.hidden = false;
           webTeamInviteStatusElement.textContent = "Ссылка скопирована в буфер обмена";
         }
+
+        await loadWebTeamInvitesList();
       } catch (error) {
         if (webTeamSettingsErrorElement) {
           webTeamSettingsErrorElement.hidden = false;
           webTeamSettingsErrorElement.textContent =
             error instanceof Error ? error.message : "Не удалось создать ссылку";
+        }
+      }
+    })();
+  });
+
+  webTeamLeaveButtonElement?.addEventListener("click", () => {
+    void (async () => {
+      if (
+        !window.confirm(
+          "Покинуть команду? Вы переключитесь на личное пространство. Общие данные команды останутся у других участников."
+        )
+      ) {
+        return;
+      }
+
+      if (webTeamSettingsErrorElement) {
+        webTeamSettingsErrorElement.hidden = true;
+        webTeamSettingsErrorElement.textContent = "";
+      }
+
+      try {
+        webTeamLeaveButtonElement.disabled = true;
+        await leaveCurrentTeamWorkspace();
+      } catch (error) {
+        if (webTeamSettingsErrorElement) {
+          webTeamSettingsErrorElement.hidden = false;
+          webTeamSettingsErrorElement.textContent =
+            error instanceof Error ? error.message : "Не удалось покинуть команду";
+        }
+      } finally {
+        if (webTeamLeaveButtonElement) {
+          webTeamLeaveButtonElement.disabled = false;
         }
       }
     })();

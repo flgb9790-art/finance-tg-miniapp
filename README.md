@@ -107,3 +107,28 @@ MVP-проект для учета личных финансов через Tele
 6. В Telegram бот должен принимать webhook на `https://<ваш-домен>/api/telegram/webhook` — это настраивается автоматически при старте, если задан `APP_URL`.
 
 В репозитории лежит `railway.json`: сборка `npm ci --include=dev && npm run build` (так `typescript` из devDependencies точно есть при `NODE_ENV=production` на этапе установки), старт `HOST=0.0.0.0 node dist/index.js`, healthcheck `/health`. Версия Node: **`engines.node`** и **`.nvmrc`** (22) — на Node 22+ у runtime есть встроенный WebSocket для Supabase; для Node 20 в коде остаётся полифилл `ws`.
+
+## Teams MVP (рабочие пространства)
+
+После деплоя backend и mini app с поддержкой команд:
+
+1. В Supabase SQL Editor по порядку примените миграции из `supabase/migrations/` (минимум `001` … `005_workspaces_mvp.sql`).
+2. Проверьте базу: `npm run verify:workspaces` (нужны `SUPABASE_URL` и `SUPABASE_SERVICE_ROLE_KEY` в `.env`).
+3. Перезапустите сервис на Railway.
+
+### Поведение
+
+- У каждого пользователя есть **личное** пространство; опционально одна **команда** (до 5 участников).
+- Активное пространство хранится в cookie `balancy_workspace_id` (веб и mini app).
+- Веб: `https://<домен>/mini-app/?web=1`, приглашение: `?web=1&invite=<token>`.
+- В Telegram mini app: переключение в «Ещё → Команда и доступ», настройки команды в «Настройки».
+- В командном режиме в истории операций видно, **кто внёс** запись.
+- **Telegram-бот** (`/accounts`, `/add`) работает только с **личными** счетами; команда — через mini app / веб.
+
+### API (основное)
+
+- `POST /api/workspaces/team` — создать команду
+- `POST /api/workspaces/switch` — переключить пространство
+- `POST /api/workspaces/invites` / `GET /api/workspaces/invites` — ссылка и список активных приглашений (владелец)
+- `POST /api/workspaces/invites/:token/accept` — принять приглашение
+- `POST /api/workspaces/team/leave` — покинуть команду (не владелец)

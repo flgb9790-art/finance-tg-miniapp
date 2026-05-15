@@ -7,8 +7,12 @@ import {
   countWorkspaceMembers,
   createTeamWorkspace,
   createWorkspaceInvite,
+  ensurePersonalWorkspace,
   getActiveInviteByToken,
+  getPersonalWorkspaceForUser,
   getWorkspaceById,
+  leaveTeamWorkspace,
+  listActiveWorkspaceInvites,
   listWorkspaceMembersWithProfiles,
   listWorkspacesForUser,
   revokeWorkspaceInvite,
@@ -187,6 +191,37 @@ export function registerWorkspaceRoutes(app: Express, deps: WorkspaceRoutesDeps)
     }
   });
 
+  app.get("/api/workspaces/invites", async (req, res) => {
+    try {
+      const { appUser, ws } = await requireWorkspaceContext(req, deps);
+
+      if (ws.workspace.kind !== "team") {
+        res.status(400).json({ error: "Invites are only available for team workspaces" });
+        return;
+      }
+
+      if (ws.role !== "owner") {
+        res.status(403).json({ error: "Only the team owner can list invites" });
+        return;
+      }
+
+      const invites = await listActiveWorkspaceInvites(ws.workspaceId);
+
+      res.json({
+        invites: invites.map((invite) => ({
+          id: invite.id,
+          token: invite.token,
+          createdAt: invite.created_at
+        }))
+      });
+    } catch (error) {
+      console.error("Failed to list workspace invites", error);
+      res.status(workspaceErrorStatus(error)).json({
+        error: workspaceErrorMessage(error)
+      });
+    }
+  });
+
   app.post("/api/workspaces/invites", async (req, res) => {
     try {
       const { appUser, ws } = await requireWorkspaceContext(req, deps);
@@ -294,6 +329,41 @@ export function registerWorkspaceRoutes(app: Express, deps: WorkspaceRoutesDeps)
       });
     } catch (error) {
       console.error("Failed to revoke workspace invite", error);
+      res.status(workspaceErrorStatus(error)).json({
+        error: workspaceErrorMessage(error)
+      });
+    }
+  });
+
+  app.post("/api/workspaces/team/leave", async (req, res) => {
+    try {
+      const { appUser, ws } = await requireWorkspaceContext(req, deps);
+
+      if (ws.workspace.kind !== "team") {
+        res.status(400).json({ error: "Not in a team workspace" });
+        return;
+      }
+
+      await leaveTeamWorkspace(ws.workspaceId, appUser.id);
+
+      const personal =
+        (await getPersonalWorkspaceForUser(appUser.id)) ??
+        (await ensurePersonalWorkspace(appUser.id));
+      const membership = await assertWorkspaceMember(personal.id, appUser.id);
+
+      setActiveWorkspaceCookie(res, personal.id);
+
+      res.json({
+        workspace: await buildWorkspaceApiDto({
+          appUserId: appUser.id,
+          workspaceId: personal.id,
+          role: membership.role,
+          workspace: personal
+        }),
+        workspaces: await buildWorkspacesListPayload(appUser.id)
+      });
+    } catch (error) {
+      console.error("Failed to leave team workspace", error);
       res.status(workspaceErrorStatus(error)).json({
         error: workspaceErrorMessage(error)
       });
