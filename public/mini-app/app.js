@@ -5097,30 +5097,43 @@ function readTransferOptionCurrency(opt) {
   return ds && String(ds).trim() ? String(ds).trim() : "";
 }
 
+function formatAccountAvailabilityLine(selectEl) {
+  if (!selectEl) {
+    return "Доступно: —";
+  }
+
+  const id = String(selectEl.value ?? "").trim();
+  const account = state.accounts.find((a) => String(a.id) === id);
+
+  if (!account) {
+    return "Доступно: —";
+  }
+
+  const cur = String(account.currency_code ?? "").trim();
+  const bal = Number(account.balance ?? 0);
+  return `Доступно: ${formatMoney(bal, cur)}`;
+}
+
 function syncTransferAccountAvailabilityLines() {
   const fromLine = document.getElementById("transferFromAvailableLine");
   const toLine = document.getElementById("transferToAvailableLine");
 
-  const apply = (selectEl, lineEl) => {
-    if (!selectEl || !lineEl) {
-      return;
-    }
+  if (transferFromAccountInput && fromLine) {
+    fromLine.textContent = formatAccountAvailabilityLine(transferFromAccountInput);
+  }
 
-    const id = String(selectEl.value ?? "").trim();
-    const account = state.accounts.find((a) => String(a.id) === id);
+  if (transferToAccountInput && toLine) {
+    toLine.textContent = formatAccountAvailabilityLine(transferToAccountInput);
+  }
+}
 
-    if (!account) {
-      lineEl.textContent = "Доступно: —";
-      return;
-    }
+function syncEntryAccountAvailabilityLine() {
+  const lineEl = document.getElementById("entryAccountAvailableLine");
+  if (!entryAccountInput || !lineEl) {
+    return;
+  }
 
-    const cur = String(account.currency_code ?? "").trim();
-    const bal = Number(account.balance ?? 0);
-    lineEl.textContent = `Доступно: ${formatMoney(bal, cur)}`;
-  };
-
-  apply(transferFromAccountInput, fromLine);
-  apply(transferToAccountInput, toLine);
+  lineEl.textContent = formatAccountAvailabilityLine(entryAccountInput);
 }
 
 function scheduleTransferRateHintRefresh() {
@@ -5363,6 +5376,7 @@ function populateAccountOptions() {
     entryAccountInput.innerHTML = `<option value="">Сначала создайте счет</option>`;
     transferFromAccountInput.innerHTML = `<option value="">Сначала создайте счет</option>`;
     transferToAccountInput.innerHTML = `<option value="">Сначала создайте счет</option>`;
+    syncEntryAccountAvailabilityLine();
     syncWebTransferAmountCurrencyUi();
     return;
   }
@@ -5386,6 +5400,7 @@ function populateAccountOptions() {
   } else {
     syncEntryCurrencyFromAccount(true);
   }
+  syncEntryAccountAvailabilityLine();
   syncWebTransferAmountCurrencyUi();
 }
 
@@ -7993,6 +8008,7 @@ entryKindInput?.addEventListener("change", () => {
 
 entryAccountInput?.addEventListener("change", () => {
   syncEntryCurrencyFromAccount(true);
+  syncEntryAccountAvailabilityLine();
 });
 
 entryCurrencyInput?.addEventListener("change", () => {

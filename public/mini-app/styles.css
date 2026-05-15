@@ -5915,7 +5915,9 @@ body.web-mode .web-activity-tip-text {
   body.web-mode .web-transfer-layout {
     grid-template-columns: 1fr;
   }
+}
 
+@media (max-width: 1499px) {
   body.web-mode .web-transfer-accounts-row {
     grid-template-columns: 1fr;
     grid-template-rows: none;
@@ -5951,21 +5953,6 @@ body.web-mode .web-activity-tip-text {
 
 @media (max-width: 980px) {
   body.web-mode #screen-categories .web-category-icon-grid {
-    width: 100%;
-    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
-  }
-}
-
-@media (max-width: 650px) {
-  body.web-mode .web-accounts-appearance-row {
-    grid-template-columns: 1fr;
-  }
-
-  body.web-mode .web-accounts-appearance-pickers {
-    width: 100%;
-  }
-
-  body.web-mode #screen-accounts .web-category-icon-grid {
     width: 100%;
     grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
   }
@@ -6110,7 +6097,7 @@ body:not(.web-mode)[data-app-active-screen="transfer"] .web-transfer-foot-tip {
   align-items: end;
 }
 
-@media (min-width: 901px) {
+@media (min-width: 1500px) {
   body.web-mode .web-transfer-accounts-row {
     grid-template-rows: auto auto auto;
     align-items: center;
@@ -9011,10 +8998,10 @@ body.web-mode .web-accounts-list-shell.web-accounts-surface {
 }
 
 body.web-mode .web-accounts-appearance-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
-  gap: 16px 20px;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: stretch;
 }
 
 body:not(.web-mode) .web-accounts-appearance-row {
@@ -9022,10 +9009,17 @@ body:not(.web-mode) .web-accounts-appearance-row {
 }
 
 body.web-mode .web-accounts-appearance-pickers {
+  width: 100%;
   min-width: 0;
 }
 
+body.web-mode #screen-accounts .web-category-icon-grid {
+  width: 100%;
+  grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+}
+
 body.web-mode .web-accounts-appearance-row .tg-account-preview-block {
+  width: 100%;
   margin-top: 0;
 }
 
