@@ -505,25 +505,31 @@ async function sumAccountsBalanceInReportingCurrency(
   reportingCurrency: string
 ): Promise<number> {
   const rateCache = new Map<string, number>();
+  const codes = accounts.map((account) => String(account.currency_code ?? ""));
 
-  async function convert(amount: number, fromCurrencyCode: string): Promise<number> {
-    if (fromCurrencyCode === reportingCurrency) {
-      return amount;
-    }
-
-    const key = `${fromCurrencyCode}:${reportingCurrency}`;
-
-    if (!rateCache.has(key)) {
-      rateCache.set(key, await getExchangeRate(fromCurrencyCode, reportingCurrency));
-    }
-
-    return Number((amount * (rateCache.get(key) ?? 1)).toFixed(2));
-  }
+  await Promise.all(
+    [...new Set(codes)]
+      .filter((code) => code.length > 0 && code !== reportingCurrency)
+      .map(async (code) => {
+        rateCache.set(
+          `${code}:${reportingCurrency}`,
+          await getExchangeRate(code, reportingCurrency)
+        );
+      })
+  );
 
   let total = 0;
 
   for (const account of accounts) {
-    total += await convert(Number(account.balance), account.currency_code);
+    const from = account.currency_code;
+
+    if (from === reportingCurrency) {
+      total += Number(account.balance);
+      continue;
+    }
+
+    const rate = rateCache.get(`${from}:${reportingCurrency}`) ?? 1;
+    total += Number((Number(account.balance) * rate).toFixed(2));
   }
 
   return Number(total.toFixed(2));
@@ -596,24 +602,31 @@ export async function buildBootstrapMonthDashboard(
 
 export async function getDashboardSummary(
   userId: string,
-  reportingCurrency = env.reportingCurrency
+  reportingCurrency = env.reportingCurrency,
+  options?: { categoriesCount?: number }
 ): Promise<DashboardSummary> {
   const accounts = await listAccounts(userId);
-  const { data: categories, error } = await supabase
-    .from("categories")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("is_archived", false);
+  let categoriesCount = options?.categoriesCount;
 
-  if (error) {
-    throw error;
+  if (categoriesCount === undefined) {
+    const { data: categories, error } = await supabase
+      .from("categories")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("is_archived", false);
+
+    if (error) {
+      throw error;
+    }
+
+    categoriesCount = (categories ?? []).length;
   }
 
   const { summary } = await buildBootstrapMonthDashboard(
     userId,
     reportingCurrency,
     accounts,
-    (categories ?? []).length
+    categoriesCount
   );
 
   return summary;
@@ -625,26 +638,68 @@ async function aggregateReportFromBundle(
   options?: { accounts?: AccountRow[] }
 ): Promise<ReportResult> {
   const { startDate, endDate, reportingCurrency, entries, appliedCategory } = bundle;
+  const hasEntryFilters = Boolean(appliedCategory || bundle.accountId || bundle.kind);
 
-  const transfers = await listTransfersByRange(input.userId, startDate, endDate);
-  const accounts = options?.accounts ?? (await listAccounts(input.userId));
+  const accountsPromise =
+    options?.accounts !== undefined
+      ? Promise.resolve(options.accounts)
+      : listAccounts(input.userId);
+
+  const [transfers, accounts, entriesAfterPeriod] = await Promise.all([
+    listTransfersByRange(input.userId, startDate, endDate),
+    accountsPromise,
+    listEntriesStrictlyAfter(input.userId, endDate)
+  ]);
+
+  const currencyCodes = new Set<string>();
+
+  for (const entry of entries) {
+    currencyCodes.add(String(entry.currency_code ?? ""));
+  }
+
+  for (const account of accounts) {
+    currencyCodes.add(String(account.currency_code ?? ""));
+  }
+
+  for (const transfer of transfers) {
+    currencyCodes.add(String(transfer.from_currency_code ?? ""));
+  }
+
+  for (const row of entriesAfterPeriod) {
+    currencyCodes.add(String(row.currency_code ?? ""));
+  }
+
   const rateCache = new Map<string, number>();
+  const rateTargets = [...currencyCodes].filter(
+    (code) => code.length > 0 && code !== reportingCurrency
+  );
 
-  async function convert(
+  await Promise.all(
+    rateTargets.map(async (code) => {
+      rateCache.set(
+        `${code}:${reportingCurrency}`,
+        await getExchangeRate(code, reportingCurrency)
+      );
+    })
+  );
+
+  function convertSynced(
     amount: number,
     fromCurrencyCode: string,
     toCurrencyCode: string
-  ): Promise<number> {
-    const key = `${fromCurrencyCode}:${toCurrencyCode}`;
-
-    if (!rateCache.has(key)) {
-      rateCache.set(
-        key,
-        await getExchangeRate(fromCurrencyCode, toCurrencyCode)
-      );
+  ): number {
+    if (fromCurrencyCode === toCurrencyCode) {
+      return Number(amount.toFixed(2));
     }
 
-    return Number((amount * (rateCache.get(key) ?? 1)).toFixed(2));
+    const key = `${fromCurrencyCode}:${toCurrencyCode}`;
+    const rate = rateCache.get(key);
+
+    if (rate === undefined) {
+      throw new Error(`Exchange rate ${fromCurrencyCode} -> ${toCurrencyCode} was not warmed`);
+    }
+
+    return Number((amount * rate).toFixed(2));
   }
 
   let incomes = 0;
@@ -658,7 +713,7 @@ async function aggregateReportFromBundle(
   const sparkByDaySlot = new Map<string, { income: number; expense: number; count: number }>();
 
   for (const entry of entries) {
-    const convertedAmount = await convert(
+    const convertedAmount = convertSynced(
       Number(entry.amount),
       entry.currency_code,
       reportingCurrency
@@ -717,16 +772,12 @@ async function aggregateReportFromBundle(
       }))
       .sort((left, right) => right.total - left.total);
 
-  const currentTotalBalance = await accounts.reduce(async (promise, account) => {
-    const sum = await promise;
-    const converted = await convert(
-      Number(account.balance),
-      account.currency_code,
-      reportingCurrency
+  const currentTotalBalance = accounts.reduce((sum, account) => {
+    return (
+      sum +
+      convertSynced(Number(account.balance), account.currency_code, reportingCurrency)
     );
-
-    return sum + converted;
-  }, Promise.resolve(0));
+  }, 0);
 
   const dayKeys = enumerateUtcDaysInclusive(startDate, endDate);
   const sparkLast7Days = buildReportSparkLast7Days(dayKeys, sparkByDaySlot);
@@ -760,33 +811,38 @@ async function aggregateReportFromBundle(
 
   let transfersVolumeReporting = 0;
   for (const transfer of transfers) {
-    transfersVolumeReporting += await convert(
+    transfersVolumeReporting += convertSynced(
       Number(transfer.from_amount),
       transfer.from_currency_code,
       reportingCurrency
     );
   }
 
-  const unfilteredPeriodEntries = await listEntriesByRange(
-    input.userId,
-    startDate,
-    endDate,
-    undefined
-  );
   let netUnfilteredPeriod = 0;
-  for (const entry of unfilteredPeriodEntries) {
-    const convertedAmount = await convert(
-      Number(entry.amount),
-      entry.currency_code,
-      reportingCurrency
+
+  if (hasEntryFilters) {
+    const unfilteredPeriodEntries = await listEntriesByRange(
+      input.userId,
+      startDate,
+      endDate,
+      undefined
     );
-    netUnfilteredPeriod += entry.kind === "income" ? convertedAmount : -convertedAmount;
+
+    for (const entry of unfilteredPeriodEntries) {
+      const convertedAmount = convertSynced(
+        Number(entry.amount),
+        entry.currency_code,
+        reportingCurrency
+      );
+      netUnfilteredPeriod += entry.kind === "income" ? convertedAmount : -convertedAmount;
+    }
+  } else {
+    netUnfilteredPeriod = incomes - expenses;
   }
 
-  const entriesAfterPeriod = await listEntriesStrictlyAfter(input.userId, endDate);
   let netAfterPeriod = 0;
   for (const row of entriesAfterPeriod) {
-    const convertedAmount = await convert(
+    const convertedAmount = convertSynced(
       row.amount,
       row.currency_code,
       reportingCurrency

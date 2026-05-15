@@ -231,6 +231,8 @@ let transferToAmountProgrammatic = false;
 let reportChartInstances = { trend: null, category: null };
 
 const balancySplashStartedAt = Date.now();
+let refreshAppDataDebounceTimer = null;
+let refreshAppDataInFlight = null;
 
 (function noteClientBundleEvaluated() {
   try {
@@ -701,7 +703,8 @@ function attachTelegramPullToRefresh() {
         void refreshAppData({
           globalBusy: true,
           busyMessage: "Обновляем данные…",
-          syncWebOperationsHistory: true
+          syncWebOperationsHistory: true,
+          light: true
         });
       }
     }
@@ -4271,7 +4274,7 @@ function attachTgActivityOpsChrome() {
     if (refreshButton) {
       refreshButton.click();
     } else {
-      void refreshAppData();
+      void refreshAppData({ light: true });
     }
   });
 
@@ -5835,20 +5838,34 @@ function populateCategoryOptions() {
 
 function renderAll(options = {}) {
   const screen = options.activeScreen ?? document.body.dataset.appActiveScreen ?? "home";
+  const partial = options.partial === true;
 
   safeRenderStep("summary", () => renderSummary(state.summary));
-  safeRenderStep("accounts", () => renderAccounts(state.accounts));
-  safeRenderStep("categories", () => renderCategories(state.categories));
-  safeRenderStep("tgActivityFilters", () => populateTgActivityFilterSelects());
-  safeRenderStep("recentEntries", () => renderRecentEntries(state.recentEntries));
-  safeRenderStep("recentTransfers", () => renderRecentTransfers(state.recentTransfers));
-  safeRenderStep("homeActivity", () =>
-    renderHomeRecentActivity(state.recentEntries, state.recentTransfers)
-  );
-  safeRenderStep("webActivityRecent", () =>
-    renderWebActivityRecentList(state.recentEntries, state.recentTransfers)
-  );
-  safeRenderStep("webTransferRecent", () => renderWebTransferRecentList(state.recentTransfers));
+
+  if (!partial || screen === "accounts" || screen === "home" || screen === "activity" || screen === "transfer") {
+    safeRenderStep("accounts", () => renderAccounts(state.accounts));
+  }
+
+  if (!partial || screen === "categories") {
+    safeRenderStep("categories", () => renderCategories(state.categories));
+  }
+
+  if (!partial || screen === "ledger") {
+    safeRenderStep("tgActivityFilters", () => populateTgActivityFilterSelects());
+  }
+
+  if (!partial || screen === "home" || screen === "activity" || screen === "transfer") {
+    safeRenderStep("recentEntries", () => renderRecentEntries(state.recentEntries));
+    safeRenderStep("recentTransfers", () => renderRecentTransfers(state.recentTransfers));
+    safeRenderStep("homeActivity", () =>
+      renderHomeRecentActivity(state.recentEntries, state.recentTransfers)
+    );
+    safeRenderStep("webActivityRecent", () =>
+      renderWebActivityRecentList(state.recentEntries, state.recentTransfers)
+    );
+    safeRenderStep("webTransferRecent", () => renderWebTransferRecentList(state.recentTransfers));
+  }
+
   safeRenderStep("report", () => {
     if (screen !== "reports") {
       return;
@@ -5860,13 +5877,30 @@ function renderAll(options = {}) {
       renderReportWebVisuals(state.report);
     }
   });
-  safeRenderStep("accountOptions", () => populateAccountOptions());
-  safeRenderStep("currencyOptions", () => populateCurrencyOptions());
-  safeRenderStep("reportingCurrencyOptions", () => populateReportingCurrencyOptions());
-  safeRenderStep("reportCategoryFilterOptions", () => populateReportCategoryFilterOptions());
-  safeRenderStep("reportAccountFilterOptions", () => populateReportFilterAccounts());
-  safeRenderStep("categoryOptions", () => populateCategoryOptions());
-  safeRenderStep("fxReferencePanel", () => syncFxReferencePanel());
+
+  if (
+    !partial ||
+    screen === "activity" ||
+    screen === "transfer" ||
+    screen === "accounts" ||
+    screen === "reports" ||
+    screen === "home"
+  ) {
+    safeRenderStep("accountOptions", () => populateAccountOptions());
+    safeRenderStep("categoryOptions", () => populateCategoryOptions());
+  }
+
+  if (!partial || screen === "reports") {
+    safeRenderStep("currencyOptions", () => populateCurrencyOptions());
+    safeRenderStep("reportingCurrencyOptions", () => populateReportingCurrencyOptions());
+    safeRenderStep("reportCategoryFilterOptions", () => populateReportCategoryFilterOptions());
+    safeRenderStep("reportAccountFilterOptions", () => populateReportFilterAccounts());
+  }
+
+  if (!partial || screen === "home") {
+    safeRenderStep("fxReferencePanel", () => syncFxReferencePanel());
+  }
+
   safeRenderStep("webProfile", () => syncWebProfile());
   applyBalancyHintsFromState();
 }
@@ -6417,6 +6451,48 @@ async function openReportCsvInNewTab() {
   }
 }
 
+function applyReportingCurrencyFromSummary(summary) {
+  const resolvedReportingCurrency =
+    summary?.reportingCurrency ?? currentReportingCurrencySelection();
+  setStoredReportingCurrency(resolvedReportingCurrency);
+  syncReportingCurrencyInputs(resolvedReportingCurrency);
+}
+
+function applyDashboardPayload(payload) {
+  const activeScreen = document.body.dataset.appActiveScreen ?? "home";
+  const onReportsScreen = activeScreen === "reports";
+
+  if (payload.summary !== undefined && payload.summary !== null) {
+    state.summary = payload.summary;
+    applyReportingCurrencyFromSummary(payload.summary);
+  }
+
+  if (!onReportsScreen && payload.report !== undefined) {
+    state.report = payload.report;
+    state.reportExportQuery = buildReportQueryString();
+  }
+}
+
+function applyRefreshPayload(payload) {
+  if (Array.isArray(payload.accounts)) {
+    state.accounts = payload.accounts;
+  }
+
+  if (Array.isArray(payload.categories)) {
+    state.categories = payload.categories;
+  }
+
+  if (Array.isArray(payload.recentEntries)) {
+    state.recentEntries = payload.recentEntries;
+  }
+
+  if (Array.isArray(payload.recentTransfers)) {
+    state.recentTransfers = payload.recentTransfers;
+  }
+
+  applyDashboardPayload(payload);
+}
+
 function applyBootstrapPayload(payload) {
   const user = payload.user;
 
@@ -6428,18 +6504,7 @@ function applyBootstrapPayload(payload) {
   state.recentTransfers = payload.recentTransfers ?? [];
   state.summary = payload.summary ?? null;
 
-  const activeScreen = document.body.dataset.appActiveScreen ?? "home";
-  const onReportsScreen = activeScreen === "reports";
-
-  if (!onReportsScreen) {
-    state.report = payload.report ?? null;
-    state.reportExportQuery = buildReportQueryString();
-  }
-
-  const resolvedReportingCurrency =
-    payload.summary?.reportingCurrency ?? currentReportingCurrencySelection();
-  setStoredReportingCurrency(resolvedReportingCurrency);
-  syncReportingCurrencyInputs(resolvedReportingCurrency);
+  applyDashboardPayload(payload);
 
   if (userNameElement && user) {
     userNameElement.textContent =
@@ -6451,10 +6516,48 @@ function applyBootstrapPayload(payload) {
   syncHomeWelcomeLine(user);
 }
 
+function buildAppDataApiUrl(options = {}) {
+  const reportingCurrency = currentReportingCurrencySelection();
+  const params = new URLSearchParams();
+  params.set("reportingCurrency", reportingCurrency);
+
+  if (options.light) {
+    if (options.includeCategories) {
+      params.append("include", "categories");
+    }
+
+    return `/api/refresh?${params.toString()}`;
+  }
+
+  return `/api/bootstrap?${params.toString()}`;
+}
+
+function scheduleDebouncedBackgroundRefresh(delayMs = 900) {
+  window.clearTimeout(refreshAppDataDebounceTimer);
+  refreshAppDataDebounceTimer = window.setTimeout(() => {
+    refreshAppDataDebounceTimer = null;
+
+    if (refreshAppDataInFlight) {
+      return;
+    }
+
+    refreshAppDataInFlight = refreshAppData({ backgroundRefresh: true, light: true })
+      .catch((error) => {
+        console.error(error);
+      })
+      .finally(() => {
+        refreshAppDataInFlight = null;
+      });
+  }, delayMs);
+}
+
 function afterBootstrapRender(options = {}) {
   const activeScreen = document.body.dataset.appActiveScreen ?? "home";
 
-  renderAll({ activeScreen });
+  renderAll({
+    activeScreen,
+    partial: options.backgroundRefresh === true
+  });
 
   if (activeScreen === "ledger" && !isWebMode) {
     populateTgActivityFilterSelects();
@@ -6498,12 +6601,14 @@ async function refreshAppData(options = {}) {
     }
 
     const fetchOptions = bootstrapAbort !== undefined ? { signal: bootstrapAbort } : {};
-    const payload = await apiFetch(
-      `/api/bootstrap?reportingCurrency=${encodeURIComponent(reportingCurrency)}`,
-      fetchOptions
-    );
+    const payload = await apiFetch(buildAppDataApiUrl(options), fetchOptions);
 
-    applyBootstrapPayload(payload);
+    if (options.light) {
+      applyRefreshPayload(payload);
+    } else {
+      applyBootstrapPayload(payload);
+    }
+
     afterBootstrapRender(options);
     return payload;
   } finally {
@@ -6693,7 +6798,7 @@ async function handleCreateAccount(event) {
 
     resetAccountForm();
     setAccountsStatus(isEditing ? "Счет обновлен." : "Счет создан.", "success");
-    await refreshAppData({ backgroundRefresh: true });
+    await refreshAppData({ backgroundRefresh: true, light: true });
   } catch (error) {
     console.error(error);
     setAccountsStatus(
@@ -6725,7 +6830,7 @@ async function handleDeleteAccount(accountId) {
     }
 
     setAccountsStatus("Счет удален.", "success");
-    await refreshAppData({ backgroundRefresh: true });
+    await refreshAppData({ backgroundRefresh: true, light: true });
   } catch (error) {
     console.error(error);
     setAccountsStatus(
@@ -6890,7 +6995,7 @@ async function handleCategorySubmit(event) {
 
     resetCategoryForm();
     setStatus(isEditing ? "Категория обновлена." : "Категория создана.", "success");
-    await refreshAppData({ backgroundRefresh: true });
+    await refreshAppData({ backgroundRefresh: true, light: true, includeCategories: true });
   } catch (error) {
     console.error(error);
     setStatus(
@@ -6925,7 +7030,7 @@ async function handleDeleteCategory(categoryId) {
       "Категория удалена. Старые операции сохранены, но у них больше не будет этой статьи.",
       "success"
     );
-    await refreshAppData({ backgroundRefresh: true });
+    await refreshAppData({ backgroundRefresh: true, light: true, includeCategories: true });
   } catch (error) {
     console.error(error);
     setStatus(
@@ -6977,7 +7082,7 @@ async function handleCreateEntry(event) {
 
     resetEntryFormToDefaults();
     setStatus("Операция сохранена.", "success");
-    await refreshAppData({ backgroundRefresh: true });
+    await refreshAppData({ backgroundRefresh: true, light: true });
   } catch (error) {
     console.error(error);
     setStatus(error instanceof Error ? error.message : "Не удалось сохранить операцию", "error");
@@ -7019,7 +7124,7 @@ async function handleCreateTransfer(event) {
     transferToAmountAutofillTag = null;
     transferToAmountProgrammatic = false;
     setStatus("Перевод сохранен.", "success");
-    await refreshAppData({ backgroundRefresh: true });
+    await refreshAppData({ backgroundRefresh: true, light: true });
     const back = transferReturnScreen || "home";
     openScreen(back);
   } catch (error) {
@@ -7042,7 +7147,7 @@ async function handleSyncRates() {
       body: JSON.stringify({})
     });
     setStatus("Курсы валют обновлены.", "success");
-    await refreshAppData({ backgroundRefresh: true });
+    await refreshAppData({ backgroundRefresh: true, light: true });
   } catch (error) {
     console.error(error);
     setStatus(error instanceof Error ? error.message : "Не удалось обновить курсы", "error");
@@ -7203,7 +7308,7 @@ function attachCategoryListsListener() {
 
 if (refreshButton) {
   refreshButton.addEventListener("click", () => {
-    void refreshAppData({ globalBusy: true, busyMessage: "Обновляем данные…" });
+    void refreshAppData({ globalBusy: true, busyMessage: "Обновляем данные…", light: true });
   });
 }
 
@@ -7284,7 +7389,8 @@ if (isWebMode) {
       void refreshAppData({
         globalBusy: true,
         busyMessage: "Обновляем данные…",
-        syncWebOperationsHistory: true
+        syncWebOperationsHistory: true,
+        light: true
       });
     });
   }
@@ -7467,7 +7573,8 @@ Array.from(document.querySelectorAll("[data-refresh-action]")).forEach((button) 
     void refreshAppData({
       globalBusy: true,
       busyMessage: "Обновляем данные…",
-      syncWebOperationsHistory: true
+      syncWebOperationsHistory: true,
+      light: true
     });
   });
 });
@@ -7552,12 +7659,12 @@ attachTgAccountsScreenChrome();
 attachFxReferencePanelListeners();
 
 window.addEventListener("focus", () => {
-  void refreshAppData({ backgroundRefresh: true });
+  scheduleDebouncedBackgroundRefresh();
 });
 
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
-    void refreshAppData({ backgroundRefresh: true });
+    scheduleDebouncedBackgroundRefresh();
   }
 });
 
@@ -7598,13 +7705,13 @@ cancelAccountEditButton?.addEventListener("click", () => {
 reportingCurrencyInput?.addEventListener("change", () => {
   setStoredReportingCurrency(reportingCurrencyInput.value);
   syncReportingCurrencyInputs(reportingCurrencyInput.value);
-  void refreshAppData({ syncWebOperationsHistory: true });
+  void refreshAppData({ syncWebOperationsHistory: true, light: true });
 });
 
 homeReportingCurrencyInput?.addEventListener("change", () => {
   setStoredReportingCurrency(homeReportingCurrencyInput.value);
   syncReportingCurrencyInputs(homeReportingCurrencyInput.value);
-  void refreshAppData({ syncWebOperationsHistory: true });
+  void refreshAppData({ syncWebOperationsHistory: true, light: true });
 });
 
 categoryForm?.addEventListener("submit", (event) => {

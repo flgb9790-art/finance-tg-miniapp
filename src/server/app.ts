@@ -10,6 +10,7 @@ import {
   updateAccount
 } from "../services/accounts.js";
 import {
+  countActiveCategories,
   createCategory,
   deleteCategory,
   listCategories,
@@ -399,6 +400,71 @@ export function createHttpApp(): express.Express {
       "private, no-cache, no-store, max-age=0, must-revalidate"
     );
     res.sendFile(miniAppHtmlPath);
+  });
+
+  app.get("/api/refresh", async (req, res) => {
+    try {
+      const appUser = await authenticateMiniAppUser(req);
+      const reportingCurrency = await resolveReportingCurrency(req);
+      const includeRaw = req.query.include;
+      const include = new Set(
+        typeof includeRaw === "string"
+          ? includeRaw
+              .split(",")
+              .map((part) => part.trim())
+              .filter(Boolean)
+          : []
+      );
+
+      const [accounts, activity, categoriesCount] = await Promise.all([
+        listAccounts(appUser.id),
+        getRecentActivity(appUser.id),
+        countActiveCategories(appUser.id)
+      ]);
+
+      let summary = null;
+      let report = null;
+
+      try {
+        const dashboard = await buildBootstrapMonthDashboard(
+          appUser.id,
+          reportingCurrency,
+          accounts,
+          categoriesCount
+        );
+        summary = dashboard.summary;
+        report = dashboard.report;
+      } catch (error) {
+        console.error("Failed to build refresh dashboard", error);
+      }
+
+      const payload: {
+        accounts: typeof accounts;
+        recentEntries: typeof activity.recentEntries;
+        recentTransfers: typeof activity.recentTransfers;
+        summary: typeof summary;
+        report: typeof report;
+        categories?: Awaited<ReturnType<typeof listCategories>>;
+      } = {
+        accounts,
+        recentEntries: activity.recentEntries,
+        recentTransfers: activity.recentTransfers,
+        summary,
+        report
+      };
+
+      if (include.has("categories")) {
+        payload.categories = await listCategories(appUser.id);
+      }
+
+      res.json(payload);
+    } catch (error) {
+      console.error("Failed to refresh mini app data", error);
+
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Failed to refresh mini app data"
+      });
+    }
   });
 
   app.get("/api/bootstrap", async (req, res) => {

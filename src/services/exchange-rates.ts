@@ -121,6 +121,24 @@ export async function syncExchangeRates(): Promise<{
   };
 }
 
+/** Параллельно прогревает in-memory кэш курсов в валюту отчёта. */
+export async function preloadExchangeRatesToReportingCurrency(
+  fromCurrencyCodes: Iterable<string>,
+  reportingCurrency: string
+): Promise<void> {
+  const targets = [...new Set(fromCurrencyCodes)].filter(
+    (code) => code.length > 0 && code !== reportingCurrency
+  );
+
+  if (targets.length === 0) {
+    return;
+  }
+
+  await Promise.all(
+    targets.map((code) => getExchangeRate(code, reportingCurrency))
+  );
+}
+
 export async function getExchangeRate(
   fromCurrencyCode: string,
   toCurrencyCode: string

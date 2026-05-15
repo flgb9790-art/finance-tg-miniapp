@@ -33,6 +33,20 @@ export async function listCategories(userId: string): Promise<CategoryRow[]> {
   return (data ?? []) as CategoryRow[];
 }
 
+export async function countActiveCategories(userId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from("categories")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("is_archived", false);
+
+  if (error) {
+    throw error;
+  }
+
+  return count ?? 0;
+}
+
 export async function createCategory(
   input: CreateCategoryInput
 ): Promise<CategoryRow> {
