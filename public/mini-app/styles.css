@@ -35,10 +35,6 @@
   --form-control-min-height: 50px;
   --form-control-padding-y: 11px;
   --form-control-padding-x: 15px;
-  /* Telegram: нижняя навигация — смещение от visualViewport (клавиатура) */
-  --balancy-nav-visual-bottom: 0px;
-  --balancy-nav-visual-left: 0px;
-  --balancy-nav-visual-width: 100%;
 }
 
 * {
@@ -135,15 +131,13 @@ body:not(.web-mode) .app-shell {
 
 body:not(.web-mode).keyboard-open .app-shell {
   min-height: var(--balancy-tg-vh, 100svh);
-  padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  /* Нижняя панель скрыта — не резервируем под неё 78px, иначе пустой зазор над клавиатурой */
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
 }
 
-/* Telegram + Android: не скрываем нижнее меню при клавиатуре — иначе оно «пропадает», но остаётся кликабельным по месту (opacity/visibility + fixed). Меню может перекрываться клавиатурой — это предсказуемее, чем «невидимая» панель. */
+/* Telegram: при клавиатуре скрываем нижнее меню (display — без «невидимых» кликов по старому opacity/transform). Панель fixed не участвует в потоке, отступ app-shell сохраняем. */
 body:not(.web-mode).keyboard-open .bottom-nav {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: none;
+  display: none !important;
 }
 
 body:not(.web-mode) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]),
@@ -309,6 +303,8 @@ body:not(.web-mode) main.content.tabbed-content > .screen.screen-active {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  /* minmax(0,1fr) даёт трек с нулевым минимумом — в TG WebView колонка иногда сжимается как на скрине «История» */
+  grid-template-columns: minmax(100%, 1fr);
 }
 
 #screen-home {
@@ -1858,15 +1854,6 @@ details.currency-breakdown[open] .currency-breakdown-hint::before {
   box-shadow: 0 -6px 22px rgb(15 23 42 / 0.08);
 }
 
-/* Telegram: панель привязана к нижнему краю видимой области (над клавиатурой), без «прыжков» layout viewport */
-body:not(.web-mode) nav.bottom-nav {
-  left: var(--balancy-nav-visual-left, 0px);
-  right: auto;
-  width: var(--balancy-nav-visual-width, 100%);
-  max-width: none;
-  bottom: var(--balancy-nav-visual-bottom, 0px);
-}
-
 .bottom-nav-button {
   flex: 1 1 0;
   min-width: 0;
@@ -2794,9 +2781,12 @@ body.web-mode #miniTopbar {
 body:not(.web-mode) #webTopNav.web-desktop-shell {
   display: block;
   width: 100%;
+  min-width: 100%;
+  max-width: none;
   height: auto;
   min-height: 0;
   overflow: visible;
+  box-sizing: border-box;
 }
 
 body:not(.web-mode) #webTopNav .web-sidebar,
@@ -2806,6 +2796,10 @@ body:not(.web-mode) #webTopNav .web-page-header {
 
 body:not(.web-mode) #webTopNav .web-main-column {
   overflow: visible;
+  width: 100%;
+  min-width: 100%;
+  max-width: none;
+  box-sizing: border-box;
 }
 
 body.web-mode #webTopNav.web-desktop-shell {

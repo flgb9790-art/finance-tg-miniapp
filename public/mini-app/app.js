@@ -373,9 +373,6 @@ function syncViewportMetrics() {
     isFormTextField(document.activeElement)
   );
   syncFxCalcKeyboardAccessory();
-  if (!isWebMode) {
-    syncTelegramBottomDock();
-  }
 }
 
 const BALANCY_HINTS_ENABLED_STORAGE_KEY = "balancyHintsEnabled";
@@ -506,40 +503,15 @@ function syncTelegramLayoutViewportVar() {
   }
 }
 
-/** Нижняя навигация: bottom/left/width от visualViewport, чтобы панель оставалась над клавиатурой и не «прыгала». */
-function syncTelegramBottomDock() {
-  if (isWebMode || typeof window === "undefined" || typeof document === "undefined") {
-    return;
-  }
-  const vv = window.visualViewport;
-  if (!vv || typeof vv.height !== "number" || !Number.isFinite(vv.height)) {
-    document.documentElement.style.setProperty("--balancy-nav-visual-bottom", "0px");
-    document.documentElement.style.setProperty("--balancy-nav-visual-left", "0px");
-    document.documentElement.style.setProperty("--balancy-nav-visual-width", "100%");
-    return;
-  }
-  const insetBottom = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-  const left = Math.max(0, vv.offsetLeft);
-  const rawW = vv.width;
-  const width = rawW > 1 ? rawW : Math.max(0, window.innerWidth - left);
-  document.documentElement.style.setProperty("--balancy-nav-visual-bottom", `${insetBottom}px`);
-  document.documentElement.style.setProperty("--balancy-nav-visual-left", `${left}px`);
-  document.documentElement.style.setProperty("--balancy-nav-visual-width", `${width}px`);
-}
-
 function bindTelegramViewportListeners() {
   if (balancyTgViewportListenersBound || isWebMode || !tg) {
     return;
   }
   balancyTgViewportListenersBound = true;
   syncTelegramLayoutViewportVar();
-  syncTelegramBottomDock();
   try {
     if (typeof tg.onEvent === "function") {
-      tg.onEvent("viewport_changed", () => {
-        syncTelegramLayoutViewportVar();
-        syncTelegramBottomDock();
-      });
+      tg.onEvent("viewport_changed", syncTelegramLayoutViewportVar);
     }
   } catch {
     //
@@ -547,10 +519,7 @@ function bindTelegramViewportListeners() {
   const vv = window.visualViewport;
   if (vv && typeof vv.addEventListener === "function") {
     vv.addEventListener("resize", syncTelegramLayoutViewportVar, { passive: true });
-    vv.addEventListener("resize", syncTelegramBottomDock, { passive: true });
-    vv.addEventListener("scroll", syncTelegramBottomDock, { passive: true });
   }
-  window.addEventListener("resize", syncTelegramBottomDock, { passive: true });
 }
 
 let balancyPullRefreshAttached = false;
@@ -1486,9 +1455,6 @@ function openScreen(screenName) {
   if (!isWebMode) {
     syncTgGlobalScreenChrome(nextScreen);
     scrollTelegramAppShellToTop();
-    window.requestAnimationFrame(() => {
-      syncTelegramBottomDock();
-    });
   }
 
   applyBalancyHintsFromState();
