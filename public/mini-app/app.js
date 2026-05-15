@@ -3,6 +3,16 @@ const isWebMode = new URLSearchParams(window.location.search).get("web") === "1"
 const WEB_WORKSPACE_MODE_SEEN_KEY = "balancy_web_workspace_mode_seen_v1";
 const WEB_INVITE_TOKEN_SESSION_KEY = "balancy_web_invite_token";
 
+/** Есть реальная сессия mini app (не просто заглушка Telegram). */
+function isTelegramMiniAppWithInitData() {
+  try {
+    const raw = window.Telegram?.WebApp?.initData;
+    return typeof raw === "string" && raw.trim().length > 0;
+  } catch {
+    return false;
+  }
+}
+
 /** В этом заходе по URL был ?invite= — нужно сбросить веб-сессию, иначе чужой balancy_session откроет чужой аккаунт. */
 let webInviteCapturedThisPageLoad = false;
 
@@ -12,6 +22,19 @@ function parseWebInviteTokenFromLocation() {
     const token = params.get("invite")?.trim();
 
     if (!token) {
+      return;
+    }
+
+    /*
+      Мобильный Safari/Chrome: ссылка без ?web=1 не включает веб-режим — loadApp() завершается с
+      «Откройте из Telegram», вход через Login Widget не показывается. Добавляем web=1, если это не
+      полноценный Telegram Mini App с initData.
+     */
+    if (params.get("web") !== "1" && !isTelegramMiniAppWithInitData()) {
+      params.set("web", "1");
+      params.set("invite", token);
+      const next = `${window.location.pathname}?${params.toString()}${window.location.hash || ""}`;
+      window.location.replace(next);
       return;
     }
 
@@ -6427,10 +6450,8 @@ async function buildWorkspaceInviteClipboardUrl(token) {
 
   const url = new URL("/mini-app/", `${base}/`);
   url.searchParams.set("invite", String(token).trim());
-
-  if (isWebMode) {
-    url.searchParams.set("web", "1");
-  }
+  /* Вне Telegram Mini App вход только через веб (?web=1 + Login Widget). Иначе моб. браузер не авторизуется. */
+  url.searchParams.set("web", "1");
 
   return url.toString();
 }
