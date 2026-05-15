@@ -576,6 +576,28 @@ body:not(.web-mode) #screen-home {
   overflow-wrap: anywhere;
 }
 
+.web-profile-settings-btn {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  min-height: 40px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font: inherit;
+  font-weight: 650;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--fill-subtle);
+  cursor: pointer;
+}
+
+.web-profile-settings-btn:hover {
+  background: rgb(241 245 249);
+  border-color: rgb(18 18 43 / 0.14);
+}
+
 .web-profile-logout {
   border: 1px solid rgb(220 38 38 / 0.25);
   border-radius: 10px;
@@ -584,6 +606,9 @@ body:not(.web-mode) #screen-home {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  font: inherit;
+  font-size: 14px;
   text-decoration: none;
   color: #991b1b;
   font-weight: 700;
@@ -3002,11 +3027,13 @@ body.web-mode #webTopNav.web-desktop-shell {
 
 .web-profile-menu--sidebar {
   position: relative;
+  width: 100%;
 }
 
 .web-profile-menu--sidebar .web-profile-dropdown {
   position: fixed;
   z-index: 400;
+  box-sizing: border-box;
 }
 
 .web-main-column {

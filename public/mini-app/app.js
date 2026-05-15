@@ -69,6 +69,7 @@ const webProfileToggleButton = document.getElementById("webProfileToggleButton")
 const webProfileDropdown = document.getElementById("webProfileDropdown");
 const webProfileMeta = document.getElementById("webProfileMeta");
 const webSwitchUserButton = document.getElementById("webSwitchUserButton");
+const webOpenSettingsButton = document.getElementById("webOpenSettingsButton");
 const webNewEntryMenu = document.getElementById("webNewEntryMenu");
 const webPageTitleElement = document.getElementById("webPageTitle");
 const webPageSubtitleElement = document.getElementById("webPageSubtitle");
@@ -5547,8 +5548,8 @@ function positionWebSidebarProfileDropdown() {
   const toggleRect = webProfileToggleButton.getBoundingClientRect();
   webProfileDropdown.style.position = "fixed";
   webProfileDropdown.style.zIndex = "400";
-  webProfileDropdown.style.left = `${Math.max(margin, toggleRect.left)}px`;
-  webProfileDropdown.style.width = `${Math.min(300, Math.max(240, toggleRect.width))}px`;
+  webProfileDropdown.style.left = `${toggleRect.left}px`;
+  webProfileDropdown.style.width = `${toggleRect.width}px`;
   webProfileDropdown.style.right = "auto";
 
   const dropdownHeight = webProfileDropdown.offsetHeight;
@@ -6911,7 +6912,13 @@ if (isWebMode) {
     toggleWebProfileDropdown();
   });
 
+  webOpenSettingsButton?.addEventListener("click", () => {
+    closeWebProfileDropdown();
+    openScreen("settings");
+  });
+
   webSwitchUserButton?.addEventListener("click", () => {
+    closeWebProfileDropdown();
     void handleWebLogout();
   });
 
