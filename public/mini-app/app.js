@@ -6554,6 +6554,70 @@ async function continueWorkspaceBootAfterInviteGate() {
   hideWorkspaceInviteGate();
 }
 
+function reportWorkspaceInviteMessage(message, kind = "error") {
+  const text = String(message ?? "").trim();
+
+  if (!text) {
+    return;
+  }
+
+  if (document.body.classList.contains("workspace-invite-gate-open")) {
+    setWorkspaceInviteGateError(text);
+    return;
+  }
+
+  if (shouldShowWorkspaceModeChoice()) {
+    showWebModeChoice();
+    setWebModeChoiceError(text);
+    return;
+  }
+
+  setStatus(text, kind);
+}
+
+async function resolvePendingInviteForCurrentUser(workspace) {
+  const existing = Array.isArray(state.workspaces)
+    ? state.workspaces.find((item) => item.id === workspace.id)
+    : undefined;
+
+  if (existing) {
+    clearPendingWebInviteToken();
+    hideWorkspaceInviteGate();
+    hideWebModeChoice();
+    document.body.classList.remove("workspace-mode-choice-open");
+
+    if (state.workspace?.id !== workspace.id) {
+      await switchWebWorkspace(workspace.id);
+    }
+
+    reportWorkspaceInviteMessage(
+      existing.role === "owner"
+        ? "Вы уже владелец этой команды. Открыли её для вас."
+        : "Вы уже в этой команде.",
+      "success"
+    );
+    return true;
+  }
+
+  const otherTeam = Array.isArray(state.workspaces)
+    ? state.workspaces.find((item) => item.kind === "team")
+    : undefined;
+
+  if (otherTeam) {
+    clearPendingWebInviteToken();
+    hideWorkspaceInviteGate();
+    hideWebModeChoice();
+    document.body.classList.remove("workspace-mode-choice-open");
+    reportWorkspaceInviteMessage(
+      `Вы уже в команде «${otherTeam.name}». Сначала выйдите из неё в настройках.`,
+      "error"
+    );
+    return true;
+  }
+
+  return false;
+}
+
 async function maybeShowWorkspaceInviteGate(token) {
   try {
     const payload = await apiFetch(`/api/workspaces/invites/${encodeURIComponent(token)}`);
@@ -6563,19 +6627,17 @@ async function maybeShowWorkspaceInviteGate(token) {
       throw new Error("Приглашение не найдено");
     }
 
+    if (await resolvePendingInviteForCurrentUser(workspace)) {
+      return false;
+    }
+
     showWorkspaceInviteGate(workspace);
     return true;
   } catch (error) {
     clearPendingWebInviteToken();
-    const message = error instanceof Error ? error.message : "Не удалось загрузить приглашение";
-
-    if (shouldShowWorkspaceModeChoice()) {
-      showWebModeChoice();
-      setWebModeChoiceError(message);
-    } else {
-      setStatus(message, "error");
-    }
-
+    reportWorkspaceInviteMessage(
+      error instanceof Error ? error.message : "Не удалось загрузить приглашение"
+    );
     return false;
   }
 }
@@ -6642,17 +6704,32 @@ async function createWebTeamWorkspace(name) {
 async function tryAcceptPendingWebInvite() {
   const token = getPendingWebInviteToken();
 
-  if (!token || !state.user) {
+  if (!token) {
+    reportWorkspaceInviteMessage("Ссылка приглашения устарела. Откройте новую ссылку от владельца команды.");
+    return false;
+  }
+
+  if (!state.user) {
+    reportWorkspaceInviteMessage("Сначала войдите через Telegram, затем нажмите «Вступить» снова.");
     return false;
   }
 
   try {
-    await apiFetch(`/api/workspaces/invites/${encodeURIComponent(token)}/accept`, {
+    const payload = await apiFetch(`/api/workspaces/invites/${encodeURIComponent(token)}/accept`, {
       method: "POST"
     });
+
+    if (payload?.workspace) {
+      applyWorkspacePayload({ workspace: payload.workspace });
+    }
+
     clearPendingWebInviteToken();
     markWebWorkspaceModeSeen();
+    hideWorkspaceInviteGate();
+    hideWebModeChoice();
+    document.body.classList.remove("workspace-mode-choice-open");
     state.webOperationsLastPayload = null;
+
     await refreshAppData({
       globalBusy: true,
       busyMessage: "Подключаем к команде…",
@@ -6660,19 +6737,8 @@ async function tryAcceptPendingWebInvite() {
     });
     return true;
   } catch (error) {
-    clearPendingWebInviteToken();
     const message = error instanceof Error ? error.message : "Не удалось принять приглашение";
-
-    if (
-      document.body.classList.contains("workspace-mode-choice-open") ||
-      shouldShowWorkspaceModeChoice()
-    ) {
-      showWebModeChoice();
-      setWebModeChoiceError(message);
-    } else {
-      setStatus(message, "error");
-    }
-
+    reportWorkspaceInviteMessage(message);
     return false;
   }
 }
@@ -7195,9 +7261,12 @@ function attachWorkspaceUi() {
         const accepted = await tryAcceptPendingWebInvite();
 
         if (accepted) {
-          hideWorkspaceInviteGate();
-          hideWebModeChoice();
           setStatus("Вы вступили в команду", "success");
+        } else if (
+          workspaceInviteGateErrorElement?.hidden !== false &&
+          !workspaceInviteGateErrorElement?.textContent?.trim()
+        ) {
+          setWorkspaceInviteGateError("Не удалось вступить. Попробуйте ещё раз или откройте новую ссылку.");
         }
       } catch (error) {
         setWorkspaceInviteGateError(
@@ -7213,6 +7282,7 @@ function attachWorkspaceUi() {
 
   workspaceInviteDeclineButtonElement?.addEventListener("click", () => {
     clearPendingWebInviteToken();
+    hideWorkspaceInviteGate();
     void continueWorkspaceBootAfterInviteGate();
   });
 

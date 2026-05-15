@@ -570,20 +570,23 @@ export async function acceptWorkspaceInvite(
   const existingMembership = await getWorkspaceMembership(workspace.id, userId);
 
   if (existingMembership) {
-    throw new WorkspaceError("already_member", "You are already a member of this team");
+    return {
+      workspace,
+      membership: existingMembership
+    };
   }
 
   if (await userHasTeamWorkspace(userId)) {
     throw new WorkspaceError(
       "team_already_exists",
-      "You can only belong to one team workspace in this version"
+      "Вы уже состоите в другой команде. В этой версии можно быть только в одной команде."
     );
   }
 
   const memberCount = await countWorkspaceMembers(workspace.id);
 
   if (memberCount >= workspace.max_members) {
-    throw new WorkspaceError("team_full", "This team has reached the member limit");
+    throw new WorkspaceError("team_full", "В команде уже максимум участников (5)");
   }
 
   const { data: membership, error } = await supabase
