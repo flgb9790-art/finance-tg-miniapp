@@ -5986,13 +5986,6 @@ body.web-mode[data-app-active-screen="home"] .web-dash-stat-value {
   font-size: 17px;
 }
 
-body.web-mode[data-app-active-screen="home"] .web-dash-spark {
-  width: 56px;
-  height: 28px;
-  right: 8px;
-  bottom: 6px;
-}
-
 body.web-mode[data-app-active-screen="home"] .web-home-mid-grid {
   gap: 12px;
   align-items: stretch;
