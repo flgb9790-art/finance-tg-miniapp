@@ -2128,11 +2128,9 @@ function renderWebDashSparkChart(container, spark, mode) {
   container.classList.toggle("web-dash-spark--empty", !hasData);
 
   const chartHeightPx = 50;
-  const daysHtml = [];
+  const barsHtml = [];
 
   for (let dayIndex = 0; dayIndex < WEB_DASH_SPARK_DAY_COUNT; dayIndex += 1) {
-    const bars = [];
-
     for (let slotIndex = 0; slotIndex < WEB_DASH_SPARK_SLOTS_PER_DAY; slotIndex += 1) {
       const raw = Number(valueGrid[dayIndex]?.[slotIndex] ?? 0);
       const count = Number(countGrid[dayIndex]?.[slotIndex] ?? 0);
@@ -2140,24 +2138,19 @@ function renderWebDashSparkChart(container, spark, mode) {
       const score = amount * (1 + count * 0.12);
       const heightPx = hasData ? Math.round(5 + (score / max) * chartHeightPx) : 5;
       const negClass = mode === "net" && raw < 0 ? " web-dash-spark-bar--negative" : "";
-      const edgeClass =
-        slotIndex === 0 || slotIndex === WEB_DASH_SPARK_SLOTS_PER_DAY - 1
-          ? " web-dash-spark-bar--edge"
-          : slotIndex === 1 || slotIndex === WEB_DASH_SPARK_SLOTS_PER_DAY - 2
-            ? " web-dash-spark-bar--edge-mid"
-            : "";
+      const isChartEdge =
+        (dayIndex === 0 && slotIndex === 0) ||
+        (dayIndex === WEB_DASH_SPARK_DAY_COUNT - 1 &&
+          slotIndex === WEB_DASH_SPARK_SLOTS_PER_DAY - 1);
+      const fadeClass = isChartEdge ? " web-dash-spark-bar--chart-edge" : "";
 
-      bars.push(
-        `<span class="web-dash-spark-bar web-dash-spark-bar--slot-${slotIndex}${negClass}${edgeClass}" style="height:${heightPx}px"></span>`
+      barsHtml.push(
+        `<span class="web-dash-spark-bar web-dash-spark-bar--slot-${slotIndex}${negClass}${fadeClass}" style="height:${heightPx}px"></span>`
       );
     }
-
-    daysHtml.push(
-      `<div class="web-dash-spark-day"><div class="web-dash-spark-day-bars">${bars.join("")}</div></div>`
-    );
   }
 
-  container.innerHTML = `<\u0064iv class="web-dash-spark-chart">${daysHtml.join("")}</\u0064iv>`;
+  container.innerHTML = `<\u0064iv class="web-dash-spark-chart">${barsHtml.join("")}</\u0064iv>`;
 }
 
 function syncWebDashSparkCharts() {

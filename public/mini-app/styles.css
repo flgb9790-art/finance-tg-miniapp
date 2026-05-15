@@ -3469,10 +3469,12 @@ body.web-mode .web-dash-hero .hero-currency-select.fx-board-base-select--toolbar
 
 .web-dash-spark {
   position: absolute;
-  left: 10px;
-  right: 10px;
+  left: 0;
+  right: 0;
   bottom: 8px;
+  width: 100%;
   height: 56px;
+  box-sizing: border-box;
   pointer-events: none;
 }
 
@@ -3480,23 +3482,6 @@ body.web-mode .web-dash-hero .hero-currency-select.fx-board-base-select--toolbar
   display: flex;
   align-items: flex-end;
   justify-content: stretch;
-  gap: 6px;
-  width: 100%;
-  height: 100%;
-}
-
-.web-dash-spark-day {
-  flex: 1 1 0;
-  min-width: 0;
-  height: 100%;
-  display: flex;
-  align-items: flex-end;
-}
-
-.web-dash-spark-day-bars {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
   gap: 2px;
   width: 100%;
   height: 100%;
@@ -3504,7 +3489,8 @@ body.web-mode .web-dash-hero .hero-currency-select.fx-board-base-select--toolbar
 
 .web-dash-spark-bar {
   display: block;
-  flex: 0 0 auto;
+  flex: 1 1 0;
+  min-width: 2px;
   border-radius: 3px 3px 1px 1px;
   min-height: 4px;
   transition: height 0.28s ease;
@@ -3512,25 +3498,24 @@ body.web-mode .web-dash-hero .hero-currency-select.fx-board-base-select--toolbar
 
 .web-dash-spark-bar--slot-0,
 .web-dash-spark-bar--slot-5 {
-  width: 2px;
+  flex: 0.72 1 0;
+  max-width: 5px;
 }
 
 .web-dash-spark-bar--slot-1,
 .web-dash-spark-bar--slot-4 {
-  width: 3px;
+  flex: 0.88 1 0;
+  max-width: 7px;
 }
 
 .web-dash-spark-bar--slot-2,
 .web-dash-spark-bar--slot-3 {
-  width: 4px;
+  flex: 1.05 1 0;
+  max-width: 9px;
 }
 
-.web-dash-spark-bar--edge {
-  opacity: 0.34;
-}
-
-.web-dash-spark-bar--edge-mid {
-  opacity: 0.58;
+.web-dash-spark-bar--chart-edge {
+  opacity: 0.32;
 }
 
 .web-dash-spark-income .web-dash-spark-bar {
