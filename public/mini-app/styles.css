@@ -11210,3 +11210,19 @@ body.web-mode.web-mode-choice-open .app-shell {
     grid-template-columns: 1fr;
   }
 }
+
+.web-ops-table .web-ops-col-author {
+  display: none;
+}
+
+.web-ops-table--show-author .web-ops-col-author {
+  display: table-cell;
+}
+
+.web-ops-col-author {
+  font-size: 13px;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -1604,6 +1604,66 @@ function populateWebOperationsFilterSelects() {
   }
 }
 
+function shouldShowOperationAuthor() {
+  return state.workspace?.kind === "team";
+}
+
+function resolveOperationCreatedByFromApi(row, payload) {
+  if (row?.createdBy && typeof row.createdBy === "object") {
+    return row.createdBy;
+  }
+
+  const embed = payload?.created_by;
+  if (embed?.id) {
+    const firstName =
+      [embed.first_name, embed.last_name].filter(Boolean).join(" ").trim() || null;
+    return {
+      id: embed.id,
+      firstName,
+      username: embed.username ?? null
+    };
+  }
+
+  return null;
+}
+
+function formatOperationAuthorLabel(createdBy) {
+  if (!createdBy) {
+    return "";
+  }
+
+  if (createdBy.firstName) {
+    return createdBy.firstName;
+  }
+
+  if (createdBy.username) {
+    return `@${createdBy.username}`;
+  }
+
+  return "Участник";
+}
+
+function formatOperationAuthorMeta(createdBy, occurredAt) {
+  const when = formatDateTime(occurredAt);
+  const author = formatOperationAuthorLabel(createdBy);
+
+  if (!shouldShowOperationAuthor() || !author) {
+    return when;
+  }
+
+  return `${author} · ${when}`;
+}
+
+function getWebOpsTableColspan() {
+  return shouldShowOperationAuthor() ? 7 : 6;
+}
+
+function syncOperationAuthorChrome() {
+  document.querySelectorAll(".web-ops-table").forEach((table) => {
+    table.classList.toggle("web-ops-table--show-author", shouldShowOperationAuthor());
+  });
+}
+
 function getWebOpsPageSizeValue() {
   const raw = Number(webOpsPageSize?.value ?? 8);
   if (!Number.isFinite(raw) || raw < 1) {
@@ -1740,10 +1800,19 @@ function renderWebOperationsFromPayload(payload) {
     return;
   }
 
+  syncOperationAuthorChrome();
   webOpsTableBody.innerHTML = items.map((row) => buildWebOperationsTableRowHtml(row)).join("");
 }
 
 function buildWebOperationsTableRowHtml(row) {
+  const createdBy = resolveOperationCreatedByFromApi(
+    row,
+    row.kind === "entry" ? row.entry : row.transfer
+  );
+  const authorCell = shouldShowOperationAuthor()
+    ? `<td class="web-ops-col-author">${escapeHtml(formatOperationAuthorLabel(createdBy) || "—")}</td>`
+    : "";
+
   if (row.kind === "entry") {
     const e = row.entry;
     const dt = escapeHtml(formatDateTime(e.occurred_at));
@@ -1773,6 +1842,7 @@ function buildWebOperationsTableRowHtml(row) {
       <td>${cat}</td>
       <td class="web-ops-col-num"><span class="${amtClass}">${sign}${amt}</span></td>
       <td>${cur}</td>
+      ${authorCell}
     </tr>`;
   }
 
@@ -1799,6 +1869,7 @@ function buildWebOperationsTableRowHtml(row) {
     <td>—</td>
     <td class="web-ops-col-num"><span class="web-ops-amount-transfer">−${fromAmt}</span></td>
     <td>${fromCur}</td>
+    ${authorCell}
   </tr>`;
 }
 
@@ -1811,7 +1882,7 @@ async function refreshWebOperationsBoard() {
     return;
   }
 
-  webOpsTableBody.innerHTML = `<tr><td colspan="6" class="muted">Загрузка…</td></tr>`;
+  webOpsTableBody.innerHTML = `<tr><td colspan="${getWebOpsTableColspan()}" class="muted">Загрузка…</td></tr>`;
   if (webOpsEmptyHint) {
     webOpsEmptyHint.hidden = true;
   }
@@ -1822,7 +1893,7 @@ async function refreshWebOperationsBoard() {
     renderWebOperationsFromPayload(payload);
   } catch (error) {
     console.error(error);
-    webOpsTableBody.innerHTML = `<tr><td colspan="6" class="inline-error">${escapeHtml(
+    webOpsTableBody.innerHTML = `<tr><td colspan="${getWebOpsTableColspan()}" class="inline-error">${escapeHtml(
       error instanceof Error ? error.message : "Не удалось загрузить операции"
     )}</td></tr>`;
   }
@@ -3881,7 +3952,12 @@ function renderRecentEntries(entries) {
                 <strong>${escapeHtml(entry.category?.name ?? "Без категории")}</strong>
               </div>
               <div class="account-meta">
-                ${escapeHtml(entry.account?.name ?? "Счет")} · ${escapeHtml(formatDateTime(entry.occurred_at))}
+                ${escapeHtml(entry.account?.name ?? "Счет")} · ${escapeHtml(
+                  formatOperationAuthorMeta(
+                    resolveOperationCreatedByFromApi(null, entry),
+                    entry.occurred_at
+                  )
+                )}
               </div>
               ${
                 entry.note
@@ -3928,7 +4004,12 @@ function renderRecentTransfers(transfers) {
                   transfer.to_account?.name ?? "Счет"
                 )}</strong>
               </div>
-              <div class="transfer-meta">${escapeHtml(formatDateTime(transfer.occurred_at))}</div>
+              <div class="transfer-meta">${escapeHtml(
+                formatOperationAuthorMeta(
+                  resolveOperationCreatedByFromApi(null, transfer),
+                  transfer.occurred_at
+                )
+              )}</div>
               ${
                 transfer.note
                   ? `<div class="account-meta">${escapeHtml(transfer.note)}</div>`
@@ -4150,11 +4231,19 @@ function operationsApiItemToFeedItem(row) {
   if (!row || typeof row !== "object") {
     return null;
   }
+
+  const createdBy = resolveOperationCreatedByFromApi(row, row.entry ?? row.transfer);
+
   if (row.kind === "entry" && row.entry) {
-    return { type: "entry", occurredAt: row.entry.occurred_at, payload: row.entry };
+    return { type: "entry", occurredAt: row.entry.occurred_at, payload: row.entry, createdBy };
   }
   if (row.kind === "transfer" && row.transfer) {
-    return { type: "transfer", occurredAt: row.transfer.occurred_at, payload: row.transfer };
+    return {
+      type: "transfer",
+      occurredAt: row.transfer.occurred_at,
+      payload: row.transfer,
+      createdBy
+    };
   }
   return null;
 }
@@ -4198,7 +4287,10 @@ function buildTgOpsFeedHtmlFromItems(items) {
           <div class="tg-ops-row-main">
             <span class="tg-ops-row-title">${escapeHtml(catName)}</span>
             <span class="tg-ops-row-meta">${escapeHtml(entry.account?.name ?? "Счёт")} · ${escapeHtml(
-              formatDateTime(entry.occurred_at)
+              formatOperationAuthorMeta(
+                item.createdBy ?? resolveOperationCreatedByFromApi(null, entry),
+                entry.occurred_at
+              )
             )}</span>
           </div>
           <div class="tg-ops-amount-stack">
@@ -4214,7 +4306,12 @@ function buildTgOpsFeedHtmlFromItems(items) {
           <div class="tg-ops-row-icon tg-ops-row-icon--transfer" aria-hidden="true">${getEntryIcon("transfer")}</div>
           <div class="tg-ops-row-main">
             <span class="tg-ops-row-title">${escapeHtml(title)}</span>
-            <span class="tg-ops-row-meta">${escapeHtml(formatDateTime(transfer.occurred_at))}</span>
+            <span class="tg-ops-row-meta">${escapeHtml(
+              formatOperationAuthorMeta(
+                item.createdBy ?? resolveOperationCreatedByFromApi(null, transfer),
+                transfer.occurred_at
+              )
+            )}</span>
           </div>
           ${formatTgOpsTransferAmountCell(transfer)}
         </div>`);
@@ -4404,12 +4501,14 @@ function buildRecentActivityCombinedHtml(entries, transfers, limit = 12) {
     ...entries.map((entry) => ({
       type: "entry",
       occurredAt: entry.occurred_at,
-      payload: entry
+      payload: entry,
+      createdBy: resolveOperationCreatedByFromApi(null, entry)
     })),
     ...transfers.map((transfer) => ({
       type: "transfer",
       occurredAt: transfer.occurred_at,
-      payload: transfer
+      payload: transfer,
+      createdBy: resolveOperationCreatedByFromApi(null, transfer)
     }))
   ]
     .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
@@ -4440,7 +4539,9 @@ function buildRecentActivityCombinedHtml(entries, transfers, limit = 12) {
                 <div class="item-copy">
                   <div class="account-name">${escapeHtml(entry.category?.name ?? "Без категории")}</div>
                   <div class="account-meta">
-                    ${escapeHtml(entry.account?.name ?? "Счет")} · ${escapeHtml(formatDateTime(entry.occurred_at))}
+                    ${escapeHtml(entry.account?.name ?? "Счет")} · ${escapeHtml(
+                      formatOperationAuthorMeta(item.createdBy, entry.occurred_at)
+                    )}
                   </div>
                 </div>
               </div>
@@ -4461,7 +4562,9 @@ function buildRecentActivityCombinedHtml(entries, transfers, limit = 12) {
                 <div class="account-name">${escapeHtml(transfer.from_account?.name ?? "Счет")} → ${escapeHtml(
                   transfer.to_account?.name ?? "Счет"
                 )}</div>
-                <div class="account-meta">${escapeHtml(formatDateTime(transfer.occurred_at))}</div>
+                <div class="account-meta">${escapeHtml(
+                  formatOperationAuthorMeta(item.createdBy, transfer.occurred_at)
+                )}</div>
               </div>
             </div>
             ${formatTransferAmountStackHtml(transfer)}
@@ -6583,6 +6686,8 @@ function syncWorkspaceChrome() {
         ? `Команда · ${state.workspace.name}`
         : "Личное · Настройки";
   }
+
+  syncOperationAuthorChrome();
 }
 
 function attachWebWorkspaceUi() {

@@ -8,6 +8,7 @@ import { convertAmount } from "./exchange-rates.js";
 export interface EntryRow {
   id: string;
   user_id: string;
+  created_by_user_id: string | null;
   kind: OperationKind;
   account_id: string;
   category_id: string | null;
@@ -20,6 +21,12 @@ export interface EntryRow {
 }
 
 export interface EntryListItem extends EntryRow {
+  created_by: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    username: string | null;
+  } | null;
   account: {
     name: string;
     currency_code: string;
@@ -29,6 +36,13 @@ export interface EntryListItem extends EntryRow {
     kind: OperationKind;
   } | null;
 }
+
+export const ENTRY_LIST_SELECT = `
+        *,
+        created_by:app_users!created_by_user_id(id, first_name, last_name, username),
+        account:accounts(name, currency_code),
+        category:categories(name, kind)
+      `;
 
 export interface CreateEntryInput {
   workspaceId: string;
@@ -52,13 +66,7 @@ export async function listRecentEntries(
 ): Promise<EntryListItem[]> {
   const { data, error } = await supabase
     .from("entries")
-    .select(
-      `
-        *,
-        account:accounts(name, currency_code),
-        category:categories(name, kind)
-      `
-    )
+    .select(ENTRY_LIST_SELECT)
     .eq("workspace_id", workspaceId)
     .order("occurred_at", { ascending: false })
     .limit(limit);

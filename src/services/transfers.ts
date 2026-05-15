@@ -5,6 +5,7 @@ import { getAccountById, updateAccountBalance } from "./accounts.js";
 export interface TransferRow {
   id: string;
   user_id: string;
+  created_by_user_id: string | null;
   from_account_id: string;
   to_account_id: string;
   from_amount: string;
@@ -19,6 +20,12 @@ export interface TransferRow {
 }
 
 export interface TransferListItem extends TransferRow {
+  created_by: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    username: string | null;
+  } | null;
   from_account: {
     name: string;
     currency_code: string;
@@ -28,6 +35,13 @@ export interface TransferListItem extends TransferRow {
     currency_code: string;
   } | null;
 }
+
+export const TRANSFER_LIST_SELECT = `
+        *,
+        created_by:app_users!created_by_user_id(id, first_name, last_name, username),
+        from_account:accounts!transfers_from_account_id_fkey(name, currency_code),
+        to_account:accounts!transfers_to_account_id_fkey(name, currency_code)
+      `;
 
 export interface CreateTransferInput {
   workspaceId: string;
@@ -50,13 +64,7 @@ export async function listRecentTransfers(
 ): Promise<TransferListItem[]> {
   const { data, error } = await supabase
     .from("transfers")
-    .select(
-      `
-        *,
-        from_account:accounts!transfers_from_account_id_fkey(name, currency_code),
-        to_account:accounts!transfers_to_account_id_fkey(name, currency_code)
-      `
-    )
+    .select(TRANSFER_LIST_SELECT)
     .eq("workspace_id", workspaceId)
     .order("occurred_at", { ascending: false })
     .limit(limit);

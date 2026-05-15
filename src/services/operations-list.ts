@@ -1,8 +1,12 @@
 import type { OperationKind } from "../shared/domain.js";
 import { supabase } from "../lib/supabase.js";
 import { getExchangeRate } from "./exchange-rates.js";
-import type { EntryListItem } from "./entries.js";
-import type { TransferListItem } from "./transfers.js";
+import { ENTRY_LIST_SELECT, type EntryListItem } from "./entries.js";
+import {
+  toOperationCreatedByDto,
+  type OperationCreatedByDto
+} from "./operation-created-by.js";
+import { TRANSFER_LIST_SELECT, type TransferListItem } from "./transfers.js";
 
 function startOfDay(date: Date): Date {
   const result = new Date(date);
@@ -50,9 +54,18 @@ export type OperationTimelineItem =
   | { kind: "entry"; occurredAt: string; entry: EntryListItem }
   | { kind: "transfer"; occurredAt: string; transfer: TransferListItem };
 
+export type OperationTimelineItemDto = {
+  kind: "entry" | "transfer";
+  occurredAt: string;
+  createdAt: string;
+  createdBy: OperationCreatedByDto | null;
+  entry?: EntryListItem;
+  transfer?: TransferListItem;
+};
+
 export interface OperationsListResult {
   reportingCurrency: string;
-  items: OperationTimelineItem[];
+  items: OperationTimelineItemDto[];
   total: number;
   summary: {
     operationsCount: number;
@@ -172,13 +185,7 @@ async function fetchEntriesWindow(
 ): Promise<EntryListItem[]> {
   let q = supabase
     .from("entries")
-    .select(
-      `
-        *,
-        account:accounts(name, currency_code),
-        category:categories(name, kind)
-      `
-    )
+    .select(ENTRY_LIST_SELECT)
     .eq("workspace_id", workspaceId)
     .gte("occurred_at", opts.from)
     .lte("occurred_at", opts.to);
@@ -219,13 +226,7 @@ async function fetchTransfersWindow(
 ): Promise<TransferListItem[]> {
   let q = supabase
     .from("transfers")
-    .select(
-      `
-        *,
-        from_account:accounts!transfers_from_account_id_fkey(name, currency_code),
-        to_account:accounts!transfers_to_account_id_fkey(name, currency_code)
-      `
-    )
+    .select(TRANSFER_LIST_SELECT)
     .eq("workspace_id", workspaceId)
     .gte("occurred_at", opts.from)
     .lte("occurred_at", opts.to);
@@ -278,6 +279,26 @@ function matchesSearch(item: OperationTimelineItem, needle: string): boolean {
     .join(" ")
     .toLowerCase();
   return hay.includes(n);
+}
+
+function serializeTimelineItem(item: OperationTimelineItem): OperationTimelineItemDto {
+  if (item.kind === "entry") {
+    return {
+      kind: "entry",
+      occurredAt: item.occurredAt,
+      createdAt: item.entry.created_at,
+      createdBy: toOperationCreatedByDto(item.entry),
+      entry: item.entry
+    };
+  }
+
+  return {
+    kind: "transfer",
+    occurredAt: item.occurredAt,
+    createdAt: item.transfer.created_at,
+    createdBy: toOperationCreatedByDto(item.transfer),
+    transfer: item.transfer
+  };
 }
 
 async function sumEntriesReporting(
@@ -388,7 +409,7 @@ export async function listOperationsTimeline(
 
   return {
     reportingCurrency,
-    items: page,
+    items: page.map(serializeTimelineItem),
     total,
     summary: {
       operationsCount: total,
