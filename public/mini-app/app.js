@@ -1833,6 +1833,7 @@ function resetAccountForm() {
   applyAccountIconKeyToForm(DEFAULT_ACCOUNT_ICON_KEY);
   setAccountsStatus("");
   syncAccountFormTitles();
+  syncAccountPreview();
 }
 
 function startAccountEdit(accountId) {
@@ -1859,6 +1860,7 @@ function startAccountEdit(accountId) {
   }
   applyAccountIconKeyToForm(meta.iconKey || defaultAccountIconKeyForType(account.type));
   syncAccountFormTitles();
+  syncAccountPreview();
   setAccountsStatus("Режим редактирования: измените данные ниже и нажмите «Сохранить изменения».", "success");
   openScreen("accounts");
 
@@ -2621,9 +2623,9 @@ function renderAccounts(accounts) {
   syncAccountFormTitles();
   cancelAccountEditButton?.classList.toggle("hidden-button", !state.editingAccountId);
 
-  const headCount = document.getElementById("webAccountsHeadCount");
-  if (headCount) {
-    headCount.textContent = accounts.length > 0 ? `Всего счетов: ${accounts.length}` : "";
+  const headBadge = document.getElementById("webAccountsHeadBadge");
+  if (headBadge) {
+    headBadge.textContent = String(accounts.length);
   }
 
   renderTgAccountsSummary(accounts);
@@ -2798,6 +2800,61 @@ function applyAccountIconKeyToForm(iconKey) {
   document.querySelectorAll("#webAccountIconGrid .web-category-icon-btn").forEach((btn) => {
     btn.classList.toggle("is-selected", btn.dataset.accountIcon === k);
   });
+  syncAccountPreview();
+}
+
+function readAccountPreviewAccentHex() {
+  const hidden = document.getElementById("accountAccentInput");
+  const fromForm = hidden instanceof HTMLInputElement ? hidden.value.trim() : "";
+  if (fromForm && /^#[0-9a-fA-F]{6}$/.test(fromForm)) {
+    return fromForm.toLowerCase();
+  }
+  if (state.editingAccountId) {
+    const stored = readAccountAccent(state.editingAccountId);
+    if (stored) {
+      return stored;
+    }
+  }
+  return "#4338ca";
+}
+
+function syncAccountPreview() {
+  if (!isWebMode) {
+    return;
+  }
+
+  const titleEl = document.getElementById("tgAccountPreviewTitle");
+  const metaEl = document.getElementById("tgAccountPreviewMeta");
+  const balanceEl = document.getElementById("tgAccountPreviewBalance");
+  const iconEl = document.getElementById("tgAccountPreviewIcon");
+  const glyphEl = document.getElementById("tgAccountPreviewIconGlyph");
+  const nameInput = document.getElementById("nameInput");
+  const typeInput = document.getElementById("typeInput");
+  const balanceInput = document.getElementById("balanceInput");
+  const iconKeyInput = document.getElementById("accountIconKeyInput");
+
+  if (!titleEl || !metaEl || !balanceEl || !iconEl || !glyphEl) {
+    return;
+  }
+
+  const rawName = nameInput instanceof HTMLInputElement ? nameInput.value.trim() : "";
+  const type = typeInput instanceof HTMLSelectElement ? typeInput.value : "cash";
+  const currency =
+    currencyInput instanceof HTMLSelectElement && currencyInput.value
+      ? currencyInput.value
+      : "USD";
+  const iconKey =
+    iconKeyInput instanceof HTMLInputElement && String(iconKeyInput.value ?? "").trim()
+      ? String(iconKeyInput.value).trim()
+      : defaultAccountIconKeyForType(type);
+
+  titleEl.textContent = `${rawName || "Tinkoff"} · ${currency}`;
+  metaEl.textContent = `${formatType(type)} · ${formatCurrencyLineFromCode(currency)}`;
+  glyphEl.textContent = getAccountIconGlyph(iconKey);
+  iconEl.style.backgroundColor = readAccountPreviewAccentHex();
+
+  const balance = balanceInput instanceof HTMLInputElement ? Number(balanceInput.value) : 0;
+  balanceEl.textContent = formatMoney(Number.isFinite(balance) ? balance : 0, currency);
 }
 
 let categoryFormSharedChromeAttached = false;
@@ -2876,6 +2933,7 @@ function applyAccentSwatchesForAccountId(accountId) {
   const hex = readAccountAccent(accountId);
   const hidden = document.getElementById("accountAccentInput");
   if (!hidden || !hex) {
+    syncAccountPreview();
     return;
   }
   hidden.value = hex;
@@ -2884,6 +2942,7 @@ function applyAccentSwatchesForAccountId(accountId) {
       b.classList.add("is-selected");
     }
   });
+  syncAccountPreview();
 }
 
 function attachWebAccountColorChrome() {
@@ -2907,7 +2966,48 @@ function attachWebAccountColorChrome() {
     if (hidden) {
       hidden.value = hex.toLowerCase();
     }
+    syncAccountPreview();
   });
+}
+
+let accountFormChromeAttached = false;
+
+function attachAccountFormChrome() {
+  if (accountFormChromeAttached) {
+    return;
+  }
+  accountFormChromeAttached = true;
+
+  const iconGrid = document.getElementById("webAccountIconGrid");
+  iconGrid?.addEventListener("click", (event) => {
+    const t = event.target instanceof Element ? event.target.closest("[data-account-icon]") : null;
+    if (!t || !iconGrid.contains(t)) {
+      return;
+    }
+    const key = t.dataset.accountIcon?.trim();
+    if (!key) {
+      return;
+    }
+    iconGrid.querySelectorAll(".web-category-icon-btn").forEach((b) => b.classList.remove("is-selected"));
+    t.classList.add("is-selected");
+    applyAccountIconKeyToForm(key);
+  });
+
+  document.getElementById("typeInput")?.addEventListener("change", () => {
+    if (!state.editingAccountId) {
+      const typeEl = document.getElementById("typeInput");
+      const nextType = typeEl instanceof HTMLSelectElement ? typeEl.value : "cash";
+      applyAccountIconKeyToForm(defaultAccountIconKeyForType(nextType));
+    } else {
+      syncAccountPreview();
+    }
+  });
+
+  document.getElementById("nameInput")?.addEventListener("input", syncAccountPreview);
+  document.getElementById("balanceInput")?.addEventListener("input", syncAccountPreview);
+  currencyInput?.addEventListener("change", syncAccountPreview);
+
+  syncAccountPreview();
 }
 
 function syncAccountFormTitles() {
@@ -6447,29 +6547,6 @@ function attachTgAccountsScreenChrome() {
     document.querySelector("#screen-accounts .web-accounts-main")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  const iconGrid = document.getElementById("webAccountIconGrid");
-  iconGrid?.addEventListener("click", (event) => {
-    const t = event.target instanceof Element ? event.target.closest("[data-account-icon]") : null;
-    if (!t || !iconGrid.contains(t)) {
-      return;
-    }
-    const key = t.dataset.accountIcon?.trim();
-    if (!key) {
-      return;
-    }
-    iconGrid.querySelectorAll(".web-category-icon-btn").forEach((b) => b.classList.remove("is-selected"));
-    t.classList.add("is-selected");
-    applyAccountIconKeyToForm(key);
-  });
-
-  document.getElementById("typeInput")?.addEventListener("change", () => {
-    if (state.editingAccountId) {
-      return;
-    }
-    const typeEl = document.getElementById("typeInput");
-    const nextType = typeEl instanceof HTMLSelectElement ? typeEl.value : "cash";
-    applyAccountIconKeyToForm(defaultAccountIconKeyForType(nextType));
-  });
 }
 
 function attachAccountsListListener() {
@@ -7208,6 +7285,7 @@ attachCategoryListsListener();
 attachCategoryFormSharedChrome();
 attachWebCategoriesChrome();
 attachWebAccountColorChrome();
+attachAccountFormChrome();
 attachTgAccountsScreenChrome();
 attachFxReferencePanelListeners();
 

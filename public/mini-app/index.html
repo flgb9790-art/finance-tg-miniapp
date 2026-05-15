@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260515web-categories-balance";
+        var BALANCY_CLIENT_ASSET_REV = "20260515web-accounts-layout";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -651,17 +651,19 @@
                   </div>
                 </header>
 
-                <div class="web-accounts-list-shell web-accounts-surface">
+                <section class="web-accounts-list-shell web-accounts-surface web-accounts-toolbar--web">
                   <p class="section-label web-accounts-telegram-label">Счета</p>
-                  <div class="web-accounts-list-head">
-                    <h2 id="accountsTitle" class="web-accounts-title">Ваши счета</h2>
-                    <span id="webAccountsHeadCount" class="web-accounts-head-count muted"></span>
+                  <header class="web-categories-section-head web-accounts-list-head">
+                    <h2 id="accountsTitle" class="web-categories-section-title web-accounts-title">Ваши счета</h2>
+                    <span id="webAccountsHeadBadge" class="web-categories-badge">0</span>
+                  </header>
+                  <div class="web-accounts-list-body">
+                    <div id="accountsList" class="accounts-list"></div>
                   </div>
-                  <div id="accountsList" class="accounts-list"></div>
-                  <button type="button" class="web-categories-add-outline tg-accounts-add-btn" id="tgAccountsAddOutlineButton">
+                  <button type="button" class="web-categories-add-outline tg-accounts-add-btn tg-only-block" id="tgAccountsAddOutlineButton">
                     + Добавить счёт
                   </button>
-                </div>
+                </section>
 
                 <section id="tgAccountsSummaryCard" class="web-accounts-surface tg-accounts-summary tg-only-block" hidden>
                   <h3 class="tg-accounts-summary-title">Сводка по счетам</h3>
@@ -816,7 +818,7 @@
                   <input type="hidden" id="accountAccentInput" value="" autocomplete="off" />
                 </div>
 
-                <div class="tg-account-icon-block tg-only-block">
+                <div class="tg-account-icon-block">
                   <span class="web-categories-field-label">Иконка (необязательно)</span>
                   <div id="webAccountIconGrid" class="web-category-icon-grid" role="group" aria-label="Иконка счёта">
                     <button type="button" class="web-category-icon-btn is-selected" data-account-icon="card" aria-label="Карта" title="Карта"><span aria-hidden="true">💳</span></button>
@@ -848,6 +850,25 @@
                     placeholder="Добавьте описание счёта"
                   ></textarea>
                 </label>
+
+                <div class="tg-account-preview-block web-only-block">
+                  <span class="web-categories-field-label">Предпросмотр</span>
+                  <article class="tg-account-preview-card" id="tgAccountPreviewCard">
+                    <div class="tg-account-preview-top">
+                      <div class="tg-account-preview-icon" id="tgAccountPreviewIcon" aria-hidden="true">
+                        <span id="tgAccountPreviewIconGlyph" class="account-leading-glyph">💳</span>
+                      </div>
+                      <div class="tg-account-preview-names">
+                        <div id="tgAccountPreviewTitle" class="tg-account-preview-title">Tinkoff · USD</div>
+                        <div id="tgAccountPreviewMeta" class="tg-account-preview-meta muted">Карта · USD — US Dollar</div>
+                      </div>
+                    </div>
+                    <div class="tg-account-preview-bottom">
+                      <div class="tg-account-preview-balance-label muted">Баланс</div>
+                      <div id="tgAccountPreviewBalance" class="tg-account-preview-balance">0,00 USD</div>
+                    </div>
+                  </article>
+                </div>
 
                 <p id="accountsStatusText" class="muted form-status"></p>
                 <div class="web-accounts-form-actions">
