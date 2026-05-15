@@ -3490,7 +3490,9 @@ body.web-mode .web-dash-hero .hero-currency-select.fx-board-base-select--toolbar
 .web-dash-spark-bar {
   display: block;
   flex: 1 1 0;
-  min-width: 2px;
+  min-width: 0;
+  max-width: none;
+  width: auto;
   border-radius: 3px 3px 1px 1px;
   min-height: 4px;
   transition: height 0.28s ease;
@@ -3498,20 +3500,17 @@ body.web-mode .web-dash-hero .hero-currency-select.fx-board-base-select--toolbar
 
 .web-dash-spark-bar--slot-0,
 .web-dash-spark-bar--slot-5 {
-  flex: 0.72 1 0;
-  max-width: 5px;
+  flex: 0.92 1 0;
 }
 
 .web-dash-spark-bar--slot-1,
 .web-dash-spark-bar--slot-4 {
-  flex: 0.88 1 0;
-  max-width: 7px;
+  flex: 0.96 1 0;
 }
 
 .web-dash-spark-bar--slot-2,
 .web-dash-spark-bar--slot-3 {
-  flex: 1.05 1 0;
-  max-width: 9px;
+  flex: 1 1 0;
 }
 
 .web-dash-spark-bar--chart-edge {
