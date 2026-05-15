@@ -105,6 +105,8 @@ const entryAmountInput = document.getElementById("entryAmountInput");
 const entryCurrencyInput = document.getElementById("entryCurrencyInput");
 const entryCurrencyHint = document.getElementById("entryCurrencyHint");
 const webActivityRecentListElement = document.getElementById("webActivityRecentList");
+const webTransferRecentListElement = document.getElementById("webTransferRecentList");
+const WEB_RECENT_SIDEBAR_LIMIT = 9;
 const transferForm = document.getElementById("transferForm");
 const transferSubmitButton = document.getElementById("transferSubmitButton");
 const transferFromAccountInput = document.getElementById("transferFromAccountInput");
@@ -4251,12 +4253,58 @@ function buildRecentActivityCombinedHtml(entries, transfers, limit = 12) {
     .join("");
 }
 
+function buildWebRecentTransfersHtml(transfers, limit = WEB_RECENT_SIDEBAR_LIMIT) {
+  const list = (Array.isArray(transfers) ? transfers : []).slice(0, limit);
+
+  if (list.length === 0) {
+    return `
+      <div class="empty-state">
+        <strong>Переводов пока нет</strong>
+        <p class="account-meta">Создайте первый перевод между счетами.</p>
+      </div>
+    `;
+  }
+
+  return list
+    .map((transfer) => {
+      return `
+        <article class="account-item home-activity-row">
+          <div class="account-item-header">
+            <div class="item-leading">
+              <div class="entry-icon entry-icon-transfer">${getEntryIcon("transfer")}</div>
+              <div class="item-copy">
+                <div class="account-name">${escapeHtml(transfer.from_account?.name ?? "Счет")} → ${escapeHtml(
+                  transfer.to_account?.name ?? "Счет"
+                )}</div>
+                <div class="account-meta">${escapeHtml(formatDateTime(transfer.occurred_at))}</div>
+              </div>
+            </div>
+            ${formatTransferAmountStackHtml(transfer)}
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function renderWebTransferRecentList(transfers) {
+  if (!isWebMode || !webTransferRecentListElement) {
+    return;
+  }
+
+  webTransferRecentListElement.innerHTML = buildWebRecentTransfersHtml(transfers, WEB_RECENT_SIDEBAR_LIMIT);
+}
+
 function renderWebActivityRecentList(entries, transfers) {
   if (!isWebMode || !webActivityRecentListElement) {
     return;
   }
 
-  webActivityRecentListElement.innerHTML = buildRecentActivityCombinedHtml(entries, transfers, 9);
+  webActivityRecentListElement.innerHTML = buildRecentActivityCombinedHtml(
+    entries,
+    transfers,
+    WEB_RECENT_SIDEBAR_LIMIT
+  );
 }
 
 function renderHomeRecentActivity(entries, transfers) {
@@ -5673,6 +5721,7 @@ function renderAll() {
   safeRenderStep("webActivityRecent", () =>
     renderWebActivityRecentList(state.recentEntries, state.recentTransfers)
   );
+  safeRenderStep("webTransferRecent", () => renderWebTransferRecentList(state.recentTransfers));
   safeRenderStep("report", () => {
     renderReport(state.report);
     if (!isWebMode && document.body.dataset.appActiveScreen === "reports" && state.report) {

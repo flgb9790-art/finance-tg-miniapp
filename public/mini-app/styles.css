@@ -3883,7 +3883,9 @@ body.web-mode #screen-activity .activity-form-card {
 }
 
 body.web-mode #screen-activity .web-activity-recent-card.card,
-body.web-mode #screen-activity .activity-form-card.card {
+body.web-mode #screen-transfer .web-activity-recent-card.card,
+body.web-mode #screen-activity .activity-form-card.card,
+body.web-mode #screen-transfer .web-transfer-card.card {
   background: #fff !important;
   border: 1px solid rgb(15 23 42 / 0.08) !important;
   border-radius: 18px !important;
@@ -5163,20 +5165,19 @@ body.web-mode #screen-activity.screen-active {
   max-width: 100%;
 }
 
-body.web-mode .web-activity-layout {
+body.web-mode .web-activity-layout,
+body.web-mode .web-transfer-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px;
-  align-items: stretch;
+  align-items: start;
   width: 100%;
 }
 
 body.web-mode .web-activity-recent-card {
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  height: 100%;
-  align-self: stretch;
+  align-self: start;
 }
 
 body.web-mode .web-activity-recent-title {
@@ -5188,9 +5189,6 @@ body.web-mode .web-activity-recent-title {
 
 body.web-mode .web-activity-recent-list {
   margin-top: 12px;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
   padding: 0;
   border: none;
   border-radius: 0;
@@ -5223,13 +5221,13 @@ body.web-mode .web-activity-recent-list .empty-state {
   padding: 16px 8px;
 }
 
-body.web-mode .web-activity-main {
+body.web-mode .web-activity-main,
+body.web-mode .web-transfer-main {
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  height: 100%;
-  align-self: stretch;
+  align-self: start;
 }
 
 body.web-mode .web-activity-main .activity-form-card {
@@ -5434,24 +5432,29 @@ body.web-mode .tg-only-block {
   display: none !important;
 }
 
-body.web-mode[data-app-active-screen="transfer"] #screen-transfer.screen-active > :not(.web-transfer-sheet) {
+body.web-mode[data-app-active-screen="transfer"] #screen-transfer.screen-active > :not(.web-transfer-layout) {
   display: none !important;
 }
 
 body.web-mode[data-app-active-screen="transfer"] #screen-transfer.screen-active {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
+  display: block;
   padding-top: 8px;
+}
+
+body.web-mode[data-app-active-screen="transfer"] .web-transfer-layout {
+  width: 100%;
 }
 
 body.web-mode[data-app-active-screen="transfer"] .web-transfer-sheet {
   width: 100%;
-  max-width: 560px;
+  max-width: none;
 }
 
-body:not(.web-mode)[data-app-active-screen="transfer"] #screen-transfer.screen-active > :not(.web-transfer-sheet) {
+body:not(.web-mode)[data-app-active-screen="transfer"] #screen-transfer.screen-active > :not(.web-transfer-layout) {
+  display: none !important;
+}
+
+body:not(.web-mode)[data-app-active-screen="transfer"] .web-transfer-layout > :not(.web-transfer-main) {
   display: none !important;
 }
 
