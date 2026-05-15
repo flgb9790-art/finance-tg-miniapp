@@ -35,6 +35,10 @@
   --form-control-min-height: 50px;
   --form-control-padding-y: 11px;
   --form-control-padding-x: 15px;
+  /* Telegram: нижняя навигация — смещение от visualViewport (клавиатура) */
+  --balancy-nav-visual-bottom: 0px;
+  --balancy-nav-visual-left: 0px;
+  --balancy-nav-visual-width: 100%;
 }
 
 * {
@@ -292,8 +296,27 @@ body.web-mode .pull-refresh-host {
   align-content: start;
 }
 
+/* Telegram: min-width:0 у активного экрана даёт «узкую колонку» (История и др.), пока контент не раздвинет грид */
+body:not(.web-mode) main.content.tabbed-content {
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+body:not(.web-mode) main.content.tabbed-content > .screen.screen-active {
+  min-width: 100%;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 #screen-home {
   min-width: 0;
+}
+
+body:not(.web-mode) #screen-home {
+  min-width: 100%;
 }
 
 .topbar,
@@ -1833,6 +1856,15 @@ details.currency-breakdown[open] .currency-breakdown-hint::before {
   border-radius: 0;
   border-top: 1px solid var(--line);
   box-shadow: 0 -6px 22px rgb(15 23 42 / 0.08);
+}
+
+/* Telegram: панель привязана к нижнему краю видимой области (над клавиатурой), без «прыжков» layout viewport */
+body:not(.web-mode) nav.bottom-nav {
+  left: var(--balancy-nav-visual-left, 0px);
+  right: auto;
+  width: var(--balancy-nav-visual-width, 100%);
+  max-width: none;
+  bottom: var(--balancy-nav-visual-bottom, 0px);
 }
 
 .bottom-nav-button {
@@ -8327,12 +8359,12 @@ body:not(.web-mode) .tg-mini-topbar-legacy-refresh {
 body:not(.web-mode) .app-shell {
   padding-top: 10px;
   max-width: 100%;
-  overflow-x: clip;
+  overflow-x: hidden;
   box-sizing: border-box;
 }
 
 body:not(.web-mode) html {
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 
 body:not(.web-mode) .bottom-nav-item--web-only {
@@ -8563,6 +8595,15 @@ body:not(.web-mode) #screen-home .balancy-home-currencies-scroll {
 
 body:not(.web-mode) #screen-home .balancy-home-currencies-scroll::-webkit-scrollbar {
   height: 0;
+}
+
+/* Один скролл-контейнер: внутренний .currency-breakdown-strip не должен перехватывать жесты (Android). */
+body:not(.web-mode) #screen-home .balancy-home-currencies-scroll .currency-breakdown-strip {
+  overflow-x: visible !important;
+  overscroll-behavior-x: auto;
+  scroll-snap-type: none;
+  margin-right: 0;
+  padding-bottom: 0;
 }
 
 body:not(.web-mode) #screen-home .balancy-home-currencies-strip {
