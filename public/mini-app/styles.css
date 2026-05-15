@@ -4327,21 +4327,20 @@ body:not(.web-mode) .web-activity-tip {
   display: none !important;
 }
 
-body:not(.web-mode) #screen-activity > .web-activity-tip {
+body:not(.web-mode) #screen-activity .balancy-hint-card[data-balancy-hint="activityForm"] {
   display: flex !important;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 12px 14px;
-  margin: 0 0 12px;
+  margin: 12px 0 0;
   border-radius: 14px;
   background: rgb(248 250 252);
   border: 1px solid rgb(15 23 42 / 0.06);
-}
-
-body:not(.web-mode) #screen-activity > .activity-form-card:not(.web-transfer-card) {
-  display: block !important;
 }
 
 body:not(.web-mode) #entryFormResetWeb {
@@ -4358,8 +4357,14 @@ body:not(.web-mode) #screen-activity > .activity-ledger-card {
 }
 
 body:not(.web-mode) #screen-activity {
-  min-width: 0;
+  min-width: 100%;
+  width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
+}
+
+body:not(.web-mode) #screen-activity .balancy-hint-card[data-balancy-hint="activityForm"][hidden] {
+  display: none !important;
 }
 
 body:not(.web-mode) #screen-ledger.screen-active .tg-ops-activity-root {
@@ -5038,12 +5043,45 @@ body:not(.web-mode) .tg-ops-date-input-shell .tg-ops-control[type="date"] {
   }
 }
 
-body:not(.web-mode) .web-activity-layout {
-  display: contents;
+body:not(.web-mode) #screen-activity .web-activity-layout {
+  display: block;
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
-body:not(.web-mode) .web-activity-main {
-  display: contents;
+body:not(.web-mode) #screen-activity .web-activity-main {
+  display: block;
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+body:not(.web-mode) #screen-activity .activity-form-card:not(.web-transfer-card) {
+  display: block !important;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+body:not(.web-mode) #screen-activity .web-op-entry-form {
+  width: 100%;
+  min-width: 0;
+}
+
+body:not(.web-mode) #screen-activity .web-op-entry-form label {
+  width: 100%;
+  min-width: 0;
+}
+
+body:not(.web-mode) #screen-activity .web-op-entry-form input,
+body:not(.web-mode) #screen-activity .web-op-entry-form select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 body.web-mode #screen-activity.screen-active {
@@ -5056,7 +5094,7 @@ body.web-mode .web-activity-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
   width: 100%;
 }
 
@@ -5067,9 +5105,11 @@ body.web-mode .web-activity-recent-card {
   border: 1px solid rgb(15 23 42 / 0.08);
   background: #fff;
   box-shadow: 0 4px 22px rgb(15 23 42 / 0.06);
-  min-height: 320px;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  align-self: stretch;
 }
 
 body.web-mode .web-activity-recent-title {
@@ -5083,9 +5123,31 @@ body.web-mode .web-activity-recent-list {
   margin-top: 12px;
   flex: 1 1 auto;
   min-height: 0;
-  max-height: min(72vh, 640px);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgb(248 250 252);
+  border: 1px solid rgb(226 232 240);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+body.web-mode .web-activity-recent-list .home-activity-row {
+  background: #fff;
+  border: 1px solid rgb(226 232 240);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+body.web-mode .web-activity-recent-list .home-activity-row + .home-activity-row {
+  margin-top: 8px;
+}
+
+body.web-mode .web-activity-recent-list .empty-state {
+  background: transparent;
+  border: none;
+  padding: 16px 8px;
 }
 
 body.web-mode .web-activity-main {
@@ -5093,6 +5155,18 @@ body.web-mode .web-activity-main {
   display: flex;
   flex-direction: column;
   gap: 0;
+  height: 100%;
+  align-self: stretch;
+}
+
+body.web-mode .web-activity-main .activity-form-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+body.web-mode .web-activity-main .web-op-entry-form {
+  flex: 1 1 auto;
 }
 
 body.web-mode .web-activity-compose {
@@ -9146,7 +9220,7 @@ body:not(.web-mode) #screen-more .tg-more-screen-actions .ghost-button {
   margin: 0 0 12px;
 }
 
-#screen-activity > .balancy-hint-card {
+#screen-activity .balancy-hint-card[data-balancy-hint="activityForm"] {
   margin-top: 4px;
 }
 

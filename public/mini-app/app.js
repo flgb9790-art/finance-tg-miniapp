@@ -1952,6 +1952,10 @@ function readEntryAccountCurrency() {
   return String(raw).trim().toUpperCase();
 }
 
+function readEntryOperationCurrency() {
+  return String(entryCurrencyInput?.value ?? "").trim().toUpperCase();
+}
+
 function syncEntryCurrencyFromAccount(forceAccountCurrency = false) {
   if (!entryCurrencyInput) {
     return;
@@ -4154,7 +4158,7 @@ function renderWebActivityRecentList(entries, transfers) {
     return;
   }
 
-  webActivityRecentListElement.innerHTML = buildRecentActivityCombinedHtml(entries, transfers, 12);
+  webActivityRecentListElement.innerHTML = buildRecentActivityCombinedHtml(entries, transfers, 8);
 }
 
 function renderHomeRecentActivity(entries, transfers) {
@@ -5060,8 +5064,17 @@ function populateAccountOptions() {
     transferToAccountInput.selectedIndex = 1;
   }
 
+  const preservedCurrency = readEntryOperationCurrency();
   populateEntryCurrencyOptions();
-  syncEntryCurrencyFromAccount(true);
+  const currencyCodes = [...(entryCurrencyInput?.options ?? [])]
+    .map((option) => option.value)
+    .filter(Boolean);
+  if (preservedCurrency && currencyCodes.includes(preservedCurrency)) {
+    entryCurrencyInput.value = preservedCurrency;
+    syncEntryCurrencyHint();
+  } else {
+    syncEntryCurrencyFromAccount(true);
+  }
   syncWebTransferAmountCurrencyUi();
 }
 
@@ -6637,13 +6650,19 @@ async function handleCreateEntry(event) {
 
   const formData = new FormData(entryForm);
   const rawDate = String(formData.get("occurredAt") ?? "");
-  const rawCurrency = String(formData.get("currencyCode") ?? "").trim().toUpperCase();
+  const accountCurrency = readEntryAccountCurrency();
+  const operationCurrency =
+    readEntryOperationCurrency() ||
+    String(formData.get("currencyCode") ?? "")
+      .trim()
+      .toUpperCase() ||
+    accountCurrency;
   const payload = {
     kind: String(formData.get("kind") ?? "expense"),
     accountId: String(formData.get("accountId") ?? ""),
     categoryId: String(formData.get("categoryId") ?? ""),
     amount: Number(formData.get("amount") ?? 0),
-    currencyCode: rawCurrency || null,
+    currencyCode: operationCurrency || null,
     note: String(formData.get("note") ?? "").trim(),
     occurredAt: rawDate ? toIsoDate(rawDate) : new Date().toISOString()
   };
