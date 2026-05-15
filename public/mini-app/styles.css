@@ -7061,19 +7061,13 @@ body:not(.web-mode) .report-transfers-fallback:not([hidden]) {
 
 body.web-mode .web-categories-layout {
   display: grid;
-  grid-template-columns: minmax(0, 460px) minmax(440px, 1fr);
-  gap: 24px 28px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 24px;
   align-items: start;
 }
 
 body.web-mode .web-categories-main {
   min-width: 0;
-  max-width: 460px;
-}
-
-body.web-mode .web-categories-panel {
-  min-width: 0;
-  max-width: none;
 }
 
 body.web-mode .web-categories-legacy-wrap {
@@ -7458,18 +7452,18 @@ body.web-mode .tg-category-preview-block {
 
 body.web-mode .web-category-icon-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(7, 36px);
   gap: 8px;
   margin-top: 8px;
 }
 
 body.web-mode .web-category-icon-btn {
-  aspect-ratio: 1;
-  min-width: 0;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   border: 1px solid rgb(226 232 240);
   background: #fff;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -7478,8 +7472,7 @@ body.web-mode .web-category-icon-btn {
   padding: 0;
   transition:
     background 0.15s ease,
-    border-color 0.15s ease,
-    transform 0.12s ease;
+    border-color 0.15s ease;
 }
 
 body.web-mode .web-category-icon-btn:hover {
@@ -7510,9 +7503,9 @@ body.web-mode .tg-category-preview-leading {
 }
 
 body.web-mode .tg-category-preview-icon-ring {
-  width: 44px;
-  height: 44px;
-  border-radius: 999px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
