@@ -6675,6 +6675,25 @@ body.web-mode[data-app-active-screen="home"] .web-dash-plan-track {
   height: 8px;
 }
 
+@media (max-width: 753px) {
+  body.web-mode .web-home-rail,
+  body.web-mode[data-app-active-screen="home"] .web-home-rail {
+    grid-template-columns: 1fr;
+    align-items: start;
+    align-content: start;
+  }
+
+  body.web-mode .web-home-rail > .web-dash-donut-card,
+  body.web-mode .web-home-rail > .web-dash-plan-card,
+  body.web-mode[data-app-active-screen="home"] .web-home-rail > .web-dash-donut-card,
+  body.web-mode[data-app-active-screen="home"] .web-home-rail > .web-dash-plan-card {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    align-self: stretch;
+  }
+}
+
 body.web-mode[data-app-active-screen="home"] .web-home-foot-cta {
   margin-top: 8px;
   padding: 8px 10px;
