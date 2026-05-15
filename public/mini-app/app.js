@@ -211,8 +211,6 @@ let tgOpsFilterSnapshotInitialized = false;
 let tgActivityOpsChromeAttached = false;
 let tgOpsDefaultDatesInitialized = false;
 
-/** Активная вкладка списка категорий в веб-режиме */
-let webCategoriesActiveKind = "income";
 let webCategoriesChromeAttached = false;
 
 /** Экран, на который вернёмся после «Назад» / отмены с формы перевода */
@@ -3257,40 +3255,8 @@ function applyAccentSwatchesForCategoryId(categoryId) {
   syncTgCategoryPreview();
 }
 
-function renderWebCategoriesTable(categories) {
-  const tbody = document.getElementById("webCategoriesTableBody");
-  if (!tbody || !isWebMode) {
-    return;
-  }
-
-  const kind = webCategoriesActiveKind === "expense" ? "expense" : "income";
-  const items = categories.filter((c) => c.kind === kind);
-
-  document.querySelectorAll("[data-web-categories-tab]").forEach((btn) => {
-    const active = btn.dataset.webCategoriesTab === kind;
-    btn.classList.toggle("is-active", active);
-    btn.setAttribute("aria-selected", active ? "true" : "false");
-  });
-
-  const emptyEl = document.getElementById("webCategoriesEmptyState");
-  const footer = document.getElementById("webCategoriesFooterCount");
-
-  if (items.length === 0) {
-    tbody.innerHTML = "";
-    if (emptyEl) {
-      emptyEl.hidden = false;
-    }
-    if (footer) {
-      footer.textContent = formatCategoryCountRu(0);
-    }
-    return;
-  }
-
-  if (emptyEl) {
-    emptyEl.hidden = true;
-  }
-
-  tbody.innerHTML = items
+function buildWebCategoriesTableRowsHtml(items) {
+  return items
     .map((category) => {
       const dot = resolveCategoryDotColor(category);
       const meta = readCategoryUiMeta(category.id);
@@ -3315,10 +3281,41 @@ function renderWebCategoriesTable(categories) {
       </tr>`;
     })
     .join("");
+}
 
-  if (footer) {
-    footer.textContent = formatCategoryCountRu(items.length);
+function renderWebCategoriesTableSection(kind, categories) {
+  const tbodyId = kind === "income" ? "webCategoriesIncomeTableBody" : "webCategoriesExpenseTableBody";
+  const emptyId = kind === "income" ? "webCategoriesIncomeEmptyState" : "webCategoriesExpenseEmptyState";
+  const tbody = document.getElementById(tbodyId);
+  const emptyEl = document.getElementById(emptyId);
+  if (!tbody) {
+    return;
   }
+
+  const items = categories.filter((c) => c.kind === kind);
+
+  if (items.length === 0) {
+    tbody.innerHTML = "";
+    if (emptyEl) {
+      emptyEl.hidden = false;
+    }
+    return;
+  }
+
+  if (emptyEl) {
+    emptyEl.hidden = true;
+  }
+
+  tbody.innerHTML = buildWebCategoriesTableRowsHtml(items);
+}
+
+function renderWebCategoriesTable(categories) {
+  if (!isWebMode) {
+    return;
+  }
+
+  renderWebCategoriesTableSection("income", categories);
+  renderWebCategoriesTableSection("expense", categories);
 }
 
 function attachWebCategoriesChrome() {
@@ -3326,39 +3323,6 @@ function attachWebCategoriesChrome() {
     return;
   }
   webCategoriesChromeAttached = true;
-
-  document.querySelectorAll("[data-web-categories-tab]").forEach((btn) => {
-    btn.addEventListener("mousedown", (event) => {
-      event.preventDefault();
-    });
-    btn.addEventListener("click", () => {
-      const next = btn.dataset.webCategoriesTab;
-      if (next !== "income" && next !== "expense") {
-        return;
-      }
-      webCategoriesActiveKind = next;
-      renderWebCategoriesTable(state.categories);
-    });
-  });
-
-  document.getElementById("webCategoriesOpenFormButton")?.addEventListener("click", () => {
-    state.editingCategoryId = null;
-    categoryForm.reset();
-    const sel = document.getElementById("categoryKindInput");
-    if (sel) {
-      sel.value = webCategoriesActiveKind === "expense" ? "expense" : "income";
-    }
-    syncWebCategoryKindPicksFromSelect();
-    clearWebCategoryAccentSelection();
-    const desc = document.getElementById("categoryDescriptionInput");
-    if (desc instanceof HTMLTextAreaElement) {
-      desc.value = "";
-    }
-    applyCategoryIconKeyToForm(DEFAULT_CATEGORY_ICON_KEY);
-    syncCategoryFormChrome();
-    syncTgCategoryPreview();
-    document.getElementById("categoryNameInput")?.focus();
-  });
 }
 
 function syncCategoryFormChrome() {
@@ -3433,7 +3397,6 @@ function startCategoryEdit(categoryId) {
   openScreen("categories");
 
   if (isWebMode) {
-    webCategoriesActiveKind = category.kind;
     renderWebCategoriesTable(state.categories);
     window.requestAnimationFrame(() => {
       document.getElementById("categoryNameInput")?.focus({ preventScroll: true });
@@ -6903,7 +6866,8 @@ function attachCategoryListsListener() {
 
   incomeCategoriesListElement.addEventListener("click", onCategoryListClick);
   expenseCategoriesListElement.addEventListener("click", onCategoryListClick);
-  document.getElementById("webCategoriesTableBody")?.addEventListener("click", onCategoryListClick);
+  document.getElementById("webCategoriesIncomeTableBody")?.addEventListener("click", onCategoryListClick);
+  document.getElementById("webCategoriesExpenseTableBody")?.addEventListener("click", onCategoryListClick);
 }
 
 if (refreshButton) {

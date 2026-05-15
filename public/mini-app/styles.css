@@ -7078,13 +7078,44 @@ body:not(.web-mode) .web-categories-toolbar--web {
   display: none !important;
 }
 
-body.web-mode .web-categories-toolbar.web-categories-toolbar--web {
+body.web-mode .web-categories-list-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+}
+
+body.web-mode .web-categories-section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+body.web-mode .web-categories-section-head {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 12px 16px 14px;
-  border-radius: 16px;
   border: 1px solid rgb(15 23 42 / 0.08);
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
   background: #fff;
-  box-shadow: 0 1px 3px rgb(15 23 42 / 0.05);
+}
+
+body.web-mode .web-categories-section-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: rgb(15 23 42);
+}
+
+body.web-mode .web-categories-section .web-categories-table-shell {
+  border-radius: 0 0 16px 16px;
+  border-top: 1px solid rgb(226 232 240);
+  box-shadow: 0 4px 22px rgb(15 23 42 / 0.06);
 }
 
 .web-categories-toolbar {
@@ -7392,9 +7423,147 @@ body:not(.web-mode) .tg-color-label-tg {
 }
 
 body.web-mode .tg-category-icon-block,
-body.web-mode .tg-category-preview-block,
-body.web-mode .tg-category-desc-label {
-  display: none !important;
+body.web-mode .tg-category-preview-block {
+  display: block;
+}
+
+body.web-mode .web-category-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+body.web-mode .web-category-icon-btn {
+  aspect-ratio: 1;
+  min-width: 0;
+  border-radius: 12px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.12s ease;
+}
+
+body.web-mode .web-category-icon-btn:hover {
+  background: rgb(248 250 252);
+}
+
+body.web-mode .tg-category-icon-block {
+  margin-top: 4px;
+}
+
+body.web-mode .tg-category-preview-block {
+  margin-top: 6px;
+}
+
+body.web-mode .tg-category-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgb(226 232 240);
+  background: rgb(248 250 252);
+}
+
+body.web-mode .tg-category-preview-leading {
+  flex-shrink: 0;
+}
+
+body.web-mode .tg-category-preview-icon-ring {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(224 231 255 / 0.95);
+  box-shadow: inset 0 0 0 1px rgb(67 56 202 / 0.18);
+}
+
+body.web-mode .tg-category-preview-icon-glyph {
+  font-size: 22px;
+  line-height: 1;
+}
+
+body.web-mode .tg-category-preview-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+body.web-mode .tg-category-preview-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+body.web-mode .tg-category-preview-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgb(15 23 42);
+}
+
+body.web-mode .tg-category-preview-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+body.web-mode .tg-category-preview-pill--income {
+  background: var(--balancy-ui-1-soft);
+  color: var(--balancy-ui-1);
+}
+
+body.web-mode .tg-category-preview-pill--expense {
+  background: rgb(254 226 226);
+  color: rgb(185 28 28);
+}
+
+body.web-mode .tg-category-preview-desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+body.web-mode .tg-category-preview-chevron {
+  display: none;
+}
+
+body.web-mode .tg-category-desc-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 88px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  font-size: 15px;
+  color: rgb(15 23 42);
+  font-family: inherit;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+body.web-mode .tg-category-desc-input::placeholder {
+  color: rgb(148 163 184);
+}
+
+body.web-mode .tg-category-desc-input:focus {
+  outline: none;
+  border-color: rgb(67 56 202 / 0.55);
+  box-shadow: 0 0 0 3px var(--balancy-ui-ring-soft);
 }
 
 body.web-mode .tg-category-panel-head {

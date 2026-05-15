@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260515tg-width-activity9";
+        var BALANCY_CLIENT_ASSET_REV = "20260515web-categories-ui";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -1578,53 +1578,54 @@
           <div class="web-categories-page">
             <div class="web-categories-layout">
               <div class="web-categories-main">
-                <div class="web-categories-toolbar web-categories-toolbar--web">
-                  <div class="web-categories-tabs" role="tablist" aria-label="Вид списка категорий">
-                    <button
-                      type="button"
-                      class="web-categories-tab is-active"
-                      role="tab"
-                      aria-selected="true"
-                      data-web-categories-tab="income"
-                    >
-                      Категории доходов
+                <div class="web-categories-list-stack web-categories-toolbar--web">
+                  <section class="web-categories-section" aria-labelledby="webCategoriesIncomeHeading">
+                    <header class="web-categories-section-head">
+                      <h2 id="webCategoriesIncomeHeading" class="web-categories-section-title">Категории доходов</h2>
                       <span id="webCategoriesIncomeBadge" class="web-categories-badge web-categories-badge--income">0</span>
-                    </button>
-                    <button
-                      type="button"
-                      class="web-categories-tab"
-                      role="tab"
-                      aria-selected="false"
-                      data-web-categories-tab="expense"
-                    >
-                      Категории расходов
+                    </header>
+                    <div class="web-categories-table-shell">
+                      <table class="web-categories-table" aria-label="Категории доходов">
+                        <thead>
+                          <tr>
+                            <th scope="col">Название</th>
+                            <th scope="col">Тип категории</th>
+                            <th scope="col" class="web-categories-col-actions">
+                              <span class="visually-hidden">Действия</span>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody id="webCategoriesIncomeTableBody"></tbody>
+                      </table>
+                      <div id="webCategoriesIncomeEmptyState" class="web-categories-empty" hidden>
+                        <p class="muted">Пока нет категорий доходов.</p>
+                      </div>
+                    </div>
+                  </section>
+                  <section class="web-categories-section" aria-labelledby="webCategoriesExpenseHeading">
+                    <header class="web-categories-section-head">
+                      <h2 id="webCategoriesExpenseHeading" class="web-categories-section-title">Категории расходов</h2>
                       <span id="webCategoriesExpenseBadge" class="web-categories-badge web-categories-badge--expense">0</span>
-                    </button>
-                  </div>
-                  <button type="button" id="webCategoriesOpenFormButton" class="web-categories-add-outline">
-                    + Добавить категорию
-                  </button>
+                    </header>
+                    <div class="web-categories-table-shell">
+                      <table class="web-categories-table" aria-label="Категории расходов">
+                        <thead>
+                          <tr>
+                            <th scope="col">Название</th>
+                            <th scope="col">Тип категории</th>
+                            <th scope="col" class="web-categories-col-actions">
+                              <span class="visually-hidden">Действия</span>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody id="webCategoriesExpenseTableBody"></tbody>
+                      </table>
+                      <div id="webCategoriesExpenseEmptyState" class="web-categories-empty" hidden>
+                        <p class="muted">Пока нет категорий расходов.</p>
+                      </div>
+                    </div>
+                  </section>
                 </div>
-
-                <div class="web-categories-table-shell web-categories-toolbar--web">
-                  <table class="web-categories-table" aria-label="Список категорий">
-                    <thead>
-                      <tr>
-                        <th scope="col">Название</th>
-                        <th scope="col">Тип категории</th>
-                        <th scope="col" class="web-categories-col-actions">
-                          <span class="visually-hidden">Действия</span>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody id="webCategoriesTableBody"></tbody>
-                  </table>
-                  <div id="webCategoriesEmptyState" class="web-categories-empty" hidden>
-                    <p class="muted">Пока нет категорий этого типа.</p>
-                  </div>
-                </div>
-
-                <p id="webCategoriesFooterCount" class="web-categories-footer muted web-categories-toolbar--web"></p>
 
                 <div class="balancy-hint-card tg-only-block" data-balancy-hint="categoriesSwipeTg" role="status" hidden>
                   <span class="balancy-hint-icon" aria-hidden="true">💡</span>
