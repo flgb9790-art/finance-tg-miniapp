@@ -1110,6 +1110,59 @@ function setAccountsStatus(text, type = "muted") {
         : "muted form-status";
 }
 
+/** Supabase / JSON иногда отдаёт telegram_user_id строкой — иначе в UI «нет ID». */
+function normalizeBootstrapUser(raw) {
+  if (!raw || typeof raw !== "object") {
+    return null;
+  }
+
+  const u = { ...raw };
+
+  if ("telegram_user_id" in u && u.telegram_user_id != null && typeof u.telegram_user_id !== "number") {
+    const n = Number(String(u.telegram_user_id).trim());
+    if (Number.isFinite(n)) {
+      u.telegram_user_id = n;
+    }
+  }
+
+  return u;
+}
+
+function getTelegramUserIdForDisplay(user) {
+  if (!user || typeof user !== "object") {
+    return null;
+  }
+
+  const tid = user.telegram_user_id;
+
+  if (typeof tid === "number" && Number.isFinite(tid)) {
+    return String(tid);
+  }
+
+  if (typeof tid === "string" && /^\d+$/.test(tid.trim())) {
+    return tid.trim();
+  }
+
+  return null;
+}
+
+function formatUserDisplayName(user) {
+  if (!user || typeof user !== "object") {
+    return "Пользователь";
+  }
+
+  const name =
+    [user.first_name, user.last_name].filter(Boolean).join(" ").trim() ||
+    (typeof user.username === "string" && user.username.trim() ? `@${user.username.trim()}` : "");
+
+  if (name) {
+    return name;
+  }
+
+  const id = getTelegramUserIdForDisplay(user);
+  return id ? `Telegram ${id}` : "Пользователь";
+}
+
 function syncHomeWelcomeLine(user) {
   if (!homeWelcomeLine) {
     return;
@@ -1123,6 +1176,7 @@ function syncHomeWelcomeLine(user) {
   const first =
     (typeof user.first_name === "string" && user.first_name.trim()) ||
     (typeof user.username === "string" && user.username.trim()) ||
+    getTelegramUserIdForDisplay(user) ||
     "друг";
 
   homeWelcomeLine.textContent = `Добро пожаловать, ${first} 👋`;
@@ -6158,15 +6212,9 @@ function syncWebProfile() {
     return;
   }
 
-  const displayName =
-    [user.first_name, user.last_name].filter(Boolean).join(" ") ||
-    (user.username ? `@${user.username}` : "") ||
-    "Telegram";
+  const displayName = formatUserDisplayName(user);
 
-  const telegramId =
-    typeof user.telegram_user_id === "number" && Number.isFinite(user.telegram_user_id)
-      ? String(user.telegram_user_id)
-      : "—";
+  const telegramId = getTelegramUserIdForDisplay(user) ?? "—";
 
   if (webProfileMeta) {
     webProfileMeta.textContent = `${displayName} · Telegram ID ${telegramId}`;
@@ -7059,9 +7107,37 @@ async function loadWebTeamInvitesList() {
       const item = document.createElement("li");
       item.className = "web-team-invite-item";
 
+      const tokenStr = typeof invite.token === "string" ? invite.token : "";
+      const tokenHint =
+        tokenStr.length > 14 ? `${tokenStr.slice(0, 8)}…${tokenStr.slice(-6)}` : tokenStr;
+
       const label = document.createElement("span");
       label.className = "web-team-invite-item-label";
-      label.textContent = formatWorkspaceInviteCreatedAt(invite.createdAt);
+      label.textContent = `${formatWorkspaceInviteCreatedAt(invite.createdAt)} · ${tokenHint}`;
+
+      const actions = document.createElement("div");
+      actions.className = "web-team-invite-item-actions";
+
+      const copyButton = document.createElement("button");
+      copyButton.type = "button";
+      copyButton.className = "ghost-button web-team-invite-copy";
+      copyButton.textContent = "Копировать";
+      copyButton.addEventListener("click", () => {
+        void (async () => {
+          if (!tokenStr) {
+            setStatus("Нет токена приглашения", "error");
+            return;
+          }
+
+          try {
+            const link = await buildWorkspaceInviteClipboardUrl(tokenStr);
+            await navigator.clipboard.writeText(link);
+            setStatus("Ссылка скопирована в буфер обмена", "success");
+          } catch (error) {
+            setStatus(error instanceof Error ? error.message : "Не удалось скопировать", "error");
+          }
+        })();
+      });
 
       const revokeButton = document.createElement("button");
       revokeButton.type = "button";
@@ -7085,7 +7161,8 @@ async function loadWebTeamInvitesList() {
         })();
       });
 
-      item.append(label, revokeButton);
+      actions.append(copyButton, revokeButton);
+      item.append(label, actions);
       webTeamInvitesListElement.appendChild(item);
     });
   } catch (error) {
@@ -7957,7 +8034,7 @@ function applyRefreshPayload(payload) {
 }
 
 function applyBootstrapPayload(payload) {
-  const user = payload.user;
+  const user = normalizeBootstrapUser(payload.user);
 
   state.user = user ?? state.user;
   state.accounts = payload.accounts ?? [];
@@ -7971,10 +8048,7 @@ function applyBootstrapPayload(payload) {
   applyWorkspacePayload(payload);
 
   if (userNameElement && user) {
-    userNameElement.textContent =
-      [user.first_name, user.last_name].filter(Boolean).join(" ") ||
-      user.username ||
-      "Пользователь";
+    userNameElement.textContent = formatUserDisplayName(user);
   }
 
   syncHomeWelcomeLine(user);

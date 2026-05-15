@@ -11217,18 +11217,28 @@ body.workspace-invite-gate-open .bottom-nav {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  flex-wrap: wrap;
   padding: 8px 10px;
   border-radius: 10px;
   border: 1px solid var(--line);
   background: #fff;
 }
 
-.web-team-invite-item-label {
-  font-size: 13px;
+.web-team-invite-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
 }
 
+.web-team-invite-copy,
 .web-team-invite-revoke {
   flex-shrink: 0;
+}
+
+.web-team-invite-item-label {
+  font-size: 13px;
 }
 
 .web-team-leave-block {
