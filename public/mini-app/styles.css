@@ -5558,6 +5558,60 @@ body:not(.web-mode)[data-app-active-screen="transfer"] .web-transfer-foot-tip {
   align-items: end;
 }
 
+@media (min-width: 521px) {
+  body.web-mode .web-transfer-accounts-row {
+    grid-template-rows: auto auto auto;
+    align-items: center;
+    column-gap: 10px;
+    row-gap: 0;
+  }
+
+  body.web-mode .web-transfer-accounts-row .web-transfer-field--account {
+    display: contents;
+  }
+
+  body.web-mode .web-transfer-accounts-row > .web-transfer-field--account:first-of-type > span {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+  }
+
+  body.web-mode .web-transfer-accounts-row > .web-transfer-field--account:first-of-type > .web-transfer-select-shell {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  body.web-mode .web-transfer-accounts-row > .web-transfer-field--account:first-of-type > .web-transfer-available {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: start;
+  }
+
+  body.web-mode .web-transfer-accounts-row > .web-transfer-swap-btn {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+    justify-self: center;
+  }
+
+  body.web-mode .web-transfer-accounts-row > .web-transfer-field--account:last-of-type > span {
+    grid-column: 3;
+    grid-row: 1;
+    align-self: end;
+  }
+
+  body.web-mode .web-transfer-accounts-row > .web-transfer-field--account:last-of-type > .web-transfer-select-shell {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  body.web-mode .web-transfer-accounts-row > .web-transfer-field--account:last-of-type > .web-transfer-available {
+    grid-column: 3;
+    grid-row: 3;
+    align-self: start;
+  }
+}
+
 @media (max-width: 520px) {
   .web-transfer-accounts-row {
     grid-template-columns: 1fr;
