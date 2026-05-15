@@ -4002,7 +4002,7 @@ async function refreshTgOperationsBoard() {
     return;
   }
 
-  root.innerHTML = `<div class="empty-state muted tg-ops-loading" style="padding: 20px 16px 24px;">Загрузка…</div>`;
+  root.innerHTML = `<div class="empty-state muted tg-ops-loading">Загрузка…</div>`;
   const nav = document.getElementById("tgOpsPaginationNav");
   if (nav) {
     nav.hidden = true;
@@ -4160,7 +4160,7 @@ function renderWebActivityRecentList(entries, transfers) {
     return;
   }
 
-  webActivityRecentListElement.innerHTML = buildRecentActivityCombinedHtml(entries, transfers, 8);
+  webActivityRecentListElement.innerHTML = buildRecentActivityCombinedHtml(entries, transfers, 9);
 }
 
 function renderHomeRecentActivity(entries, transfers) {

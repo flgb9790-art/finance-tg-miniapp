@@ -307,6 +307,41 @@ body:not(.web-mode) main.content.tabbed-content > .screen.screen-active {
   grid-template-columns: minmax(100%, 1fr);
 }
 
+body:not(.web-mode) #screen-ledger.screen-active,
+body:not(.web-mode) #screen-activity.screen-active {
+  min-width: 100%;
+  width: 100%;
+  max-width: 100%;
+  grid-template-columns: minmax(100%, 1fr);
+  align-self: stretch;
+}
+
+body:not(.web-mode) .tg-ops-activity-root,
+body:not(.web-mode) .tg-ops-list-card,
+body:not(.web-mode) #tgActivityCombinedList,
+body:not(.web-mode) .tg-ops-feed {
+  min-width: 100%;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+body:not(.web-mode) .tg-ops-head,
+body:not(.web-mode) .tg-ops-search-wrap,
+body:not(.web-mode) .tg-ops-filters-panel,
+body:not(.web-mode) .tg-ops-stats {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+body:not(.web-mode) #tgActivityCombinedList > .empty-state {
+  width: 100%;
+  min-width: 100%;
+  padding: 20px 16px 24px;
+  box-sizing: border-box;
+}
+
 #screen-home {
   min-width: 0;
 }
@@ -5100,7 +5135,7 @@ body:not(.web-mode) #screen-activity .activity-form-card:not(.web-transfer-card)
   display: block !important;
   width: 100%;
   max-width: none;
-  min-width: 0;
+  min-width: 100%;
   box-sizing: border-box;
   align-self: stretch;
 }
@@ -5370,11 +5405,13 @@ body.web-mode .web-activity-tip-text {
   max-width: 100%;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 1024px) {
   body.web-mode .web-activity-layout {
     grid-template-columns: 1fr;
   }
+}
 
+@media (max-width: 720px) {
   body.web-mode .web-op-entry-form {
     grid-template-columns: 1fr;
   }
@@ -8523,6 +8560,10 @@ body:not(.web-mode) #miniTopbar {
   gap: 0;
   position: relative;
   z-index: auto;
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: max(4px, env(safe-area-inset-top, 0px)) 0 6px;
   margin: 0 0 2px;
   background: transparent;
@@ -8567,6 +8608,8 @@ body:not(.web-mode) .tg-mini-topbar-legacy-refresh {
 
 body:not(.web-mode) .app-shell {
   padding-top: 10px;
+  width: 100%;
+  min-width: 100%;
   max-width: 100%;
   overflow-x: hidden;
   box-sizing: border-box;
