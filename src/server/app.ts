@@ -26,12 +26,11 @@ import {
 } from "../services/exchange-rates.js";
 import { getCurrencyByCode, listActiveCurrencies } from "../services/currencies.js";
 import {
+  buildBootstrapMonthDashboard,
   buildReportExportPayload,
   formatReportResultAsCsv,
-  getDashboardSummary,
   getRecentActivity,
-  getReport,
-  resolveReportRange
+  getReport
 } from "../services/reports.js";
 import { createTransfer } from "../services/transfers.js";
 import {
@@ -406,30 +405,28 @@ export function createHttpApp(): express.Express {
     try {
       const appUser = await authenticateMiniAppUser(req);
       const reportingCurrency = await resolveReportingCurrency(req);
-      const accounts = await listAccounts(appUser.id);
-      const categories = await listCategories(appUser.id);
-      const currencies = await listActiveCurrencies();
-      const activity = await getRecentActivity(appUser.id);
+
+      const [accounts, categories, currencies, activity] = await Promise.all([
+        listAccounts(appUser.id),
+        listCategories(appUser.id),
+        listActiveCurrencies(),
+        getRecentActivity(appUser.id)
+      ]);
+
       let summary = null;
       let report = null;
 
       try {
-        summary = await getDashboardSummary(appUser.id, reportingCurrency);
+        const dashboard = await buildBootstrapMonthDashboard(
+          appUser.id,
+          reportingCurrency,
+          accounts,
+          categories.length
+        );
+        summary = dashboard.summary;
+        report = dashboard.report;
       } catch (error) {
-        console.error("Failed to build dashboard summary", error);
-      }
-
-      try {
-        const reportRange = resolveReportRange("month");
-        report = await getReport({
-          userId: appUser.id,
-          period: "month",
-          startDate: reportRange.startDate,
-          endDate: reportRange.endDate,
-          reportingCurrency
-        });
-      } catch (error) {
-        console.error("Failed to build default report", error);
+        console.error("Failed to build bootstrap dashboard", error);
       }
 
       res.json({

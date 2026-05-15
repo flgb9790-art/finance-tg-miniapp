@@ -35,6 +35,17 @@ function roundAmount(value: number): number {
   return Number(value.toFixed(2));
 }
 
+const MEMORY_RATE_TTL_MS = 10 * 60 * 1000;
+const memoryRateCache = new Map<string, { rate: number; expiresAt: number }>();
+
+function memoryRateCacheKey(fromCurrencyCode: string, toCurrencyCode: string): string {
+  return `${fromCurrencyCode}:${toCurrencyCode}`;
+}
+
+export function invalidateExchangeRateMemoryCache(): void {
+  memoryRateCache.clear();
+}
+
 export async function syncExchangeRates(): Promise<{
   syncedPairs: number;
   updatedAt: string;
@@ -102,6 +113,8 @@ export async function syncExchangeRates(): Promise<{
     throw error;
   }
 
+  invalidateExchangeRateMemoryCache();
+
   return {
     syncedPairs: upsertRows.length,
     updatedAt: new Date().toISOString()
@@ -114,6 +127,13 @@ export async function getExchangeRate(
 ): Promise<number> {
   if (fromCurrencyCode === toCurrencyCode) {
     return 1;
+  }
+
+  const cacheKey = memoryRateCacheKey(fromCurrencyCode, toCurrencyCode);
+  const cached = memoryRateCache.get(cacheKey);
+
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.rate;
   }
 
   async function readRate(): Promise<number | null> {
@@ -134,6 +154,10 @@ export async function getExchangeRate(
   const existingRate = await readRate();
 
   if (existingRate !== null) {
+    memoryRateCache.set(cacheKey, {
+      rate: existingRate,
+      expiresAt: Date.now() + MEMORY_RATE_TTL_MS
+    });
     return existingRate;
   }
 
@@ -143,6 +167,11 @@ export async function getExchangeRate(
   if (syncedRate === null) {
     throw new Error(`Exchange rate ${fromCurrencyCode} -> ${toCurrencyCode} was not found`);
   }
+
+  memoryRateCache.set(cacheKey, {
+    rate: syncedRate,
+    expiresAt: Date.now() + MEMORY_RATE_TTL_MS
+  });
 
   return syncedRate;
 }

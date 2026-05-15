@@ -1,6 +1,6 @@
 import { env } from "../config/env.js";
 import { getCategoryById } from "./categories.js";
-import { listAccounts } from "./accounts.js";
+import { listAccounts, type AccountRow } from "./accounts.js";
 import { getExchangeRate, getLatestExchangeRateUpdate } from "./exchange-rates.js";
 import { listRecentEntries } from "./entries.js";
 import { listRecentTransfers } from "./transfers.js";
@@ -487,10 +487,7 @@ export async function buildReportExportPayload(input: {
   return { report, operations };
 }
 
-export async function getDashboardSummary(
-  userId: string,
-  reportingCurrency = env.reportingCurrency
-): Promise<{
+export interface DashboardSummary {
   accountsCount: number;
   balancesByCurrency: Record<string, number>;
   categoriesCount: number;
@@ -501,7 +498,106 @@ export async function getDashboardSummary(
   reportingCurrency: string;
   totalBalanceConverted: number;
   ratesUpdatedAt: string | null;
-}> {
+}
+
+async function sumAccountsBalanceInReportingCurrency(
+  accounts: AccountRow[],
+  reportingCurrency: string
+): Promise<number> {
+  const rateCache = new Map<string, number>();
+
+  async function convert(amount: number, fromCurrencyCode: string): Promise<number> {
+    if (fromCurrencyCode === reportingCurrency) {
+      return amount;
+    }
+
+    const key = `${fromCurrencyCode}:${reportingCurrency}`;
+
+    if (!rateCache.has(key)) {
+      rateCache.set(key, await getExchangeRate(fromCurrencyCode, reportingCurrency));
+    }
+
+    return Number((amount * (rateCache.get(key) ?? 1)).toFixed(2));
+  }
+
+  let total = 0;
+
+  for (const account of accounts) {
+    total += await convert(Number(account.balance), account.currency_code);
+  }
+
+  return Number(total.toFixed(2));
+}
+
+export async function buildDashboardSummaryFromParts(
+  accounts: AccountRow[],
+  categoriesCount: number,
+  monthReport: ReportResult,
+  reportingCurrency: string
+): Promise<DashboardSummary> {
+  const balancesByCurrency = accounts.reduce<Record<string, number>>(
+    (result, account) => {
+      result[account.currency_code] =
+        (result[account.currency_code] ?? 0) + Number(account.balance);
+      return result;
+    },
+    {}
+  );
+
+  const totalBalanceConverted = await sumAccountsBalanceInReportingCurrency(
+    accounts,
+    reportingCurrency
+  );
+
+  return {
+    accountsCount: accounts.length,
+    balancesByCurrency,
+    categoriesCount,
+    monthlyIncome: monthReport.incomes,
+    monthlyExpense: monthReport.expenses,
+    monthlyNet: monthReport.net,
+    monthlyExpenseByCategory: monthReport.expenseByCategory,
+    reportingCurrency,
+    totalBalanceConverted,
+    ratesUpdatedAt:
+      monthReport.ratesUpdatedAt ?? (await getLatestExchangeRateUpdate())
+  };
+}
+
+/** Один месячный отчёт для bootstrap (без compareToPrevious). */
+export async function buildBootstrapMonthDashboard(
+  userId: string,
+  reportingCurrency: string,
+  accounts: AccountRow[],
+  categoriesCount: number
+): Promise<{ summary: DashboardSummary; report: ReportResult }> {
+  const monthRange = resolveReportRange("month");
+  const monthBundle = await resolveReportEntriesBundle({
+    userId,
+    period: "month",
+    startDate: monthRange.startDate,
+    endDate: monthRange.endDate,
+    reportingCurrency
+  });
+  const report = await aggregateReportFromBundle(
+    { userId, period: "month" },
+    monthBundle,
+    { accounts }
+  );
+  const summary = await buildDashboardSummaryFromParts(
+    accounts,
+    categoriesCount,
+    report,
+    reportingCurrency
+  );
+
+  return { summary, report };
+}
+
+export async function getDashboardSummary(
+  userId: string,
+  reportingCurrency = env.reportingCurrency
+): Promise<DashboardSummary> {
   const accounts = await listAccounts(userId);
   const { data: categories, error } = await supabase
     .from("categories")
@@ -513,63 +609,25 @@ export async function getDashboardSummary(
     throw error;
   }
 
-  const monthRange = resolveReportRange("month");
-  const monthBundle = await resolveReportEntriesBundle({
+  const { summary } = await buildBootstrapMonthDashboard(
     userId,
-    period: "month",
-    startDate: monthRange.startDate,
-    endDate: monthRange.endDate,
-    reportingCurrency
-  });
-  const monthReport = await aggregateReportFromBundle(
-    { userId, period: "month" },
-    monthBundle
-  );
-
-  const balancesByCurrency = accounts.reduce<Record<string, number>>(
-    (result, account) => {
-      result[account.currency_code] =
-        (result[account.currency_code] ?? 0) + Number(account.balance);
-      return result;
-    },
-    {}
-  );
-
-  const totalBalanceConverted = await accounts.reduce(
-    async (promise, account) => {
-      const sum = await promise;
-      const rate = await getExchangeRate(
-        account.currency_code,
-        reportingCurrency
-      );
-
-      return sum + Number(account.balance) * rate;
-    },
-    Promise.resolve(0)
-  );
-
-  return {
-    accountsCount: accounts.length,
-    balancesByCurrency,
-    categoriesCount: (categories ?? []).length,
-    monthlyIncome: monthReport.incomes,
-    monthlyExpense: monthReport.expenses,
-    monthlyNet: monthReport.net,
-    monthlyExpenseByCategory: monthReport.expenseByCategory,
     reportingCurrency,
-    totalBalanceConverted: Number(totalBalanceConverted.toFixed(2)),
-    ratesUpdatedAt: await getLatestExchangeRateUpdate()
-  };
+    accounts,
+    (categories ?? []).length
+  );
+
+  return summary;
 }
 
 async function aggregateReportFromBundle(
   input: { userId: string; period: ReportPeriod },
-  bundle: ReportEntriesBundle
+  bundle: ReportEntriesBundle,
+  options?: { accounts?: AccountRow[] }
 ): Promise<ReportResult> {
   const { startDate, endDate, reportingCurrency, entries, appliedCategory } = bundle;
 
   const transfers = await listTransfersByRange(input.userId, startDate, endDate);
-  const accounts = await listAccounts(input.userId);
+  const accounts = options?.accounts ?? (await listAccounts(input.userId));
   const rateCache = new Map<string, number>();
 
   async function convert(
@@ -851,18 +909,25 @@ async function computeCompareToPrevious(
   };
 }
 
-export async function getReport(input: {
-  userId: string;
-  period: ReportPeriod;
-  startDate?: string;
-  endDate?: string;
-  reportingCurrency?: string;
-  categoryId?: string;
-  accountId?: string;
-  kind?: OperationKind;
-}): Promise<ReportResult> {
+export async function getReport(
+  input: {
+    userId: string;
+    period: ReportPeriod;
+    startDate?: string;
+    endDate?: string;
+    reportingCurrency?: string;
+    categoryId?: string;
+    accountId?: string;
+    kind?: OperationKind;
+  },
+  options?: { compareToPrevious?: boolean }
+): Promise<ReportResult> {
   const report = await buildReportFromInput(input);
-  report.compareToPrevious = await computeCompareToPrevious(input, report);
+
+  if (options?.compareToPrevious !== false) {
+    report.compareToPrevious = await computeCompareToPrevious(input, report);
+  }
+
   return report;
 }
 

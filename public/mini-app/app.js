@@ -698,7 +698,7 @@ function attachTelegramPullToRefresh() {
       if (ready && Date.now() - lastPullRefreshAt > COOLDOWN_MS) {
         lastPullRefreshAt = Date.now();
         didPull = true;
-        void loadApp({
+        void refreshAppData({
           globalBusy: true,
           busyMessage: "Обновляем данные…",
           syncWebOperationsHistory: true
@@ -875,7 +875,7 @@ async function dismissAppSplashAfterSuccess() {
     return;
   }
 
-  const minMs = 1200;
+  const minMs = 400;
   const elapsed = Date.now() - balancySplashStartedAt;
 
   if (elapsed < minMs) {
@@ -1461,6 +1461,10 @@ function openScreen(screenName) {
   if (!isWebMode) {
     syncTgGlobalScreenChrome(nextScreen);
     scrollTelegramAppShellToTop();
+  }
+
+  if (isWebMode && nextScreen === "home") {
+    window.requestAnimationFrame(() => syncWebDashSparkCharts());
   }
 
   applyBalancyHintsFromState();
@@ -2222,7 +2226,9 @@ function renderWebDesktopDashboard(summary) {
   const visual = document.getElementById("webHomeDonutVisual");
   const legend = document.getElementById("webHomeDonutLegend");
 
-  syncWebDashSparkCharts();
+  if (document.body.dataset.appActiveScreen === "home") {
+    syncWebDashSparkCharts();
+  }
 
   if (!visual || !legend) {
     return;
@@ -4265,7 +4271,7 @@ function attachTgActivityOpsChrome() {
     if (refreshButton) {
       refreshButton.click();
     } else {
-      void loadApp();
+      void refreshAppData();
     }
   });
 
@@ -5827,7 +5833,9 @@ function populateCategoryOptions() {
     .join("");
 }
 
-function renderAll() {
+function renderAll(options = {}) {
+  const screen = options.activeScreen ?? document.body.dataset.appActiveScreen ?? "home";
+
   safeRenderStep("summary", () => renderSummary(state.summary));
   safeRenderStep("accounts", () => renderAccounts(state.accounts));
   safeRenderStep("categories", () => renderCategories(state.categories));
@@ -5842,8 +5850,13 @@ function renderAll() {
   );
   safeRenderStep("webTransferRecent", () => renderWebTransferRecentList(state.recentTransfers));
   safeRenderStep("report", () => {
+    if (screen !== "reports") {
+      return;
+    }
+
     renderReport(state.report);
-    if (!isWebMode && document.body.dataset.appActiveScreen === "reports" && state.report) {
+
+    if (!isWebMode && state.report) {
       renderReportWebVisuals(state.report);
     }
   });
@@ -6404,6 +6417,102 @@ async function openReportCsvInNewTab() {
   }
 }
 
+function applyBootstrapPayload(payload) {
+  const user = payload.user;
+
+  state.user = user ?? state.user;
+  state.accounts = payload.accounts ?? [];
+  state.categories = payload.categories ?? [];
+  state.currencies = Array.isArray(payload.currencies) ? payload.currencies : [];
+  state.recentEntries = payload.recentEntries ?? [];
+  state.recentTransfers = payload.recentTransfers ?? [];
+  state.summary = payload.summary ?? null;
+
+  const activeScreen = document.body.dataset.appActiveScreen ?? "home";
+  const onReportsScreen = activeScreen === "reports";
+
+  if (!onReportsScreen) {
+    state.report = payload.report ?? null;
+    state.reportExportQuery = buildReportQueryString();
+  }
+
+  const resolvedReportingCurrency =
+    payload.summary?.reportingCurrency ?? currentReportingCurrencySelection();
+  setStoredReportingCurrency(resolvedReportingCurrency);
+  syncReportingCurrencyInputs(resolvedReportingCurrency);
+
+  if (userNameElement && user) {
+    userNameElement.textContent =
+      [user.first_name, user.last_name].filter(Boolean).join(" ") ||
+      user.username ||
+      "Пользователь";
+  }
+
+  syncHomeWelcomeLine(user);
+}
+
+function afterBootstrapRender(options = {}) {
+  const activeScreen = document.body.dataset.appActiveScreen ?? "home";
+
+  renderAll({ activeScreen });
+
+  if (activeScreen === "ledger" && !isWebMode) {
+    populateTgActivityFilterSelects();
+    ensureTgOpsDefaultDates();
+    if (!tgOpsFilterSnapshotInitialized) {
+      Object.assign(tgOpsAppliedFilter, readTgOpsFilterFromDom());
+      tgOpsFilterSnapshotInitialized = true;
+    }
+    void refreshTgOperationsBoard();
+  }
+
+  if (activeScreen === "history") {
+    populateWebOperationsFilterSelects();
+    if (options.syncWebOperationsHistory) {
+      void refreshWebOperationsBoard();
+    }
+  }
+
+  if (activeScreen === "reports" && options.syncWebOperationsHistory) {
+    void loadReport();
+  }
+}
+
+async function refreshAppData(options = {}) {
+  const showGlobalOverlay = options.globalBusy === true;
+
+  if (showGlobalOverlay) {
+    beginGlobalBusy(options.busyMessage ?? "Загружаем данные…");
+  }
+
+  try {
+    const reportingCurrency = currentReportingCurrencySelection();
+    let bootstrapAbort = undefined;
+
+    try {
+      if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+        bootstrapAbort = AbortSignal.timeout(45000);
+      }
+    } catch (_) {
+      /* Older WebViews: no AbortSignal.timeout */
+    }
+
+    const fetchOptions = bootstrapAbort !== undefined ? { signal: bootstrapAbort } : {};
+    const payload = await apiFetch(
+      `/api/bootstrap?reportingCurrency=${encodeURIComponent(reportingCurrency)}`,
+      fetchOptions
+    );
+
+    applyBootstrapPayload(payload);
+    afterBootstrapRender(options);
+    return payload;
+  } finally {
+    if (showGlobalOverlay) {
+      endGlobalBusy();
+    }
+  }
+}
+
 async function loadApp(options = {}) {
   if (!tg) {
     if (userNameElement) {
@@ -6418,6 +6527,19 @@ async function loadApp(options = {}) {
   const showGlobalOverlay = options.globalBusy === true && !bgRefresh;
   if (showGlobalOverlay) {
     beginGlobalBusy(options.busyMessage ?? "Загружаем данные…");
+  }
+
+  if (bgRefresh) {
+    try {
+      await refreshAppData(options);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      if (showGlobalOverlay) {
+        endGlobalBusy();
+      }
+    }
+    return;
   }
 
   try {
@@ -6481,74 +6603,8 @@ async function loadApp(options = {}) {
       return;
     }
 
-    let bootstrapAbort = undefined;
-
-    try {
-      if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
-        bootstrapAbort = AbortSignal.timeout(45000);
-      }
-    } catch (_) {
-      /* Older WebViews: no AbortSignal.timeout */
-    }
-
     setStatus("Загружаем данные...");
-    const reportingCurrency = currentReportingCurrencySelection();
-    const fetchOptions = bootstrapAbort !== undefined ? { signal: bootstrapAbort } : undefined;
-
-    const payload = await apiFetch(
-      `/api/bootstrap?reportingCurrency=${encodeURIComponent(reportingCurrency)}`,
-      fetchOptions ?? {}
-    );
-    const user = payload.user;
-
-    state.user = user;
-    state.accounts = payload.accounts ?? [];
-    state.categories = payload.categories ?? [];
-    state.currencies = Array.isArray(payload.currencies) ? payload.currencies : [];
-    state.recentEntries = payload.recentEntries ?? [];
-    state.recentTransfers = payload.recentTransfers ?? [];
-    state.summary = payload.summary ?? null;
-
-    const activeScreen = document.body.dataset.appActiveScreen ?? "home";
-    const onReportsScreen = activeScreen === "reports";
-
-    if (!onReportsScreen) {
-      state.report = payload.report ?? null;
-      state.reportExportQuery = buildReportQueryString();
-    }
-
-    const resolvedReportingCurrency = payload.summary?.reportingCurrency ?? reportingCurrency;
-    setStoredReportingCurrency(resolvedReportingCurrency);
-    syncReportingCurrencyInputs(resolvedReportingCurrency);
-
-    if (userNameElement) {
-      userNameElement.textContent =
-        [user.first_name, user.last_name].filter(Boolean).join(" ") ||
-        user.username ||
-        "Пользователь";
-    }
-
-    syncHomeWelcomeLine(user);
-
-    renderAll();
-    if (document.body.dataset.appActiveScreen === "ledger" && !isWebMode) {
-      populateTgActivityFilterSelects();
-      ensureTgOpsDefaultDates();
-      if (!tgOpsFilterSnapshotInitialized) {
-        Object.assign(tgOpsAppliedFilter, readTgOpsFilterFromDom());
-        tgOpsFilterSnapshotInitialized = true;
-      }
-      void refreshTgOperationsBoard();
-    }
-    if (document.body.dataset.appActiveScreen === "history") {
-      populateWebOperationsFilterSelects();
-      if (options.syncWebOperationsHistory) {
-        void refreshWebOperationsBoard();
-      }
-    }
-    if (document.body.dataset.appActiveScreen === "reports" && options.syncWebOperationsHistory) {
-      void loadReport();
-    }
+    await refreshAppData(options);
     setStatus(
       "Все готово. Интерфейс разбит по вкладкам и стал проще для ежедневного использования.",
       "success"
@@ -6637,8 +6693,7 @@ async function handleCreateAccount(event) {
 
     resetAccountForm();
     setAccountsStatus(isEditing ? "Счет обновлен." : "Счет создан.", "success");
-    renderAll();
-    await loadApp({ backgroundRefresh: true });
+    await refreshAppData({ backgroundRefresh: true });
   } catch (error) {
     console.error(error);
     setAccountsStatus(
@@ -6670,8 +6725,7 @@ async function handleDeleteAccount(accountId) {
     }
 
     setAccountsStatus("Счет удален.", "success");
-    renderAll();
-    await loadApp({ backgroundRefresh: true });
+    await refreshAppData({ backgroundRefresh: true });
   } catch (error) {
     console.error(error);
     setAccountsStatus(
@@ -6836,7 +6890,7 @@ async function handleCategorySubmit(event) {
 
     resetCategoryForm();
     setStatus(isEditing ? "Категория обновлена." : "Категория создана.", "success");
-    await loadApp({ backgroundRefresh: true });
+    await refreshAppData({ backgroundRefresh: true });
   } catch (error) {
     console.error(error);
     setStatus(
@@ -6871,8 +6925,7 @@ async function handleDeleteCategory(categoryId) {
       "Категория удалена. Старые операции сохранены, но у них больше не будет этой статьи.",
       "success"
     );
-    renderAll();
-    await loadApp({ backgroundRefresh: true });
+    await refreshAppData({ backgroundRefresh: true });
   } catch (error) {
     console.error(error);
     setStatus(
@@ -6924,7 +6977,7 @@ async function handleCreateEntry(event) {
 
     resetEntryFormToDefaults();
     setStatus("Операция сохранена.", "success");
-    await loadApp({ backgroundRefresh: true });
+    await refreshAppData({ backgroundRefresh: true });
   } catch (error) {
     console.error(error);
     setStatus(error instanceof Error ? error.message : "Не удалось сохранить операцию", "error");
@@ -6966,7 +7019,7 @@ async function handleCreateTransfer(event) {
     transferToAmountAutofillTag = null;
     transferToAmountProgrammatic = false;
     setStatus("Перевод сохранен.", "success");
-    await loadApp({ backgroundRefresh: true });
+    await refreshAppData({ backgroundRefresh: true });
     const back = transferReturnScreen || "home";
     openScreen(back);
   } catch (error) {
@@ -6989,7 +7042,7 @@ async function handleSyncRates() {
       body: JSON.stringify({})
     });
     setStatus("Курсы валют обновлены.", "success");
-    await loadApp({ backgroundRefresh: true });
+    await refreshAppData({ backgroundRefresh: true });
   } catch (error) {
     console.error(error);
     setStatus(error instanceof Error ? error.message : "Не удалось обновить курсы", "error");
@@ -7150,7 +7203,7 @@ function attachCategoryListsListener() {
 
 if (refreshButton) {
   refreshButton.addEventListener("click", () => {
-    void loadApp({ globalBusy: true, busyMessage: "Обновляем данные…" });
+    void refreshAppData({ globalBusy: true, busyMessage: "Обновляем данные…" });
   });
 }
 
@@ -7228,7 +7281,11 @@ if (isWebMode) {
 
   if (webRefreshButton) {
     webRefreshButton.addEventListener("click", () => {
-      void loadApp({ globalBusy: true, busyMessage: "Обновляем данные…", syncWebOperationsHistory: true });
+      void refreshAppData({
+        globalBusy: true,
+        busyMessage: "Обновляем данные…",
+        syncWebOperationsHistory: true
+      });
     });
   }
 
@@ -7407,7 +7464,11 @@ document.querySelectorAll("[data-web-new-entry]").forEach((button) => {
 
 Array.from(document.querySelectorAll("[data-refresh-action]")).forEach((button) => {
   button.addEventListener("click", () => {
-    void loadApp({ globalBusy: true, busyMessage: "Обновляем данные…", syncWebOperationsHistory: true });
+    void refreshAppData({
+      globalBusy: true,
+      busyMessage: "Обновляем данные…",
+      syncWebOperationsHistory: true
+    });
   });
 });
 
@@ -7491,12 +7552,12 @@ attachTgAccountsScreenChrome();
 attachFxReferencePanelListeners();
 
 window.addEventListener("focus", () => {
-  void loadApp({ backgroundRefresh: true });
+  void refreshAppData({ backgroundRefresh: true });
 });
 
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
-    void loadApp({ backgroundRefresh: true });
+    void refreshAppData({ backgroundRefresh: true });
   }
 });
 
@@ -7537,13 +7598,13 @@ cancelAccountEditButton?.addEventListener("click", () => {
 reportingCurrencyInput?.addEventListener("change", () => {
   setStoredReportingCurrency(reportingCurrencyInput.value);
   syncReportingCurrencyInputs(reportingCurrencyInput.value);
-  void loadApp({ syncWebOperationsHistory: true });
+  void refreshAppData({ syncWebOperationsHistory: true });
 });
 
 homeReportingCurrencyInput?.addEventListener("change", () => {
   setStoredReportingCurrency(homeReportingCurrencyInput.value);
   syncReportingCurrencyInputs(homeReportingCurrencyInput.value);
-  void loadApp({ syncWebOperationsHistory: true });
+  void refreshAppData({ syncWebOperationsHistory: true });
 });
 
 categoryForm?.addEventListener("submit", (event) => {
