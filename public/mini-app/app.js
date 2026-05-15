@@ -6473,6 +6473,73 @@ function applyDashboardPayload(payload) {
   }
 }
 
+const RECENT_ENTRIES_LIMIT = 12;
+
+function mergeRecentEntry(entry) {
+  if (!entry?.id) {
+    return;
+  }
+
+  state.recentEntries = [
+    entry,
+    ...state.recentEntries.filter((row) => row.id !== entry.id)
+  ].slice(0, RECENT_ENTRIES_LIMIT);
+}
+
+function mergeRecentTransfer(transfer) {
+  if (!transfer?.id) {
+    return;
+  }
+
+  state.recentTransfers = [
+    transfer,
+    ...state.recentTransfers.filter((row) => row.id !== transfer.id)
+  ].slice(0, WEB_RECENT_SIDEBAR_LIMIT);
+}
+
+function applyMutationPatch(patch) {
+  if (!patch) {
+    return;
+  }
+
+  if (Array.isArray(patch.accounts)) {
+    state.accounts = patch.accounts;
+  }
+
+  if (patch.summary) {
+    state.summary = patch.summary;
+    applyReportingCurrencyFromSummary(patch.summary);
+  }
+}
+
+function finishMutationFromResponse(response, renderOptions = {}) {
+  if (!response?.patch) {
+    return false;
+  }
+
+  applyMutationPatch(response.patch);
+
+  if (response.entry) {
+    mergeRecentEntry(response.entry);
+  }
+
+  if (response.transfer) {
+    mergeRecentTransfer(response.transfer);
+  }
+
+  afterBootstrapRender({
+    backgroundRefresh: true,
+    partial: true,
+    ...renderOptions
+  });
+
+  if (response.patch.syncReport) {
+    void refreshAppData({ backgroundRefresh: true, light: true });
+  }
+
+  return true;
+}
+
 function applyRefreshPayload(payload) {
   if (Array.isArray(payload.accounts)) {
     state.accounts = payload.accounts;
@@ -6798,7 +6865,10 @@ async function handleCreateAccount(event) {
 
     resetAccountForm();
     setAccountsStatus(isEditing ? "Счет обновлен." : "Счет создан.", "success");
-    await refreshAppData({ backgroundRefresh: true, light: true });
+
+    if (!finishMutationFromResponse(response)) {
+      await refreshAppData({ backgroundRefresh: true, light: true });
+    }
   } catch (error) {
     console.error(error);
     setAccountsStatus(
@@ -7075,14 +7145,17 @@ async function handleCreateEntry(event) {
   beginGlobalBusy("Сохраняем операцию…");
 
   try {
-    await apiFetch("/api/entries", {
+    const response = await apiFetch("/api/entries", {
       method: "POST",
       body: JSON.stringify(payload)
     });
 
     resetEntryFormToDefaults();
     setStatus("Операция сохранена.", "success");
-    await refreshAppData({ backgroundRefresh: true, light: true });
+
+    if (!finishMutationFromResponse(response)) {
+      await refreshAppData({ backgroundRefresh: true, light: true });
+    }
   } catch (error) {
     console.error(error);
     setStatus(error instanceof Error ? error.message : "Не удалось сохранить операцию", "error");
@@ -7114,7 +7187,7 @@ async function handleCreateTransfer(event) {
   beginGlobalBusy("Сохраняем перевод…");
 
   try {
-    await apiFetch("/api/transfers", {
+    const response = await apiFetch("/api/transfers", {
       method: "POST",
       body: JSON.stringify(payload)
     });
@@ -7124,7 +7197,11 @@ async function handleCreateTransfer(event) {
     transferToAmountAutofillTag = null;
     transferToAmountProgrammatic = false;
     setStatus("Перевод сохранен.", "success");
-    await refreshAppData({ backgroundRefresh: true, light: true });
+
+    if (!finishMutationFromResponse(response)) {
+      await refreshAppData({ backgroundRefresh: true, light: true });
+    }
+
     const back = transferReturnScreen || "home";
     openScreen(back);
   } catch (error) {

@@ -535,6 +535,123 @@ async function sumAccountsBalanceInReportingCurrency(
   return Number(total.toFixed(2));
 }
 
+export function isOccurredInReportRange(
+  occurredAt: string,
+  startDate: string,
+  endDate: string
+): boolean {
+  const occurredMs = new Date(occurredAt).getTime();
+  return (
+    occurredMs >= new Date(startDate).getTime() &&
+    occurredMs <= new Date(endDate).getTime()
+  );
+}
+
+function mapExpenseCategoryTotals(
+  expenseByCategoryMap: Map<string, number>,
+  reportingCurrency: string
+): ReportCategoryItem[] {
+  return Array.from(expenseByCategoryMap.entries())
+    .map(([categoryName, total]) => ({
+      categoryName,
+      total: Number(total.toFixed(2)),
+      currencyCode: reportingCurrency
+    }))
+    .sort((left, right) => right.total - left.total);
+}
+
+/** Доходы/расходы месяца в валюте отчёта (без переводов, балансов и спарклайнов). */
+export async function computeMonthEntryTotalsInReportingCurrency(
+  userId: string,
+  reportingCurrency: string,
+  startDate: string,
+  endDate: string
+): Promise<{
+  incomes: number;
+  expenses: number;
+  net: number;
+  expenseByCategory: ReportCategoryItem[];
+  ratesUpdatedAt: string | null;
+}> {
+  const bundle = await resolveReportEntriesBundle({
+    userId,
+    period: "month",
+    startDate,
+    endDate,
+    reportingCurrency
+  });
+
+  const currencyCodes = new Set<string>();
+
+  for (const entry of bundle.entries) {
+    currencyCodes.add(String(entry.currency_code ?? ""));
+  }
+
+  const rateCache = new Map<string, number>();
+
+  await Promise.all(
+    [...currencyCodes]
+      .filter((code) => code.length > 0 && code !== reportingCurrency)
+      .map(async (code) => {
+        rateCache.set(
+          `${code}:${reportingCurrency}`,
+          await getExchangeRate(code, reportingCurrency)
+        );
+      })
+  );
+
+  function convertSynced(
+    amount: number,
+    fromCurrencyCode: string,
+    toCurrencyCode: string
+  ): number {
+    if (fromCurrencyCode === toCurrencyCode) {
+      return Number(amount.toFixed(2));
+    }
+
+    const rate = rateCache.get(`${fromCurrencyCode}:${toCurrencyCode}`);
+
+    if (rate === undefined) {
+      throw new Error(
+        `Exchange rate ${fromCurrencyCode} -> ${toCurrencyCode} was not warmed`
+      );
+    }
+
+    return Number((amount * rate).toFixed(2));
+  }
+
+  let incomes = 0;
+  let expenses = 0;
+  const expenseByCategoryMap = new Map<string, number>();
+
+  for (const entry of bundle.entries) {
+    const convertedAmount = convertSynced(
+      Number(entry.amount),
+      entry.currency_code,
+      reportingCurrency
+    );
+
+    if (entry.kind === "income") {
+      incomes += convertedAmount;
+    } else {
+      expenses += convertedAmount;
+      const categoryName = entry.category?.name ?? "Без категории";
+      expenseByCategoryMap.set(
+        categoryName,
+        (expenseByCategoryMap.get(categoryName) ?? 0) + convertedAmount
+      );
+    }
+  }
+
+  return {
+    incomes: Number(incomes.toFixed(2)),
+    expenses: Number(expenses.toFixed(2)),
+    net: Number((incomes - expenses).toFixed(2)),
+    expenseByCategory: mapExpenseCategoryTotals(expenseByCategoryMap, reportingCurrency),
+    ratesUpdatedAt: await getLatestExchangeRateUpdate()
+  };
+}
+
 export async function buildDashboardSummaryFromParts(
   accounts: AccountRow[],
   categoriesCount: number,

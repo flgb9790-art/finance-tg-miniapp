@@ -33,6 +33,11 @@ import {
   getRecentActivity,
   getReport
 } from "../services/reports.js";
+import {
+  buildAccountsMutationPatch,
+  buildEntryMutationPatch,
+  buildTransferMutationPatch
+} from "../services/mutation-patch.js";
 import { createTransfer } from "../services/transfers.js";
 import {
   listOperationsTimeline,
@@ -583,7 +588,10 @@ export function createHttpApp(): express.Express {
         balance
       });
 
-      res.status(201).json({ account });
+      const reportingCurrency = await resolveReportingCurrency(req);
+      const patch = await buildAccountsMutationPatch(appUser.id, reportingCurrency);
+
+      res.status(201).json({ account, patch });
     } catch (error) {
       console.error("Failed to create account from mini app", error);
 
@@ -650,7 +658,10 @@ export function createHttpApp(): express.Express {
         balance
       });
 
-      res.json({ account });
+      const reportingCurrency = await resolveReportingCurrency(req);
+      const patch = await buildAccountsMutationPatch(appUser.id, reportingCurrency);
+
+      res.json({ account, patch });
     } catch (error) {
       console.error("Failed to update account from mini app", error);
 
@@ -837,6 +848,7 @@ export function createHttpApp(): express.Express {
         return;
       }
 
+      const reportingCurrency = await resolveReportingCurrency(req);
       const entry = await createEntry({
         userId: appUser.id,
         kind: kind as OperationKind,
@@ -848,7 +860,9 @@ export function createHttpApp(): express.Express {
         occurredAt
       });
 
-      res.status(201).json({ entry });
+      const patch = await buildEntryMutationPatch(appUser.id, reportingCurrency, entry);
+
+      res.status(201).json({ entry, patch });
     } catch (error) {
       console.error("Failed to create entry from mini app", error);
 
@@ -898,6 +912,7 @@ export function createHttpApp(): express.Express {
         return;
       }
 
+      const reportingCurrency = await resolveReportingCurrency(req);
       const transfer = await createTransfer({
         userId: appUser.id,
         fromAccountId,
@@ -908,7 +923,9 @@ export function createHttpApp(): express.Express {
         occurredAt
       });
 
-      res.status(201).json({ transfer });
+      const patch = await buildTransferMutationPatch(appUser.id, reportingCurrency);
+
+      res.status(201).json({ transfer, patch });
     } catch (error) {
       console.error("Failed to create transfer from mini app", error);
 
