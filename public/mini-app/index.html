@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260515web-home-rail-stack-753-v1";
+        var BALANCY_CLIENT_ASSET_REV = "20260515web-nav-instruction-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -71,28 +71,13 @@
             </svg>
             <span>Главная</span>
           </button>
-          <button type="button" class="web-sidebar-link" data-web-nav="activity">
+          <button type="button" class="web-sidebar-link" data-web-nav="accounts">
             <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M5 5H19V19H5V5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
-              <path d="M8 9H16M8 13H13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              <rect x="4" y="6" width="16" height="12" rx="2.5" stroke="currentColor" stroke-width="1.7" />
+              <path d="M4 10H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              <path d="M8 14H10.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
             </svg>
-            <span>Операции</span>
-          </button>
-          <button type="button" class="web-sidebar-link" data-web-nav="history">
-            <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M4 6H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-              <path d="M4 12H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-              <path d="M4 18H14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-              <path d="M17 16V20M15 18H19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-            </svg>
-            <span>История</span>
-          </button>
-          <button type="button" class="web-sidebar-link" data-web-nav="reports">
-            <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M5 19V5M5 19H19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-              <path d="M8 15L11 11L14 13L18 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            <span>Отчёты</span>
+            <span>Счета</span>
           </button>
           <button type="button" class="web-sidebar-link" data-web-nav="categories">
             <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -106,20 +91,47 @@
             </svg>
             <span>Категории</span>
           </button>
-          <button type="button" class="web-sidebar-link" data-web-nav="accounts">
+          <button type="button" class="web-sidebar-link" data-web-nav="activity">
             <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="4" y="6" width="16" height="12" rx="2.5" stroke="currentColor" stroke-width="1.7" />
-              <path d="M4 10H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-              <path d="M8 14H10.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              <path d="M5 5H19V19H5V5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+              <path d="M8 9H16M8 13H13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
             </svg>
-            <span>Счета</span>
+            <span>Операции</span>
           </button>
-          <button type="button" class="web-sidebar-link" data-web-sidebar-action="transfer">
+          <button type="button" class="web-sidebar-link" data-web-nav="transfer">
             <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M7 8H17M7 16H17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
               <path d="M14 5L17 8L14 11M10 19L7 16L10 13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
             <span>Переводы</span>
+          </button>
+          <button type="button" class="web-sidebar-link" data-web-nav="reports">
+            <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 19V5M5 19H19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              <path d="M8 15L11 11L14 13L18 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>Отчёты</span>
+          </button>
+          <button type="button" class="web-sidebar-link" data-web-nav="history">
+            <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 6H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              <path d="M4 12H20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              <path d="M4 18H14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              <path d="M17 16V20M15 18H19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+            <span>История</span>
+          </button>
+          <button type="button" class="web-sidebar-link web-sidebar-link--instruction" data-web-nav="instruction">
+            <svg class="web-sidebar-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M12 6.5A3.5 3.5 0 0 1 15.5 10v.5H16a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h.5V10A3.5 3.5 0 0 1 12 6.5Z"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linejoin="round"
+              />
+              <path d="M10 17.5h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+            <span>Инструкция</span>
           </button>
         </nav>
         </div>
@@ -1354,6 +1366,179 @@
         </section>
 
         <section id="screen-instruction" class="screen" data-screen="instruction">
+          <div class="web-instruction-root">
+            <nav class="web-instr-toc card" aria-label="Содержание инструкции">
+              <p class="web-instr-toc-title">Содержание</p>
+              <ol class="web-instr-toc-list">
+                <li><a href="#web-instr-start">С чего начать</a></li>
+                <li><a href="#web-instr-nav">Меню и навигация</a></li>
+                <li><a href="#web-instr-home">Главная</a></li>
+                <li><a href="#web-instr-accounts">Счета</a></li>
+                <li><a href="#web-instr-categories">Категории</a></li>
+                <li><a href="#web-instr-activity">Операции</a></li>
+                <li><a href="#web-instr-transfer">Переводы</a></li>
+                <li><a href="#web-instr-reports">Отчёты</a></li>
+                <li><a href="#web-instr-history">История</a></li>
+              </ol>
+            </nav>
+            <p class="help-doc-lede muted">Пошаговое руководство по веб-версии Balancy: куда нажимать, в каком порядке заводить данные и как читать сводки. Серые блоки ниже — схемы экранов с номерами кнопок.</p>
+            <article id="web-instr-start" class="help-doc-section card help-doc-callout web-instr-section">
+              <h3 class="help-doc-h3">1. С чего начать</h3>
+              <ol class="help-doc-list help-doc-numbered">
+                <li>Откройте <strong>Счета</strong> и создайте хотя бы один счёт.</li>
+                <li>Добавьте <strong>Категории</strong> доходов и расходов.</li>
+                <li>Запишите операцию в <strong>Операции</strong> или через <strong>+ Новая запись</strong>.</li>
+              </ol>
+            </article>
+            <article id="web-instr-nav" class="help-doc-section card help-doc-callout web-instr-section">
+              <h3 class="help-doc-h3">2. Меню слева и шапка</h3>
+              <p class="muted">Разделы — слева; быстрые действия — справа в шапке.</p>
+              <figure class="web-instr-figure">
+                <figcaption class="web-instr-figure-caption muted">Схема: боковое меню и шапка</figcaption>
+                <div class="web-instr-shot" aria-hidden="true">
+                  <div class="web-instr-shot-layout">
+                    <div class="web-instr-shot-sidebar">
+                      <div class="web-instr-shot-brand">Balancy</div>
+                      <div class="web-instr-shot-nav-item is-hot"><span class="web-instr-pin">1</span>Главная</div>
+                      <div class="web-instr-shot-nav-item"><span class="web-instr-pin">2</span>Счета</div>
+                      <div class="web-instr-shot-nav-item"><span class="web-instr-pin">3</span>Категории</div>
+                      <div class="web-instr-shot-nav-item"><span class="web-instr-pin">4</span>Операции</div>
+                      <div class="web-instr-shot-nav-item"><span class="web-instr-pin">5</span>Переводы</div>
+                      <div class="web-instr-shot-nav-item"><span class="web-instr-pin">6</span>Отчёты</div>
+                      <div class="web-instr-shot-nav-item"><span class="web-instr-pin">7</span>История</div>
+                      <div class="web-instr-shot-nav-item web-instr-shot-nav-item--guide"><span class="web-instr-pin">8</span>Инструкция</div>
+                    </div>
+                    <div class="web-instr-shot-main">
+                      <div class="web-instr-shot-header">
+                        <span class="web-instr-shot-title">Главная</span>
+                        <span class="web-instr-shot-btn is-hot"><span class="web-instr-pin">A</span>+ Новая запись</span>
+                        <span class="web-instr-shot-btn-icon"><span class="web-instr-pin">B</span>↻</span>
+                      </div>
+                      <div class="web-instr-shot-body muted">Содержимое раздела</div>
+                    </div>
+                  </div>
+                </div>
+              </figure>
+              <ul class="help-doc-list">
+                <li><strong>1–7</strong> — разделы меню.</li>
+                <li><strong>8</strong> — эта инструкция (слегка выделена).</li>
+                <li><strong>A</strong> — новая запись.</li>
+                <li><strong>B</strong> — обновить данные.</li>
+              </ul>
+            </article>
+            <article id="web-instr-home" class="help-doc-section card help-doc-callout web-instr-section">
+              <h3 class="help-doc-h3">3. Главная</h3>
+              <p class="muted">Баланс, сводка за месяц, счета, история, диаграммы.</p>
+              <figure class="web-instr-figure">
+                <figcaption class="web-instr-figure-caption muted">Схема: карточки на главной</figcaption>
+                <div class="web-instr-shot web-instr-shot--stack" aria-hidden="true">
+                  <div class="web-instr-shot-card is-hot"><span class="web-instr-pin">1</span>Общий баланс</div>
+                  <div class="web-instr-shot-row">
+                    <div class="web-instr-shot-card"><span class="web-instr-pin">2</span>Ваши счета</div>
+                    <div class="web-instr-shot-card"><span class="web-instr-pin">3</span>История</div>
+                  </div>
+                  <div class="web-instr-shot-row">
+                    <div class="web-instr-shot-card"><span class="web-instr-pin">4</span>По категориям</div>
+                    <div class="web-instr-shot-card"><span class="web-instr-pin">5</span>Расходы и доходы</div>
+                  </div>
+                </div>
+              </figure>
+              <ul class="help-doc-list">
+                <li><strong>1</strong> — валюта отображения и общий баланс.</li>
+                <li><strong>2–3</strong> — короткие списки счетов и операций.</li>
+                <li><strong>4–5</strong> — расходы по категориям и полоски дохода/расхода.</li>
+              </ul>
+            </article>
+            <article id="web-instr-accounts" class="help-doc-section card help-doc-callout web-instr-section">
+              <h3 class="help-doc-h3">4. Счета</h3>
+              <ol class="help-doc-list help-doc-numbered">
+                <li>Меню <strong>Счета</strong>: список слева, форма справа.</li>
+                <li>Заполните поля и нажмите <strong>Создать счёт</strong>.</li>
+                <li>Редактирование — иконка карандаша в строке.</li>
+              </ol>
+              <figure class="web-instr-figure">
+                <div class="web-instr-shot web-instr-shot--form" aria-hidden="true">
+                  <div class="web-instr-shot-field"><span class="web-instr-pin">1</span>Название</div>
+                  <div class="web-instr-shot-field"><span class="web-instr-pin">2</span>Тип · Валюта · Баланс</div>
+                  <div class="web-instr-shot-field"><span class="web-instr-pin">3</span>Цвет и иконка</div>
+                  <div class="web-instr-shot-field is-hot"><span class="web-instr-pin">4</span>Создать счёт</div>
+                </div>
+              </figure>
+            </article>
+            <article id="web-instr-categories" class="help-doc-section card help-doc-callout web-instr-section">
+              <h3 class="help-doc-h3">5. Категории</h3>
+              <ol class="help-doc-list help-doc-numbered">
+                <li>Выберите <strong>Доход</strong> или <strong>Расход</strong>.</li>
+                <li>Укажите название, цвет и иконку.</li>
+                <li><strong>Сохранить</strong>.</li>
+              </ol>
+              <figure class="web-instr-figure">
+                <div class="web-instr-shot web-instr-shot--form" aria-hidden="true">
+                  <div class="web-instr-shot-field"><span class="web-instr-pin">1</span>Тип: Доход / Расход</div>
+                  <div class="web-instr-shot-field"><span class="web-instr-pin">2</span>Название</div>
+                  <div class="web-instr-shot-field"><span class="web-instr-pin">3</span>Сетка иконок</div>
+                  <div class="web-instr-shot-field is-hot"><span class="web-instr-pin">4</span>Сохранить</div>
+                </div>
+              </figure>
+            </article>
+            <article id="web-instr-activity" class="help-doc-section card help-doc-callout web-instr-section">
+              <h3 class="help-doc-h3">6. Операции</h3>
+              <ol class="help-doc-list help-doc-numbered">
+                <li>Раздел <strong>Операции</strong> или меню <strong>+ Новая запись</strong>.</li>
+                <li>Карточки <strong>Доход</strong> / <strong>Расход</strong>.</li>
+                <li>Под счётом — строка «Доступно: …».</li>
+                <li><strong>Сохранить операцию</strong>.</li>
+              </ol>
+              <figure class="web-instr-figure">
+                <div class="web-instr-shot web-instr-shot--form" aria-hidden="true">
+                  <div class="web-instr-shot-field"><span class="web-instr-pin">1</span>Тип операции</div>
+                  <div class="web-instr-shot-field"><span class="web-instr-pin">2</span>Счёт · Категория</div>
+                  <div class="web-instr-shot-field"><span class="web-instr-pin">3</span>Сумма · Дата</div>
+                  <div class="web-instr-shot-field is-hot"><span class="web-instr-pin">4</span>Сохранить</div>
+                </div>
+              </figure>
+            </article>
+            <article id="web-instr-transfer" class="help-doc-section card help-doc-callout web-instr-section">
+              <h3 class="help-doc-h3">7. Переводы</h3>
+              <ol class="help-doc-list help-doc-numbered">
+                <li>Меню <strong>Переводы</strong>.</li>
+                <li>Счета «откуда» и «куда», кнопка ⇅ между ними.</li>
+                <li><strong>Сохранить перевод</strong>.</li>
+              </ol>
+              <figure class="web-instr-figure">
+                <div class="web-instr-shot web-instr-shot--form" aria-hidden="true">
+                  <div class="web-instr-shot-field"><span class="web-instr-pin">1</span>Со счёта · На счёт</div>
+                  <div class="web-instr-shot-field"><span class="web-instr-pin">2</span>Сумма</div>
+                  <div class="web-instr-shot-field is-hot"><span class="web-instr-pin">3</span>Сохранить перевод</div>
+                </div>
+              </figure>
+            </article>
+            <article id="web-instr-reports" class="help-doc-section card help-doc-callout web-instr-section">
+              <h3 class="help-doc-h3">8. Отчёты</h3>
+              <ol class="help-doc-list help-doc-numbered">
+                <li>Выберите период и фильтры.</li>
+                <li><strong>Показать</strong> — графики и таблицы.</li>
+                <li><strong>Скачать отчёт</strong> — CSV.</li>
+              </ol>
+              <figure class="web-instr-figure">
+                <div class="web-instr-shot web-instr-shot--form" aria-hidden="true">
+                  <div class="web-instr-shot-field"><span class="web-instr-pin">1</span>Период</div>
+                  <div class="web-instr-shot-field"><span class="web-instr-pin">2</span>Фильтры</div>
+                  <div class="web-instr-shot-field is-hot"><span class="web-instr-pin">3</span>Показать</div>
+                </div>
+              </figure>
+            </article>
+            <article id="web-instr-history" class="help-doc-section card help-doc-callout web-instr-section">
+              <h3 class="help-doc-h3">9. История</h3>
+              <ol class="help-doc-list help-doc-numbered">
+                <li>Задайте фильтры и поиск.</li>
+                <li><strong>Применить</strong>.</li>
+                <li>Листайте страницы внизу таблицы.</li>
+              </ol>
+              <p class="help-doc-note muted">Если запись не появилась — нажмите обновление в шапке.</p>
+            </article>
+          </div>
+
           <div class="tg-instruction-root">
             <header class="tg-ops-head tg-instruction-head">
               <div>
