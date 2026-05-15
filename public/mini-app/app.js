@@ -3,6 +3,9 @@ const isWebMode = new URLSearchParams(window.location.search).get("web") === "1"
 const WEB_WORKSPACE_MODE_SEEN_KEY = "balancy_web_workspace_mode_seen_v1";
 const WEB_INVITE_TOKEN_SESSION_KEY = "balancy_web_invite_token";
 
+/** В этом заходе по URL был ?invite= — нужно сбросить веб-сессию, иначе чужой balancy_session откроет чужой аккаунт. */
+let webInviteCapturedThisPageLoad = false;
+
 function parseWebInviteTokenFromLocation() {
   try {
     const params = new URLSearchParams(window.location.search);
@@ -13,6 +16,7 @@ function parseWebInviteTokenFromLocation() {
     }
 
     sessionStorage.setItem(WEB_INVITE_TOKEN_SESSION_KEY, token);
+    webInviteCapturedThisPageLoad = true;
     params.delete("invite");
     const nextQuery = params.toString();
     const nextUrl = nextQuery
@@ -6349,13 +6353,38 @@ async function fetchWebLoginConfig() {
       botUsername:
         typeof payload?.botUsername === "string" && payload.botUsername.trim()
           ? payload.botUsername.trim()
+          : null,
+      publicAppUrl:
+        typeof payload?.publicAppUrl === "string" && payload.publicAppUrl.trim()
+          ? payload.publicAppUrl.trim()
           : null
     };
   } catch {
-    webLoginConfigCache = { botUsername: null };
+    webLoginConfigCache = { botUsername: null, publicAppUrl: null };
   }
 
   return webLoginConfigCache;
+}
+
+/**
+ * Короткая ссылка для приглашения. В TG mini app `window.location.href` бывает длинным (tgWebApp… и т.д.),
+ * из‑за этого копировался мусор и переход мог вести «не туда». Берём APP_URL с сервера + `/mini-app/`.
+ */
+async function buildWorkspaceInviteClipboardUrl(token) {
+  const raw = (await fetchWebLoginConfig()).publicAppUrl;
+  const base =
+    typeof raw === "string" && raw.trim().length > 0
+      ? raw.replace(/\/+$/, "")
+      : window.location.origin;
+
+  const url = new URL("/mini-app/", `${base}/`);
+  url.searchParams.set("invite", String(token).trim());
+
+  if (isWebMode) {
+    url.searchParams.set("web", "1");
+  }
+
+  return url.toString();
 }
 
 async function mountWebTelegramLoginWidget() {
@@ -7301,18 +7330,8 @@ function attachWorkspaceUi() {
           throw new Error("Сервер не вернул токен приглашения");
         }
 
-        const url = new URL(window.location.href);
-        url.searchParams.delete("invite");
-
-        if (isWebMode) {
-          url.searchParams.set("web", "1");
-        } else {
-          url.searchParams.delete("web");
-        }
-
-        url.searchParams.set("invite", token);
-
-        await navigator.clipboard.writeText(url.toString());
+        const link = await buildWorkspaceInviteClipboardUrl(token);
+        await navigator.clipboard.writeText(link);
 
         if (webTeamInviteStatusElement) {
           webTeamInviteStatusElement.hidden = false;
@@ -8121,6 +8140,44 @@ async function loadApp(options = {}) {
   }
 
   if (isWebMode) {
+    if (webInviteCapturedThisPageLoad) {
+      webInviteCapturedThisPageLoad = false;
+
+      try {
+        await fetch(resolveFetchUrl("/auth/logout"), {
+          method: "POST",
+          credentials: "include"
+        });
+      } catch {
+        //
+      }
+
+      state.user = null;
+      state.workspace = null;
+      state.workspaces = [];
+      state.webOperationsLastPayload = null;
+      hideWebModeChoice();
+      hideWorkspaceInviteGate();
+      document.body.classList.remove(
+        "web-mode-choice-open",
+        "workspace-mode-choice-open",
+        "workspace-invite-gate-open"
+      );
+
+      showWebLoginGate(
+        getPendingWebInviteToken()
+          ? "Ссылка-приглашение: войдите аккаунтом того, кого добавляете в команду. Предыдущая веб-сессия на этом устройстве сброшена."
+          : ""
+      );
+      dismissAppSplash({ fast: true });
+
+      if (showGlobalOverlay) {
+        endGlobalBusy();
+      }
+
+      return;
+    }
+
     try {
       setStatus("Загружаем данные...");
       await refreshAppData(options);

@@ -358,7 +358,9 @@ export function createHttpApp(): express.Express {
 
   app.get("/api/web-login-config", (_req, res) => {
     res.json({
-      botUsername: env.telegramBotUsername?.trim() ?? null
+      botUsername: env.telegramBotUsername?.trim() ?? null,
+      /** Канонический публичный origin без пути — для короткой ссылки invite (не брать window.location из TG WebView). */
+      publicAppUrl: env.appUrl?.trim() ?? null
     });
   });
 
