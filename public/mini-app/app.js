@@ -5973,7 +5973,6 @@ function openWebNavDrawer() {
     return;
   }
 
-  closeWebProfileDropdown();
   closeWebNewEntryMenu();
   document.body.classList.add("web-nav-drawer-open");
   webSidebarBurgerBtn?.setAttribute("aria-expanded", "true");
@@ -6009,16 +6008,20 @@ function positionWebSidebarProfileDropdown() {
   const toggleRect = webProfileToggleButton.getBoundingClientRect();
   const sidebarEl = webProfileToggleButton.closest(".web-sidebar");
   const sidebarRect = sidebarEl?.getBoundingClientRect();
+  const inDrawer = window.innerWidth <= 900;
+  const inCompactSidebar = sidebarRect && sidebarRect.width < 120;
 
   webProfileDropdown.style.position = "fixed";
-  webProfileDropdown.style.zIndex = "500";
+  webProfileDropdown.style.zIndex = inDrawer ? "560" : "500";
   webProfileDropdown.style.width = "";
   webProfileDropdown.style.right = "auto";
 
   const dropdownWidth = webProfileDropdown.getBoundingClientRect().width || 248;
   let left = toggleRect.left;
 
-  if (sidebarRect && sidebarRect.width < 120) {
+  if (inDrawer && sidebarRect) {
+    left = sidebarRect.left + 12;
+  } else if (inCompactSidebar && sidebarRect) {
     left = sidebarRect.right + margin;
   }
 
@@ -7593,6 +7596,22 @@ if (isWebMode) {
 
   webProfileToggleButton?.addEventListener("click", (event) => {
     event.stopPropagation();
+    closeWebNewEntryMenu();
+
+    if (window.innerWidth <= 900 && !document.body.classList.contains("web-nav-drawer-open")) {
+      openWebNavDrawer();
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          if (webProfileDropdown?.hidden) {
+            webProfileDropdown.hidden = false;
+            webProfileToggleButton.setAttribute("aria-expanded", "true");
+          }
+          positionWebSidebarProfileDropdown();
+        });
+      });
+      return;
+    }
+
     toggleWebProfileDropdown();
   });
 

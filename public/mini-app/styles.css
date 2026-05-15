@@ -4062,6 +4062,57 @@ body.web-mode .web-sidebar {
   }
 }
 
+/* Drawer: подписи в меню и профиль поверх (перебивает compact 72px @1279) */
+@media (max-width: 900px) {
+  body.web-mode .web-sidebar-brand {
+    justify-content: flex-start !important;
+    margin: -8px -10px !important;
+    padding: 8px 10px !important;
+  }
+
+  body.web-mode .web-sidebar-brand .brand-wordmark {
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
+
+  body.web-mode .web-sidebar-brand .brand-wordmark::before {
+    content: none !important;
+  }
+
+  body.web-mode .web-sidebar-link {
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    padding: 10px 12px !important;
+  }
+
+  body.web-mode .web-sidebar-link > span:not(.web-sidebar-icon) {
+    display: inline !important;
+  }
+
+  body.web-mode .web-sidebar-user {
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    padding: 10px 12px !important;
+  }
+
+  body.web-mode .web-sidebar-user-meta {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  body.web-mode .web-sidebar-user-chevron {
+    display: block !important;
+  }
+
+  body.web-mode.web-nav-drawer-open .web-sidebar {
+    overflow: visible;
+  }
+
+  body.web-mode .web-profile-menu--sidebar .web-profile-dropdown {
+    z-index: 560;
+  }
+}
+
 /* Web: calmer main content strips */
 body.web-mode {
   background: #eef1f5;
@@ -4090,14 +4141,15 @@ body.web-mode .web-home-mid-grid > .web-home-columns {
 
 body.web-mode .web-home-columns {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   align-items: stretch;
   padding: 0;
   border: none;
   min-height: 0;
-  height: 100%;
+  height: auto;
   align-self: stretch;
+  width: 100%;
 }
 
 body.web-mode .web-home-columns > .web-home-col-card {
@@ -4105,7 +4157,17 @@ body.web-mode .web-home-columns > .web-home-col-card {
   flex-direction: column;
   align-items: stretch;
   min-height: 0;
-  height: 100%;
+  height: auto;
+  width: 100%;
+  max-width: none;
+}
+
+body.web-mode .web-home-mid-grid > .web-home-rail > .web-dash-donut-card,
+body.web-mode .web-home-mid-grid > .web-home-rail > .web-dash-plan-card,
+body.web-mode .web-home-mid-grid > .web-home-rail > .card {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
 }
 
 body.web-mode .web-home-columns > .web-home-col-card .web-home-card-main {
@@ -4116,10 +4178,11 @@ body.web-mode .web-home-columns > .web-home-col-card .web-home-card-main {
 }
 
 body.web-mode .web-home-columns > .web-home-col-card .web-home-list-fill {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   margin-top: 12px;
   min-width: 0;
   min-height: 0;
+  max-height: min(320px, 42vh);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -6256,9 +6319,8 @@ body.web-mode[data-app-active-screen="home"] .app-shell > main.content.tabbed-co
 
 body.web-mode[data-app-active-screen="home"] #screen-home.screen-active {
   gap: 10px;
-  flex: 1 1 auto;
-  min-height: 0;
-  grid-template-rows: auto auto auto auto auto;
+  flex: 0 1 auto;
+  min-height: auto;
 }
 
 body.web-mode[data-app-active-screen="home"] .web-dash-summary-grid {
@@ -6301,14 +6363,14 @@ body.web-mode[data-app-active-screen="home"] .web-home-mid-grid {
 
 body.web-mode[data-app-active-screen="home"] .web-home-columns {
   gap: 12px;
-  height: 100%;
+  height: auto;
   min-height: 0;
   align-items: stretch;
   align-self: stretch;
 }
 
 body.web-mode[data-app-active-screen="home"] .web-home-columns > .web-home-col-card {
-  height: 100%;
+  height: auto;
   min-height: 0;
 }
 
@@ -6316,7 +6378,7 @@ body.web-mode[data-app-active-screen="home"] .web-home-rail {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  height: 100%;
+  height: auto;
   min-height: 0;
   align-self: stretch;
   width: 100%;
@@ -6335,7 +6397,7 @@ body.web-mode[data-app-active-screen="home"] .web-home-columns > .web-home-col-c
 }
 
 body.web-mode[data-app-active-screen="home"] .web-home-columns > .web-home-col-card .web-home-card-main {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -6343,9 +6405,9 @@ body.web-mode[data-app-active-screen="home"] .web-home-columns > .web-home-col-c
 
 body.web-mode[data-app-active-screen="home"] .web-home-columns > .web-home-col-card .web-home-list-fill {
   margin-top: 8px;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
-  max-height: none;
+  max-height: min(300px, 42vh);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   align-content: start;
