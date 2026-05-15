@@ -74,6 +74,8 @@ const webNewEntryMenu = document.getElementById("webNewEntryMenu");
 const webPageTitleElement = document.getElementById("webPageTitle");
 const webPageSubtitleElement = document.getElementById("webPageSubtitle");
 const webSidebarUserNameElement = document.getElementById("webSidebarUserName");
+const webSidebarBurgerBtn = document.getElementById("webSidebarBurgerBtn");
+const webNavDrawerBackdrop = document.getElementById("webNavDrawerBackdrop");
 const syncRatesButton = document.getElementById("syncRatesButton");
 const fxBoardBaseInput = document.getElementById("fxBoardBaseInput");
 const fxBoardRowsElement = document.getElementById("fxBoardRows");
@@ -1418,6 +1420,7 @@ function openScreen(screenName) {
   if (isWebMode) {
     syncWebPageTitle(nextScreen);
     closeWebNewEntryMenu();
+    closeWebNavDrawer();
     if (nextScreen === "activity") {
       syncWebEntryKindCardsFromSelect();
     }
@@ -5956,6 +5959,38 @@ function clearWebSidebarProfileDropdownPosition() {
   webProfileDropdown.style.zIndex = "";
 }
 
+function closeWebNavDrawer() {
+  document.body.classList.remove("web-nav-drawer-open");
+  webSidebarBurgerBtn?.setAttribute("aria-expanded", "false");
+  if (webNavDrawerBackdrop) {
+    webNavDrawerBackdrop.hidden = true;
+    webNavDrawerBackdrop.setAttribute("aria-hidden", "true");
+  }
+}
+
+function openWebNavDrawer() {
+  if (!isWebMode || window.innerWidth > 900) {
+    return;
+  }
+
+  closeWebProfileDropdown();
+  closeWebNewEntryMenu();
+  document.body.classList.add("web-nav-drawer-open");
+  webSidebarBurgerBtn?.setAttribute("aria-expanded", "true");
+  if (webNavDrawerBackdrop) {
+    webNavDrawerBackdrop.hidden = false;
+    webNavDrawerBackdrop.setAttribute("aria-hidden", "false");
+  }
+}
+
+function toggleWebNavDrawer() {
+  if (document.body.classList.contains("web-nav-drawer-open")) {
+    closeWebNavDrawer();
+  } else {
+    openWebNavDrawer();
+  }
+}
+
 function positionWebSidebarProfileDropdown() {
   if (!isWebMode || !webProfileDropdown || !webProfileToggleButton) {
     return;
@@ -5972,11 +6007,23 @@ function positionWebSidebarProfileDropdown() {
 
   const margin = 8;
   const toggleRect = webProfileToggleButton.getBoundingClientRect();
+  const sidebarEl = webProfileToggleButton.closest(".web-sidebar");
+  const sidebarRect = sidebarEl?.getBoundingClientRect();
+
   webProfileDropdown.style.position = "fixed";
-  webProfileDropdown.style.zIndex = "400";
-  webProfileDropdown.style.left = `${toggleRect.left}px`;
-  webProfileDropdown.style.width = `${toggleRect.width}px`;
+  webProfileDropdown.style.zIndex = "500";
+  webProfileDropdown.style.width = "";
   webProfileDropdown.style.right = "auto";
+
+  const dropdownWidth = webProfileDropdown.getBoundingClientRect().width || 248;
+  let left = toggleRect.left;
+
+  if (sidebarRect && sidebarRect.width < 120) {
+    left = sidebarRect.right + margin;
+  }
+
+  left = Math.max(margin, Math.min(left, window.innerWidth - dropdownWidth - margin));
+  webProfileDropdown.style.left = `${left}px`;
 
   const dropdownHeight = webProfileDropdown.offsetHeight;
   let top = toggleRect.top - dropdownHeight - margin;
@@ -7535,6 +7582,15 @@ if (isWebMode) {
     });
   });
 
+  webSidebarBurgerBtn?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    toggleWebNavDrawer();
+  });
+
+  webNavDrawerBackdrop?.addEventListener("click", () => {
+    closeWebNavDrawer();
+  });
+
   webProfileToggleButton?.addEventListener("click", (event) => {
     event.stopPropagation();
     toggleWebProfileDropdown();
@@ -7564,9 +7620,23 @@ if (isWebMode) {
   });
 
   window.addEventListener("resize", () => {
+    if (window.innerWidth > 900) {
+      closeWebNavDrawer();
+    }
+
     if (!webProfileDropdown?.hidden) {
       positionWebSidebarProfileDropdown();
     }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") {
+      return;
+    }
+
+    closeWebNavDrawer();
+    closeWebProfileDropdown();
+    closeWebNewEntryMenu();
   });
 
   document.addEventListener("click", (event) => {

@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260515web-responsive-home-v1";
+        var BALANCY_CLIENT_ASSET_REV = "20260515web-responsive-fix-v2";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -50,6 +50,7 @@
     </div>
 
     <div id="webTopNav" class="web-desktop-shell">
+      <div id="webNavDrawerBackdrop" class="web-nav-drawer-backdrop" hidden aria-hidden="true"></div>
       <aside class="web-sidebar" aria-label="Меню Balancy">
         <div class="web-sidebar-top">
           <button type="button" class="web-sidebar-brand" data-web-nav="home" aria-label="Balancy — на главную">
@@ -178,6 +179,18 @@
       </aside>
       <div class="web-main-column">
         <header class="web-page-header">
+          <button
+            type="button"
+            id="webSidebarBurgerBtn"
+            class="web-sidebar-burger"
+            aria-label="Открыть меню"
+            aria-expanded="false"
+            aria-controls="webTopNav"
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 7H20M4 12H20M4 17H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+          </button>
           <div class="web-page-title-block">
             <div class="web-page-title-copy">
               <h1 id="webPageTitle" class="web-page-title">Главная</h1>

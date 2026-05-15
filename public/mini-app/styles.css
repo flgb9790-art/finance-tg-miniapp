@@ -3067,8 +3067,52 @@ body.web-mode #webTopNav.web-desktop-shell {
 
 .web-profile-menu--sidebar .web-profile-dropdown {
   position: fixed;
-  z-index: 400;
+  z-index: 500;
   box-sizing: border-box;
+  width: min(280px, calc(100vw - 24px));
+  min-width: 248px;
+  max-width: calc(100vw - 24px);
+}
+
+.web-sidebar-burger {
+  display: none;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.web-sidebar-burger svg {
+  width: 22px;
+  height: 22px;
+}
+
+.web-nav-drawer-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 440;
+  border: none;
+  margin: 0;
+  padding: 0;
+  background: rgb(15 23 42 / 0.42);
+  cursor: pointer;
+}
+
+body.web-mode.web-nav-drawer-open {
+  overflow: hidden;
+}
+
+body.web-mode.web-nav-drawer-open .web-nav-drawer-backdrop:not([hidden]) {
+  display: block;
 }
 
 .web-main-column {
@@ -3200,31 +3244,60 @@ body.web-mode .web-page-title {
 
 @media (max-width: 900px) {
   body.web-mode {
-    --web-sidebar-w: 100%;
-    overflow: auto;
-    height: auto;
+    --web-sidebar-w: min(288px, 88vw);
+    overflow: hidden;
+    height: 100dvh;
   }
 
   body.web-mode #webTopNav.web-desktop-shell {
-    flex-direction: column;
-    height: auto;
-    max-height: none;
-    min-height: 100dvh;
-    overflow: visible;
+    flex-direction: row;
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  body.web-mode .web-sidebar-burger {
+    display: inline-flex;
+  }
+
+  body.web-mode .web-page-header {
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 12px;
+  }
+
+  body.web-mode .web-page-title-block {
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   body.web-mode .web-sidebar {
-    width: 100%;
-    flex: 0 0 auto;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    border-right: none;
-    border-bottom: 1px solid var(--line);
-    overflow: visible;
-    align-self: stretch;
-    height: auto;
-    padding: 12px 14px 10px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 450;
+    width: var(--web-sidebar-w);
+    flex: none;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    align-self: auto;
+    height: 100dvh;
+    max-height: 100dvh;
+    padding: 16px 14px 14px;
+    border-right: 1px solid var(--line);
+    border-bottom: none;
+    overflow: hidden;
+    transform: translateX(-108%);
+    transition: transform 0.22s ease;
+    box-shadow: none;
+  }
+
+  body.web-mode.web-nav-drawer-open .web-sidebar {
+    transform: translateX(0);
+    box-shadow: 12px 0 40px rgb(15 23 42 / 0.18);
   }
 
   body.web-mode .web-sidebar-brand .brand-wordmark {
@@ -3233,6 +3306,12 @@ body.web-mode .web-page-title {
 
   body.web-mode .web-sidebar-brand .brand-wordmark::before {
     content: none;
+  }
+
+  body.web-mode .web-sidebar-brand {
+    justify-content: flex-start;
+    margin: -8px -10px;
+    padding: 8px 10px;
   }
 
   body.web-mode .web-sidebar-link {
@@ -3261,34 +3340,37 @@ body.web-mode .web-page-title {
   }
 
   body.web-mode .web-sidebar-nav-scroll {
-    flex: 1 1 220px;
+    flex: 1 1 auto;
     min-height: 0;
-    max-height: 200px;
+    max-height: none;
     overflow-y: auto;
   }
 
   body.web-mode .web-sidebar-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
+    flex-wrap: nowrap;
     width: 100%;
   }
 
   body.web-mode .web-sidebar-upsell {
-    display: none;
+    display: grid;
   }
 
   body.web-mode .web-sidebar-footer {
     margin-top: 0;
-    width: auto;
+    width: 100%;
   }
 
   body.web-mode .web-main-column {
-    overflow: visible;
+    flex: 1 1 auto;
+    min-width: 0;
     min-height: 0;
+    overflow: hidden;
   }
 
   body.web-mode .app-shell {
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: auto;
     flex: 1 1 auto;
     min-height: 0;
   }
@@ -3787,6 +3869,67 @@ body.web-mode .web-sidebar {
   }
 }
 
+@media (max-width: 1279px), (max-height: 820px) {
+  body.web-mode[data-app-active-screen="home"] #screen-home.screen-active {
+    display: flex;
+    flex-direction: column;
+    flex: 0 1 auto;
+    min-height: auto;
+    gap: var(--web-shell-gap, 14px);
+  }
+
+  body.web-mode[data-app-active-screen="home"] .app-shell > main.content.tabbed-content {
+    min-height: auto;
+  }
+
+  body.web-mode[data-app-active-screen="home"] .web-home-columns,
+  body.web-mode .web-home-columns {
+    height: auto;
+    min-height: auto;
+    align-self: stretch;
+    align-items: stretch;
+  }
+
+  body.web-mode[data-app-active-screen="home"] .web-home-columns > .web-home-col-card,
+  body.web-mode .web-home-columns > .web-home-col-card {
+    height: auto;
+    min-height: auto;
+  }
+
+  body.web-mode[data-app-active-screen="home"] .web-home-rail {
+    height: auto;
+    min-height: auto;
+  }
+
+  body.web-mode[data-app-active-screen="home"] .web-home-mid-grid,
+  body.web-mode .web-home-mid-grid {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: auto;
+    align-items: stretch;
+  }
+
+  body.web-mode .web-home-columns {
+    grid-template-columns: 1fr;
+  }
+
+  body.web-mode[data-app-active-screen="home"] .web-home-columns > .web-home-col-card .web-home-list-fill {
+    flex: 0 1 auto;
+    max-height: min(300px, 44vh);
+    min-height: 100px;
+  }
+
+  body.web-mode[data-app-active-screen="home"] .web-dash-donut-card,
+  body.web-mode[data-app-active-screen="home"] .web-dash-plan-card {
+    flex: 0 1 auto;
+    max-height: none;
+  }
+
+  body.web-mode .web-main-column {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
+
 @media (max-width: 1279px) {
   body.web-mode {
     --web-sidebar-w: 72px;
@@ -3851,6 +3994,11 @@ body.web-mode .web-sidebar {
     display: none;
   }
 
+  body.web-mode .web-sidebar-footer,
+  body.web-mode .web-profile-menu--sidebar {
+    overflow: visible;
+  }
+
   body.web-mode .web-page-header {
     padding-left: 18px;
     padding-right: 18px;
@@ -3867,13 +4015,11 @@ body.web-mode .web-sidebar {
   }
 }
 
-@media (max-width: 820px) {
+@media (max-width: 1100px) {
   body.web-mode .web-home-columns {
     grid-template-columns: 1fr;
   }
-}
 
-@media (max-width: 1100px) {
   body.web-mode .web-home-dash-top {
     grid-template-columns: 1fr;
   }
