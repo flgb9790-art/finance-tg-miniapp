@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260515web-nav-instruction-v1";
+        var BALANCY_CLIENT_ASSET_REV = "20260515instruction-text-scroll-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -1381,161 +1381,92 @@
                 <li><a href="#web-instr-history">История</a></li>
               </ol>
             </nav>
-            <p class="help-doc-lede muted">Пошаговое руководство по веб-версии Balancy: куда нажимать, в каком порядке заводить данные и как читать сводки. Серые блоки ниже — схемы экранов с номерами кнопок.</p>
+            <p class="help-doc-lede muted">
+              Пошаговое руководство по веб-версии Balancy: порядок настройки, разделы в боковом меню и основные действия в шапке.
+            </p>
             <article id="web-instr-start" class="help-doc-section card help-doc-callout web-instr-section">
               <h3 class="help-doc-h3">1. С чего начать</h3>
+              <p class="muted">
+                После входа откройте <strong>Главную</strong> — там общий баланс в выбранной валюте отображения и краткая сводка за месяц.
+              </p>
               <ol class="help-doc-list help-doc-numbered">
-                <li>Откройте <strong>Счета</strong> и создайте хотя бы один счёт.</li>
-                <li>Добавьте <strong>Категории</strong> доходов и расходов.</li>
-                <li>Запишите операцию в <strong>Операции</strong> или через <strong>+ Новая запись</strong>.</li>
+                <li>Создайте хотя бы один <strong>счёт</strong> в разделе «Счета».</li>
+                <li>Добавьте <strong>категории</strong> доходов и расходов в разделе «Категории».</li>
+                <li>Запишите первую операцию в «Операции» или через <strong>+ Новая запись</strong> в шапке.</li>
+                <li>Курсы валют подтягиваются с сервера; при необходимости нажмите обновление в шапке.</li>
               </ol>
             </article>
             <article id="web-instr-nav" class="help-doc-section card help-doc-callout web-instr-section">
               <h3 class="help-doc-h3">2. Меню слева и шапка</h3>
-              <p class="muted">Разделы — слева; быстрые действия — справа в шапке.</p>
-              <figure class="web-instr-figure">
-                <figcaption class="web-instr-figure-caption muted">Схема: боковое меню и шапка</figcaption>
-                <div class="web-instr-shot" aria-hidden="true">
-                  <div class="web-instr-shot-layout">
-                    <div class="web-instr-shot-sidebar">
-                      <div class="web-instr-shot-brand">Balancy</div>
-                      <div class="web-instr-shot-nav-item is-hot"><span class="web-instr-pin">1</span>Главная</div>
-                      <div class="web-instr-shot-nav-item"><span class="web-instr-pin">2</span>Счета</div>
-                      <div class="web-instr-shot-nav-item"><span class="web-instr-pin">3</span>Категории</div>
-                      <div class="web-instr-shot-nav-item"><span class="web-instr-pin">4</span>Операции</div>
-                      <div class="web-instr-shot-nav-item"><span class="web-instr-pin">5</span>Переводы</div>
-                      <div class="web-instr-shot-nav-item"><span class="web-instr-pin">6</span>Отчёты</div>
-                      <div class="web-instr-shot-nav-item"><span class="web-instr-pin">7</span>История</div>
-                      <div class="web-instr-shot-nav-item web-instr-shot-nav-item--guide"><span class="web-instr-pin">8</span>Инструкция</div>
-                    </div>
-                    <div class="web-instr-shot-main">
-                      <div class="web-instr-shot-header">
-                        <span class="web-instr-shot-title">Главная</span>
-                        <span class="web-instr-shot-btn is-hot"><span class="web-instr-pin">A</span>+ Новая запись</span>
-                        <span class="web-instr-shot-btn-icon"><span class="web-instr-pin">B</span>↻</span>
-                      </div>
-                      <div class="web-instr-shot-body muted">Содержимое раздела</div>
-                    </div>
-                  </div>
-                </div>
-              </figure>
+              <p class="muted">В боковом меню слева — основные разделы (сверху вниз):</p>
               <ul class="help-doc-list">
-                <li><strong>1–7</strong> — разделы меню.</li>
-                <li><strong>8</strong> — эта инструкция (слегка выделена).</li>
-                <li><strong>A</strong> — новая запись.</li>
-                <li><strong>B</strong> — обновить данные.</li>
+                <li><strong>Главная</strong> — баланс, счета, последние операции, диаграммы.</li>
+                <li><strong>Счета</strong> — список и форма создания или редактирования.</li>
+                <li><strong>Категории</strong> — статьи доходов и расходов.</li>
+                <li><strong>Операции</strong> — форма дохода или расхода.</li>
+                <li><strong>Переводы</strong> — перевод между своими счетами.</li>
+                <li><strong>Отчёты</strong> — аналитика за период.</li>
+                <li><strong>История</strong> — лента операций с фильтрами.</li>
+                <li><strong>Инструкция</strong> — этот раздел.</li>
               </ul>
+              <p class="muted">
+                В шапке справа: <strong>+ Новая запись</strong> (доход, расход или перевод) и кнопка обновления данных.
+                На узком экране откройте меню кнопкой «бургер» в шапке.
+              </p>
             </article>
             <article id="web-instr-home" class="help-doc-section card help-doc-callout web-instr-section">
               <h3 class="help-doc-h3">3. Главная</h3>
-              <p class="muted">Баланс, сводка за месяц, счета, история, диаграммы.</p>
-              <figure class="web-instr-figure">
-                <figcaption class="web-instr-figure-caption muted">Схема: карточки на главной</figcaption>
-                <div class="web-instr-shot web-instr-shot--stack" aria-hidden="true">
-                  <div class="web-instr-shot-card is-hot"><span class="web-instr-pin">1</span>Общий баланс</div>
-                  <div class="web-instr-shot-row">
-                    <div class="web-instr-shot-card"><span class="web-instr-pin">2</span>Ваши счета</div>
-                    <div class="web-instr-shot-card"><span class="web-instr-pin">3</span>История</div>
-                  </div>
-                  <div class="web-instr-shot-row">
-                    <div class="web-instr-shot-card"><span class="web-instr-pin">4</span>По категориям</div>
-                    <div class="web-instr-shot-card"><span class="web-instr-pin">5</span>Расходы и доходы</div>
-                  </div>
-                </div>
-              </figure>
-              <ul class="help-doc-list">
-                <li><strong>1</strong> — валюта отображения и общий баланс.</li>
-                <li><strong>2–3</strong> — короткие списки счетов и операций.</li>
-                <li><strong>4–5</strong> — расходы по категориям и полоски дохода/расхода.</li>
-              </ul>
+              <p class="muted">
+                Карточка баланса показывает общую сумму в валюте отображения; ниже — остатки по валютам, блоки «Ваши счета» и «История»,
+                расходы по категориям и сравнение доходов и расходов за месяц. Справа на широком экране — круговая диаграмма и план.
+              </p>
             </article>
             <article id="web-instr-accounts" class="help-doc-section card help-doc-callout web-instr-section">
               <h3 class="help-doc-h3">4. Счета</h3>
               <ol class="help-doc-list help-doc-numbered">
-                <li>Меню <strong>Счета</strong>: список слева, форма справа.</li>
-                <li>Заполните поля и нажмите <strong>Создать счёт</strong>.</li>
-                <li>Редактирование — иконка карандаша в строке.</li>
+                <li>Откройте <strong>Счета</strong>: слева список, справа форма.</li>
+                <li>Укажите название, тип, валюту, стартовый баланс, цвет и иконку.</li>
+                <li>Нажмите <strong>Создать счёт</strong> или сохраните изменения при редактировании.</li>
+                <li>Редактирование — иконка карандаша в строке списка.</li>
               </ol>
-              <figure class="web-instr-figure">
-                <div class="web-instr-shot web-instr-shot--form" aria-hidden="true">
-                  <div class="web-instr-shot-field"><span class="web-instr-pin">1</span>Название</div>
-                  <div class="web-instr-shot-field"><span class="web-instr-pin">2</span>Тип · Валюта · Баланс</div>
-                  <div class="web-instr-shot-field"><span class="web-instr-pin">3</span>Цвет и иконка</div>
-                  <div class="web-instr-shot-field is-hot"><span class="web-instr-pin">4</span>Создать счёт</div>
-                </div>
-              </figure>
             </article>
             <article id="web-instr-categories" class="help-doc-section card help-doc-callout web-instr-section">
               <h3 class="help-doc-h3">5. Категории</h3>
-              <ol class="help-doc-list help-doc-numbered">
-                <li>Выберите <strong>Доход</strong> или <strong>Расход</strong>.</li>
-                <li>Укажите название, цвет и иконку.</li>
-                <li><strong>Сохранить</strong>.</li>
-              </ol>
-              <figure class="web-instr-figure">
-                <div class="web-instr-shot web-instr-shot--form" aria-hidden="true">
-                  <div class="web-instr-shot-field"><span class="web-instr-pin">1</span>Тип: Доход / Расход</div>
-                  <div class="web-instr-shot-field"><span class="web-instr-pin">2</span>Название</div>
-                  <div class="web-instr-shot-field"><span class="web-instr-pin">3</span>Сетка иконок</div>
-                  <div class="web-instr-shot-field is-hot"><span class="web-instr-pin">4</span>Сохранить</div>
-                </div>
-              </figure>
+              <p class="muted">
+                Переключите <strong>Доход</strong> или <strong>Расход</strong>, задайте название, цвет и иконку, нажмите <strong>Сохранить</strong>.
+                Список слева, форма справа — как у счетов.
+              </p>
             </article>
             <article id="web-instr-activity" class="help-doc-section card help-doc-callout web-instr-section">
               <h3 class="help-doc-h3">6. Операции</h3>
               <ol class="help-doc-list help-doc-numbered">
-                <li>Раздел <strong>Операции</strong> или меню <strong>+ Новая запись</strong>.</li>
-                <li>Карточки <strong>Доход</strong> / <strong>Расход</strong>.</li>
-                <li>Под счётом — строка «Доступно: …».</li>
-                <li><strong>Сохранить операцию</strong>.</li>
+                <li>Раздел <strong>Операции</strong> или <strong>+ Новая запись</strong> → доход или расход.</li>
+                <li>Выберите счёт и категорию; под счётом отображается строка «Доступно: …».</li>
+                <li>Укажите сумму, дату и при необходимости комментарий.</li>
+                <li>Нажмите <strong>Сохранить операцию</strong>.</li>
               </ol>
-              <figure class="web-instr-figure">
-                <div class="web-instr-shot web-instr-shot--form" aria-hidden="true">
-                  <div class="web-instr-shot-field"><span class="web-instr-pin">1</span>Тип операции</div>
-                  <div class="web-instr-shot-field"><span class="web-instr-pin">2</span>Счёт · Категория</div>
-                  <div class="web-instr-shot-field"><span class="web-instr-pin">3</span>Сумма · Дата</div>
-                  <div class="web-instr-shot-field is-hot"><span class="web-instr-pin">4</span>Сохранить</div>
-                </div>
-              </figure>
             </article>
             <article id="web-instr-transfer" class="help-doc-section card help-doc-callout web-instr-section">
               <h3 class="help-doc-h3">7. Переводы</h3>
-              <ol class="help-doc-list help-doc-numbered">
-                <li>Меню <strong>Переводы</strong>.</li>
-                <li>Счета «откуда» и «куда», кнопка ⇅ между ними.</li>
-                <li><strong>Сохранить перевод</strong>.</li>
-              </ol>
-              <figure class="web-instr-figure">
-                <div class="web-instr-shot web-instr-shot--form" aria-hidden="true">
-                  <div class="web-instr-shot-field"><span class="web-instr-pin">1</span>Со счёта · На счёт</div>
-                  <div class="web-instr-shot-field"><span class="web-instr-pin">2</span>Сумма</div>
-                  <div class="web-instr-shot-field is-hot"><span class="web-instr-pin">3</span>Сохранить перевод</div>
-                </div>
-              </figure>
+              <p class="muted">
+                В меню <strong>Переводы</strong> укажите счёт списания и зачисления (кнопка ⇅ меняет их местами), сумму и дату.
+                Перевод между своими счетами не меняет общий баланс в одной валюте, но обновляет остатки по каждому счёту.
+                При разных валютах можно задать сумму зачисления вручную.
+              </p>
             </article>
             <article id="web-instr-reports" class="help-doc-section card help-doc-callout web-instr-section">
               <h3 class="help-doc-h3">8. Отчёты</h3>
-              <ol class="help-doc-list help-doc-numbered">
-                <li>Выберите период и фильтры.</li>
-                <li><strong>Показать</strong> — графики и таблицы.</li>
-                <li><strong>Скачать отчёт</strong> — CSV.</li>
-              </ol>
-              <figure class="web-instr-figure">
-                <div class="web-instr-shot web-instr-shot--form" aria-hidden="true">
-                  <div class="web-instr-shot-field"><span class="web-instr-pin">1</span>Период</div>
-                  <div class="web-instr-shot-field"><span class="web-instr-pin">2</span>Фильтры</div>
-                  <div class="web-instr-shot-field is-hot"><span class="web-instr-pin">3</span>Показать</div>
-                </div>
-              </figure>
+              <p class="muted">
+                Выберите период и фильтры, нажмите <strong>Показать</strong>. После расчёта доступны таблицы и графики;
+                при наличии прав — <strong>Скачать отчёт</strong> в CSV.
+              </p>
             </article>
             <article id="web-instr-history" class="help-doc-section card help-doc-callout web-instr-section">
               <h3 class="help-doc-h3">9. История</h3>
-              <ol class="help-doc-list help-doc-numbered">
-                <li>Задайте фильтры и поиск.</li>
-                <li><strong>Применить</strong>.</li>
-                <li>Листайте страницы внизу таблицы.</li>
-              </ol>
-              <p class="help-doc-note muted">Если запись не появилась — нажмите обновление в шапке.</p>
+              <p class="muted">
+                Задайте период, тип, счёт, категорию или поисковую строку и нажмите <strong>Применить</strong>.
+                Листайте страницы внизу таблицы. Если запись не появилась — обновите данные в шапке.
+              </p>
             </article>
           </div>
 

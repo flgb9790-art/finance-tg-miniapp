@@ -5020,11 +5020,26 @@ body:not(.web-mode) #screen-activity .web-op-kind-card--expense.is-selected {
   padding-bottom: 8px;
 }
 
+/* Telegram Android: overflow:auto без реального переполнения ловит жесты и блокирует прокрутку страницы */
+body:not(.web-mode) #screen-instruction.screen-active {
+  touch-action: pan-y;
+}
+
+body:not(.web-mode) #screen-instruction .tg-instruction-scroll.help-doc-scroll {
+  overflow-y: visible;
+  overscroll-behavior: auto;
+  flex: none;
+  min-height: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
 body.web-mode .web-instruction-root {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: 920px;
+  width: 100%;
+  max-width: none;
   padding-bottom: 28px;
 }
 
