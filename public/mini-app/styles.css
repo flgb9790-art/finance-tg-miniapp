@@ -10988,7 +10988,9 @@ body.web-mode.web-login-gate-open .app-shell {
 body.web-mode.web-mode-choice-open #webTopNav,
 body.web-mode.web-mode-choice-open .app-shell,
 body.workspace-mode-choice-open .app-shell,
-body.workspace-mode-choice-open .bottom-nav {
+body.workspace-mode-choice-open .bottom-nav,
+body.workspace-invite-gate-open .app-shell,
+body.workspace-invite-gate-open .bottom-nav {
   visibility: hidden;
   pointer-events: none;
 }
@@ -11320,4 +11322,96 @@ body.workspace-mode-choice-open .bottom-nav {
 
 .tg-workspace-create-team {
   width: 100%;
+}
+
+.workspace-invite-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 10045;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(20px, env(safe-area-inset-top, 0px)) 20px max(20px, env(safe-area-inset-bottom, 0px));
+  background: #ffffff;
+}
+
+.workspace-invite-gate[hidden] {
+  display: none !important;
+}
+
+.workspace-invite-gate-card {
+  width: min(100%, 420px);
+  padding: 28px 24px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: #fff;
+  box-shadow: 0 16px 48px rgb(18 18 43 / 0.1);
+}
+
+.workspace-invite-gate-title {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.workspace-invite-gate-team-name {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 650;
+  text-align: center;
+}
+
+.workspace-invite-gate-meta {
+  margin: 0 0 18px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.workspace-invite-gate-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.workspace-invite-gate-error {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 13px;
+}
+
+.tg-create-team-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.tg-create-team-label {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.tg-create-team-input {
+  width: 100%;
+  min-height: var(--form-control-min-height);
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  padding: var(--form-control-padding-y) var(--form-control-padding-x);
+  font: inherit;
+}
+
+.tg-create-team-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.tg-create-team-submit {
+  width: 100%;
+}
+
+.tg-create-team-error {
+  margin: 0;
+  font-size: 13px;
 }

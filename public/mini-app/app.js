@@ -105,6 +105,12 @@ const webModeChoiceTeamPanelElement = document.getElementById("webModeChoiceTeam
 const webModeChoiceTeamNameInput = document.getElementById("webModeChoiceTeamName");
 const webModeChoiceTeamSubmitButton = document.getElementById("webModeChoiceTeamSubmit");
 const webModeChoiceErrorElement = document.getElementById("webModeChoiceError");
+const workspaceInviteGateElement = document.getElementById("workspaceInviteGate");
+const workspaceInviteGateTeamNameElement = document.getElementById("workspaceInviteGateTeamName");
+const workspaceInviteGateMetaElement = document.getElementById("workspaceInviteGateMeta");
+const workspaceInviteAcceptButtonElement = document.getElementById("workspaceInviteAcceptButton");
+const workspaceInviteDeclineButtonElement = document.getElementById("workspaceInviteDeclineButton");
+const workspaceInviteGateErrorElement = document.getElementById("workspaceInviteGateError");
 const webWorkspaceSwitcherElement = document.getElementById("webWorkspaceSwitcher");
 const webWorkspaceSwitcherListElement = document.getElementById("webWorkspaceSwitcherList");
 const webTeamSettingsCardElement = document.getElementById("webTeamSettingsCard");
@@ -125,6 +131,11 @@ const tgWorkspaceCardElement = document.getElementById("tgWorkspaceCard");
 const tgWorkspaceActiveMetaElement = document.getElementById("tgWorkspaceActiveMeta");
 const tgWorkspaceSwitcherListElement = document.getElementById("tgWorkspaceSwitcherList");
 const tgWorkspaceCreateTeamButtonElement = document.getElementById("tgWorkspaceCreateTeamButton");
+const tgCreateTeamPanelElement = document.getElementById("tgCreateTeamPanel");
+const tgCreateTeamNameInputElement = document.getElementById("tgCreateTeamNameInput");
+const tgCreateTeamSubmitButtonElement = document.getElementById("tgCreateTeamSubmitButton");
+const tgCreateTeamCancelButtonElement = document.getElementById("tgCreateTeamCancelButton");
+const tgCreateTeamErrorElement = document.getElementById("tgCreateTeamError");
 
 const webOpenSettingsButton = document.getElementById("webOpenSettingsButton");
 const webNewEntryMenu = document.getElementById("webNewEntryMenu");
@@ -6490,8 +6501,95 @@ function hideWebModeChoice() {
   }
 }
 
+function setWorkspaceInviteGateError(message = "") {
+  if (!workspaceInviteGateErrorElement) {
+    return;
+  }
+
+  const text = String(message ?? "").trim();
+  workspaceInviteGateErrorElement.hidden = !text;
+  workspaceInviteGateErrorElement.textContent = text;
+}
+
+function showWorkspaceInviteGate(workspace) {
+  if (!workspaceInviteGateElement) {
+    return;
+  }
+
+  document.body.classList.add("workspace-invite-gate-open", "workspace-mode-choice-open");
+  workspaceInviteGateElement.hidden = false;
+  setWorkspaceInviteGateError("");
+
+  if (workspaceInviteGateTeamNameElement) {
+    workspaceInviteGateTeamNameElement.textContent = workspace?.name || "Команда";
+  }
+
+  if (workspaceInviteGateMetaElement) {
+    const count = workspace?.memberCount ?? 1;
+    const max = workspace?.maxMembers ?? 5;
+    workspaceInviteGateMetaElement.textContent = `${count} из ${max} участников уже в команде`;
+  }
+}
+
+function hideWorkspaceInviteGate() {
+  if (workspaceInviteGateElement) {
+    workspaceInviteGateElement.hidden = true;
+  }
+
+  document.body.classList.remove("workspace-invite-gate-open");
+  setWorkspaceInviteGateError("");
+
+  if (!webModeChoiceElement || webModeChoiceElement.hidden) {
+    document.body.classList.remove("workspace-mode-choice-open");
+  }
+}
+
+async function continueWorkspaceBootAfterInviteGate() {
+  if (shouldShowWorkspaceModeChoice()) {
+    showWebModeChoice();
+    return;
+  }
+
+  hideWebModeChoice();
+  hideWorkspaceInviteGate();
+}
+
+async function maybeShowWorkspaceInviteGate(token) {
+  try {
+    const payload = await apiFetch(`/api/workspaces/invites/${encodeURIComponent(token)}`);
+    const workspace = payload?.workspace;
+
+    if (!workspace) {
+      throw new Error("Приглашение не найдено");
+    }
+
+    showWorkspaceInviteGate(workspace);
+    return true;
+  } catch (error) {
+    clearPendingWebInviteToken();
+    const message = error instanceof Error ? error.message : "Не удалось загрузить приглашение";
+
+    if (shouldShowWorkspaceModeChoice()) {
+      showWebModeChoice();
+      setWebModeChoiceError(message);
+    } else {
+      setStatus(message, "error");
+    }
+
+    return false;
+  }
+}
+
 async function finalizeWorkspaceBoot() {
-  await tryAcceptPendingWebInvite();
+  const token = getPendingWebInviteToken();
+
+  if (token && state.user) {
+    const previewShown = await maybeShowWorkspaceInviteGate(token);
+
+    if (previewShown) {
+      return;
+    }
+  }
 
   if (shouldShowWorkspaceModeChoice()) {
     showWebModeChoice();
@@ -6499,6 +6597,7 @@ async function finalizeWorkspaceBoot() {
   }
 
   hideWebModeChoice();
+  hideWorkspaceInviteGate();
 }
 
 async function switchWebWorkspace(workspaceId) {
@@ -6678,6 +6777,51 @@ function renderTgWorkspaceTools() {
       });
     }
   }
+
+  if (tgWorkspaceCreateTeamButtonElement) {
+    tgWorkspaceCreateTeamButtonElement.hidden = hasTeam || !tgCreateTeamPanelElement?.hidden;
+  }
+}
+
+function setTgCreateTeamError(message = "") {
+  if (!tgCreateTeamErrorElement) {
+    return;
+  }
+
+  const text = String(message ?? "").trim();
+  tgCreateTeamErrorElement.hidden = !text;
+  tgCreateTeamErrorElement.textContent = text;
+}
+
+function showTgCreateTeamPanel() {
+  if (!tgCreateTeamPanelElement) {
+    return;
+  }
+
+  tgCreateTeamPanelElement.hidden = false;
+
+  if (tgWorkspaceCreateTeamButtonElement) {
+    tgWorkspaceCreateTeamButtonElement.hidden = true;
+  }
+
+  setTgCreateTeamError("");
+  tgCreateTeamNameInputElement?.focus();
+}
+
+function hideTgCreateTeamPanel() {
+  if (tgCreateTeamPanelElement) {
+    tgCreateTeamPanelElement.hidden = true;
+  }
+
+  if (tgCreateTeamNameInputElement) {
+    tgCreateTeamNameInputElement.value = "";
+  }
+
+  setTgCreateTeamError("");
+
+  const hasTeam = Array.isArray(state.workspaces)
+    ? state.workspaces.some((item) => item.kind === "team")
+    : false;
 
   if (tgWorkspaceCreateTeamButtonElement) {
     tgWorkspaceCreateTeamButtonElement.hidden = hasTeam;
@@ -6993,12 +7137,83 @@ function attachWorkspaceUi() {
   });
 
   tgWorkspaceCreateTeamButtonElement?.addEventListener("click", () => {
-    showWebModeChoice();
-    if (webModeChoiceTeamPanelElement) {
-      webModeChoiceTeamPanelElement.hidden = false;
+    if (isWebMode) {
+      showWebModeChoice();
+      if (webModeChoiceTeamPanelElement) {
+        webModeChoiceTeamPanelElement.hidden = false;
+      }
+      webModeChoiceTeamNameInput?.focus();
+      setWebModeChoiceError("");
+      return;
     }
-    webModeChoiceTeamNameInput?.focus();
-    setWebModeChoiceError("");
+
+    showTgCreateTeamPanel();
+  });
+
+  tgCreateTeamCancelButtonElement?.addEventListener("click", () => {
+    hideTgCreateTeamPanel();
+  });
+
+  tgCreateTeamSubmitButtonElement?.addEventListener("click", () => {
+    void (async () => {
+      const name = tgCreateTeamNameInputElement?.value?.trim() ?? "";
+
+      if (!name) {
+        setTgCreateTeamError("Введите название команды");
+        return;
+      }
+
+      setTgCreateTeamError("");
+
+      try {
+        if (tgCreateTeamSubmitButtonElement) {
+          tgCreateTeamSubmitButtonElement.disabled = true;
+        }
+
+        await createWebTeamWorkspace(name);
+        hideTgCreateTeamPanel();
+        setStatus("Команда создана", "success");
+      } catch (error) {
+        setTgCreateTeamError(error instanceof Error ? error.message : "Не удалось создать команду");
+      } finally {
+        if (tgCreateTeamSubmitButtonElement) {
+          tgCreateTeamSubmitButtonElement.disabled = false;
+        }
+      }
+    })();
+  });
+
+  workspaceInviteAcceptButtonElement?.addEventListener("click", () => {
+    void (async () => {
+      setWorkspaceInviteGateError("");
+
+      try {
+        if (workspaceInviteAcceptButtonElement) {
+          workspaceInviteAcceptButtonElement.disabled = true;
+        }
+
+        const accepted = await tryAcceptPendingWebInvite();
+
+        if (accepted) {
+          hideWorkspaceInviteGate();
+          hideWebModeChoice();
+          setStatus("Вы вступили в команду", "success");
+        }
+      } catch (error) {
+        setWorkspaceInviteGateError(
+          error instanceof Error ? error.message : "Не удалось принять приглашение"
+        );
+      } finally {
+        if (workspaceInviteAcceptButtonElement) {
+          workspaceInviteAcceptButtonElement.disabled = false;
+        }
+      }
+    })();
+  });
+
+  workspaceInviteDeclineButtonElement?.addEventListener("click", () => {
+    clearPendingWebInviteToken();
+    void continueWorkspaceBootAfterInviteGate();
   });
 
   webTeamCopyInviteButtonElement?.addEventListener("click", () => {
@@ -7017,7 +7232,14 @@ function attachWorkspaceUi() {
         }
 
         const url = new URL(window.location.href);
-        url.searchParams.set("web", "1");
+        url.searchParams.delete("invite");
+
+        if (isWebMode) {
+          url.searchParams.set("web", "1");
+        } else {
+          url.searchParams.delete("web");
+        }
+
         url.searchParams.set("invite", token);
 
         await navigator.clipboard.writeText(url.toString());
@@ -7688,7 +7910,8 @@ function buildAppDataApiUrl(options = {}) {
 function scheduleDebouncedBackgroundRefresh(delayMs = 900) {
   if (
     (isWebMode && document.body.classList.contains("web-login-gate-open")) ||
-    document.body.classList.contains("workspace-mode-choice-open")
+    document.body.classList.contains("workspace-mode-choice-open") ||
+    document.body.classList.contains("workspace-invite-gate-open")
   ) {
     return;
   }
@@ -7832,7 +8055,10 @@ async function loadApp(options = {}) {
       setStatus("Загружаем данные...");
       await refreshAppData(options);
       hideWebLoginGate();
-      if (!document.body.classList.contains("workspace-mode-choice-open")) {
+      if (
+        !document.body.classList.contains("workspace-mode-choice-open") &&
+        !document.body.classList.contains("workspace-invite-gate-open")
+      ) {
         setStatus(
           "Все готово. Интерфейс разбит по вкладкам и стал проще для ежедневного использования.",
           "success"
@@ -7925,7 +8151,10 @@ async function loadApp(options = {}) {
 
     setStatus("Загружаем данные...");
     await refreshAppData(options);
-    if (!document.body.classList.contains("workspace-mode-choice-open")) {
+    if (
+      !document.body.classList.contains("workspace-mode-choice-open") &&
+      !document.body.classList.contains("workspace-invite-gate-open")
+    ) {
       setStatus(
         "Все готово. Интерфейс разбит по вкладкам и стал проще для ежедневного использования.",
         "success"
