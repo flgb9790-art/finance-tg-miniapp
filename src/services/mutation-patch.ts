@@ -1,22 +1,50 @@
 import type { AccountRow } from "./accounts.js";
 import { listAccounts } from "./accounts.js";
-import { countActiveCategories } from "./categories.js";
+import { countActiveCategories, listCategories, type CategoryRow } from "./categories.js";
 import type { EntryListItem } from "./entries.js";
-import type { TransferListItem } from "./transfers.js";
 import {
   buildDashboardSummaryFromParts,
   computeMonthEntryTotalsInReportingCurrency,
   isOccurredInReportRange,
   resolveReportRange,
+  sumAccountsBalanceInReportingCurrency,
   type DashboardSummary,
   type ReportResult
 } from "./reports.js";
 
 export interface AppMutationPatch {
-  accounts: AccountRow[];
-  summary: DashboardSummary;
+  accounts?: AccountRow[];
+  categories?: CategoryRow[];
+  summary?: DashboardSummary | Partial<DashboardSummary>;
   /** Фоновый пересчёт отчёта/спарклайнов (месяц затронут). */
   syncReport?: boolean;
+}
+
+function balancesByCurrencyFromAccounts(
+  accounts: AccountRow[]
+): Record<string, number> {
+  return accounts.reduce<Record<string, number>>((result, account) => {
+    result[account.currency_code] =
+      (result[account.currency_code] ?? 0) + Number(account.balance);
+    return result;
+  }, {});
+}
+
+async function buildBalancesSummaryPartial(
+  accounts: AccountRow[],
+  categoriesCount: number,
+  reportingCurrency: string
+): Promise<Partial<DashboardSummary>> {
+  return {
+    accountsCount: accounts.length,
+    categoriesCount,
+    balancesByCurrency: balancesByCurrencyFromAccounts(accounts),
+    totalBalanceConverted: await sumAccountsBalanceInReportingCurrency(
+      accounts,
+      reportingCurrency
+    ),
+    reportingCurrency
+  };
 }
 
 async function buildBalanceSummary(
@@ -47,12 +75,13 @@ async function buildBalanceSummary(
   return buildDashboardSummaryFromParts(
     accounts,
     categoriesCount,
-    syntheticReport as ReportResult,
+    syntheticReport,
     reportingCurrency
   );
 }
 
-export async function buildAccountsMutationPatch(
+/** Счета и остатки без пересчёта доходов/расходов месяца (перевод, счёт). */
+export async function buildBalancesOnlyMutationPatch(
   userId: string,
   reportingCurrency: string
 ): Promise<AppMutationPatch> {
@@ -61,14 +90,44 @@ export async function buildAccountsMutationPatch(
     countActiveCategories(userId)
   ]);
 
-  const summary = await buildBalanceSummary(
-    userId,
-    reportingCurrency,
+  return {
     accounts,
-    categoriesCount
-  );
+    summary: await buildBalancesSummaryPartial(accounts, categoriesCount, reportingCurrency)
+  };
+}
 
-  return { accounts, summary };
+export async function buildAccountsMutationPatch(
+  userId: string,
+  reportingCurrency: string
+): Promise<AppMutationPatch> {
+  return buildBalancesOnlyMutationPatch(userId, reportingCurrency);
+}
+
+export async function buildTransferMutationPatch(
+  userId: string,
+  reportingCurrency: string
+): Promise<AppMutationPatch> {
+  return buildBalancesOnlyMutationPatch(userId, reportingCurrency);
+}
+
+export async function buildCategoriesMutationPatch(
+  userId: string,
+  reportingCurrency: string
+): Promise<AppMutationPatch> {
+  const [categories, accounts, categoriesCount] = await Promise.all([
+    listCategories(userId),
+    listAccounts(userId),
+    countActiveCategories(userId)
+  ]);
+
+  return {
+    categories,
+    accounts,
+    summary: {
+      ...(await buildBalancesSummaryPartial(accounts, categoriesCount, reportingCurrency)),
+      categoriesCount: categories.length
+    }
+  };
 }
 
 export async function buildEntryMutationPatch(
@@ -110,32 +169,4 @@ export async function buildEntryMutationPatch(
     summary,
     syncReport: inMonth
   };
-}
-
-export async function buildTransferMutationPatch(
-  userId: string,
-  reportingCurrency: string
-): Promise<AppMutationPatch> {
-  const [accounts, categoriesCount] = await Promise.all([
-    listAccounts(userId),
-    countActiveCategories(userId)
-  ]);
-
-  const monthRange = resolveReportRange("month");
-  const monthTotals = await computeMonthEntryTotalsInReportingCurrency(
-    userId,
-    reportingCurrency,
-    monthRange.startDate,
-    monthRange.endDate
-  );
-
-  const summary = await buildBalanceSummary(
-    userId,
-    reportingCurrency,
-    accounts,
-    categoriesCount,
-    monthTotals
-  );
-
-  return { accounts, summary };
 }

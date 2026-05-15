@@ -35,6 +35,8 @@ import {
 } from "../services/reports.js";
 import {
   buildAccountsMutationPatch,
+  buildBalancesOnlyMutationPatch,
+  buildCategoriesMutationPatch,
   buildEntryMutationPatch,
   buildTransferMutationPatch
 } from "../services/mutation-patch.js";
@@ -684,7 +686,11 @@ export function createHttpApp(): express.Express {
       }
 
       await deleteAccount(accountId, appUser.id);
-      res.status(204).send();
+
+      const reportingCurrency = await resolveReportingCurrency(req);
+      const patch = await buildBalancesOnlyMutationPatch(appUser.id, reportingCurrency);
+
+      res.json({ ok: true, patch });
     } catch (error) {
       console.error("Failed to delete account from mini app", error);
 
@@ -723,7 +729,10 @@ export function createHttpApp(): express.Express {
         name
       });
 
-      res.status(201).json({ category });
+      const reportingCurrency = await resolveReportingCurrency(req);
+      const patch = await buildCategoriesMutationPatch(appUser.id, reportingCurrency);
+
+      res.status(201).json({ category, patch });
     } catch (error) {
       console.error("Failed to create category from mini app", error);
 
@@ -768,7 +777,10 @@ export function createHttpApp(): express.Express {
         kind: kind as OperationKind
       });
 
-      res.json({ category });
+      const reportingCurrency = await resolveReportingCurrency(req);
+      const patch = await buildCategoriesMutationPatch(appUser.id, reportingCurrency);
+
+      res.json({ category, patch });
     } catch (error) {
       console.error("Failed to update category from mini app", error);
 
@@ -794,7 +806,10 @@ export function createHttpApp(): express.Express {
 
       await deleteCategory(categoryId, appUser.id);
 
-      res.status(204).send();
+      const reportingCurrency = await resolveReportingCurrency(req);
+      const patch = await buildCategoriesMutationPatch(appUser.id, reportingCurrency);
+
+      res.json({ ok: true, patch });
     } catch (error) {
       console.error("Failed to delete category from mini app", error);
 

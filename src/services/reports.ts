@@ -500,7 +500,7 @@ export interface DashboardSummary {
   ratesUpdatedAt: string | null;
 }
 
-async function sumAccountsBalanceInReportingCurrency(
+export async function sumAccountsBalanceInReportingCurrency(
   accounts: AccountRow[],
   reportingCurrency: string
 ): Promise<number> {

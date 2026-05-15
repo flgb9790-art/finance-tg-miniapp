@@ -6506,9 +6506,25 @@ function applyMutationPatch(patch) {
     state.accounts = patch.accounts;
   }
 
+  if (Array.isArray(patch.categories)) {
+    state.categories = patch.categories;
+  }
+
   if (patch.summary) {
-    state.summary = patch.summary;
-    applyReportingCurrencyFromSummary(patch.summary);
+    const next = patch.summary;
+
+    if (
+      state.summary &&
+      next.monthlyIncome === undefined &&
+      next.monthlyExpense === undefined &&
+      next.monthlyNet === undefined
+    ) {
+      Object.assign(state.summary, next);
+    } else {
+      state.summary = next;
+    }
+
+    applyReportingCurrencyFromSummary(state.summary);
   }
 }
 
@@ -6886,11 +6902,9 @@ async function handleDeleteAccount(accountId) {
   beginGlobalBusy("Удаляем счёт…");
 
   try {
-    await apiFetch(`/api/accounts/${encodeURIComponent(accountId)}`, {
+    const response = await apiFetch(`/api/accounts/${encodeURIComponent(accountId)}`, {
       method: "DELETE"
     });
-
-    state.accounts = state.accounts.filter((account) => account.id !== accountId);
 
     removeAccountAccent(accountId);
     removeAccountUiMeta(accountId);
@@ -6900,7 +6914,11 @@ async function handleDeleteAccount(accountId) {
     }
 
     setAccountsStatus("Счет удален.", "success");
-    await refreshAppData({ backgroundRefresh: true, light: true });
+
+    if (!finishMutationFromResponse(response)) {
+      state.accounts = state.accounts.filter((account) => account.id !== accountId);
+      await refreshAppData({ backgroundRefresh: true, light: true });
+    }
   } catch (error) {
     console.error(error);
     setAccountsStatus(
@@ -7065,7 +7083,10 @@ async function handleCategorySubmit(event) {
 
     resetCategoryForm();
     setStatus(isEditing ? "Категория обновлена." : "Категория создана.", "success");
-    await refreshAppData({ backgroundRefresh: true, light: true, includeCategories: true });
+
+    if (!finishMutationFromResponse(result)) {
+      await refreshAppData({ backgroundRefresh: true, light: true, includeCategories: true });
+    }
   } catch (error) {
     console.error(error);
     setStatus(
@@ -7083,11 +7104,9 @@ async function handleDeleteCategory(categoryId) {
   beginGlobalBusy("Удаляем категорию…");
 
   try {
-    await apiFetch(`/api/categories/${encodeURIComponent(categoryId)}`, {
+    const response = await apiFetch(`/api/categories/${encodeURIComponent(categoryId)}`, {
       method: "DELETE"
     });
-
-    state.categories = state.categories.filter((category) => category.id !== categoryId);
 
     if (state.editingCategoryId === categoryId) {
       resetCategoryForm();
@@ -7100,7 +7119,11 @@ async function handleDeleteCategory(categoryId) {
       "Категория удалена. Старые операции сохранены, но у них больше не будет этой статьи.",
       "success"
     );
-    await refreshAppData({ backgroundRefresh: true, light: true, includeCategories: true });
+
+    if (!finishMutationFromResponse(response)) {
+      state.categories = state.categories.filter((category) => category.id !== categoryId);
+      await refreshAppData({ backgroundRefresh: true, light: true, includeCategories: true });
+    }
   } catch (error) {
     console.error(error);
     setStatus(
