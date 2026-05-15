@@ -2048,6 +2048,9 @@ function resetEntryFormToDefaults() {
 }
 
 const WEB_DASH_SPARK_DAY_COUNT = 7;
+const WEB_DASH_SPARK_SLOTS_PER_DAY = 6;
+
+const WEB_DASH_SPARK_SLOT_WEIGHTS = [0.1, 0.14, 0.2, 0.22, 0.18, 0.16];
 
 function pickWebDashSparkDays(dailySeries, dayCount = WEB_DASH_SPARK_DAY_COUNT) {
   const series = Array.isArray(dailySeries) ? dailySeries : [];
@@ -2057,62 +2060,104 @@ function pickWebDashSparkDays(dailySeries, dayCount = WEB_DASH_SPARK_DAY_COUNT) 
   return series.slice(-dayCount);
 }
 
-function estimateWebDashDayActivity(day) {
-  const income = Number(day?.income ?? 0);
-  const expense = Number(day?.expense ?? 0);
-  let activity = 0;
-  if (income > 0) {
-    activity += 1;
-  }
-  if (expense > 0) {
-    activity += 1;
-  }
-  return activity;
+function emptySparkSlotRow() {
+  return Array.from({ length: WEB_DASH_SPARK_SLOTS_PER_DAY }, () => 0);
 }
 
-function renderWebDashSparkChart(container, days, mode) {
+function distributeDailyAmountToSparkSlots(total) {
+  const amount = Math.max(0, Number(total) || 0);
+  if (amount <= 0) {
+    return emptySparkSlotRow();
+  }
+
+  return WEB_DASH_SPARK_SLOT_WEIGHTS.map((weight) => Number((amount * weight).toFixed(2)));
+}
+
+function buildFallbackSparkLast7Days(dailySeries) {
+  const days = pickWebDashSparkDays(dailySeries, WEB_DASH_SPARK_DAY_COUNT);
+  const dates = [];
+
+  for (let i = 0; i < WEB_DASH_SPARK_DAY_COUNT; i += 1) {
+    dates.push(days[i]?.date ?? "");
+  }
+
+  return {
+    dates,
+    income: dates.map((_, index) => distributeDailyAmountToSparkSlots(days[index]?.income ?? 0)),
+    expense: dates.map((_, index) => distributeDailyAmountToSparkSlots(days[index]?.expense ?? 0)),
+    net: dates.map((_, index) => {
+      const inc = Number(days[index]?.income ?? 0);
+      const exp = Number(days[index]?.expense ?? 0);
+      return distributeDailyAmountToSparkSlots(inc - exp);
+    }),
+    operationCount: dates.map(() => emptySparkSlotRow())
+  };
+}
+
+function resolveWebDashSparkData() {
+  const spark = state.report?.sparkLast7Days;
+  if (spark?.dates?.length) {
+    return spark;
+  }
+
+  return buildFallbackSparkLast7Days(state.report?.dailySeries ?? []);
+}
+
+function renderWebDashSparkChart(container, spark, mode) {
   if (!container) {
     return;
   }
 
-  const barCount = WEB_DASH_SPARK_DAY_COUNT;
-  const slice = pickWebDashSparkDays(days, barCount);
-  const padded = [];
+  const valueGrid =
+    mode === "income" ? spark.income : mode === "expense" ? spark.expense : spark.net;
+  const countGrid = spark.operationCount ?? [];
 
-  for (let i = 0; i < barCount; i += 1) {
-    padded.push(slice[i] ?? { date: "", income: 0, expense: 0, net: 0 });
+  const allScores = [];
+
+  for (let dayIndex = 0; dayIndex < WEB_DASH_SPARK_DAY_COUNT; dayIndex += 1) {
+    for (let slotIndex = 0; slotIndex < WEB_DASH_SPARK_SLOTS_PER_DAY; slotIndex += 1) {
+      const raw = Number(valueGrid[dayIndex]?.[slotIndex] ?? 0);
+      const count = Number(countGrid[dayIndex]?.[slotIndex] ?? 0);
+      const amount = mode === "net" ? Math.abs(raw) : Math.max(0, raw);
+      allScores.push(amount * (1 + count * 0.12));
+    }
   }
 
-  const scores = padded.map((day) => {
-    const income = Math.max(0, Number(day.income ?? 0));
-    const expense = Math.max(0, Number(day.expense ?? 0));
-    const net = Number(day.net ?? 0);
-    const activity = estimateWebDashDayActivity(day);
-
-    if (mode === "income") {
-      return income * (1 + activity * 0.14);
-    }
-    if (mode === "expense") {
-      return expense * (1 + activity * 0.14);
-    }
-    return Math.abs(net) * (1 + activity * 0.1);
-  });
-
-  const max = Math.max(...scores, 0.0001);
-  const hasData = scores.some((v) => v > 0.0001);
+  const max = Math.max(...allScores, 0.0001);
+  const hasData = allScores.some((value) => value > 0.0001);
   container.classList.toggle("web-dash-spark--empty", !hasData);
 
-  const chartHeightPx = 46;
+  const chartHeightPx = 50;
+  const daysHtml = [];
 
-  container.innerHTML = padded
-    .map((day, index) => {
-      const score = scores[index];
-      const heightPx = hasData ? Math.round(6 + (score / max) * chartHeightPx) : 6;
-      const net = Number(day.net ?? 0);
-      const negClass = mode === "net" && net < 0 ? " web-dash-spark-bar--negative" : "";
-      return `<span class="web-dash-spark-bar${negClass}" style="height:${heightPx}px"></span>`;
-    })
-    .join("");
+  for (let dayIndex = 0; dayIndex < WEB_DASH_SPARK_DAY_COUNT; dayIndex += 1) {
+    const bars = [];
+
+    for (let slotIndex = 0; slotIndex < WEB_DASH_SPARK_SLOTS_PER_DAY; slotIndex += 1) {
+      const raw = Number(valueGrid[dayIndex]?.[slotIndex] ?? 0);
+      const count = Number(countGrid[dayIndex]?.[slotIndex] ?? 0);
+      const amount = mode === "net" ? Math.abs(raw) : Math.max(0, raw);
+      const score = amount * (1 + count * 0.12);
+      const heightPx = hasData ? Math.round(5 + (score / max) * chartHeightPx) : 5;
+      const negClass = mode === "net" && raw < 0 ? " web-dash-spark-bar--negative" : "";
+      const edgeClass =
+        slotIndex === 0 || slotIndex === WEB_DASH_SPARK_SLOTS_PER_DAY - 1
+          ? " web-dash-spark-bar--edge"
+          : slotIndex === 1 || slotIndex === WEB_DASH_SPARK_SLOTS_PER_DAY - 2
+            ? " web-dash-spark-bar--edge-mid"
+            : "";
+
+      bars.push(
+        `<span class="web-dash-spark-bar web-dash-spark-bar--slot-${slotIndex}${negClass}${edgeClass}" style="height:${heightPx}px"></span>`
+      );
+    }
+
+    daysHtml.push(
+      `<div class="web-dash-spark-day"><div class="web-dash-spark-day-bars">${bars.join("")}</div></div>`
+    );
+  }
+
+  container.innerHTML = `<\u0064iv class="web-dash-spark-chart">${daysHtml.join("")}</\u0064iv>`;
 }
 
 function syncWebDashSparkCharts() {
@@ -2120,10 +2165,10 @@ function syncWebDashSparkCharts() {
     return;
   }
 
-  const daily = state.report?.dailySeries ?? [];
-  renderWebDashSparkChart(document.querySelector(".web-dash-spark-income"), daily, "income");
-  renderWebDashSparkChart(document.querySelector(".web-dash-spark-expense"), daily, "expense");
-  renderWebDashSparkChart(document.querySelector(".web-dash-spark-net"), daily, "net");
+  const spark = resolveWebDashSparkData();
+  renderWebDashSparkChart(document.querySelector(".web-dash-spark-income"), spark, "income");
+  renderWebDashSparkChart(document.querySelector(".web-dash-spark-expense"), spark, "expense");
+  renderWebDashSparkChart(document.querySelector(".web-dash-spark-net"), spark, "net");
 }
 
 function renderWebDesktopDashboard(summary) {

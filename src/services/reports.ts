@@ -39,6 +39,45 @@ export interface ReportDailyPoint {
   net: number;
 }
 
+/** Веб-дашборд: последние 7 дней периода, по 6 четырёхчасовых интервалов (UTC). */
+export interface ReportSparkLast7Days {
+  dates: string[];
+  income: number[][];
+  expense: number[][];
+  net: number[][];
+  operationCount: number[][];
+}
+
+const REPORT_SPARK_DAY_COUNT = 7;
+const REPORT_SPARK_SLOTS_PER_DAY = 6;
+
+function utcSparkSlotFromOccurredAt(occurredAt: string): number {
+  const hour = new Date(occurredAt).getUTCHours();
+  return Math.min(REPORT_SPARK_SLOTS_PER_DAY - 1, Math.floor(hour / 4));
+}
+
+function buildReportSparkLast7Days(
+  dayKeys: string[],
+  sparkByDaySlot: Map<string, { income: number; expense: number; count: number }>
+): ReportSparkLast7Days {
+  const dates = dayKeys.slice(-REPORT_SPARK_DAY_COUNT);
+  const slotValues = (date: string, pick: (b: { income: number; expense: number; count: number }) => number) =>
+    Array.from({ length: REPORT_SPARK_SLOTS_PER_DAY }, (_, slot) => {
+      const bucket = sparkByDaySlot.get(`${date}:${slot}`);
+      return bucket ? Number(pick(bucket).toFixed(2)) : 0;
+    });
+
+  return {
+    dates,
+    income: dates.map((date) => slotValues(date, (b) => b.income)),
+    expense: dates.map((date) => slotValues(date, (b) => b.expense)),
+    net: dates.map((date) =>
+      slotValues(date, (b) => Number((b.income - b.expense).toFixed(2)))
+    ),
+    operationCount: dates.map((date) => slotValues(date, (b) => b.count))
+  };
+}
+
 export interface ReportMonthlyPoint {
   monthKey: string;
   income: number;
@@ -64,6 +103,8 @@ export interface ReportResult {
   dailySeries: ReportDailyPoint[];
   /** Агрегаты по календарным месяцам (UTC) в валюте отчёта */
   monthlySeries: ReportMonthlyPoint[];
+  /** Последние 7 дней периода: 6×4ч бакетов для мини-графиков на веб-главной */
+  sparkLast7Days: ReportSparkLast7Days;
   incomeEntryCount: number;
   expenseEntryCount: number;
   /** Сумма списаний по переводам (from_amount) в валюте отчёта */
@@ -556,6 +597,7 @@ async function aggregateReportFromBundle(
   const incomeByCategoryMap = new Map<string, number>();
   const dailyMap = new Map<string, { income: number; expense: number }>();
   const monthlyMap = new Map<string, { income: number; expense: number }>();
+  const sparkByDaySlot = new Map<string, { income: number; expense: number; count: number }>();
 
   for (const entry of entries) {
     const convertedAmount = await convert(
@@ -567,6 +609,9 @@ async function aggregateReportFromBundle(
     const occurredAt = String(entry.occurred_at);
     const day = utcDayFromOccurredAt(occurredAt);
     const monthKey = utcMonthKeyFromOccurredAt(occurredAt);
+    const sparkSlot = utcSparkSlotFromOccurredAt(occurredAt);
+    const sparkKey = `${day}:${sparkSlot}`;
+    const sparkBucket = sparkByDaySlot.get(sparkKey) ?? { income: 0, expense: 0, count: 0 };
 
     if (entry.kind === "income") {
       incomes += convertedAmount;
@@ -582,6 +627,8 @@ async function aggregateReportFromBundle(
       const m = monthlyMap.get(monthKey) ?? { income: 0, expense: 0 };
       m.income += convertedAmount;
       monthlyMap.set(monthKey, m);
+      sparkBucket.income += convertedAmount;
+      sparkBucket.count += 1;
     } else {
       expenses += convertedAmount;
       expenseEntryCount += 1;
@@ -596,7 +643,11 @@ async function aggregateReportFromBundle(
       const m = monthlyMap.get(monthKey) ?? { income: 0, expense: 0 };
       m.expense += convertedAmount;
       monthlyMap.set(monthKey, m);
+      sparkBucket.expense += convertedAmount;
+      sparkBucket.count += 1;
     }
+
+    sparkByDaySlot.set(sparkKey, sparkBucket);
   }
 
   const mapToSortedItems = (mapping: Map<string, number>): ReportCategoryItem[] =>
@@ -620,6 +671,7 @@ async function aggregateReportFromBundle(
   }, Promise.resolve(0));
 
   const dayKeys = enumerateUtcDaysInclusive(startDate, endDate);
+  const sparkLast7Days = buildReportSparkLast7Days(dayKeys, sparkByDaySlot);
   const dailySeries: ReportDailyPoint[] = dayKeys.map((date) => {
     const bucket = dailyMap.get(date) ?? { income: 0, expense: 0 };
     const inc = Number(bucket.income.toFixed(2));
@@ -722,6 +774,7 @@ async function aggregateReportFromBundle(
     operationsCount,
     dailySeries,
     monthlySeries,
+    sparkLast7Days,
     incomeEntryCount,
     expenseEntryCount,
     transfersVolumeReporting: Number(transfersVolumeReporting.toFixed(2)),
