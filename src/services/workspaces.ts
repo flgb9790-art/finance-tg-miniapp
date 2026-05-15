@@ -611,6 +611,42 @@ export async function acceptWorkspaceInvite(
   };
 }
 
+export interface WorkspaceMemberWithProfile extends WorkspaceMemberRow {
+  user: {
+    id: string;
+    first_name: string | null;
+    username: string | null;
+  } | null;
+}
+
+export async function listWorkspaceMembersWithProfiles(
+  workspaceId: string
+): Promise<WorkspaceMemberWithProfile[]> {
+  const members = await listWorkspaceMembers(workspaceId);
+
+  if (members.length === 0) {
+    return [];
+  }
+
+  const userIds = members.map((member) => member.user_id);
+  const { data: users, error } = await supabase
+    .from("app_users")
+    .select("id, first_name, username")
+    .in("id", userIds);
+
+  if (error) {
+    logSupabaseError("listWorkspaceMembersWithProfiles users", error);
+    throw error;
+  }
+
+  const userById = new Map((users ?? []).map((user) => [user.id as string, user]));
+
+  return members.map((member) => ({
+    ...member,
+    user: (userById.get(member.user_id) as WorkspaceMemberWithProfile["user"]) ?? null
+  }));
+}
+
 export async function leaveTeamWorkspace(
   workspaceId: string,
   userId: string

@@ -255,7 +255,7 @@ export function resolveReportRange(
 }
 
 async function listEntriesByRange(
-  userId: string,
+  workspaceId: string,
   startDate: string,
   endDate: string,
   filters?: { accountId?: string; kind?: OperationKind }
@@ -269,7 +269,7 @@ async function listEntriesByRange(
         category:categories(name, kind)
       `
     )
-    .eq("user_id", userId)
+    .eq("workspace_id", workspaceId)
     .gte("occurred_at", startDate)
     .lte("occurred_at", endDate);
 
@@ -291,14 +291,14 @@ async function listEntriesByRange(
 }
 
 async function listTransfersByRange(
-  userId: string,
+  workspaceId: string,
   startDate: string,
   endDate: string
 ): Promise<{ id: string; from_amount: string; from_currency_code: string }[]> {
   const { data, error } = await supabase
     .from("transfers")
     .select("id, from_amount, from_currency_code")
-    .eq("user_id", userId)
+    .eq("workspace_id", workspaceId)
     .gte("occurred_at", startDate)
     .lte("occurred_at", endDate);
 
@@ -310,13 +310,13 @@ async function listTransfersByRange(
 }
 
 async function listEntriesStrictlyAfter(
-  userId: string,
+  workspaceId: string,
   afterOccurredAt: string
 ): Promise<{ amount: number; currency_code: string; kind: string }[]> {
   const { data, error } = await supabase
     .from("entries")
     .select("amount, currency_code, kind")
-    .eq("user_id", userId)
+    .eq("workspace_id", workspaceId)
     .gt("occurred_at", afterOccurredAt)
     .order("occurred_at", { ascending: true });
 
@@ -344,7 +344,7 @@ type ReportEntriesBundle = {
 };
 
 async function resolveReportEntriesBundle(input: {
-  userId: string;
+  workspaceId: string;
   period: ReportPeriod;
   startDate?: string;
   endDate?: string;
@@ -373,7 +373,7 @@ async function resolveReportEntriesBundle(input: {
       : undefined;
 
   const rawEntries = await listEntriesByRange(
-    input.userId,
+    input.workspaceId,
     startDate,
     endDate,
     entryFilters
@@ -382,7 +382,7 @@ async function resolveReportEntriesBundle(input: {
   let appliedCategory: ReportResult["appliedCategory"];
 
   if (input.categoryId) {
-    const categoryRow = await getCategoryById(input.categoryId, input.userId);
+    const categoryRow = await getCategoryById(input.categoryId, input.workspaceId);
 
     if (!categoryRow) {
       throw new Error("Категория не найдена");
@@ -468,7 +468,7 @@ async function buildReportOperationCsvRows(
 
 /** Сводка отчёта + строки операций для CSV (один проход по проводкам в БД). */
 export async function buildReportExportPayload(input: {
-  userId: string;
+  workspaceId: string;
   period: ReportPeriod;
   startDate?: string;
   endDate?: string;
@@ -562,7 +562,7 @@ function mapExpenseCategoryTotals(
 
 /** Доходы/расходы месяца в валюте отчёта (без переводов, балансов и спарклайнов). */
 export async function computeMonthEntryTotalsInReportingCurrency(
-  userId: string,
+  workspaceId: string,
   reportingCurrency: string,
   startDate: string,
   endDate: string
@@ -574,7 +574,7 @@ export async function computeMonthEntryTotalsInReportingCurrency(
   ratesUpdatedAt: string | null;
 }> {
   const bundle = await resolveReportEntriesBundle({
-    userId,
+    workspaceId,
     period: "month",
     startDate,
     endDate,
@@ -689,21 +689,21 @@ export async function buildDashboardSummaryFromParts(
 
 /** Один месячный отчёт для bootstrap (без compareToPrevious). */
 export async function buildBootstrapMonthDashboard(
-  userId: string,
+  workspaceId: string,
   reportingCurrency: string,
   accounts: AccountRow[],
   categoriesCount: number
 ): Promise<{ summary: DashboardSummary; report: ReportResult }> {
   const monthRange = resolveReportRange("month");
   const monthBundle = await resolveReportEntriesBundle({
-    userId,
+    workspaceId,
     period: "month",
     startDate: monthRange.startDate,
     endDate: monthRange.endDate,
     reportingCurrency
   });
   const report = await aggregateReportFromBundle(
-    { userId, period: "month" },
+    { workspaceId, period: "month" },
     monthBundle,
     { accounts }
   );
@@ -718,18 +718,18 @@ export async function buildBootstrapMonthDashboard(
 }
 
 export async function getDashboardSummary(
-  userId: string,
+  workspaceId: string,
   reportingCurrency = env.reportingCurrency,
   options?: { categoriesCount?: number }
 ): Promise<DashboardSummary> {
-  const accounts = await listAccounts(userId);
+  const accounts = await listAccounts(workspaceId);
   let categoriesCount = options?.categoriesCount;
 
   if (categoriesCount === undefined) {
     const { data: categories, error } = await supabase
       .from("categories")
       .select("id")
-      .eq("user_id", userId)
+      .eq("workspace_id", workspaceId)
       .eq("is_archived", false);
 
     if (error) {
@@ -740,7 +740,7 @@ export async function getDashboardSummary(
   }
 
   const { summary } = await buildBootstrapMonthDashboard(
-    userId,
+    workspaceId,
     reportingCurrency,
     accounts,
     categoriesCount
@@ -750,7 +750,7 @@ export async function getDashboardSummary(
 }
 
 async function aggregateReportFromBundle(
-  input: { userId: string; period: ReportPeriod },
+  input: { workspaceId: string; period: ReportPeriod },
   bundle: ReportEntriesBundle,
   options?: { accounts?: AccountRow[] }
 ): Promise<ReportResult> {
@@ -760,12 +760,12 @@ async function aggregateReportFromBundle(
   const accountsPromise =
     options?.accounts !== undefined
       ? Promise.resolve(options.accounts)
-      : listAccounts(input.userId);
+      : listAccounts(input.workspaceId);
 
   const [transfers, accounts, entriesAfterPeriod] = await Promise.all([
-    listTransfersByRange(input.userId, startDate, endDate),
+    listTransfersByRange(input.workspaceId, startDate, endDate),
     accountsPromise,
-    listEntriesStrictlyAfter(input.userId, endDate)
+    listEntriesStrictlyAfter(input.workspaceId, endDate)
   ]);
 
   const currencyCodes = new Set<string>();
@@ -939,7 +939,7 @@ async function aggregateReportFromBundle(
 
   if (hasEntryFilters) {
     const unfilteredPeriodEntries = await listEntriesByRange(
-      input.userId,
+      input.workspaceId,
       startDate,
       endDate,
       undefined
@@ -1027,7 +1027,7 @@ function pctChange(current: number, previous: number): number | null {
 }
 
 async function buildReportFromInput(input: {
-  userId: string;
+  workspaceId: string;
   period: ReportPeriod;
   startDate?: string;
   endDate?: string;
@@ -1043,7 +1043,7 @@ async function buildReportFromInput(input: {
 
 async function computeCompareToPrevious(
   input: {
-    userId: string;
+    workspaceId: string;
     period: ReportPeriod;
     startDate?: string;
     endDate?: string;
@@ -1084,7 +1084,7 @@ async function computeCompareToPrevious(
 
 export async function getReport(
   input: {
-    userId: string;
+    workspaceId: string;
     period: ReportPeriod;
     startDate?: string;
     endDate?: string;
@@ -1240,13 +1240,13 @@ export function formatReportResultAsCsv(
   return `\uFEFF${block}`;
 }
 
-export async function getRecentActivity(userId: string): Promise<{
+export async function getRecentActivity(workspaceId: string): Promise<{
   recentEntries: Awaited<ReturnType<typeof listRecentEntries>>;
   recentTransfers: Awaited<ReturnType<typeof listRecentTransfers>>;
 }> {
   const [recentEntries, recentTransfers] = await Promise.all([
-    listRecentEntries(userId),
-    listRecentTransfers(userId)
+    listRecentEntries(workspaceId),
+    listRecentTransfers(workspaceId)
   ]);
 
   return {

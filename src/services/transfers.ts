@@ -30,7 +30,8 @@ export interface TransferListItem extends TransferRow {
 }
 
 export interface CreateTransferInput {
-  userId: string;
+  workspaceId: string;
+  createdByUserId: string;
   fromAccountId: string;
   toAccountId: string;
   fromAmount: number;
@@ -44,7 +45,7 @@ function roundAmount(value: number): number {
 }
 
 export async function listRecentTransfers(
-  userId: string,
+  workspaceId: string,
   limit = 10
 ): Promise<TransferListItem[]> {
   const { data, error } = await supabase
@@ -56,7 +57,7 @@ export async function listRecentTransfers(
         to_account:accounts!transfers_to_account_id_fkey(name, currency_code)
       `
     )
-    .eq("user_id", userId)
+    .eq("workspace_id", workspaceId)
     .order("occurred_at", { ascending: false })
     .limit(limit);
 
@@ -70,8 +71,8 @@ export async function listRecentTransfers(
 export async function createTransfer(
   input: CreateTransferInput
 ): Promise<TransferListItem> {
-  const fromAccount = await getAccountById(input.fromAccountId, input.userId);
-  const toAccount = await getAccountById(input.toAccountId, input.userId);
+  const fromAccount = await getAccountById(input.fromAccountId, input.workspaceId);
+  const toAccount = await getAccountById(input.toAccountId, input.workspaceId);
 
   if (!fromAccount || !toAccount) {
     throw new Error("One of the selected accounts was not found");
@@ -114,25 +115,27 @@ export async function createTransfer(
 
   await updateAccountBalance(
     fromAccount.id,
-    input.userId,
+    input.workspaceId,
     roundAmount(currentFromBalance - input.fromAmount)
   );
 
   try {
     await updateAccountBalance(
       toAccount.id,
-      input.userId,
+      input.workspaceId,
       roundAmount(currentToBalance + resolvedToAmount)
     );
   } catch (error) {
-    await updateAccountBalance(fromAccount.id, input.userId, currentFromBalance);
+    await updateAccountBalance(fromAccount.id, input.workspaceId, currentFromBalance);
     throw error;
   }
 
   const { data, error } = await supabase
     .from("transfers")
     .insert({
-      user_id: input.userId,
+      user_id: input.createdByUserId,
+      workspace_id: input.workspaceId,
+      created_by_user_id: input.createdByUserId,
       from_account_id: fromAccount.id,
       to_account_id: toAccount.id,
       from_amount: input.fromAmount,
@@ -153,14 +156,14 @@ export async function createTransfer(
     .single();
 
   if (error) {
-    await updateAccountBalance(fromAccount.id, input.userId, currentFromBalance);
-    await updateAccountBalance(toAccount.id, input.userId, currentToBalance);
+    await updateAccountBalance(fromAccount.id, input.workspaceId, currentFromBalance);
+    await updateAccountBalance(toAccount.id, input.workspaceId, currentToBalance);
     throw error;
   }
 
   if (!data) {
-    await updateAccountBalance(fromAccount.id, input.userId, currentFromBalance);
-    await updateAccountBalance(toAccount.id, input.userId, currentToBalance);
+    await updateAccountBalance(fromAccount.id, input.workspaceId, currentFromBalance);
+    await updateAccountBalance(toAccount.id, input.workspaceId, currentToBalance);
     throw new Error("Supabase did not return the created transfer");
   }
 

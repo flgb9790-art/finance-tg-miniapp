@@ -6,6 +6,7 @@ import TelegramBot from "node-telegram-bot-api";
 import { env } from "../config/env.js";
 import { createAccount, listAccounts } from "../services/accounts.js";
 import { registerTelegramUser } from "../services/users.js";
+import { ensurePersonalWorkspace } from "../services/workspaces.js";
 import type { AccountType } from "../shared/domain.js";
 
 type DraftStep = "name" | "balance";
@@ -208,8 +209,14 @@ function formatAccountsMessage(
   return ["Ваши счета:", "", ...lines].join("\n");
 }
 
+async function resolveBotWorkspaceId(userId: string): Promise<string> {
+  const workspace = await ensurePersonalWorkspace(userId);
+  return workspace.id;
+}
+
 async function showAccounts(bot: TelegramBot, chatId: number, userId: string) {
-  const accounts = await listAccounts(userId);
+  const workspaceId = await resolveBotWorkspaceId(userId);
+  const accounts = await listAccounts(workspaceId);
 
   await bot.sendMessage(chatId, formatAccountsMessage(accounts), {
     reply_markup: { remove_keyboard: true }
@@ -382,8 +389,10 @@ function registerTelegramHandlers(bot: TelegramBot): void {
           return;
         }
 
+        const workspaceId = await resolveBotWorkspaceId(draft.userId);
         const account = await createAccount({
-          userId: draft.userId,
+          workspaceId,
+          createdByUserId: draft.userId,
           name: draft.name,
           type: draft.type,
           currencyCode: draft.currencyCode,

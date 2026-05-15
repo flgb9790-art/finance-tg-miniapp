@@ -160,7 +160,7 @@ export function parseOperationsListQuery(
 }
 
 async function fetchEntriesWindow(
-  userId: string,
+  workspaceId: string,
   opts: {
     from: string;
     to: string;
@@ -179,7 +179,7 @@ async function fetchEntriesWindow(
         category:categories(name, kind)
       `
     )
-    .eq("user_id", userId)
+    .eq("workspace_id", workspaceId)
     .gte("occurred_at", opts.from)
     .lte("occurred_at", opts.to);
 
@@ -209,7 +209,7 @@ async function fetchEntriesWindow(
 }
 
 async function fetchTransfersWindow(
-  userId: string,
+  workspaceId: string,
   opts: {
     from: string;
     to: string;
@@ -226,7 +226,7 @@ async function fetchTransfersWindow(
         to_account:accounts!transfers_to_account_id_fkey(name, currency_code)
       `
     )
-    .eq("user_id", userId)
+    .eq("workspace_id", workspaceId)
     .gte("occurred_at", opts.from)
     .lte("occurred_at", opts.to);
 
@@ -310,7 +310,7 @@ async function sumEntriesReporting(
 }
 
 export async function listOperationsTimeline(
-  userId: string,
+  workspaceId: string,
   reportingCurrency: string,
   query: OperationsListQuery
 ): Promise<OperationsListResult> {
@@ -326,7 +326,7 @@ export async function listOperationsTimeline(
   let transferRows: TransferListItem[] = [];
 
   if (query.categoryId) {
-    entryRows = await fetchEntriesWindow(userId, {
+    entryRows = await fetchEntriesWindow(workspaceId, {
       ...base,
       categoryId: query.categoryId,
       kind:
@@ -337,15 +337,15 @@ export async function listOperationsTimeline(
     transferRows = [];
   } else if (query.kind === "transfer") {
     entryRows = [];
-    transferRows = await fetchTransfersWindow(userId, base);
+    transferRows = await fetchTransfersWindow(workspaceId, base);
   } else if (query.kind === "income" || query.kind === "expense") {
-    entryRows = await fetchEntriesWindow(userId, {
+    entryRows = await fetchEntriesWindow(workspaceId, {
       ...base,
       kind: query.kind as OperationKind
     });
     transferRows = [];
   } else if (query.kind === "all") {
-    entryRows = await fetchEntriesWindow(userId, base);
+    entryRows = await fetchEntriesWindow(workspaceId, base);
     transferRows = [];
   }
 

@@ -16,7 +16,6 @@ export interface AppMutationPatch {
   accounts?: AccountRow[];
   categories?: CategoryRow[];
   summary?: DashboardSummary | Partial<DashboardSummary>;
-  /** Фоновый пересчёт отчёта/спарклайнов (месяц затронут). */
   syncReport?: boolean;
 }
 
@@ -48,7 +47,7 @@ async function buildBalancesSummaryPartial(
 }
 
 async function buildBalanceSummary(
-  userId: string,
+  workspaceId: string,
   reportingCurrency: string,
   accounts: AccountRow[],
   categoriesCount: number,
@@ -58,7 +57,7 @@ async function buildBalanceSummary(
   const monthTotals =
     monthReport ??
     (await computeMonthEntryTotalsInReportingCurrency(
-      userId,
+      workspaceId,
       reportingCurrency,
       monthRange.startDate,
       monthRange.endDate
@@ -80,14 +79,13 @@ async function buildBalanceSummary(
   );
 }
 
-/** Счета и остатки без пересчёта доходов/расходов месяца (перевод, счёт). */
 export async function buildBalancesOnlyMutationPatch(
-  userId: string,
+  workspaceId: string,
   reportingCurrency: string
 ): Promise<AppMutationPatch> {
   const [accounts, categoriesCount] = await Promise.all([
-    listAccounts(userId),
-    countActiveCategories(userId)
+    listAccounts(workspaceId),
+    countActiveCategories(workspaceId)
   ]);
 
   return {
@@ -97,27 +95,27 @@ export async function buildBalancesOnlyMutationPatch(
 }
 
 export async function buildAccountsMutationPatch(
-  userId: string,
+  workspaceId: string,
   reportingCurrency: string
 ): Promise<AppMutationPatch> {
-  return buildBalancesOnlyMutationPatch(userId, reportingCurrency);
+  return buildBalancesOnlyMutationPatch(workspaceId, reportingCurrency);
 }
 
 export async function buildTransferMutationPatch(
-  userId: string,
+  workspaceId: string,
   reportingCurrency: string
 ): Promise<AppMutationPatch> {
-  return buildBalancesOnlyMutationPatch(userId, reportingCurrency);
+  return buildBalancesOnlyMutationPatch(workspaceId, reportingCurrency);
 }
 
 export async function buildCategoriesMutationPatch(
-  userId: string,
+  workspaceId: string,
   reportingCurrency: string
 ): Promise<AppMutationPatch> {
   const [categories, accounts, categoriesCount] = await Promise.all([
-    listCategories(userId),
-    listAccounts(userId),
-    countActiveCategories(userId)
+    listCategories(workspaceId),
+    listAccounts(workspaceId),
+    countActiveCategories(workspaceId)
   ]);
 
   return {
@@ -131,7 +129,7 @@ export async function buildCategoriesMutationPatch(
 }
 
 export async function buildEntryMutationPatch(
-  userId: string,
+  workspaceId: string,
   reportingCurrency: string,
   entry: EntryListItem
 ): Promise<AppMutationPatch> {
@@ -143,13 +141,13 @@ export async function buildEntryMutationPatch(
   );
 
   const [accounts, categoriesCount] = await Promise.all([
-    listAccounts(userId),
-    countActiveCategories(userId)
+    listAccounts(workspaceId),
+    countActiveCategories(workspaceId)
   ]);
 
   const monthTotals = inMonth
     ? await computeMonthEntryTotalsInReportingCurrency(
-        userId,
+        workspaceId,
         reportingCurrency,
         monthRange.startDate,
         monthRange.endDate
@@ -157,7 +155,7 @@ export async function buildEntryMutationPatch(
     : undefined;
 
   const summary = await buildBalanceSummary(
-    userId,
+    workspaceId,
     reportingCurrency,
     accounts,
     categoriesCount,

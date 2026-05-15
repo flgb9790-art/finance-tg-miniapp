@@ -4,6 +4,7 @@ import type { AccountType } from "../shared/domain.js";
 export interface AccountRow {
   id: string;
   user_id: string;
+  workspace_id?: string;
   name: string;
   type: AccountType;
   currency_code: string;
@@ -13,7 +14,8 @@ export interface AccountRow {
 }
 
 export interface CreateAccountInput {
-  userId: string;
+  workspaceId: string;
+  createdByUserId: string;
   name: string;
   type: AccountType;
   currencyCode: string;
@@ -22,7 +24,7 @@ export interface CreateAccountInput {
 
 export interface UpdateAccountInput {
   accountId: string;
-  userId: string;
+  workspaceId: string;
   name: string;
   type: AccountType;
   currencyCode: string;
@@ -35,7 +37,9 @@ export async function createAccount(
   const { data, error } = await supabase
     .from("accounts")
     .insert({
-      user_id: input.userId,
+      user_id: input.createdByUserId,
+      workspace_id: input.workspaceId,
+      created_by_user_id: input.createdByUserId,
       name: input.name,
       type: input.type,
       currency_code: input.currencyCode,
@@ -55,11 +59,11 @@ export async function createAccount(
   return data as AccountRow;
 }
 
-export async function listAccounts(userId: string): Promise<AccountRow[]> {
+export async function listAccounts(workspaceId: string): Promise<AccountRow[]> {
   const { data, error } = await supabase
     .from("accounts")
     .select("*")
-    .eq("user_id", userId)
+    .eq("workspace_id", workspaceId)
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -71,13 +75,13 @@ export async function listAccounts(userId: string): Promise<AccountRow[]> {
 
 export async function getAccountById(
   accountId: string,
-  userId: string
+  workspaceId: string
 ): Promise<AccountRow | null> {
   const { data, error } = await supabase
     .from("accounts")
     .select("*")
     .eq("id", accountId)
-    .eq("user_id", userId)
+    .eq("workspace_id", workspaceId)
     .maybeSingle();
 
   if (error) {
@@ -89,7 +93,7 @@ export async function getAccountById(
 
 export async function updateAccountBalance(
   accountId: string,
-  userId: string,
+  workspaceId: string,
   balance: number
 ): Promise<AccountRow> {
   const { data, error } = await supabase
@@ -98,7 +102,7 @@ export async function updateAccountBalance(
       balance
     })
     .eq("id", accountId)
-    .eq("user_id", userId)
+    .eq("workspace_id", workspaceId)
     .select()
     .single();
 
@@ -125,7 +129,7 @@ export async function updateAccount(
       balance: input.balance
     })
     .eq("id", input.accountId)
-    .eq("user_id", input.userId)
+    .eq("workspace_id", input.workspaceId)
     .select()
     .single();
 
@@ -142,21 +146,19 @@ export async function updateAccount(
 
 export async function deleteAccount(
   accountId: string,
-  userId: string
+  workspaceId: string
 ): Promise<void> {
-  const existing = await getAccountById(accountId, userId);
+  const existing = await getAccountById(accountId, workspaceId);
 
   if (!existing) {
     throw new Error("Счёт не найден или уже удалён.");
   }
 
-  // Схема: entries / transfers → accounts ON DELETE RESTRICT.
-  // Сначала убираем зависимости, иначе delete на accounts не пройдёт.
   const { error: entriesError } = await supabase
     .from("entries")
     .delete()
     .eq("account_id", accountId)
-    .eq("user_id", userId);
+    .eq("workspace_id", workspaceId);
 
   if (entriesError) {
     throw entriesError;
@@ -166,7 +168,7 @@ export async function deleteAccount(
     .from("transfers")
     .delete()
     .eq("from_account_id", accountId)
-    .eq("user_id", userId);
+    .eq("workspace_id", workspaceId);
 
   if (transfersFromError) {
     throw transfersFromError;
@@ -176,7 +178,7 @@ export async function deleteAccount(
     .from("transfers")
     .delete()
     .eq("to_account_id", accountId)
-    .eq("user_id", userId);
+    .eq("workspace_id", workspaceId);
 
   if (transfersToError) {
     throw transfersToError;
@@ -186,7 +188,7 @@ export async function deleteAccount(
     .from("accounts")
     .delete()
     .eq("id", accountId)
-    .eq("user_id", userId);
+    .eq("workspace_id", workspaceId);
 
   if (error) {
     throw error;

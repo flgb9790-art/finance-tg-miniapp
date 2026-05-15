@@ -46,12 +46,20 @@ import {
   parseOperationsListQuery
 } from "../services/operations-list.js";
 import { getAppUserById, registerTelegramUser } from "../services/users.js";
+import type { TelegramAppUserRow } from "../services/users.js";
 import {
   toTelegramBotUser,
   validateTelegramLoginData,
   validateTelegramWebAppInitData
 } from "../lib/telegram-webapp.js";
 import type { OperationKind } from "../shared/domain.js";
+import {
+  buildWorkspaceApiDto,
+  buildWorkspacesListPayload,
+  clearActiveWorkspaceCookie,
+  resolveActiveWorkspace
+} from "./workspace-context.js";
+import { registerWorkspaceRoutes } from "./workspace-routes.js";
 
 function getThrownErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message.trim()) {
@@ -401,8 +409,20 @@ export function createHttpApp(): express.Express {
 
   app.post("/auth/logout", (_req, res) => {
     clearSessionCookie(res);
+    clearActiveWorkspaceCookie(res);
     res.status(204).send();
   });
+
+  async function withAuthWorkspace(req: express.Request): Promise<{
+    appUser: TelegramAppUserRow;
+    ws: Awaited<ReturnType<typeof resolveActiveWorkspace>>;
+  }> {
+    const appUser = await authenticateMiniAppUser(req);
+    const ws = await resolveActiveWorkspace(req, appUser);
+    return { appUser, ws };
+  }
+
+  registerWorkspaceRoutes(app, { authenticateMiniAppUser });
 
   app.get("/mini-app", (_req, res) => {
     res.setHeader(
@@ -414,7 +434,7 @@ export function createHttpApp(): express.Express {
 
   app.get("/api/refresh", async (req, res) => {
     try {
-      const appUser = await authenticateMiniAppUser(req);
+      const { appUser, ws } = await withAuthWorkspace(req);
       const reportingCurrency = await resolveReportingCurrency(req);
       const includeRaw = req.query.include;
       const include = new Set(
@@ -426,18 +446,21 @@ export function createHttpApp(): express.Express {
           : []
       );
 
-      const [accounts, activity, categoriesCount] = await Promise.all([
-        listAccounts(appUser.id),
-        getRecentActivity(appUser.id),
-        countActiveCategories(appUser.id)
-      ]);
+      const [accounts, activity, categoriesCount, workspace, workspaces] =
+        await Promise.all([
+          listAccounts(ws.workspaceId),
+          getRecentActivity(ws.workspaceId),
+          countActiveCategories(ws.workspaceId),
+          buildWorkspaceApiDto(ws),
+          buildWorkspacesListPayload(appUser.id)
+        ]);
 
       let summary = null;
       let report = null;
 
       try {
         const dashboard = await buildBootstrapMonthDashboard(
-          appUser.id,
+          ws.workspaceId,
           reportingCurrency,
           accounts,
           categoriesCount
@@ -449,6 +472,8 @@ export function createHttpApp(): express.Express {
       }
 
       const payload: {
+        workspace: typeof workspace;
+        workspaces: typeof workspaces;
         accounts: typeof accounts;
         recentEntries: typeof activity.recentEntries;
         recentTransfers: typeof activity.recentTransfers;
@@ -456,6 +481,8 @@ export function createHttpApp(): express.Express {
         report: typeof report;
         categories?: Awaited<ReturnType<typeof listCategories>>;
       } = {
+        workspace,
+        workspaces,
         accounts,
         recentEntries: activity.recentEntries,
         recentTransfers: activity.recentTransfers,
@@ -464,7 +491,7 @@ export function createHttpApp(): express.Express {
       };
 
       if (include.has("categories")) {
-        payload.categories = await listCategories(appUser.id);
+        payload.categories = await listCategories(ws.workspaceId);
       }
 
       res.json(payload);
@@ -479,22 +506,25 @@ export function createHttpApp(): express.Express {
 
   app.get("/api/bootstrap", async (req, res) => {
     try {
-      const appUser = await authenticateMiniAppUser(req);
+      const { appUser, ws } = await withAuthWorkspace(req);
       const reportingCurrency = await resolveReportingCurrency(req);
 
-      const [accounts, categories, currencies, activity] = await Promise.all([
-        listAccounts(appUser.id),
-        listCategories(appUser.id),
-        listActiveCurrencies(),
-        getRecentActivity(appUser.id)
-      ]);
+      const [accounts, categories, currencies, activity, workspace, workspaces] =
+        await Promise.all([
+          listAccounts(ws.workspaceId),
+          listCategories(ws.workspaceId),
+          listActiveCurrencies(),
+          getRecentActivity(ws.workspaceId),
+          buildWorkspaceApiDto(ws),
+          buildWorkspacesListPayload(appUser.id)
+        ]);
 
       let summary = null;
       let report = null;
 
       try {
         const dashboard = await buildBootstrapMonthDashboard(
-          appUser.id,
+          ws.workspaceId,
           reportingCurrency,
           accounts,
           categories.length
@@ -507,6 +537,8 @@ export function createHttpApp(): express.Express {
 
       res.json({
         user: appUser,
+        workspace,
+        workspaces,
         accounts,
         categories,
         currencies,
@@ -526,10 +558,10 @@ export function createHttpApp(): express.Express {
 
   app.get("/api/operations", async (req, res) => {
     try {
-      const appUser = await authenticateMiniAppUser(req);
+      const { ws } = await withAuthWorkspace(req);
       const reportingCurrency = await resolveReportingCurrency(req);
       const parsed = parseOperationsListQuery(req.query as Record<string, unknown>);
-      const result = await listOperationsTimeline(appUser.id, reportingCurrency, parsed);
+      const result = await listOperationsTimeline(ws.workspaceId, reportingCurrency, parsed);
       res.json(result);
     } catch (error) {
       console.error("Failed to list operations", error);
@@ -546,7 +578,7 @@ export function createHttpApp(): express.Express {
 
   app.post("/api/accounts", async (req, res) => {
     try {
-      const appUser = await authenticateMiniAppUser(req);
+      const { appUser, ws } = await withAuthWorkspace(req);
 
       const name =
         typeof req.body?.name === "string" ? req.body.name.trim() : "";
@@ -586,7 +618,8 @@ export function createHttpApp(): express.Express {
       }
 
       const account = await createAccount({
-        userId: appUser.id,
+        workspaceId: ws.workspaceId,
+        createdByUserId: appUser.id,
         name,
         type: type as "cash" | "card" | "crypto" | "savings" | "other",
         currencyCode,
@@ -594,7 +627,7 @@ export function createHttpApp(): express.Express {
       });
 
       const reportingCurrency = await resolveReportingCurrency(req);
-      const patch = await buildAccountsMutationPatch(appUser.id, reportingCurrency);
+      const patch = await buildAccountsMutationPatch(ws.workspaceId, reportingCurrency);
 
       res.status(201).json({ account, patch });
     } catch (error) {
@@ -609,7 +642,7 @@ export function createHttpApp(): express.Express {
 
   app.patch("/api/accounts/:accountId", async (req, res) => {
     try {
-      const appUser = await authenticateMiniAppUser(req);
+      const { ws } = await withAuthWorkspace(req);
       const accountId =
         typeof req.params.accountId === "string" ? req.params.accountId.trim() : "";
       const name =
@@ -656,7 +689,7 @@ export function createHttpApp(): express.Express {
 
       const account = await updateAccount({
         accountId,
-        userId: appUser.id,
+        workspaceId: ws.workspaceId,
         name,
         type: type as "cash" | "card" | "crypto" | "savings" | "other",
         currencyCode,
@@ -664,7 +697,7 @@ export function createHttpApp(): express.Express {
       });
 
       const reportingCurrency = await resolveReportingCurrency(req);
-      const patch = await buildAccountsMutationPatch(appUser.id, reportingCurrency);
+      const patch = await buildAccountsMutationPatch(ws.workspaceId, reportingCurrency);
 
       res.json({ account, patch });
     } catch (error) {
@@ -679,7 +712,7 @@ export function createHttpApp(): express.Express {
 
   app.delete("/api/accounts/:accountId", async (req, res) => {
     try {
-      const appUser = await authenticateMiniAppUser(req);
+      const { ws } = await withAuthWorkspace(req);
       const accountId =
         typeof req.params.accountId === "string" ? req.params.accountId.trim() : "";
 
@@ -688,10 +721,10 @@ export function createHttpApp(): express.Express {
         return;
       }
 
-      await deleteAccount(accountId, appUser.id);
+      await deleteAccount(accountId, ws.workspaceId);
 
       const reportingCurrency = await resolveReportingCurrency(req);
-      const patch = await buildBalancesOnlyMutationPatch(appUser.id, reportingCurrency);
+      const patch = await buildBalancesOnlyMutationPatch(ws.workspaceId, reportingCurrency);
 
       res.json({ ok: true, patch });
     } catch (error) {
@@ -710,7 +743,7 @@ export function createHttpApp(): express.Express {
 
   app.post("/api/categories", async (req, res) => {
     try {
-      const appUser = await authenticateMiniAppUser(req);
+      const { appUser, ws } = await withAuthWorkspace(req);
       const name =
         typeof req.body?.name === "string" ? req.body.name.trim() : "";
       const kind =
@@ -727,13 +760,14 @@ export function createHttpApp(): express.Express {
       }
 
       const category = await createCategory({
-        userId: appUser.id,
+        workspaceId: ws.workspaceId,
+        createdByUserId: appUser.id,
         kind: kind as OperationKind,
         name
       });
 
       const reportingCurrency = await resolveReportingCurrency(req);
-      const patch = await buildCategoriesMutationPatch(appUser.id, reportingCurrency);
+      const patch = await buildCategoriesMutationPatch(ws.workspaceId, reportingCurrency);
 
       res.status(201).json({ category, patch });
     } catch (error) {
@@ -748,7 +782,7 @@ export function createHttpApp(): express.Express {
 
   app.patch("/api/categories/:categoryId", async (req, res) => {
     try {
-      const appUser = await authenticateMiniAppUser(req);
+      const { ws } = await withAuthWorkspace(req);
       const categoryId =
         typeof req.params.categoryId === "string"
           ? req.params.categoryId.trim()
@@ -774,14 +808,14 @@ export function createHttpApp(): express.Express {
       }
 
       const category = await updateCategory({
-        userId: appUser.id,
+        workspaceId: ws.workspaceId,
         categoryId,
         name,
         kind: kind as OperationKind
       });
 
       const reportingCurrency = await resolveReportingCurrency(req);
-      const patch = await buildCategoriesMutationPatch(appUser.id, reportingCurrency);
+      const patch = await buildCategoriesMutationPatch(ws.workspaceId, reportingCurrency);
 
       res.json({ category, patch });
     } catch (error) {
@@ -796,7 +830,7 @@ export function createHttpApp(): express.Express {
 
   app.delete("/api/categories/:categoryId", async (req, res) => {
     try {
-      const appUser = await authenticateMiniAppUser(req);
+      const { ws } = await withAuthWorkspace(req);
       const categoryId =
         typeof req.params.categoryId === "string"
           ? req.params.categoryId.trim()
@@ -807,10 +841,10 @@ export function createHttpApp(): express.Express {
         return;
       }
 
-      await deleteCategory(categoryId, appUser.id);
+      await deleteCategory(categoryId, ws.workspaceId);
 
       const reportingCurrency = await resolveReportingCurrency(req);
-      const patch = await buildCategoriesMutationPatch(appUser.id, reportingCurrency);
+      const patch = await buildCategoriesMutationPatch(ws.workspaceId, reportingCurrency);
 
       res.json({ ok: true, patch });
     } catch (error) {
@@ -825,7 +859,7 @@ export function createHttpApp(): express.Express {
 
   app.post("/api/entries", async (req, res) => {
     try {
-      const appUser = await authenticateMiniAppUser(req);
+      const { appUser, ws } = await withAuthWorkspace(req);
       const kind =
         typeof req.body?.kind === "string" ? req.body.kind.trim() : "";
       const accountId =
@@ -868,7 +902,8 @@ export function createHttpApp(): express.Express {
 
       const reportingCurrency = await resolveReportingCurrency(req);
       const entry = await createEntry({
-        userId: appUser.id,
+        workspaceId: ws.workspaceId,
+        createdByUserId: appUser.id,
         kind: kind as OperationKind,
         accountId,
         categoryId,
@@ -878,7 +913,7 @@ export function createHttpApp(): express.Express {
         occurredAt
       });
 
-      const patch = await buildEntryMutationPatch(appUser.id, reportingCurrency, entry);
+      const patch = await buildEntryMutationPatch(ws.workspaceId, reportingCurrency, entry);
 
       res.status(201).json({ entry, patch });
     } catch (error) {
@@ -892,7 +927,7 @@ export function createHttpApp(): express.Express {
 
   app.post("/api/transfers", async (req, res) => {
     try {
-      const appUser = await authenticateMiniAppUser(req);
+      const { appUser, ws } = await withAuthWorkspace(req);
       const fromAccountId =
         typeof req.body?.fromAccountId === "string"
           ? req.body.fromAccountId.trim()
@@ -932,7 +967,8 @@ export function createHttpApp(): express.Express {
 
       const reportingCurrency = await resolveReportingCurrency(req);
       const transfer = await createTransfer({
-        userId: appUser.id,
+        workspaceId: ws.workspaceId,
+        createdByUserId: appUser.id,
         fromAccountId,
         toAccountId,
         fromAmount,
@@ -941,7 +977,7 @@ export function createHttpApp(): express.Express {
         occurredAt
       });
 
-      const patch = await buildTransferMutationPatch(appUser.id, reportingCurrency);
+      const patch = await buildTransferMutationPatch(ws.workspaceId, reportingCurrency);
 
       res.status(201).json({ transfer, patch });
     } catch (error) {
@@ -956,7 +992,7 @@ export function createHttpApp(): express.Express {
 
   app.get("/api/reports", async (req, res) => {
     try {
-      const appUser = await authenticateMiniAppUser(req);
+      const { ws } = await withAuthWorkspace(req);
       const period =
         typeof req.query.period === "string" ? req.query.period : "month";
       const startDate =
@@ -990,7 +1026,7 @@ export function createHttpApp(): express.Express {
       }
 
       const report = await getReport({
-        userId: appUser.id,
+        workspaceId: ws.workspaceId,
         period: period as "week" | "month" | "quarter" | "year" | "custom",
         startDate,
         endDate,
@@ -1019,6 +1055,7 @@ export function createHttpApp(): express.Express {
   app.get("/api/reports/export.csv", async (req, res) => {
     try {
       const appUser = await authenticateCsvExportMiniAppUser(req);
+      const ws = await resolveActiveWorkspace(req, appUser);
       const period =
         typeof req.query.period === "string" ? req.query.period : "month";
       const startDate =
@@ -1052,7 +1089,7 @@ export function createHttpApp(): express.Express {
       }
 
       const exportInput = {
-        userId: appUser.id,
+        workspaceId: ws.workspaceId,
         period: period as "week" | "month" | "quarter" | "year" | "custom",
         startDate,
         endDate,

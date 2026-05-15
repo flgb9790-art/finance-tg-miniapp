@@ -31,12 +31,12 @@ export interface EntryListItem extends EntryRow {
 }
 
 export interface CreateEntryInput {
-  userId: string;
+  workspaceId: string;
+  createdByUserId: string;
   kind: OperationKind;
   accountId: string;
   categoryId: string;
   amount: number;
-  /** Валюта суммы операции; если не задана — валюта счёта. На баланс счёта применяется конвертация. */
   currencyCode?: string | null;
   note: string | null;
   occurredAt: string;
@@ -47,7 +47,7 @@ function roundAmount(value: number): number {
 }
 
 export async function listRecentEntries(
-  userId: string,
+  workspaceId: string,
   limit = 12
 ): Promise<EntryListItem[]> {
   const { data, error } = await supabase
@@ -59,7 +59,7 @@ export async function listRecentEntries(
         category:categories(name, kind)
       `
     )
-    .eq("user_id", userId)
+    .eq("workspace_id", workspaceId)
     .order("occurred_at", { ascending: false })
     .limit(limit);
 
@@ -70,7 +70,7 @@ export async function listRecentEntries(
   return (data ?? []) as EntryListItem[];
 }
 
-export async function getMonthlyEntryTotals(userId: string): Promise<{
+export async function getMonthlyEntryTotals(workspaceId: string): Promise<{
   income: number;
   expense: number;
 }> {
@@ -81,7 +81,7 @@ export async function getMonthlyEntryTotals(userId: string): Promise<{
   const { data, error } = await supabase
     .from("entries")
     .select("kind, amount")
-    .eq("user_id", userId)
+    .eq("workspace_id", workspaceId)
     .gte("occurred_at", monthStart.toISOString());
 
   if (error) {
@@ -110,13 +110,13 @@ export async function getMonthlyEntryTotals(userId: string): Promise<{
 export async function createEntry(
   input: CreateEntryInput
 ): Promise<EntryListItem> {
-  const account = await getAccountById(input.accountId, input.userId);
+  const account = await getAccountById(input.accountId, input.workspaceId);
 
   if (!account) {
     throw new Error("Account was not found");
   }
 
-  const categories = await listCategories(input.userId);
+  const categories = await listCategories(input.workspaceId);
   const category = categories.find((item) => item.id === input.categoryId);
 
   if (!category) {
@@ -159,12 +159,14 @@ export async function createEntry(
       ? roundAmount(currentBalance + balanceDelta)
       : roundAmount(currentBalance - balanceDelta);
 
-  await updateAccountBalance(account.id, input.userId, nextBalance);
+  await updateAccountBalance(account.id, input.workspaceId, nextBalance);
 
   const { data, error } = await supabase
     .from("entries")
     .insert({
-      user_id: input.userId,
+      user_id: input.createdByUserId,
+      workspace_id: input.workspaceId,
+      created_by_user_id: input.createdByUserId,
       kind: input.kind,
       account_id: input.accountId,
       category_id: input.categoryId,
@@ -183,12 +185,12 @@ export async function createEntry(
     .single();
 
   if (error) {
-    await updateAccountBalance(account.id, input.userId, currentBalance);
+    await updateAccountBalance(account.id, input.workspaceId, currentBalance);
     throw error;
   }
 
   if (!data) {
-    await updateAccountBalance(account.id, input.userId, currentBalance);
+    await updateAccountBalance(account.id, input.workspaceId, currentBalance);
     throw new Error("Supabase did not return the created entry");
   }
 
