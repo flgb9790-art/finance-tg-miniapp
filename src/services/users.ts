@@ -1,5 +1,6 @@
 import type { User as TelegramUser } from "node-telegram-bot-api";
 import { supabase } from "../lib/supabase.js";
+import { ensurePersonalWorkspace } from "./workspaces.js";
 
 function logSupabaseError(context: string, error: unknown): void {
   if (error && typeof error === "object") {
@@ -84,6 +85,7 @@ export async function registerTelegramUser(
       throw new Error("Supabase update returned no row");
     }
 
+    await ensurePersonalWorkspace(data.id);
     return data as TelegramAppUserRow;
   }
 
@@ -116,6 +118,7 @@ export async function registerTelegramUser(
         throw new Error("Supabase update after race returned no row");
       }
 
+      await ensurePersonalWorkspace(afterRace.id);
       return afterRace as TelegramAppUserRow;
     }
 
@@ -127,5 +130,6 @@ export async function registerTelegramUser(
     throw new Error("Supabase insert returned no row");
   }
 
+  await ensurePersonalWorkspace(inserted.id);
   return inserted as TelegramAppUserRow;
 }
