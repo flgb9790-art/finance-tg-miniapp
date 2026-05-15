@@ -2047,6 +2047,85 @@ function resetEntryFormToDefaults() {
   syncWebEntryKindCardsFromSelect();
 }
 
+const WEB_DASH_SPARK_DAY_COUNT = 7;
+
+function pickWebDashSparkDays(dailySeries, dayCount = WEB_DASH_SPARK_DAY_COUNT) {
+  const series = Array.isArray(dailySeries) ? dailySeries : [];
+  if (series.length === 0) {
+    return [];
+  }
+  return series.slice(-dayCount);
+}
+
+function estimateWebDashDayActivity(day) {
+  const income = Number(day?.income ?? 0);
+  const expense = Number(day?.expense ?? 0);
+  let activity = 0;
+  if (income > 0) {
+    activity += 1;
+  }
+  if (expense > 0) {
+    activity += 1;
+  }
+  return activity;
+}
+
+function renderWebDashSparkChart(container, days, mode) {
+  if (!container) {
+    return;
+  }
+
+  const barCount = WEB_DASH_SPARK_DAY_COUNT;
+  const slice = pickWebDashSparkDays(days, barCount);
+  const padded = [];
+
+  for (let i = 0; i < barCount; i += 1) {
+    padded.push(slice[i] ?? { date: "", income: 0, expense: 0, net: 0 });
+  }
+
+  const scores = padded.map((day) => {
+    const income = Math.max(0, Number(day.income ?? 0));
+    const expense = Math.max(0, Number(day.expense ?? 0));
+    const net = Number(day.net ?? 0);
+    const activity = estimateWebDashDayActivity(day);
+
+    if (mode === "income") {
+      return income * (1 + activity * 0.14);
+    }
+    if (mode === "expense") {
+      return expense * (1 + activity * 0.14);
+    }
+    return Math.abs(net) * (1 + activity * 0.1);
+  });
+
+  const max = Math.max(...scores, 0.0001);
+  const hasData = scores.some((v) => v > 0.0001);
+  container.classList.toggle("web-dash-spark--empty", !hasData);
+
+  const chartHeightPx = 46;
+
+  container.innerHTML = padded
+    .map((day, index) => {
+      const score = scores[index];
+      const heightPx = hasData ? Math.round(6 + (score / max) * chartHeightPx) : 6;
+      const net = Number(day.net ?? 0);
+      const negClass = mode === "net" && net < 0 ? " web-dash-spark-bar--negative" : "";
+      return `<span class="web-dash-spark-bar${negClass}" style="height:${heightPx}px"></span>`;
+    })
+    .join("");
+}
+
+function syncWebDashSparkCharts() {
+  if (!isWebMode) {
+    return;
+  }
+
+  const daily = state.report?.dailySeries ?? [];
+  renderWebDashSparkChart(document.querySelector(".web-dash-spark-income"), daily, "income");
+  renderWebDashSparkChart(document.querySelector(".web-dash-spark-expense"), daily, "expense");
+  renderWebDashSparkChart(document.querySelector(".web-dash-spark-net"), daily, "net");
+}
+
 function renderWebDesktopDashboard(summary) {
   if (!isWebMode) {
     return;
@@ -2104,6 +2183,8 @@ function renderWebDesktopDashboard(summary) {
 
   const visual = document.getElementById("webHomeDonutVisual");
   const legend = document.getElementById("webHomeDonutLegend");
+
+  syncWebDashSparkCharts();
 
   if (!visual || !legend) {
     return;

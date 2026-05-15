@@ -3286,12 +3286,12 @@ body.web-mode .web-dash-stat-card {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 16px 16px 14px;
+  padding: 16px 16px 68px;
   background: #fff;
   border-radius: 18px;
   border: 1px solid rgb(15 23 42 / 0.08);
   box-shadow: 0 4px 22px rgb(15 23 42 / 0.06);
-  min-height: 128px;
+  min-height: 148px;
   position: relative;
   overflow: hidden;
 }
@@ -3469,26 +3469,45 @@ body.web-mode .web-dash-hero .hero-currency-select.fx-board-base-select--toolbar
 
 .web-dash-spark {
   position: absolute;
-  right: 10px;
-  bottom: 8px;
-  width: 72px;
-  height: 36px;
-  opacity: 0.35;
-  background: repeating-linear-gradient(
-    90deg,
-    currentColor 0 3px,
-    transparent 3px 7px
-  );
-  border-radius: 6px;
-  mask-image: linear-gradient(90deg, transparent, #000 40%);
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
+  height: 52px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 5px;
+  pointer-events: none;
 }
 
-.web-dash-spark-income {
-  color: #6366f1;
+.web-dash-spark-bar {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 14px;
+  border-radius: 4px 4px 2px 2px;
+  min-height: 6px;
+  transition: height 0.28s ease;
 }
 
-.web-dash-spark-expense {
-  color: #fb7185;
+.web-dash-spark-income .web-dash-spark-bar {
+  background: linear-gradient(180deg, rgb(99 102 241 / 0.95) 0%, rgb(165 180 252 / 0.55) 100%);
+}
+
+.web-dash-spark-expense .web-dash-spark-bar {
+  background: linear-gradient(180deg, rgb(244 63 94 / 0.92) 0%, rgb(251 113 133 / 0.5) 100%);
+}
+
+.web-dash-spark-net .web-dash-spark-bar {
+  background: linear-gradient(180deg, rgb(67 56 202 / 0.9) 0%, rgb(129 140 248 / 0.5) 100%);
+}
+
+.web-dash-spark-net .web-dash-spark-bar--negative {
+  background: linear-gradient(180deg, rgb(220 38 38 / 0.88) 0%, rgb(248 113 113 / 0.48) 100%);
+}
+
+.web-dash-spark--empty .web-dash-spark-bar {
+  height: 8px !important;
+  opacity: 0.22;
 }
 
 .web-home-mid-grid {
