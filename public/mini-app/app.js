@@ -102,6 +102,9 @@ const entryAccountInput = document.getElementById("entryAccountInput");
 const entryCategoryInput = document.getElementById("entryCategoryInput");
 const entryDateInput = document.getElementById("entryDateInput");
 const entryAmountInput = document.getElementById("entryAmountInput");
+const entryCurrencyInput = document.getElementById("entryCurrencyInput");
+const entryCurrencyHint = document.getElementById("entryCurrencyHint");
+const webActivityRecentListElement = document.getElementById("webActivityRecentList");
 const transferForm = document.getElementById("transferForm");
 const transferSubmitButton = document.getElementById("transferSubmitButton");
 const transferFromAccountInput = document.getElementById("transferFromAccountInput");
@@ -1943,6 +1946,85 @@ function syncWebEntryKindCardsFromSelect() {
   });
 }
 
+function readEntryAccountCurrency() {
+  const opt = entryAccountInput?.selectedOptions?.[0];
+  const raw = opt?.getAttribute("data-currency") ?? opt?.dataset?.currency ?? "";
+  return String(raw).trim().toUpperCase();
+}
+
+function syncEntryCurrencyFromAccount(forceAccountCurrency = false) {
+  if (!entryCurrencyInput) {
+    return;
+  }
+
+  const accountCurrency = readEntryAccountCurrency();
+  if (!accountCurrency) {
+    if (entryCurrencyHint) {
+      entryCurrencyHint.hidden = true;
+      entryCurrencyHint.textContent = "";
+    }
+    return;
+  }
+
+  if (forceAccountCurrency || !entryCurrencyInput.value) {
+    entryCurrencyInput.value = accountCurrency;
+  }
+
+  syncEntryCurrencyHint();
+}
+
+function syncEntryCurrencyHint() {
+  if (!entryCurrencyHint || !entryCurrencyInput) {
+    return;
+  }
+
+  const accountCurrency = readEntryAccountCurrency();
+  const opCurrency = (entryCurrencyInput.value ?? "").trim().toUpperCase();
+
+  if (!accountCurrency || !opCurrency || accountCurrency === opCurrency) {
+    entryCurrencyHint.hidden = true;
+    entryCurrencyHint.textContent = "";
+    return;
+  }
+
+  entryCurrencyHint.hidden = false;
+  entryCurrencyHint.textContent = `Сумма в ${opCurrency}; на счёт (${accountCurrency}) будет зачислено по текущему курсу.`;
+}
+
+function populateEntryCurrencyOptions() {
+  if (!entryCurrencyInput) {
+    return;
+  }
+
+  const filteredCurrencies = getAvailableCurrencies();
+  const previous = entryCurrencyInput.value;
+
+  if (filteredCurrencies.length === 0) {
+    entryCurrencyInput.innerHTML = `<option value="">Валюты недоступны</option>`;
+    return;
+  }
+
+  entryCurrencyInput.innerHTML = filteredCurrencies
+    .map(
+      (currency) =>
+        `<option value="${escapeHtml(currency.code)}">${escapeHtml(formatCurrencyOption(currency))}</option>`
+    )
+    .join("");
+
+  const accountCurrency = readEntryAccountCurrency();
+  if (previous && filteredCurrencies.some((c) => c.code === previous)) {
+    entryCurrencyInput.value = previous;
+  } else if (accountCurrency && filteredCurrencies.some((c) => c.code === accountCurrency)) {
+    entryCurrencyInput.value = accountCurrency;
+  } else if (filteredCurrencies.some((c) => c.code === "USD")) {
+    entryCurrencyInput.value = "USD";
+  } else {
+    entryCurrencyInput.value = filteredCurrencies[0].code;
+  }
+
+  syncEntryCurrencyHint();
+}
+
 function resetEntryFormToDefaults() {
   if (!entryForm || !entryKindInput || !entryDateInput) {
     return;
@@ -1952,6 +2034,8 @@ function resetEntryFormToDefaults() {
   entryKindInput.value = "expense";
   entryDateInput.value = getCurrentLocalDateTimeValue();
   populateCategoryOptions();
+  populateEntryCurrencyOptions();
+  syncEntryCurrencyFromAccount(true);
   syncWebEntryKindCardsFromSelect();
 }
 
@@ -3992,11 +4076,7 @@ function attachTgActivityOpsChrome() {
   });
 }
 
-function renderHomeRecentActivity(entries, transfers) {
-  if (!homeRecentActivityListElement) {
-    return;
-  }
-
+function buildRecentActivityCombinedHtml(entries, transfers, limit = 12) {
   const combined = [
     ...entries.map((entry) => ({
       type: "entry",
@@ -4010,19 +4090,18 @@ function renderHomeRecentActivity(entries, transfers) {
     }))
   ]
     .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
-    .slice(0, 4);
+    .slice(0, limit);
 
   if (combined.length === 0) {
-    homeRecentActivityListElement.innerHTML = `
+    return `
       <div class="empty-state">
         <strong>Пока нет операций</strong>
-        <p class="account-meta">Добавьте доход, расход или перевод — последние движения появятся здесь.</p>
+        <p class="account-meta">Добавьте доход, расход или перевод — они появятся в списке.</p>
       </div>
     `;
-    return;
   }
 
-  homeRecentActivityListElement.innerHTML = combined
+  return combined
     .map((item) => {
       if (item.type === "entry") {
         const entry = item.payload;
@@ -4068,6 +4147,22 @@ function renderHomeRecentActivity(entries, transfers) {
       `;
     })
     .join("");
+}
+
+function renderWebActivityRecentList(entries, transfers) {
+  if (!isWebMode || !webActivityRecentListElement) {
+    return;
+  }
+
+  webActivityRecentListElement.innerHTML = buildRecentActivityCombinedHtml(entries, transfers, 12);
+}
+
+function renderHomeRecentActivity(entries, transfers) {
+  if (!homeRecentActivityListElement) {
+    return;
+  }
+
+  homeRecentActivityListElement.innerHTML = buildRecentActivityCombinedHtml(entries, transfers, 4);
 }
 
 function renderCategoryBreakdownList(targetElement, items, emptyTitle, emptyHint) {
@@ -4965,6 +5060,8 @@ function populateAccountOptions() {
     transferToAccountInput.selectedIndex = 1;
   }
 
+  populateEntryCurrencyOptions();
+  syncEntryCurrencyFromAccount(true);
   syncWebTransferAmountCurrencyUi();
 }
 
@@ -5461,6 +5558,9 @@ function renderAll() {
   safeRenderStep("recentTransfers", () => renderRecentTransfers(state.recentTransfers));
   safeRenderStep("homeActivity", () =>
     renderHomeRecentActivity(state.recentEntries, state.recentTransfers)
+  );
+  safeRenderStep("webActivityRecent", () =>
+    renderWebActivityRecentList(state.recentEntries, state.recentTransfers)
   );
   safeRenderStep("report", () => {
     renderReport(state.report);
@@ -6537,11 +6637,13 @@ async function handleCreateEntry(event) {
 
   const formData = new FormData(entryForm);
   const rawDate = String(formData.get("occurredAt") ?? "");
+  const rawCurrency = String(formData.get("currencyCode") ?? "").trim().toUpperCase();
   const payload = {
     kind: String(formData.get("kind") ?? "expense"),
     accountId: String(formData.get("accountId") ?? ""),
     categoryId: String(formData.get("categoryId") ?? ""),
     amount: Number(formData.get("amount") ?? 0),
+    currencyCode: rawCurrency || null,
     note: String(formData.get("note") ?? "").trim(),
     occurredAt: rawDate ? toIsoDate(rawDate) : new Date().toISOString()
   };
@@ -7232,6 +7334,14 @@ reportCsvStatementButton?.addEventListener("click", () => {
 entryKindInput?.addEventListener("change", () => {
   populateCategoryOptions();
   syncWebEntryKindCardsFromSelect();
+});
+
+entryAccountInput?.addEventListener("change", () => {
+  syncEntryCurrencyFromAccount(true);
+});
+
+entryCurrencyInput?.addEventListener("change", () => {
+  syncEntryCurrencyHint();
 });
 
 document.getElementById("entryFormResetWeb")?.addEventListener("click", () => {

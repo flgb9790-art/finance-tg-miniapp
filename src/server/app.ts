@@ -743,6 +743,8 @@ export function createHttpApp(): express.Express {
           ? req.body.categoryId.trim()
           : "";
       const amount = Number(req.body?.amount ?? 0);
+      const currencyCode =
+        typeof req.body?.currencyCode === "string" ? req.body.currencyCode.trim() : "";
       const note =
         typeof req.body?.note === "string" && req.body.note.trim()
           ? req.body.note.trim()
@@ -778,6 +780,7 @@ export function createHttpApp(): express.Express {
         accountId,
         categoryId,
         amount,
+        currencyCode: currencyCode || null,
         note,
         occurredAt
       });

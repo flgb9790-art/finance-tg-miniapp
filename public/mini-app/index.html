@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#f3f5fa" />
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260515web-profile-settings-align";
+        var BALANCY_CLIENT_ASSET_REV = "20260515web-activity-entry-currency";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -622,7 +622,7 @@
                 </span>
               </label>
             </div>
-            <button type="button" class="ghost-button tg-settings-back" data-open-screen="more">← Назад в «Ещё»</button>
+            <button type="button" class="ghost-button tg-settings-back tg-only-block" data-open-screen="more">← Назад в «Ещё»</button>
           </section>
         </section>
 
@@ -850,6 +850,18 @@
         </section>
 
         <section id="screen-activity" class="screen" data-screen="activity">
+          <div class="web-activity-layout">
+          <section class="card compact-section-card web-activity-recent-card web-only-block" aria-label="Последние операции">
+            <div class="section-header">
+              <div>
+                <h2 class="web-activity-recent-title">Последние операции</h2>
+              </div>
+              <button type="button" class="text-link-button" data-open-screen="history">Все</button>
+            </div>
+            <div id="webActivityRecentList" class="accounts-list web-activity-recent-list"></div>
+          </section>
+
+          <div class="web-activity-main">
           <div class="web-activity-compose">
             <div class="web-op-kind-cards" role="group" aria-label="Тип операции">
               <button
@@ -905,12 +917,19 @@
                 <select id="entryCategoryInput" name="categoryId"></select>
               </label>
 
-              <label>
+              <label class="web-op-currency-field web-op-field-span-2">
+                <span>Валюта операции <span class="web-op-req" aria-hidden="true">*</span></span>
+                <select id="entryCurrencyInput" name="currencyCode"></select>
+              </label>
+
+              <p id="entryCurrencyHint" class="muted entry-currency-hint web-op-field-span-2" hidden></p>
+
+              <label class="web-op-amount-field">
                 <span>Сумма <span class="web-op-req" aria-hidden="true">*</span></span>
                 <input id="entryAmountInput" min="0.01" name="amount" placeholder="0.00" required step="0.01" type="number" />
               </label>
 
-              <label>
+              <label class="web-op-datetime-field">
                 <span>Дата и время <span class="web-op-req" aria-hidden="true">*</span></span>
                 <div class="native-datetime-shell">
                   <input id="entryDateInput" name="occurredAt" required type="datetime-local" />
@@ -948,6 +967,9 @@
             <button type="button" class="balancy-hint-close" data-balancy-hint-close="activityForm" aria-label="Закрыть подсказку">
               ×
             </button>
+          </div>
+
+          </div>
           </div>
 
         </section>

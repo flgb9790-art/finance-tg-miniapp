@@ -2,6 +2,8 @@ import type { OperationKind } from "../shared/domain.js";
 import { supabase } from "../lib/supabase.js";
 import { getAccountById, updateAccountBalance } from "./accounts.js";
 import { listCategories } from "./categories.js";
+import { getCurrencyByCode } from "./currencies.js";
+import { convertAmount } from "./exchange-rates.js";
 
 export interface EntryRow {
   id: string;
@@ -34,8 +36,14 @@ export interface CreateEntryInput {
   accountId: string;
   categoryId: string;
   amount: number;
+  /** Валюта суммы операции; если не задана — валюта счёта. На баланс счёта применяется конвертация. */
+  currencyCode?: string | null;
   note: string | null;
   occurredAt: string;
+}
+
+function roundAmount(value: number): number {
+  return Number(value.toFixed(2));
 }
 
 export async function listRecentEntries(
@@ -119,16 +127,37 @@ export async function createEntry(
     throw new Error("Category kind does not match operation kind");
   }
 
+  const accountCurrency = account.currency_code.trim().toUpperCase();
+  let transactionCurrency = (input.currencyCode ?? "").trim().toUpperCase();
+
+  if (!transactionCurrency) {
+    transactionCurrency = accountCurrency;
+  }
+
+  if (transactionCurrency !== accountCurrency) {
+    const currencyRow = await getCurrencyByCode(transactionCurrency);
+    if (!currencyRow) {
+      throw new Error("Operation currency is invalid or inactive");
+    }
+  }
+
+  const entryAmount = roundAmount(input.amount);
+  let balanceDelta = entryAmount;
+
+  if (transactionCurrency !== accountCurrency) {
+    balanceDelta = await convertAmount(entryAmount, transactionCurrency, accountCurrency);
+  }
+
   const currentBalance = Number(account.balance);
 
-  if (input.kind === "expense" && currentBalance < input.amount) {
+  if (input.kind === "expense" && currentBalance < balanceDelta) {
     throw new Error("There is not enough money on the selected account");
   }
 
   const nextBalance =
     input.kind === "income"
-      ? currentBalance + input.amount
-      : currentBalance - input.amount;
+      ? roundAmount(currentBalance + balanceDelta)
+      : roundAmount(currentBalance - balanceDelta);
 
   await updateAccountBalance(account.id, input.userId, nextBalance);
 
@@ -139,8 +168,8 @@ export async function createEntry(
       kind: input.kind,
       account_id: input.accountId,
       category_id: input.categoryId,
-      amount: input.amount,
-      currency_code: account.currency_code,
+      amount: entryAmount,
+      currency_code: transactionCurrency,
       note: input.note,
       occurred_at: input.occurredAt
     })
