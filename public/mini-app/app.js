@@ -53,32 +53,6 @@ function parseWebInviteTokenFromLocation() {
 
 parseWebInviteTokenFromLocation();
 
-function captureInviteFromTelegramStartParam() {
-  try {
-    const existing = sessionStorage.getItem(WEB_INVITE_TOKEN_SESSION_KEY)?.trim();
-    if (existing) {
-      return;
-    }
-
-    const sp = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
-    if (typeof sp !== "string" || !sp.trim()) {
-      return;
-    }
-
-    const cleaned = sp.trim();
-    if (cleaned.length < 8) {
-      return;
-    }
-
-    sessionStorage.setItem(WEB_INVITE_TOKEN_SESSION_KEY, cleaned);
-  } catch {
-    //
-  }
-}
-
-captureInviteFromTelegramStartParam();
-
-
 /** В TG: клавиатура не сжимает layout — нижняя навигация не «подпрыгивает» над клавиатурой. Веб-версия meta не трогается. */
 function applyTelegramMiniAppViewportFix() {
   if (isWebMode) {
@@ -1361,6 +1335,54 @@ async function waitForTelegramInitData(maxMs = 12000, stepMs = 50) {
 
   return "";
 }
+
+const MIN_TG_INVITE_START_PARAM_LEN = 8;
+
+/**
+ * Параметр startapp из t.me/... попадает в Mini App как start_param (см. initData).
+ * На части клиентов initDataUnsafe заполняется с задержкой — читаем также из строки initData.
+ */
+function readTelegramInviteStartParam() {
+  try {
+    const unsafe = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+    if (typeof unsafe === "string") {
+      const t = unsafe.trim();
+      if (t.length >= MIN_TG_INVITE_START_PARAM_LEN) {
+        return t;
+      }
+    }
+
+    const raw = getInitData();
+    if (raw) {
+      const parsed = new URLSearchParams(raw).get("start_param");
+      if (typeof parsed === "string") {
+        const t = parsed.trim();
+        if (t.length >= MIN_TG_INVITE_START_PARAM_LEN) {
+          return t;
+        }
+      }
+    }
+  } catch {
+    //
+  }
+
+  return "";
+}
+
+function syncInviteFromTelegramStartParam() {
+  try {
+    const sp = readTelegramInviteStartParam();
+    if (!sp) {
+      return;
+    }
+
+    sessionStorage.setItem(WEB_INVITE_TOKEN_SESSION_KEY, sp);
+  } catch {
+    //
+  }
+}
+
+syncInviteFromTelegramStartParam();
 
 function formatType(type) {
   const labels = {
@@ -6780,6 +6802,8 @@ async function maybeShowWorkspaceInviteGate(token) {
 }
 
 async function finalizeWorkspaceBoot() {
+  syncInviteFromTelegramStartParam();
+
   const token = getPendingWebInviteToken();
 
   if (token && state.user) {
@@ -8393,6 +8417,8 @@ async function loadApp(options = {}) {
     } catch (error) {
       console.warn("Telegram.WebApp.ready failed", error);
     }
+
+    syncInviteFromTelegramStartParam();
 
     try {
       if (typeof tg.expand === "function") {
