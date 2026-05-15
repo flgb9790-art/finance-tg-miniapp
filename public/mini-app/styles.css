@@ -8400,6 +8400,52 @@ body.web-mode .web-accounts-list-shell {
   box-shadow: none;
 }
 
+body.web-mode .web-accounts-list-shell.web-accounts-surface {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+body.web-mode .web-accounts-appearance-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  gap: 16px 20px;
+  align-items: start;
+}
+
+body:not(.web-mode) .web-accounts-appearance-row {
+  display: block;
+}
+
+body.web-mode .web-accounts-appearance-pickers {
+  min-width: 0;
+}
+
+body.web-mode .web-accounts-appearance-row .tg-account-preview-block {
+  margin-top: 0;
+}
+
+body.web-mode .web-accounts-appearance-row .tg-account-preview-card {
+  margin-top: 8px;
+}
+
+body:not(.web-mode) .tg-account-preview-mobile {
+  margin-top: 8px;
+}
+
+body:not(.web-mode) .tg-account-preview-mobile-sheet {
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  padding: 10px 12px;
+  box-shadow: var(--shadow);
+}
+
+body:not(.web-mode) .tg-account-preview-mobile .account-item-header {
+  margin: 0;
+}
+
 body.web-mode .web-accounts-list-head {
   align-items: center;
   margin-bottom: 0;

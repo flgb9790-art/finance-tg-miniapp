@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260515web-accounts-polish";
+        var BALANCY_CLIENT_ASSET_REV = "20260515web-accounts-preview";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -754,6 +754,8 @@
                   </label>
                 </div>
 
+                <div class="web-accounts-appearance-row">
+                  <div class="web-accounts-appearance-pickers">
                 <div class="web-accounts-color-block">
                   <span class="web-categories-field-label tg-color-label-web">Цвет (необязательно)</span>
                   <span class="web-categories-field-label tg-color-label-tg">Цвет счёта</span>
@@ -839,6 +841,46 @@
                   </div>
                   <input type="hidden" id="accountIconKeyInput" value="card" autocomplete="off" />
                 </div>
+                  </div>
+
+                  <div class="tg-account-preview-block">
+                    <span class="web-categories-field-label">Предпросмотр</span>
+                    <div class="tg-account-preview-mobile tg-only-block">
+                      <div class="tg-account-preview-mobile-sheet">
+                        <div class="account-item-header">
+                          <div class="item-leading">
+                            <div class="account-icon account-icon-tg-tile" id="tgAccountPreviewMobileIcon">
+                              <span id="tgAccountPreviewMobileGlyph" class="account-leading-glyph">💳</span>
+                            </div>
+                            <div class="item-copy">
+                              <div id="tgAccountPreviewMobileName" class="account-name">Tinkoff · USD</div>
+                              <div id="tgAccountPreviewMobileMeta" class="account-meta">Наличные · USD — US Dollar</div>
+                            </div>
+                          </div>
+                          <div class="account-balance-stack">
+                            <span id="tgAccountPreviewMobileBalanceValue" class="account-balance-value">0,00</span>
+                            <span id="tgAccountPreviewMobileBalanceCurrency" class="account-balance-currency">USD</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <article class="tg-account-preview-card web-only-block" id="tgAccountPreviewCard">
+                      <div class="tg-account-preview-top">
+                        <div class="tg-account-preview-icon" id="tgAccountPreviewIcon" aria-hidden="true">
+                          <span id="tgAccountPreviewIconGlyph" class="account-leading-glyph">💳</span>
+                        </div>
+                        <div class="tg-account-preview-names">
+                          <div id="tgAccountPreviewTitle" class="tg-account-preview-title">Tinkoff · USD</div>
+                          <div id="tgAccountPreviewMeta" class="tg-account-preview-meta muted">Карта · USD — US Dollar</div>
+                        </div>
+                      </div>
+                      <div class="tg-account-preview-bottom">
+                        <div class="tg-account-preview-balance-label muted">Баланс</div>
+                        <div id="tgAccountPreviewBalance" class="tg-account-preview-balance">0,00 USD</div>
+                      </div>
+                    </article>
+                  </div>
+                </div>
 
                 <label class="tg-category-desc-label tg-only-block">
                   <span class="web-categories-field-label">Описание (необязательно)</span>
@@ -850,25 +892,6 @@
                     placeholder="Добавьте описание счёта"
                   ></textarea>
                 </label>
-
-                <div class="tg-account-preview-block web-only-block">
-                  <span class="web-categories-field-label">Предпросмотр</span>
-                  <article class="tg-account-preview-card" id="tgAccountPreviewCard">
-                    <div class="tg-account-preview-top">
-                      <div class="tg-account-preview-icon" id="tgAccountPreviewIcon" aria-hidden="true">
-                        <span id="tgAccountPreviewIconGlyph" class="account-leading-glyph">💳</span>
-                      </div>
-                      <div class="tg-account-preview-names">
-                        <div id="tgAccountPreviewTitle" class="tg-account-preview-title">Tinkoff · USD</div>
-                        <div id="tgAccountPreviewMeta" class="tg-account-preview-meta muted">Карта · USD — US Dollar</div>
-                      </div>
-                    </div>
-                    <div class="tg-account-preview-bottom">
-                      <div class="tg-account-preview-balance-label muted">Баланс</div>
-                      <div id="tgAccountPreviewBalance" class="tg-account-preview-balance">0,00 USD</div>
-                    </div>
-                  </article>
-                </div>
 
                 <p id="accountsStatusText" class="muted form-status"></p>
                 <div class="web-accounts-form-actions">

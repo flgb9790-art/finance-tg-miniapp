@@ -2819,23 +2819,10 @@ function readAccountPreviewAccentHex() {
 }
 
 function syncAccountPreview() {
-  if (!isWebMode) {
-    return;
-  }
-
-  const titleEl = document.getElementById("tgAccountPreviewTitle");
-  const metaEl = document.getElementById("tgAccountPreviewMeta");
-  const balanceEl = document.getElementById("tgAccountPreviewBalance");
-  const iconEl = document.getElementById("tgAccountPreviewIcon");
-  const glyphEl = document.getElementById("tgAccountPreviewIconGlyph");
   const nameInput = document.getElementById("nameInput");
   const typeInput = document.getElementById("typeInput");
   const balanceInput = document.getElementById("balanceInput");
   const iconKeyInput = document.getElementById("accountIconKeyInput");
-
-  if (!titleEl || !metaEl || !balanceEl || !iconEl || !glyphEl) {
-    return;
-  }
 
   const rawName = nameInput instanceof HTMLInputElement ? nameInput.value.trim() : "";
   const type = typeInput instanceof HTMLSelectElement ? typeInput.value : "cash";
@@ -2847,14 +2834,60 @@ function syncAccountPreview() {
     iconKeyInput instanceof HTMLInputElement && String(iconKeyInput.value ?? "").trim()
       ? String(iconKeyInput.value).trim()
       : defaultAccountIconKeyForType(type);
-
-  titleEl.textContent = `${rawName || "Tinkoff"} · ${currency}`;
-  metaEl.textContent = `${formatType(type)} · ${formatCurrencyLineFromCode(currency)}`;
-  glyphEl.textContent = getAccountIconGlyph(iconKey);
-  iconEl.style.backgroundColor = readAccountPreviewAccentHex();
-
+  const accentHex = readAccountPreviewAccentHex();
+  const glyph = getAccountIconGlyph(iconKey);
+  const titleLine = `${rawName || "Tinkoff"} · ${currency}`;
+  const metaLine = `${formatType(type)} · ${formatCurrencyLineFromCode(currency)}`;
   const balance = balanceInput instanceof HTMLInputElement ? Number(balanceInput.value) : 0;
-  balanceEl.textContent = formatMoney(Number.isFinite(balance) ? balance : 0, currency);
+  const balanceNum = Number.isFinite(balance) ? balance : 0;
+
+  const titleEl = document.getElementById("tgAccountPreviewTitle");
+  const metaEl = document.getElementById("tgAccountPreviewMeta");
+  const balanceEl = document.getElementById("tgAccountPreviewBalance");
+  const iconEl = document.getElementById("tgAccountPreviewIcon");
+  const glyphEl = document.getElementById("tgAccountPreviewIconGlyph");
+
+  if (titleEl) {
+    titleEl.textContent = titleLine;
+  }
+  if (metaEl) {
+    metaEl.textContent = metaLine;
+  }
+  if (glyphEl) {
+    glyphEl.textContent = glyph;
+  }
+  if (iconEl) {
+    iconEl.style.backgroundColor = accentHex;
+  }
+  if (balanceEl) {
+    balanceEl.textContent = formatMoney(balanceNum, currency);
+  }
+
+  const mobileName = document.getElementById("tgAccountPreviewMobileName");
+  const mobileMeta = document.getElementById("tgAccountPreviewMobileMeta");
+  const mobileIcon = document.getElementById("tgAccountPreviewMobileIcon");
+  const mobileGlyph = document.getElementById("tgAccountPreviewMobileGlyph");
+  const mobileBalanceValue = document.getElementById("tgAccountPreviewMobileBalanceValue");
+  const mobileBalanceCurrency = document.getElementById("tgAccountPreviewMobileBalanceCurrency");
+
+  if (mobileName) {
+    mobileName.textContent = titleLine;
+  }
+  if (mobileMeta) {
+    mobileMeta.textContent = metaLine;
+  }
+  if (mobileGlyph) {
+    mobileGlyph.textContent = glyph;
+  }
+  if (mobileIcon) {
+    mobileIcon.style.backgroundColor = accentHex;
+  }
+  if (mobileBalanceValue) {
+    mobileBalanceValue.textContent = formatMoneyAmount(balanceNum);
+  }
+  if (mobileBalanceCurrency) {
+    mobileBalanceCurrency.textContent = currency;
+  }
 }
 
 let categoryFormSharedChromeAttached = false;
