@@ -134,12 +134,12 @@ body:not(.web-mode).keyboard-open .app-shell {
   padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px));
 }
 
-/* В Telegram при открытой клавиатуре нижнее меню уходит под клавиатуру, а не «прилипает» над ней */
+/* Telegram + Android: не скрываем нижнее меню при клавиатуре — иначе оно «пропадает», но остаётся кликабельным по месту (opacity/visibility + fixed). Меню может перекрываться клавиатурой — это предсказуемее, чем «невидимая» панель. */
 body:not(.web-mode).keyboard-open .bottom-nav {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: translateY(calc(100% + 12px));
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
 }
 
 body:not(.web-mode) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]),
@@ -4315,8 +4315,11 @@ body:not(.web-mode) #screen-ledger.screen-active .tg-ops-activity-root {
 }
 
 body:not(.web-mode) #screen-ledger {
-  min-width: 0;
+  /* Не min-width: 0 — иначе колонка грида сжимается до min-content (узкий блок «Загрузка…»), пока не подгрузятся строки. */
+  min-width: 100%;
+  width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Telegram «История»: при обновлении списка не даём цепочке flex/grid сжать ширину контента */
@@ -4329,6 +4332,7 @@ body:not(.web-mode) #screen-ledger.screen-active {
 body:not(.web-mode) #screen-ledger .tg-ops-activity-root {
   width: 100%;
   max-width: 100%;
+  min-width: 100%;
   box-sizing: border-box;
   align-self: stretch;
 }
@@ -8548,12 +8552,13 @@ body:not(.web-mode) #screen-home .balancy-home-currencies-scroll {
   min-width: 0;
   margin: 0;
   padding: 0 0 2px;
-  overflow-x: auto;
+  /* Android WebView: scroll часто надёжнее с scroll, чем с auto; pan-x pan-y — чтобы вертикальный скролл страницы не «съедал» жест. */
+  overflow-x: scroll;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
   scrollbar-width: none;
-  touch-action: pan-x;
+  touch-action: pan-x pan-y;
 }
 
 body:not(.web-mode) #screen-home .balancy-home-currencies-scroll::-webkit-scrollbar {
@@ -8561,13 +8566,14 @@ body:not(.web-mode) #screen-home .balancy-home-currencies-scroll::-webkit-scroll
 }
 
 body:not(.web-mode) #screen-home .balancy-home-currencies-strip {
-  display: inline-flex;
+  display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
   gap: 10px;
   align-items: center;
-  vertical-align: top;
+  width: max-content;
   min-width: min-content;
+  box-sizing: border-box;
 }
 
 body:not(.web-mode) #screen-home .balancy-home-currencies-strip .currency-mini-pill {
