@@ -69,6 +69,9 @@ const webProfileToggleButton = document.getElementById("webProfileToggleButton")
 const webProfileDropdown = document.getElementById("webProfileDropdown");
 const webProfileMeta = document.getElementById("webProfileMeta");
 const webSwitchUserButton = document.getElementById("webSwitchUserButton");
+const webLoginGateElement = document.getElementById("webLoginGate");
+const webLoginWidgetHost = document.getElementById("webLoginWidgetHost");
+const webLoginGateErrorElement = document.getElementById("webLoginGateError");
 const webOpenSettingsButton = document.getElementById("webOpenSettingsButton");
 const webNewEntryMenu = document.getElementById("webNewEntryMenu");
 const webPageTitleElement = document.getElementById("webPageTitle");
@@ -538,6 +541,8 @@ function bindTelegramViewportListeners() {
 
 let balancyPullRefreshAttached = false;
 let balancyEdgeSwipeBackAttached = false;
+let webLoginWidgetMounted = false;
+let webLoginConfigCache = null;
 
 function attachTelegramPullToRefresh() {
   if (balancyPullRefreshAttached || isWebMode || typeof window === "undefined") {
@@ -6143,11 +6148,109 @@ function toggleWebProfileDropdown() {
   }
 }
 
+function isApiUnauthorizedError(error) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return message.includes("unauthorized") || message.includes("http 401");
+}
+
+async function fetchWebLoginConfig() {
+  if (webLoginConfigCache) {
+    return webLoginConfigCache;
+  }
+
+  try {
+    const response = await fetch(resolveFetchUrl("/api/web-login-config"), {
+      credentials: "include",
+      headers: {
+        "ngrok-skip-browser-warning": "true",
+        "bypass-tunnel-reminder": "true"
+      }
+    });
+    const payload = await response.json().catch(() => ({}));
+    webLoginConfigCache = {
+      botUsername:
+        typeof payload?.botUsername === "string" && payload.botUsername.trim()
+          ? payload.botUsername.trim()
+          : null
+    };
+  } catch {
+    webLoginConfigCache = { botUsername: null };
+  }
+
+  return webLoginConfigCache;
+}
+
+async function mountWebTelegramLoginWidget() {
+  if (!webLoginWidgetHost || webLoginWidgetMounted) {
+    return;
+  }
+
+  const config = await fetchWebLoginConfig();
+
+  webLoginWidgetHost.innerHTML = "";
+
+  if (!config.botUsername) {
+    webLoginWidgetHost.innerHTML =
+      '<p class="inline-error">На сервере не задан <code>TELEGRAM_BOT_USERNAME</code> — вход через Telegram недоступен.</p>';
+    return;
+  }
+
+  const script = document.createElement("script");
+  script.async = true;
+  script.src = "https://telegram.org/js/telegram-widget.js?22";
+  script.setAttribute("data-telegram-login", config.botUsername);
+  script.setAttribute("data-size", "large");
+  script.setAttribute("data-lang", "ru");
+  script.setAttribute("data-auth-url", "/auth/telegram/callback");
+  script.setAttribute("data-request-access", "write");
+  webLoginWidgetHost.appendChild(script);
+  webLoginWidgetMounted = true;
+}
+
+function showWebLoginGate(errorMessage = "") {
+  if (!isWebMode || !webLoginGateElement) {
+    return;
+  }
+
+  document.body.classList.add("web-login-gate-open");
+  webLoginGateElement.hidden = false;
+
+  if (webLoginGateErrorElement) {
+    const text = String(errorMessage ?? "").trim();
+    webLoginGateErrorElement.hidden = !text;
+    webLoginGateErrorElement.textContent = text;
+  }
+
+  void mountWebTelegramLoginWidget();
+}
+
+function hideWebLoginGate() {
+  if (!webLoginGateElement) {
+    return;
+  }
+
+  document.body.classList.remove("web-login-gate-open");
+  webLoginGateElement.hidden = true;
+
+  if (webLoginGateErrorElement) {
+    webLoginGateErrorElement.hidden = true;
+    webLoginGateErrorElement.textContent = "";
+  }
+}
+
 async function handleWebLogout() {
   try {
-    await fetch("/auth/logout", { method: "POST" });
+    await fetch(resolveFetchUrl("/auth/logout"), {
+      method: "POST",
+      credentials: "include"
+    });
   } finally {
-    window.location.href = "/web";
+    state.user = null;
+    showWebLoginGate();
   }
 }
 
@@ -6715,6 +6818,10 @@ function buildAppDataApiUrl(options = {}) {
 }
 
 function scheduleDebouncedBackgroundRefresh(delayMs = 900) {
+  if (isWebMode && document.body.classList.contains("web-login-gate-open")) {
+    return;
+  }
+
   window.clearTimeout(refreshAppDataDebounceTimer);
   refreshAppDataDebounceTimer = window.setTimeout(() => {
     refreshAppDataDebounceTimer = null;
@@ -6791,8 +6898,18 @@ async function refreshAppData(options = {}) {
       applyBootstrapPayload(payload);
     }
 
+    if (isWebMode) {
+      hideWebLoginGate();
+    }
+
     afterBootstrapRender(options);
     return payload;
+  } catch (error) {
+    if (isWebMode && isApiUnauthorizedError(error)) {
+      showWebLoginGate();
+    }
+
+    throw error;
   } finally {
     if (showGlobalOverlay) {
       endGlobalBusy();
@@ -6801,7 +6918,7 @@ async function refreshAppData(options = {}) {
 }
 
 async function loadApp(options = {}) {
-  if (!tg) {
+  if (!isWebMode && !tg) {
     if (userNameElement) {
       userNameElement.textContent = "Откройте приложение из Telegram";
     }
@@ -6819,13 +6936,52 @@ async function loadApp(options = {}) {
   if (bgRefresh) {
     try {
       await refreshAppData(options);
+      if (isWebMode) {
+        hideWebLoginGate();
+      }
     } catch (error) {
       console.error(error);
+      if (isWebMode && isApiUnauthorizedError(error)) {
+        showWebLoginGate(error instanceof Error ? error.message : "");
+      }
     } finally {
       if (showGlobalOverlay) {
         endGlobalBusy();
       }
     }
+    return;
+  }
+
+  if (isWebMode) {
+    try {
+      setStatus("Загружаем данные...");
+      await refreshAppData(options);
+      hideWebLoginGate();
+      setStatus(
+        "Все готово. Интерфейс разбит по вкладкам и стал проще для ежедневного использования.",
+        "success"
+      );
+      await dismissAppSplashAfterSuccess();
+    } catch (error) {
+      console.error(error);
+      if (isApiUnauthorizedError(error)) {
+        showWebLoginGate();
+        dismissAppSplash({ fast: true });
+        return;
+      }
+
+      if (userNameElement) {
+        userNameElement.textContent = "Не удалось загрузить приложение";
+      }
+
+      setStatus(error instanceof Error ? error.message : "Unknown error", "error");
+      dismissAppSplash({ fast: true });
+    } finally {
+      if (showGlobalOverlay) {
+        endGlobalBusy();
+      }
+    }
+
     return;
   }
 

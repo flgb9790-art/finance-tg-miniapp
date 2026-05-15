@@ -348,6 +348,12 @@ export function createHttpApp(): express.Express {
     res.json({ ok: true });
   });
 
+  app.get("/api/web-login-config", (_req, res) => {
+    res.json({
+      botUsername: env.telegramBotUsername?.trim() ?? null
+    });
+  });
+
   app.get("/", (_req, res) => {
     res.redirect(302, "/mini-app/");
   });
@@ -358,10 +364,7 @@ export function createHttpApp(): express.Express {
       return;
     }
 
-    res
-      .status(200)
-      .setHeader("Cache-Control", "no-store")
-      .send(renderWebLoginHtml());
+    res.redirect(302, webAppPath);
   });
 
   app.get("/auth/telegram/callback", async (req, res) => {

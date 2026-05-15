@@ -10873,3 +10873,98 @@ body.web-mode #screen-settings .tg-settings-card {
     background-position: 100% 50%;
   }
 }
+
+/* --- Веб: экран входа (неавторизованный ?web=1) --- */
+.web-login-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(20px, env(safe-area-inset-top, 0px)) 20px max(20px, env(safe-area-inset-bottom, 0px));
+  background: #ffffff;
+}
+
+.web-login-gate[hidden] {
+  display: none !important;
+}
+
+body.web-mode.web-login-gate-open #webTopNav,
+body.web-mode.web-login-gate-open .app-shell {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.web-login-card {
+  width: min(100%, 420px);
+  padding: 36px 32px 30px;
+  text-align: center;
+  border-radius: 24px;
+  border: 1px solid rgb(18 18 43 / 0.08);
+  background: #ffffff;
+  box-shadow:
+    0 24px 64px rgb(18 18 43 / 0.1),
+    0 2px 8px rgb(18 18 43 / 0.04);
+}
+
+.web-login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.web-login-wordmark {
+  font-size: clamp(34px, 8vw, 42px);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+  background: linear-gradient(110deg, #12122b 0%, #312e81 34%, #6366f1 52%, #1e1b4b 78%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.web-login-tagline {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 550;
+  color: rgb(71 85 105);
+  line-height: 1.45;
+}
+
+.web-login-title {
+  margin: 0 0 10px;
+  font-size: clamp(22px, 5vw, 26px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+.web-login-lede {
+  margin: 0 0 22px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.web-login-widget-host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 48px;
+  margin-bottom: 14px;
+}
+
+.web-login-error {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.web-login-footnote {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+}

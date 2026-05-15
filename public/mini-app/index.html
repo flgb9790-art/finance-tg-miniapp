@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260515instruction-text-scroll-v1";
+        var BALANCY_CLIENT_ASSET_REV = "20260515web-login-gate-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -46,6 +46,30 @@
         <div class="app-splash-footer">
           <div class="app-splash-spinner" aria-hidden="true"></div>
         </div>
+      </div>
+    </div>
+
+    <div
+      id="webLoginGate"
+      class="web-login-gate"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="webLoginGateTitle"
+      aria-describedby="webLoginGateDesc"
+    >
+      <div class="web-login-card">
+        <header class="web-login-brand">
+          <span class="web-login-wordmark brand-wordmark">Balancy</span>
+          <p class="web-login-tagline">Баланс и учёт в одном месте</p>
+        </header>
+        <h1 id="webLoginGateTitle" class="web-login-title">Добро пожаловать</h1>
+        <p id="webLoginGateDesc" class="web-login-lede muted">
+          Войдите через Telegram, чтобы открыть веб-версию Balancy и синхронизировать данные с ботом.
+        </p>
+        <div id="webLoginWidgetHost" class="web-login-widget-host"></div>
+        <p id="webLoginGateError" class="web-login-error inline-error" hidden></p>
+        <p class="web-login-footnote muted">После входа вы вернётесь в приложение автоматически.</p>
       </div>
     </div>
 
