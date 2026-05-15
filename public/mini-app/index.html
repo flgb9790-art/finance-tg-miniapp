@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260515web-home-grid-icons-v1";
+        var BALANCY_CLIENT_ASSET_REV = "20260515web-header-home-rail-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -195,7 +195,8 @@
             <div class="web-page-title-copy">
               <h1 id="webPageTitle" class="web-page-title">Главная</h1>
               <p id="webPageSubtitle" class="web-page-subtitle muted">
-                Баланс по счетам, доходы и расходы за месяц, последние операции.
+                <span class="web-page-subtitle-line web-page-subtitle-line--full"></span>
+                <span class="web-page-subtitle-line web-page-subtitle-line--compact"></span>
               </p>
             </div>
           </div>
@@ -203,12 +204,14 @@
             <div class="web-new-entry-wrap">
               <button
                 type="button"
-                class="web-page-primary-btn"
+                class="web-page-primary-btn web-page-header-action-btn"
                 id="webTopNavAddButton"
                 aria-expanded="false"
                 aria-haspopup="true"
+                aria-label="Новая запись"
               >
-                + Новая запись
+                <span class="web-page-btn-glyph" aria-hidden="true">+</span>
+                <span class="web-page-btn-text">Новая запись</span>
               </button>
               <div id="webNewEntryMenu" class="web-new-entry-menu" role="menu" hidden>
                 <p class="web-new-entry-group-label">Операции</p>
@@ -230,7 +233,7 @@
                 </button>
               </div>
             </div>
-            <button type="button" class="web-page-ghost-btn" id="webRefreshButton">
+            <button type="button" class="web-page-ghost-btn web-page-header-action-btn" id="webRefreshButton" aria-label="Обновить">
               <svg class="web-page-refresh-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path
                   d="M21 12a9 9 0 1 1-2.64-6.36"
@@ -240,19 +243,7 @@
                 />
                 <path d="M21 3v6h-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
-              Обновить
-            </button>
-            <button type="button" class="web-page-icon-btn" disabled title="Скоро" aria-label="Уведомления (скоро)">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M6 8a6 6 0 1 1 12 0c0 7 3 7 3 7H3s3 0 3-7"
-                  stroke="currentColor"
-                  stroke-width="1.7"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-                <path d="M10 21h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-              </svg>
+              <span class="web-page-btn-text">Обновить</span>
             </button>
           </div>
         </header>

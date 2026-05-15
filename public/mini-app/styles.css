@@ -3242,6 +3242,49 @@ body.web-mode .web-page-title {
   right: 0;
 }
 
+.web-page-subtitle-line--compact {
+  display: none;
+}
+
+body.web-mode .web-page-header-actions {
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+body.web-mode .web-page-header-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  min-height: 42px;
+  width: 11.25rem;
+  min-width: 11.25rem;
+  max-width: 100%;
+  padding: 10px 14px;
+}
+
+body.web-mode .web-page-primary-btn.web-page-header-action-btn {
+  border: none;
+}
+
+body.web-mode .web-page-btn-glyph {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+body.web-mode .web-page-btn-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.web-mode .web-page-ghost-btn.web-page-header-action-btn .web-page-refresh-icon {
+  flex-shrink: 0;
+}
+
 @media (max-width: 900px) {
   body.web-mode {
     --web-sidebar-w: min(288px, 88vw);
@@ -4132,6 +4175,25 @@ body.web-mode .web-sidebar {
 
   body.web-mode .web-profile-menu--sidebar .web-profile-dropdown {
     z-index: 560;
+  }
+
+  body.web-mode .web-page-subtitle-line--full {
+    display: none;
+  }
+
+  body.web-mode .web-page-subtitle-line--compact {
+    display: inline;
+  }
+
+  body.web-mode .web-page-header-action-btn {
+    width: 42px;
+    min-width: 42px;
+    padding: 0;
+    gap: 0;
+  }
+
+  body.web-mode .web-page-header-action-btn .web-page-btn-text {
+    display: none;
   }
 }
 
@@ -6383,13 +6445,14 @@ body.web-mode[data-app-active-screen="home"] .web-home-columns > .web-home-col-c
 }
 
 body.web-mode[data-app-active-screen="home"] .web-home-rail {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
   height: auto;
   min-height: 0;
   align-self: stretch;
   width: 100%;
+  align-items: stretch;
 }
 
 body.web-mode[data-app-active-screen="home"] .section-footer-note:has(#syncRatesButton) {

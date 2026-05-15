@@ -73,6 +73,12 @@ const webOpenSettingsButton = document.getElementById("webOpenSettingsButton");
 const webNewEntryMenu = document.getElementById("webNewEntryMenu");
 const webPageTitleElement = document.getElementById("webPageTitle");
 const webPageSubtitleElement = document.getElementById("webPageSubtitle");
+const webPageSubtitleFullElement = document.querySelector(
+  "#webPageSubtitle .web-page-subtitle-line--full"
+);
+const webPageSubtitleCompactElement = document.querySelector(
+  "#webPageSubtitle .web-page-subtitle-line--compact"
+);
 const webSidebarUserNameElement = document.getElementById("webSidebarUserName");
 const webSidebarBurgerBtn = document.getElementById("webSidebarBurgerBtn");
 const webNavDrawerBackdrop = document.getElementById("webNavDrawerBackdrop");
@@ -1905,7 +1911,13 @@ function syncWebPageTitle(screenName) {
   if (key === "transfer") {
     webPageTitleElement.textContent = WEB_PAGE_TITLES.transfer ?? "Перевод между счетами";
     if (webPageSubtitleElement) {
-      webPageSubtitleElement.textContent = "Переведите средства с одного счёта на другой.";
+      const transferSubtitle = "Переведите средства с одного счёта на другой.";
+      if (webPageSubtitleFullElement) {
+        webPageSubtitleFullElement.textContent = transferSubtitle;
+      }
+      if (webPageSubtitleCompactElement) {
+        webPageSubtitleCompactElement.textContent = "Перевод между счетами.";
+      }
       webPageSubtitleElement.hidden = false;
       webPageSubtitleElement.classList.remove("web-page-subtitle--empty");
       webPageSubtitleElement.removeAttribute("aria-hidden");
@@ -1930,15 +1942,37 @@ function syncWebPageTitle(screenName) {
     accounts: "Управляйте своими счетами: создавайте, редактируйте и удаляйте.",
     settings: "Подсказки и отображение советов в интерфейсе."
   };
+  const subtitleCompactByScreen = {
+    home: "Баланс и операции за месяц.",
+    activity: "Новая операция.",
+    ledger: "Фильтры и лента операций.",
+    history: "Фильтры и лента операций.",
+    instruction: "Инструкция по приложению.",
+    reports: "Сводка и графики за период.",
+    categories: "Категории доходов и расходов.",
+    accounts: "Счета и балансы.",
+    settings: "Настройки приложения."
+  };
   const subtitle = subtitleByScreen[key];
+  const subtitleCompact = subtitleCompactByScreen[key] ?? subtitle;
 
   if (subtitle) {
-    webPageSubtitleElement.textContent = subtitle;
+    if (webPageSubtitleFullElement) {
+      webPageSubtitleFullElement.textContent = subtitle;
+    }
+    if (webPageSubtitleCompactElement) {
+      webPageSubtitleCompactElement.textContent = subtitleCompact;
+    }
     webPageSubtitleElement.hidden = false;
     webPageSubtitleElement.classList.remove("web-page-subtitle--empty");
     webPageSubtitleElement.removeAttribute("aria-hidden");
   } else {
-    webPageSubtitleElement.textContent = "\u00a0";
+    if (webPageSubtitleFullElement) {
+      webPageSubtitleFullElement.textContent = "";
+    }
+    if (webPageSubtitleCompactElement) {
+      webPageSubtitleCompactElement.textContent = "";
+    }
     webPageSubtitleElement.hidden = false;
     webPageSubtitleElement.classList.add("web-page-subtitle--empty");
     webPageSubtitleElement.setAttribute("aria-hidden", "true");
