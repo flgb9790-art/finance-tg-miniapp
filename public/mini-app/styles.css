@@ -5901,8 +5901,73 @@ body.web-mode .web-activity-tip-text {
     grid-template-columns: 1fr;
   }
 
+  body.web-mode .web-op-entry-form > label.web-op-amount-field,
+  body.web-mode .web-op-entry-form > label.web-op-datetime-field {
+    grid-column: 1;
+  }
+
   body.web-mode .web-op-kind-cards {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  body.web-mode .web-transfer-layout {
+    grid-template-columns: 1fr;
+  }
+
+  body.web-mode .web-transfer-accounts-row {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    align-items: stretch;
+    justify-items: stretch;
+  }
+
+  body.web-mode .web-transfer-accounts-row .web-transfer-field--account {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  body.web-mode .web-transfer-accounts-row > .web-transfer-field--account:first-of-type > span,
+  body.web-mode .web-transfer-accounts-row > .web-transfer-field--account:first-of-type > .web-transfer-select-shell,
+  body.web-mode .web-transfer-accounts-row > .web-transfer-field--account:first-of-type > .web-transfer-available,
+  body.web-mode .web-transfer-accounts-row > .web-transfer-field--account:last-of-type > span,
+  body.web-mode .web-transfer-accounts-row > .web-transfer-field--account:last-of-type > .web-transfer-select-shell,
+  body.web-mode .web-transfer-accounts-row > .web-transfer-field--account:last-of-type > .web-transfer-available {
+    grid-column: auto;
+    grid-row: auto;
+    align-self: stretch;
+  }
+
+  body.web-mode .web-transfer-accounts-row > .web-transfer-swap-btn {
+    grid-column: auto;
+    grid-row: auto;
+    justify-self: center;
+    margin: 4px 0;
+  }
+}
+
+@media (max-width: 980px) {
+  body.web-mode #screen-categories .web-category-icon-grid {
+    width: 100%;
+    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  body.web-mode .web-accounts-appearance-row {
+    grid-template-columns: 1fr;
+  }
+
+  body.web-mode .web-accounts-appearance-pickers {
+    width: 100%;
+  }
+
+  body.web-mode #screen-accounts .web-category-icon-grid {
+    width: 100%;
+    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
   }
 }
 
@@ -6045,7 +6110,7 @@ body:not(.web-mode)[data-app-active-screen="transfer"] .web-transfer-foot-tip {
   align-items: end;
 }
 
-@media (min-width: 521px) {
+@media (min-width: 901px) {
   body.web-mode .web-transfer-accounts-row {
     grid-template-rows: auto auto auto;
     align-items: center;
@@ -6429,6 +6494,7 @@ body.web-mode[data-app-active-screen="home"] .web-home-mid-grid {
   gap: 12px;
   align-items: stretch;
   min-height: 0;
+  margin-bottom: 10px;
 }
 
 body.web-mode[data-app-active-screen="home"] .web-home-columns {
