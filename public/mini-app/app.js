@@ -4,10 +4,6 @@ const WEB_WORKSPACE_MODE_SEEN_KEY = "balancy_web_workspace_mode_seen_v1";
 const WEB_INVITE_TOKEN_SESSION_KEY = "balancy_web_invite_token";
 
 function parseWebInviteTokenFromLocation() {
-  if (!isWebMode) {
-    return;
-  }
-
   try {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("invite")?.trim();
@@ -21,7 +17,7 @@ function parseWebInviteTokenFromLocation() {
     const nextQuery = params.toString();
     const nextUrl = nextQuery
       ? `${window.location.pathname}?${nextQuery}${window.location.hash}`
-      : `${window.location.pathname}?web=1${window.location.hash}`;
+      : `${window.location.pathname}${window.location.hash}`;
     window.history.replaceState({}, "", nextUrl);
   } catch {
     //
@@ -120,6 +116,10 @@ const webTeamCopyInviteButtonElement = document.getElementById("webTeamCopyInvit
 const webTeamInviteStatusElement = document.getElementById("webTeamInviteStatus");
 const webTeamMembersListElement = document.getElementById("webTeamMembersList");
 const webTeamSettingsErrorElement = document.getElementById("webTeamSettingsError");
+const tgWorkspaceCardElement = document.getElementById("tgWorkspaceCard");
+const tgWorkspaceActiveMetaElement = document.getElementById("tgWorkspaceActiveMeta");
+const tgWorkspaceSwitcherListElement = document.getElementById("tgWorkspaceSwitcherList");
+const tgWorkspaceCreateTeamButtonElement = document.getElementById("tgWorkspaceCreateTeamButton");
 
 const webOpenSettingsButton = document.getElementById("webOpenSettingsButton");
 const webNewEntryMenu = document.getElementById("webNewEntryMenu");
@@ -1531,6 +1531,10 @@ function openScreen(screenName) {
 
   if (isWebMode && nextScreen === "home") {
     window.requestAnimationFrame(() => syncWebDashSparkCharts());
+  }
+
+  if (nextScreen === "settings" && state.workspace?.kind === "team") {
+    void loadWebTeamSettings();
   }
 
   applyBalancyHintsFromState();
@@ -6364,7 +6368,7 @@ async function mountWebTelegramLoginWidget() {
 }
 
 
-let webWorkspaceUiAttached = false;
+let workspaceUiAttached = false;
 
 function markWebWorkspaceModeSeen() {
   try {
@@ -6427,8 +6431,8 @@ function formatWorkspaceMemberLabel(member) {
   return "Участник";
 }
 
-function shouldShowWebModeChoice() {
-  if (!isWebMode || !state.user) {
+function shouldShowWorkspaceModeChoice() {
+  if (!state.user) {
     return false;
   }
 
@@ -6454,11 +6458,11 @@ function setWebModeChoiceError(message = "") {
 }
 
 function showWebModeChoice() {
-  if (!isWebMode || !webModeChoiceElement) {
+  if (!webModeChoiceElement) {
     return;
   }
 
-  document.body.classList.add("web-mode-choice-open");
+  document.body.classList.add("web-mode-choice-open", "workspace-mode-choice-open");
   webModeChoiceElement.hidden = false;
   setWebModeChoiceError("");
 }
@@ -6468,13 +6472,24 @@ function hideWebModeChoice() {
     return;
   }
 
-  document.body.classList.remove("web-mode-choice-open");
+  document.body.classList.remove("web-mode-choice-open", "workspace-mode-choice-open");
   webModeChoiceElement.hidden = true;
   setWebModeChoiceError("");
 
   if (webModeChoiceTeamPanelElement) {
     webModeChoiceTeamPanelElement.hidden = true;
   }
+}
+
+async function finalizeWorkspaceBoot() {
+  await tryAcceptPendingWebInvite();
+
+  if (shouldShowWorkspaceModeChoice()) {
+    showWebModeChoice();
+    return;
+  }
+
+  hideWebModeChoice();
 }
 
 async function switchWebWorkspace(workspaceId) {
@@ -6538,13 +6553,64 @@ async function tryAcceptPendingWebInvite() {
     return true;
   } catch (error) {
     clearPendingWebInviteToken();
-    setStatus(error instanceof Error ? error.message : "Не удалось принять приглашение", "error");
+    const message = error instanceof Error ? error.message : "Не удалось принять приглашение";
+
+    if (
+      document.body.classList.contains("workspace-mode-choice-open") ||
+      shouldShowWorkspaceModeChoice()
+    ) {
+      showWebModeChoice();
+      setWebModeChoiceError(message);
+    } else {
+      setStatus(message, "error");
+    }
+
     return false;
   }
 }
 
+function buildWorkspaceSwitcherButton(workspace, options = {}) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = options.className ?? "web-workspace-switcher-item";
+  button.dataset.workspaceId = workspace.id;
+
+  if (workspace.id === state.workspace?.id) {
+    button.classList.add("is-active");
+    button.setAttribute("aria-current", "true");
+  }
+
+  const title = document.createElement("span");
+  title.className = options.titleClassName ?? "web-workspace-switcher-item-title";
+  title.textContent = workspace.name || workspaceKindLabel(workspace.kind);
+
+  const meta = document.createElement("span");
+  meta.className = options.metaClassName ?? "muted web-workspace-switcher-item-meta";
+  meta.textContent =
+    workspace.kind === "team"
+      ? `${workspaceKindLabel(workspace.kind)} · ${workspace.memberCount ?? 1}/${workspace.maxMembers ?? 5}`
+      : workspaceKindLabel(workspace.kind);
+
+  button.append(title, meta);
+  button.addEventListener("click", () => {
+    void (async () => {
+      if (typeof options.onBeforeSwitch === "function") {
+        options.onBeforeSwitch();
+      }
+
+      try {
+        await switchWebWorkspace(workspace.id);
+      } catch (error) {
+        setStatus(error instanceof Error ? error.message : "Не удалось переключить", "error");
+      }
+    })();
+  });
+
+  return button;
+}
+
 function renderWebWorkspaceSwitcher() {
-  if (!webWorkspaceSwitcherElement || !webWorkspaceSwitcherListElement) {
+  if (!isWebMode || !webWorkspaceSwitcherElement || !webWorkspaceSwitcherListElement) {
     return;
   }
 
@@ -6561,41 +6627,52 @@ function renderWebWorkspaceSwitcher() {
   webWorkspaceSwitcherListElement.replaceChildren();
 
   workspaces.forEach((workspace) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "web-workspace-switcher-item";
-    button.dataset.workspaceId = workspace.id;
-
-    if (workspace.id === state.workspace?.id) {
-      button.classList.add("is-active");
-      button.setAttribute("aria-current", "true");
-    }
-
-    const title = document.createElement("span");
-    title.className = "web-workspace-switcher-item-title";
-    title.textContent = workspace.name || workspaceKindLabel(workspace.kind);
-
-    const meta = document.createElement("span");
-    meta.className = "muted web-workspace-switcher-item-meta";
-    meta.textContent =
-      workspace.kind === "team"
-        ? `${workspaceKindLabel(workspace.kind)} · ${workspace.memberCount ?? 1}/${workspace.maxMembers ?? 5}`
-        : workspaceKindLabel(workspace.kind);
-
-    button.append(title, meta);
-    button.addEventListener("click", () => {
-      void (async () => {
-        closeWebProfileDropdown();
-        try {
-          await switchWebWorkspace(workspace.id);
-        } catch (error) {
-          setStatus(error instanceof Error ? error.message : "Не удалось переключить", "error");
-        }
-      })();
-    });
-
-    webWorkspaceSwitcherListElement.appendChild(button);
+    webWorkspaceSwitcherListElement.appendChild(
+      buildWorkspaceSwitcherButton(workspace, {
+        onBeforeSwitch: () => closeWebProfileDropdown()
+      })
+    );
   });
+}
+
+function renderTgWorkspaceTools() {
+  if (isWebMode || !tgWorkspaceCardElement) {
+    return;
+  }
+
+  const workspaces = Array.isArray(state.workspaces) ? state.workspaces : [];
+  const active = state.workspace;
+  const hasTeam = workspaces.some((item) => item.kind === "team");
+
+  if (tgWorkspaceActiveMetaElement && active) {
+    const kindLabel = workspaceKindLabel(active.kind);
+    tgWorkspaceActiveMetaElement.textContent =
+      active.kind === "team"
+        ? `${kindLabel}: ${active.name} · ${active.memberCount ?? 1}/${active.maxMembers ?? 5}`
+        : `${kindLabel}: ${active.name}`;
+  }
+
+  if (tgWorkspaceSwitcherListElement) {
+    const showSwitcher = workspaces.length > 1;
+    tgWorkspaceSwitcherListElement.hidden = !showSwitcher;
+    tgWorkspaceSwitcherListElement.replaceChildren();
+
+    if (showSwitcher) {
+      workspaces.forEach((workspace) => {
+        tgWorkspaceSwitcherListElement.appendChild(
+          buildWorkspaceSwitcherButton(workspace, {
+            className: "tg-workspace-switcher-item",
+            titleClassName: "tg-workspace-switcher-item-title",
+            metaClassName: "muted tg-workspace-switcher-item-meta"
+          })
+        );
+      });
+    }
+  }
+
+  if (tgWorkspaceCreateTeamButtonElement) {
+    tgWorkspaceCreateTeamButtonElement.hidden = hasTeam;
+  }
 }
 
 function syncWebTeamSettingsCardVisibility() {
@@ -6608,7 +6685,7 @@ function syncWebTeamSettingsCardVisibility() {
 }
 
 async function loadWebTeamSettings() {
-  if (!isWebMode || state.workspace?.kind !== "team") {
+  if (state.workspace?.kind !== "team") {
     return;
   }
 
@@ -6671,31 +6748,30 @@ async function loadWebTeamSettings() {
 }
 
 function syncWorkspaceChrome() {
-  if (!isWebMode) {
-    return;
-  }
-
   renderWebWorkspaceSwitcher();
+  renderTgWorkspaceTools();
   syncWebTeamSettingsCardVisibility();
   syncWebProfile();
 
-  const hint = document.querySelector(".web-sidebar-user-hint");
-  if (hint && state.workspace) {
-    hint.textContent =
-      state.workspace.kind === "team"
-        ? `Команда · ${state.workspace.name}`
-        : "Личное · Настройки";
+  if (isWebMode) {
+    const hint = document.querySelector(".web-sidebar-user-hint");
+    if (hint && state.workspace) {
+      hint.textContent =
+        state.workspace.kind === "team"
+          ? `Команда · ${state.workspace.name}`
+          : "Личное · Настройки";
+    }
   }
 
   syncOperationAuthorChrome();
 }
 
-function attachWebWorkspaceUi() {
-  if (!isWebMode || webWorkspaceUiAttached) {
+function attachWorkspaceUi() {
+  if (workspaceUiAttached) {
     return;
   }
 
-  webWorkspaceUiAttached = true;
+  workspaceUiAttached = true;
 
   webModeChoicePersonalButton?.addEventListener("click", () => {
     void (async () => {
@@ -6793,6 +6869,15 @@ function attachWebWorkspaceUi() {
     })();
   });
 
+  tgWorkspaceCreateTeamButtonElement?.addEventListener("click", () => {
+    showWebModeChoice();
+    if (webModeChoiceTeamPanelElement) {
+      webModeChoiceTeamPanelElement.hidden = false;
+    }
+    webModeChoiceTeamNameInput?.focus();
+    setWebModeChoiceError("");
+  });
+
   webTeamCopyInviteButtonElement?.addEventListener("click", () => {
     void (async () => {
       if (webTeamInviteStatusElement) {
@@ -6869,6 +6954,10 @@ async function handleWebLogout() {
     });
   } finally {
     state.user = null;
+    state.workspace = null;
+    state.workspaces = [];
+    state.webOperationsLastPayload = null;
+    hideWebModeChoice();
     showWebLoginGate();
   }
 }
@@ -7378,6 +7467,8 @@ function finishMutationFromResponse(response, renderOptions = {}) {
 }
 
 function applyRefreshPayload(payload) {
+  applyWorkspacePayload(payload);
+
   if (Array.isArray(payload.accounts)) {
     state.accounts = payload.accounts;
   }
@@ -7409,6 +7500,7 @@ function applyBootstrapPayload(payload) {
   state.summary = payload.summary ?? null;
 
   applyDashboardPayload(payload);
+  applyWorkspacePayload(payload);
 
   if (userNameElement && user) {
     userNameElement.textContent =
@@ -7437,7 +7529,10 @@ function buildAppDataApiUrl(options = {}) {
 }
 
 function scheduleDebouncedBackgroundRefresh(delayMs = 900) {
-  if (isWebMode && document.body.classList.contains("web-login-gate-open")) {
+  if (
+    (isWebMode && document.body.classList.contains("web-login-gate-open")) ||
+    document.body.classList.contains("workspace-mode-choice-open")
+  ) {
     return;
   }
 
@@ -7521,6 +7616,10 @@ async function refreshAppData(options = {}) {
       hideWebLoginGate();
     }
 
+    if (!options.light) {
+      await finalizeWorkspaceBoot();
+    }
+
     afterBootstrapRender(options);
     return payload;
   } catch (error) {
@@ -7576,10 +7675,12 @@ async function loadApp(options = {}) {
       setStatus("Загружаем данные...");
       await refreshAppData(options);
       hideWebLoginGate();
-      setStatus(
-        "Все готово. Интерфейс разбит по вкладкам и стал проще для ежедневного использования.",
-        "success"
-      );
+      if (!document.body.classList.contains("workspace-mode-choice-open")) {
+        setStatus(
+          "Все готово. Интерфейс разбит по вкладкам и стал проще для ежедневного использования.",
+          "success"
+        );
+      }
       await dismissAppSplashAfterSuccess();
     } catch (error) {
       console.error(error);
@@ -7667,10 +7768,12 @@ async function loadApp(options = {}) {
 
     setStatus("Загружаем данные...");
     await refreshAppData(options);
-    setStatus(
-      "Все готово. Интерфейс разбит по вкладкам и стал проще для ежедневного использования.",
-      "success"
-    );
+    if (!document.body.classList.contains("workspace-mode-choice-open")) {
+      setStatus(
+        "Все готово. Интерфейс разбит по вкладкам и стал проще для ежедневного использования.",
+        "success"
+      );
+    }
     await dismissAppSplashAfterSuccess();
   } catch (error) {
     console.error(error);
@@ -8890,6 +8993,7 @@ try {
   attachTgActivityOpsChrome();
   attachTelegramPullToRefresh();
   attachTelegramEdgeSwipeBack();
+  attachWorkspaceUi();
 
   void loadApp();
 } catch (error) {

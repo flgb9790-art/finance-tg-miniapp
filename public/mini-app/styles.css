@@ -10986,7 +10986,9 @@ body.web-mode.web-login-gate-open .app-shell {
 }
 
 body.web-mode.web-mode-choice-open #webTopNav,
-body.web-mode.web-mode-choice-open .app-shell {
+body.web-mode.web-mode-choice-open .app-shell,
+body.workspace-mode-choice-open .app-shell,
+body.workspace-mode-choice-open .bottom-nav {
   visibility: hidden;
   pointer-events: none;
 }
@@ -11225,4 +11227,50 @@ body.web-mode.web-mode-choice-open .app-shell {
   max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.tg-workspace-card {
+  margin-top: 12px;
+}
+
+.tg-workspace-active-meta {
+  margin: 0 0 12px;
+}
+
+.tg-workspace-switcher-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tg-workspace-switcher-item {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--fill-subtle);
+  cursor: pointer;
+  font: inherit;
+  color: var(--text);
+}
+
+.tg-workspace-switcher-item.is-active {
+  border-color: rgb(67 56 202 / 0.45);
+  background: var(--balancy-ui-1-soft);
+}
+
+.tg-workspace-switcher-item-title {
+  font-weight: 650;
+  font-size: 14px;
+}
+
+.tg-workspace-switcher-item-meta {
+  font-size: 12px;
+}
+
+.tg-workspace-create-team {
+  width: 100%;
 }
