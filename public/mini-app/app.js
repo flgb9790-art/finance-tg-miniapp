@@ -272,6 +272,7 @@ const tgCreateTeamNameInputElement = document.getElementById("tgCreateTeamNameIn
 const tgCreateTeamSubmitButtonElement = document.getElementById("tgCreateTeamSubmitButton");
 const tgCreateTeamCancelButtonElement = document.getElementById("tgCreateTeamCancelButton");
 const tgCreateTeamErrorElement = document.getElementById("tgCreateTeamError");
+const tgMoreOpenAuditLogButtonElement = document.getElementById("tgMoreOpenAuditLogButton");
 
 const webOpenSettingsButton = document.getElementById("webOpenSettingsButton");
 const webNewEntryMenu = document.getElementById("webNewEntryMenu");
@@ -1967,7 +1968,11 @@ function openScreen(screenName) {
     if (
       !useWebLoginFlow() &&
       target === "more" &&
-      (nextScreen === "ledger" || nextScreen === "reports" || nextScreen === "instruction" || nextScreen === "settings")
+      (nextScreen === "ledger" ||
+        nextScreen === "reports" ||
+        nextScreen === "instruction" ||
+        nextScreen === "settings" ||
+        nextScreen === "audit-log")
     ) {
       active = true;
     }
@@ -2041,8 +2046,13 @@ function openScreen(screenName) {
     window.requestAnimationFrame(() => syncWebDashSparkCharts());
   }
 
-  if (nextScreen === "settings" && state.workspace?.kind === "team") {
-    void loadWebTeamSettings();
+  if (nextScreen === "settings") {
+    syncWebTeamSettingsCardVisibility();
+    syncWebAuditLogChrome();
+
+    if (state.workspace?.kind === "team") {
+      void loadWebTeamSettings();
+    }
   }
 
   if (nextScreen === "audit-log") {
@@ -8419,8 +8429,10 @@ function renderTgWorkspaceTools() {
     }
   }
 
-  if (tgWorkspaceCreateTeamButtonElement) {
-    tgWorkspaceCreateTeamButtonElement.hidden = hasTeam || !tgCreateTeamPanelElement?.hidden;
+  if (hasTeam) {
+    hideTgCreateTeamPanel();
+  } else if (tgWorkspaceCreateTeamButtonElement) {
+    tgWorkspaceCreateTeamButtonElement.hidden = !tgCreateTeamPanelElement?.hidden;
   }
 }
 
@@ -9197,13 +9209,25 @@ function openOperationAuditFromButton(button) {
 }
 
 function syncWebAuditLogChrome() {
-  const show = useWebLoginFlow() && state.workspace?.kind === "team";
+  const showTeamAudit = state.workspace?.kind === "team";
+  const hasTeam = Array.isArray(state.workspaces)
+    ? state.workspaces.some((item) => item.kind === "team")
+    : false;
 
   if (webAuditLogSettingsCardElement) {
-    webAuditLogSettingsCardElement.hidden = !show;
+    webAuditLogSettingsCardElement.hidden = !showTeamAudit;
   }
 
-  if (show && document.body.dataset.appActiveScreen === "history" && state.webOperationsLastPayload) {
+  if (tgMoreOpenAuditLogButtonElement) {
+    tgMoreOpenAuditLogButtonElement.hidden = !hasTeam;
+  }
+
+  if (
+    useWebLoginFlow() &&
+    showTeamAudit &&
+    document.body.dataset.appActiveScreen === "history" &&
+    state.webOperationsLastPayload
+  ) {
     renderWebOperationsFromPayload(state.webOperationsLastPayload);
   }
 }
@@ -9643,6 +9667,10 @@ function attachWorkspaceUi() {
   webOpenAuditLogButtonElement?.addEventListener("click", () => {
     state.auditLogReturnScreen = "settings";
     openScreen("audit-log");
+  });
+
+  tgMoreOpenAuditLogButtonElement?.addEventListener("click", () => {
+    state.auditLogReturnScreen = "more";
   });
 
   webAuditLogBackButtonElement?.addEventListener("click", () => {
@@ -12168,10 +12196,6 @@ document.addEventListener("click", (event) => {
   } catch {
     //
   }
-});
-
-document.getElementById("tgMoreOpenEntryModalButton")?.addEventListener("click", () => {
-  openEntryTypeModal();
 });
 
 openScreenButtons.forEach((button) => {

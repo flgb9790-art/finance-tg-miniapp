@@ -10983,14 +10983,29 @@ body:not(.web-mode) #screen-more .tg-more-screen-actions .ghost-button {
   margin-top: 16px;
 }
 
-body:not(.web-mode) #screen-settings .tg-settings-card {
-  border-radius: 18px;
-  padding: 16px 16px 18px;
-  box-shadow: 0 2px 12px rgb(15 23 42 / 0.06);
+body:not(.web-mode) #screen-settings {
+  display: grid;
+  gap: 12px;
+  padding: 0 12px 20px;
+  box-sizing: border-box;
 }
 
-body.web-mode #screen-settings .tg-settings-card {
-  display: none;
+body.web-mode .tg-settings-page {
+  display: none !important;
+}
+
+.tg-settings-page {
+  display: grid;
+  gap: 12px;
+}
+
+body:not(.web-mode) .tg-settings-page .web-settings-tiles {
+  grid-template-columns: 1fr;
+}
+
+.tg-audit-log-back {
+  width: 100%;
+  margin: 0 0 4px;
 }
 
 /* --- Web settings page --- */

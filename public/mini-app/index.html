@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260516settings-v3";
+        var BALANCY_CLIENT_ASSET_REV = "20260516mobile-settings-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -725,7 +725,15 @@
               <button type="button" class="ghost-button" data-open-screen="instruction">Инструкция</button>
               <button type="button" class="ghost-button tg-only-block" data-open-screen="ledger">История</button>
               <button type="button" class="ghost-button" data-open-screen="reports">Отчёты</button>
-              <button type="button" class="primary-button" id="tgMoreOpenEntryModalButton">Новая операция</button>
+              <button
+                type="button"
+                class="ghost-button tg-only-block"
+                id="tgMoreOpenAuditLogButton"
+                data-open-screen="audit-log"
+                hidden
+              >
+                Журнал изменений
+              </button>
             </div>
           </section>
           <section id="tgWorkspaceCard" class="card tg-workspace-card tg-only-block">
@@ -804,8 +812,46 @@
                 </label>
               </article>
             </div>
+          </div>
 
-            <article id="webAuditLogSettingsCard" class="card web-settings-panel web-settings-panel--audit web-only-block" hidden>
+          <div class="tg-settings-page tg-only-block">
+            <div class="web-settings-tiles">
+              <article class="web-settings-tile web-settings-tile--static">
+                <span class="web-settings-tile__icon web-settings-tile__icon--app" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/>
+                    <path d="M12 3v2M12 19v2M5 5l1.5 1.5M17.5 17.5 19 19M3 12h2M19 12h2M5 19l1.5-1.5M17.5 6.5 19 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <div class="web-settings-tile__body">
+                  <p class="section-label">Приложение</p>
+                  <h2 class="web-settings-tile__title">Настройки</h2>
+                  <p class="muted web-settings-tile__desc">Параметры приложения: внешний вид, язык и поведение интерфейса.</p>
+                </div>
+              </article>
+
+              <article class="web-settings-tile web-settings-tile--hints">
+                <span class="web-settings-tile__icon web-settings-tile__icon--hints" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <div class="web-settings-tile__body">
+                  <p class="section-label">Подсказки в интерфейсе</p>
+                  <h2 class="web-settings-tile__title">Подсказки в интерфейсе</h2>
+                </div>
+                <label class="balancy-switch web-settings-tile__switch" title="Включить или отключить подсказки">
+                  <input type="checkbox" id="balancyHintsEnabledToggleTg" class="balancy-switch-input" checked />
+                  <span class="balancy-switch-track" aria-hidden="true">
+                    <span class="balancy-switch-thumb"></span>
+                  </span>
+                </label>
+              </article>
+            </div>
+            <button type="button" class="ghost-button tg-settings-back" data-open-screen="more">← Назад в «Ещё»</button>
+          </div>
+
+            <article id="webAuditLogSettingsCard" class="card web-settings-panel web-settings-panel--audit" hidden>
               <div class="web-settings-panel__head">
                 <span class="web-settings-panel__icon web-settings-panel__icon--audit" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -902,34 +948,17 @@
               <p id="webTeamSettingsError" class="inline-error web-team-settings-error" hidden></p>
             </article>
 
-<section class="card tg-settings-card tg-only-block">
-            <div class="section-header">
-              <div>
-                <p class="section-label">Приложение</p>
-                <h2>Настройки</h2>
-              </div>
-            </div>
-            <p class="muted tg-settings-lead">
-              Подсказки и переключатели хранятся в этом браузере (или в WebView Telegram на этом устройстве).
-            </p>
-            <div class="balancy-settings-row">
-              <div class="balancy-settings-row-text">
-                <strong>Подсказки в интерфейсе</strong>
-                <p class="muted">Карточки с советами на главной, вкладках «Счета», «Категории», «Операции» и в «Истории».</p>
-              </div>
-              <label class="balancy-switch" title="Включить или отключить подсказки">
-                <input type="checkbox" id="balancyHintsEnabledToggleTg" class="balancy-switch-input" checked />
-                <span class="balancy-switch-track" aria-hidden="true">
-                  <span class="balancy-switch-thumb"></span>
-                </span>
-              </label>
-            </div>
-            <button type="button" class="ghost-button tg-settings-back" data-open-screen="more">← Назад в «Ещё»</button>
-          </section>
         </section>
 
         <section id="screen-audit-log" class="screen" data-screen="audit-log">
           <div class="web-audit-log-page">
+            <button
+              type="button"
+              id="webAuditLogBackButton"
+              class="ghost-button tg-audit-log-back tg-only-block"
+            >
+              ← Назад
+            </button>
 
             <div class="web-ops-filter-shell web-audit-log-filter-shell">
               <div class="web-ops-filter-row">
