@@ -45,6 +45,12 @@ import {
 } from "../services/mutation-patch.js";
 import { createTransfer, deleteTransfer, updateTransfer } from "../services/transfers.js";
 import {
+  enrichEntryForClient,
+  parseImageUploadPayload,
+  removeEntryPhoto,
+  uploadEntryPhoto
+} from "../services/operation-photos.js";
+import {
   listOperationsTimeline,
   parseOperationsListQuery
 } from "../services/operations-list.js";
@@ -955,8 +961,9 @@ export function createHttpApp(): express.Express {
       });
 
       const patch = await buildEntryMutationPatch(ws.workspaceId, reportingCurrency, entry);
+      const entryDto = await enrichEntryForClient(entry);
 
-      res.status(201).json({ entry, patch });
+      res.status(201).json({ entry: entryDto, patch });
     } catch (error) {
       console.error("Failed to create entry from mini app", error);
 
@@ -1026,8 +1033,9 @@ export function createHttpApp(): express.Express {
       });
 
       const patch = await buildEntryMutationPatch(ws.workspaceId, reportingCurrency, entry);
+      const entryDto = await enrichEntryForClient(entry);
 
-      res.json({ entry, patch });
+      res.json({ entry: entryDto, patch });
     } catch (error) {
       console.error("Failed to update entry from mini app", error);
 
@@ -1062,6 +1070,61 @@ export function createHttpApp(): express.Express {
 
       res.status(400).json({
         error: error instanceof Error ? error.message : "Failed to delete entry"
+      });
+    }
+  });
+
+  app.post(
+    "/api/entries/:entryId/photo",
+    express.json({ limit: "8mb" }),
+    async (req, res) => {
+      try {
+        const { ws } = await withAuthWorkspace(req);
+        const entryId =
+          typeof req.params.entryId === "string" ? req.params.entryId.trim() : "";
+
+        if (!entryId) {
+          res.status(400).json({ error: "Entry id is required" });
+          return;
+        }
+
+        const { buffer, contentType } = parseImageUploadPayload(req.body);
+        const entry = await uploadEntryPhoto(ws.workspaceId, entryId, buffer, contentType);
+        const reportingCurrency = await resolveReportingCurrency(req);
+        const patch = await buildEntryMutationPatch(ws.workspaceId, reportingCurrency, entry);
+
+        res.json({ entry, patch });
+      } catch (error) {
+        console.error("Failed to upload entry photo", error);
+
+        res.status(400).json({
+          error: error instanceof Error ? error.message : "Не удалось загрузить фото"
+        });
+      }
+    }
+  );
+
+  app.delete("/api/entries/:entryId/photo", async (req, res) => {
+    try {
+      const { ws } = await withAuthWorkspace(req);
+      const entryId =
+        typeof req.params.entryId === "string" ? req.params.entryId.trim() : "";
+
+      if (!entryId) {
+        res.status(400).json({ error: "Entry id is required" });
+        return;
+      }
+
+      const entry = await removeEntryPhoto(ws.workspaceId, entryId);
+      const reportingCurrency = await resolveReportingCurrency(req);
+      const patch = await buildEntryMutationPatch(ws.workspaceId, reportingCurrency, entry);
+
+      res.json({ entry, patch });
+    } catch (error) {
+      console.error("Failed to remove entry photo", error);
+
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Не удалось удалить фото"
       });
     }
   });

@@ -6166,6 +6166,124 @@ body.web-mode .web-op-entry-form > label.web-op-datetime-field {
   line-height: 1.4;
 }
 
+.entry-photo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.entry-photo-field > span {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, #64748b);
+}
+
+.entry-photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.entry-photo-preview {
+  width: 100%;
+  max-width: 220px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgb(148 163 184 / 0.35);
+  background: rgb(248 250 252);
+}
+
+.entry-photo-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 180px;
+  object-fit: cover;
+}
+
+.entry-photo-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: rgb(99 102 241 / 0.12);
+  color: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.entry-photo-chip:hover {
+  background: rgb(99 102 241 / 0.2);
+}
+
+.entry-photo-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.entry-photo-modal[hidden] {
+  display: none !important;
+}
+
+.entry-photo-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(15 23 42 / 0.72);
+}
+
+.entry-photo-modal-sheet {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 720px);
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+}
+
+.entry-photo-modal-close {
+  position: absolute;
+  top: -8px;
+  right: 0;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.14);
+  color: #fff;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.entry-photo-modal-img {
+  display: block;
+  width: 100%;
+  max-height: calc(100vh - 80px);
+  max-height: calc(100dvh - 80px);
+  object-fit: contain;
+  border-radius: 12px;
+  background: rgb(15 23 42);
+}
+
 body.web-mode .web-op-field-span-2 {
   grid-column: 1 / -1;
 }

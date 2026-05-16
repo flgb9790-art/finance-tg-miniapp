@@ -2,6 +2,7 @@ import type { OperationKind } from "../shared/domain.js";
 import { supabase } from "../lib/supabase.js";
 import { getExchangeRate } from "./exchange-rates.js";
 import { ENTRY_LIST_SELECT, type EntryListItem } from "./entries.js";
+import { enrichEntryForClient, type EntryForClient } from "./operation-photos.js";
 import {
   toOperationCreatedByDto,
   type OperationCreatedByDto
@@ -59,7 +60,7 @@ export type OperationTimelineItemDto = {
   occurredAt: string;
   createdAt: string;
   createdBy: OperationCreatedByDto | null;
-  entry?: EntryListItem;
+  entry?: EntryForClient;
   transfer?: TransferListItem;
 };
 
@@ -281,14 +282,16 @@ function matchesSearch(item: OperationTimelineItem, needle: string): boolean {
   return hay.includes(n);
 }
 
-function serializeTimelineItem(item: OperationTimelineItem): OperationTimelineItemDto {
+async function serializeTimelineItem(
+  item: OperationTimelineItem
+): Promise<OperationTimelineItemDto> {
   if (item.kind === "entry") {
     return {
       kind: "entry",
       occurredAt: item.occurredAt,
       createdAt: item.entry.created_at,
       createdBy: toOperationCreatedByDto(item.entry),
-      entry: item.entry
+      entry: await enrichEntryForClient(item.entry)
     };
   }
 
@@ -407,9 +410,11 @@ export async function listOperationsTimeline(
   const total = filtered.length;
   const page = filtered.slice(query.offset, query.offset + query.limit);
 
+  const items = await Promise.all(page.map((row) => serializeTimelineItem(row)));
+
   return {
     reportingCurrency,
-    items: page.map(serializeTimelineItem),
+    items,
     total,
     summary: {
       operationsCount: total,

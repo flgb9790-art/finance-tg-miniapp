@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260516ops-edit-v2";
+        var BALANCY_CLIENT_ASSET_REV = "20260516entry-photos-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -1205,6 +1205,31 @@
                   type="text"
                 />
               </label>
+
+              <div class="entry-photo-field web-op-field-span-2">
+                <span>Фото чека</span>
+                <div class="entry-photo-actions">
+                  <input
+                    id="entryPhotoInput"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/*"
+                    capture="environment"
+                    hidden
+                  />
+                  <button type="button" id="entryPhotoPickButton" class="ghost-button">
+                    Прикрепить фото
+                  </button>
+                  <button type="button" id="entryPhotoRemoveButton" class="ghost-button" hidden>
+                    Убрать фото
+                  </button>
+                  <button type="button" id="entryPhotoViewButton" class="ghost-button" hidden>
+                    Открыть
+                  </button>
+                </div>
+                <div id="entryPhotoPreview" class="entry-photo-preview" hidden>
+                  <img id="entryPhotoPreviewImg" alt="Превью чека" />
+                </div>
+              </div>
 
               <div class="web-op-form-actions">
                 <button id="entrySubmitButton" class="primary-button" type="button">Сохранить операцию</button>
@@ -2838,6 +2863,15 @@
             Закрыть справку
           </button>
         </footer>
+      </div>
+    </div>
+
+
+    <div id="entryPhotoModal" class="entry-photo-modal" hidden>
+      <div id="entryPhotoModalBackdrop" class="entry-photo-modal-backdrop"></div>
+      <div class="entry-photo-modal-sheet" role="dialog" aria-modal="true" aria-label="Фото чека">
+        <button type="button" id="entryPhotoModalClose" class="entry-photo-modal-close" aria-label="Закрыть">×</button>
+        <img id="entryPhotoModalImg" class="entry-photo-modal-img" alt="Фото чека" />
       </div>
     </div>
 

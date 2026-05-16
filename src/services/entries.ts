@@ -4,6 +4,7 @@ import { getAccountById, updateAccountBalance, type AccountRow } from "./account
 import { listCategories } from "./categories.js";
 import { getCurrencyByCode } from "./currencies.js";
 import { convertAmount } from "./exchange-rates.js";
+import { deleteStoredPhoto } from "./operation-photos.js";
 
 export interface EntryRow {
   id: string;
@@ -340,6 +341,10 @@ export async function deleteEntry(entryId: string, workspaceId: string): Promise
   }
 
   await reverseEntryBalances(existing, workspaceId);
+
+  if (existing.photo_url) {
+    await deleteStoredPhoto(existing.photo_url);
+  }
 
   const { error } = await supabase
     .from("entries")
