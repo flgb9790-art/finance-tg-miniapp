@@ -7,6 +7,10 @@ import { env } from "../config/env.js";
 import { createAccount, listAccounts } from "../services/accounts.js";
 import { registerTelegramUser } from "../services/users.js";
 import { ensurePersonalWorkspace } from "../services/workspaces.js";
+import {
+  buildInviteWebAppUrl,
+  isValidWorkspaceInviteToken
+} from "../server/invite-landing.js";
 import type { AccountType } from "../shared/domain.js";
 
 type DraftStep = "name" | "balance";
@@ -49,6 +53,63 @@ function welcomePhotoCaptionHtml(hasOpenAppButton: boolean): string {
     : "Откройте мини-приложение через меню бота (кнопка рядом с полем ввода) или задайте переменную <code>APP_URL</code> на сервере, чтобы появилась кнопка здесь.";
 
   return [...WELCOME_PHOTO_CAPTION_LINES, "", cta].join("\n");
+}
+
+function parseInviteTokenFromStartMessage(text: string | undefined): string | null {
+  if (!text) {
+    return null;
+  }
+
+  const payload = text.replace(/^\/start(?:@\S+)?\s*/i, "").trim();
+
+  if (!payload) {
+    return null;
+  }
+
+  const prefixed = payload.startsWith("inv_") ? payload.slice(4).trim() : payload;
+
+  return isValidWorkspaceInviteToken(prefixed) ? prefixed : null;
+}
+
+function buildWorkspaceInviteOpenMarkup(token: string): TelegramBot.InlineKeyboardMarkup {
+  const base = (env.appUrl ?? "").trim().replace(/\/+$/, "");
+
+  if (!base) {
+    return { inline_keyboard: [] };
+  }
+
+  const inviteUrl = buildInviteWebAppUrl(base, token);
+
+  return {
+    inline_keyboard: [[{ text: "Открыть приглашение", web_app: { url: inviteUrl } }]]
+  };
+}
+
+async function sendWorkspaceInviteMessage(
+  bot: TelegramBot,
+  chatId: number,
+  token: string
+): Promise<void> {
+  const inviteUrl = buildInviteWebAppUrl((env.appUrl ?? "").trim(), token);
+
+  await bot.sendMessage(
+    chatId,
+    inviteUrl
+      ? [
+          "<b>Приглашение в команду Balancy</b>",
+          "",
+          "Нажмите кнопку ниже — откроется приложение, где можно принять приглашение."
+        ].join("\n")
+      : [
+          "<b>Приглашение в команду Balancy</b>",
+          "",
+          "На сервере не задан <code>APP_URL</code> — попросите владельца команды прислать ссылку из настроек ещё раз."
+        ].join("\n"),
+    {
+      parse_mode: "HTML",
+      reply_markup: inviteUrl ? buildWorkspaceInviteOpenMarkup(token) : undefined
+    }
+  );
 }
 
 function buildWelcomeOpenAppMarkup(): TelegramBot.InlineKeyboardMarkup {
@@ -249,8 +310,15 @@ function registerTelegramHandlers(bot: TelegramBot): void {
       return;
     }
 
+    const inviteToken = parseInviteTokenFromStartMessage(message.text);
+
     try {
       await registerTelegramUser(message.from);
+
+      if (inviteToken) {
+        await sendWorkspaceInviteMessage(bot, message.chat.id, inviteToken);
+        return;
+      }
 
       await sendWelcomeBannerPhoto(bot, message.chat.id);
       await sendWelcomeKeyboardCleanup(bot, message.chat.id);

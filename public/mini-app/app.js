@@ -6560,13 +6560,8 @@ async function fetchWebLoginConfig() {
   return webLoginConfigCache;
 }
 
-/**
- * Deep link приглашения в Telegram Mini App.
- * Основное приложение (кнопка меню): t.me/bot?startapp=…
- * Отдельное приложение в BotFather: t.me/bot/shortname?startapp=…
- * startattach — только для меню вложений (attachment menu), не для обычного Mini App.
- */
-function buildTelegramWorkspaceInviteDeepLink(botUsername, token, miniAppShortName) {
+/** Ссылка в чат бота: /start inv_<token> → кнопка web_app с ?invite= (надёжно на телефоне). */
+function buildTelegramWorkspaceInviteBotStartLink(botUsername, token) {
   const bot = String(botUsername ?? "")
     .trim()
     .replace(/^@+/, "");
@@ -6576,33 +6571,43 @@ function buildTelegramWorkspaceInviteDeepLink(botUsername, token, miniAppShortNa
     return "";
   }
 
-  const shortName = String(miniAppShortName ?? "")
-    .trim()
-    .replace(/^\/+|\/+$/g, "");
+  return `https://t.me/${bot}?start=${encodeURIComponent(`inv_${cleanToken}`)}`;
+}
 
-  if (shortName) {
-    return `https://t.me/${bot}/${shortName}?startapp=${cleanToken}`;
+function buildWorkspaceInviteWebUrl(baseUrl, token) {
+  const base = String(baseUrl ?? "")
+    .trim()
+    .replace(/\/+$/, "");
+
+  if (!base || !TG_START_PARAM_RE.test(String(token ?? "").trim())) {
+    return "";
   }
 
-  return `https://t.me/${bot}?startapp=${cleanToken}`;
+  const url = new URL("/mini-app/", `${base}/`);
+  url.searchParams.set("invite", String(token).trim());
+  url.searchParams.set("web", "1");
+  return url.toString();
+}
+
+function buildWorkspaceInviteLandingUrl(baseUrl, token) {
+  const base = String(baseUrl ?? "")
+    .trim()
+    .replace(/\/+$/, "");
+  const cleanToken = String(token ?? "").trim();
+
+  if (!base || !TG_START_PARAM_RE.test(cleanToken)) {
+    return "";
+  }
+
+  return `${base}/invite/${encodeURIComponent(cleanToken)}`;
 }
 
 /**
- * Ссылка приглашения: в приоритете t.me (Telegram + mini app), иначе веб ?web=1&invite=.
+ * Универсальная ссылка: страница /invite/… (браузер + Telegram + Telegram Web).
  */
 async function buildWorkspaceInviteClipboardUrl(token) {
   const cfg = await fetchWebLoginConfig();
   const cleanToken = String(token).trim();
-
-  const tgLink = buildTelegramWorkspaceInviteDeepLink(
-    cfg.botUsername,
-    cleanToken,
-    cfg.miniAppShortName
-  );
-
-  if (tgLink) {
-    return tgLink;
-  }
 
   const raw = cfg.publicAppUrl;
   const base =
@@ -6610,11 +6615,12 @@ async function buildWorkspaceInviteClipboardUrl(token) {
       ? raw.replace(/\/+$/, "")
       : window.location.origin;
 
-  const url = new URL("/mini-app/", `${base}/`);
-  url.searchParams.set("invite", cleanToken);
-  url.searchParams.set("web", "1");
+  const landing = buildWorkspaceInviteLandingUrl(base, cleanToken);
+  if (landing) {
+    return landing;
+  }
 
-  return url.toString();
+  return buildWorkspaceInviteWebUrl(base, cleanToken) || "";
 }
 
 async function mountWebTelegramLoginWidget() {
@@ -7668,8 +7674,9 @@ async function syncWebLoginTelegramAppHint() {
       return;
     }
 
-    const tgLink = buildTelegramWorkspaceInviteDeepLink(bot, token, cfg.miniAppShortName);
-    webLoginOpenInTelegramLinkElement.href = tgLink || `https://t.me/${bot}?startapp=${token}`;
+    const tgLink = buildTelegramWorkspaceInviteBotStartLink(bot, token);
+    webLoginOpenInTelegramLinkElement.href =
+      tgLink || buildWorkspaceInviteLandingUrl(cfg.publicAppUrl, token) || `https://t.me/${bot}`;
     webLoginInviteTelegramHintElement.hidden = false;
   } catch {
     webLoginInviteTelegramHintElement.hidden = true;

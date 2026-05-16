@@ -60,6 +60,12 @@ import {
   resolveActiveWorkspace
 } from "./workspace-context.js";
 import { registerWorkspaceRoutes } from "./workspace-routes.js";
+import { resolveTelegramBotUsername } from "../lib/telegram-bot-profile.js";
+import {
+  buildInviteLandingPageUrl,
+  isValidWorkspaceInviteToken,
+  renderInviteLandingHtml
+} from "./invite-landing.js";
 
 function getThrownErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message.trim()) {
@@ -356,13 +362,42 @@ export function createHttpApp(): express.Express {
     res.json({ ok: true });
   });
 
-  app.get("/api/web-login-config", (_req, res) => {
+  app.get("/api/web-login-config", async (_req, res) => {
+    const botUsername = await resolveTelegramBotUsername();
+
     res.json({
-      botUsername: env.telegramBotUsername?.trim() ?? null,
+      botUsername,
       miniAppShortName: env.telegramMiniAppShortName?.trim() ?? null,
       /** Канонический публичный origin без пути — для короткой ссылки invite (не брать window.location из TG WebView). */
       publicAppUrl: env.appUrl?.trim() ?? null
     });
+  });
+
+  app.get("/invite/:token", async (req, res) => {
+    const token =
+      typeof req.params.token === "string" ? req.params.token.trim() : "";
+
+    if (!isValidWorkspaceInviteToken(token)) {
+      res.status(400).send("Invalid invite link");
+      return;
+    }
+
+    const appUrl = env.appUrl?.trim();
+
+    if (!appUrl) {
+      res.status(503).send("APP_URL is not configured on the server");
+      return;
+    }
+
+    const botUsername = await resolveTelegramBotUsername();
+
+    res.type("html").send(
+      renderInviteLandingHtml({
+        token,
+        appUrl,
+        botUsername
+      })
+    );
   });
 
   app.get("/", (_req, res) => {
