@@ -1413,6 +1413,109 @@ const ENTRY_FILES_ICON_SVG = `<svg class="entry-files-chip-svg" viewBox="0 0 24 
   <path d="M14 2v6h6M10 13h4M10 17h4M10 9h2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
 </svg>`;
 
+const ENTRY_NOTE_ICON_SVG = `<svg class="entry-note-chip-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <path d="M7 18.5 4 21V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-2 2.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+  <path d="M9 10h6M9 13h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+</svg>`;
+
+function buildOperationNoteChipHtml(note) {
+  const text = String(note ?? "").trim();
+
+  if (!text) {
+    return "";
+  }
+
+  const encoded = encodeURIComponent(text);
+
+  return `<button type="button" class="entry-photo-chip entry-note-chip" data-operation-note-open="${escapeHtml(encoded)}" title="Комментарий" aria-label="Открыть комментарий">${ENTRY_NOTE_ICON_SVG}</button>`;
+}
+
+function openOperationNoteModal(note) {
+  const modal = document.getElementById("operationNoteModal");
+  const textEl = document.getElementById("operationNoteModalText");
+  const clean = String(note ?? "").trim();
+
+  if (!modal || !textEl || !clean) {
+    return;
+  }
+
+  textEl.textContent = clean;
+  modal.hidden = false;
+}
+
+function closeOperationNoteModal() {
+  const modal = document.getElementById("operationNoteModal");
+  const textEl = document.getElementById("operationNoteModalText");
+
+  if (modal) {
+    modal.hidden = true;
+  }
+
+  if (textEl) {
+    textEl.textContent = "";
+  }
+}
+
+function openOperationNoteFromChip(button) {
+  const raw = String(button.getAttribute("data-operation-note-open") ?? "").trim();
+
+  if (!raw) {
+    return;
+  }
+
+  let text = "";
+
+  try {
+    text = decodeURIComponent(raw);
+  } catch {
+    text = raw;
+  }
+
+  openOperationNoteModal(text);
+}
+
+function attachOperationNoteChrome() {
+  if (window.__balancyOperationNoteChromeAttached) {
+    return;
+  }
+
+  window.__balancyOperationNoteChromeAttached = true;
+
+  const modalBackdrop = document.getElementById("operationNoteModalBackdrop");
+  const modalClose = document.getElementById("operationNoteModalClose");
+
+  modalBackdrop?.addEventListener("click", closeOperationNoteModal);
+  modalClose?.addEventListener("click", closeOperationNoteModal);
+
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+
+    if (!(target instanceof Element)) {
+      return;
+    }
+
+    const noteButton = target.closest("[data-operation-note-open]");
+
+    if (noteButton instanceof HTMLButtonElement) {
+      event.preventDefault();
+      event.stopPropagation();
+      openOperationNoteFromChip(noteButton);
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") {
+      return;
+    }
+
+    const modal = document.getElementById("operationNoteModal");
+
+    if (modal && !modal.hidden) {
+      closeOperationNoteModal();
+    }
+  });
+}
+
 function getInitData() {
   const value = tg?.initData ?? window.Telegram?.WebApp?.initData ?? "";
   return typeof value === "string" ? value.trim() : "";
@@ -3065,9 +3168,12 @@ function buildHomeActivityEntryRowHtml(entry, item) {
   const amountPrefix = entry.kind === "income" ? "+" : "-";
   const amountClass = entry.kind === "income" ? "entry-amount-income" : "entry-amount-expense";
   const createdBy = item?.createdBy ?? resolveOperationCreatedByFromApi(null, entry);
-  const noteHtml = entry.note
-    ? `<span class="home-activity-row__note" title="${escapeHtml(entry.note)}">${escapeHtml(entry.note)}</span>`
-    : "";
+  const tgCompactNotes = !useWebLoginFlow();
+  const noteHtml =
+    !tgCompactNotes && entry.note
+      ? `<span class="home-activity-row__note" title="${escapeHtml(entry.note)}">${escapeHtml(entry.note)}</span>`
+      : "";
+  const noteChipHtml = tgCompactNotes ? buildOperationNoteChipHtml(entry.note) : "";
 
   return `
           <article class="account-item home-activity-row">
@@ -3077,7 +3183,7 @@ function buildHomeActivityEntryRowHtml(entry, item) {
                 <div class="item-copy home-activity-row__copy">
                   <div class="account-name home-activity-row__title">
                     ${escapeHtml(entry.category?.name ?? "Без категории")}
-                    ${buildEntryAttachmentsChipHtml(entry)}
+                    ${buildEntryAttachmentsChipHtml(entry)}${noteChipHtml}
                   </div>
                   <div class="account-meta home-activity-row__meta">
                     ${escapeHtml(entry.account?.name ?? "Счет")} · ${escapeHtml(
@@ -5612,13 +5718,13 @@ function buildTgOpsFeedHtmlFromItems(items) {
         const entryRowHtml = `<div class="tg-ops-row" role="listitem">
           <div class="tg-ops-row-icon ${iconClass}" aria-hidden="true">${getEntryIcon(entry.kind)}</div>
           <div class="tg-ops-row-main">
-            <span class="tg-ops-row-title">${escapeHtml(catName)}${buildEntryAttachmentsChipHtml(entry)}</span>
+            <span class="tg-ops-row-title">${escapeHtml(catName)}${buildEntryAttachmentsChipHtml(entry)}${buildOperationNoteChipHtml(entry.note)}</span>
             <span class="tg-ops-row-meta">${escapeHtml(entry.account?.name ?? "Счёт")} · ${escapeHtml(
               formatOperationAuthorMeta(
                 item.createdBy ?? resolveOperationCreatedByFromApi(null, entry),
                 entry.occurred_at
               )
-            )}${entry.note ? ` · ${escapeHtml(entry.note)}` : ""}</span>
+            )}</span>
           </div>
           <div class="tg-ops-amount-stack">
             <span class="tg-ops-amount-val ${amountClass}">${amt}</span>
@@ -5634,7 +5740,7 @@ function buildTgOpsFeedHtmlFromItems(items) {
         const transferRowHtml = `<div class="tg-ops-row" role="listitem">
           <div class="tg-ops-row-icon tg-ops-row-icon--transfer" aria-hidden="true">${getEntryIcon("transfer")}</div>
           <div class="tg-ops-row-main">
-            <span class="tg-ops-row-title">${escapeHtml(title)}${buildTransferAttachmentsChipHtml(transfer)}</span>
+            <span class="tg-ops-row-title">${escapeHtml(title)}${buildTransferAttachmentsChipHtml(transfer)}${buildOperationNoteChipHtml(transfer.note)}</span>
             <span class="tg-ops-row-meta">${escapeHtml(
               formatOperationAuthorMeta(
                 item.createdBy ?? resolveOperationCreatedByFromApi(null, transfer),
@@ -5872,7 +5978,7 @@ function buildRecentActivityCombinedHtml(entries, transfers, limit = 12) {
               <div class="item-copy">
                 <div class="account-name">${escapeHtml(transfer.from_account?.name ?? "Счет")} → ${escapeHtml(
                   transfer.to_account?.name ?? "Счет"
-                )}${buildTransferAttachmentsChipHtml(transfer)}</div>
+                )}${buildTransferAttachmentsChipHtml(transfer)}${!useWebLoginFlow() ? buildOperationNoteChipHtml(transfer.note) : ""}</div>
                 <div class="account-meta">${escapeHtml(
                   formatOperationAuthorMeta(item.createdBy, transfer.occurred_at)
                 )}</div>
@@ -11062,6 +11168,7 @@ attachSwipeRowHandlers();
 attachOperationsActionsListener();
 attachEntryPhotoChrome();
 attachTransferPhotoChrome();
+attachOperationNoteChrome();
 attachCategoryListsListener();
 attachCategoryFormSharedChrome();
 attachWebCategoriesChrome();

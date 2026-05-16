@@ -6204,7 +6204,8 @@ body.web-mode .web-op-entry-form > label.web-op-datetime-field {
 }
 
 .entry-photo-chip,
-.entry-files-chip {
+.entry-files-chip,
+.entry-note-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6222,14 +6223,50 @@ body.web-mode .web-op-entry-form > label.web-op-datetime-field {
 }
 
 .entry-photo-chip:hover,
-.entry-files-chip:hover {
+.entry-files-chip:hover,
+.entry-note-chip:hover {
   background: rgb(99 102 241 / 0.2);
 }
 
-.entry-files-chip-svg {
+.entry-files-chip-svg,
+.entry-note-chip-svg {
   width: 16px;
   height: 16px;
   display: block;
+}
+
+.entry-note-chip {
+  background: rgb(100 116 139 / 0.14);
+  color: rgb(71 85 105);
+}
+
+.entry-note-chip:hover {
+  background: rgb(100 116 139 / 0.22);
+}
+
+.operation-note-modal-sheet {
+  width: min(100%, 420px);
+  padding: 20px 18px 18px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 24px 48px rgb(15 23 42 / 0.28);
+}
+
+.operation-note-modal-text {
+  margin: 36px 0 0;
+  width: 100%;
+  font-size: 15px;
+  line-height: 1.5;
+  color: rgb(30 41 59);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.operation-note-modal .entry-photo-modal-close {
+  top: 8px;
+  right: 8px;
+  background: rgb(15 23 42 / 0.08);
+  color: rgb(51 65 85);
 }
 
 .web-ops-col-attach {
