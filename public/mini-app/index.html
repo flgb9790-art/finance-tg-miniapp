@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260516layout-v3";
+        var BALANCY_CLIENT_ASSET_REV = "20260516settings-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -765,7 +765,143 @@
         </section>
 
         <section id="screen-settings" class="screen" data-screen="settings">
-          <section class="card tg-settings-card">
+          <div class="web-settings-page web-only-block">
+            <header class="web-settings-head">
+              <h1 class="web-settings-head__title">Настройки</h1>
+              <p class="web-settings-head__lede muted">Подсказки и отображение советов в интерфейсе.</p>
+            </header>
+
+            <div class="web-settings-tiles">
+              <article class="web-settings-tile web-settings-tile--static">
+                <span class="web-settings-tile__icon web-settings-tile__icon--app" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.36.46.58 1.03.58 1.65s-.22 1.19-.58 1.65Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <div class="web-settings-tile__body">
+                  <p class="section-label">Приложение</p>
+                  <h2 class="web-settings-tile__title">Настройки</h2>
+                </div>
+                <span class="web-settings-tile__chevron" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="m9 6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </article>
+
+              <article class="web-settings-tile web-settings-tile--hints">
+                <span class="web-settings-tile__icon web-settings-tile__icon--hints" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <div class="web-settings-tile__body">
+                  <p class="section-label">Подсказки в интерфейсе</p>
+                  <h2 class="web-settings-tile__title">Подсказки в интерфейсе</h2>
+                </div>
+                <label class="balancy-switch web-settings-tile__switch" title="Включить или отключить подсказки">
+                  <input type="checkbox" id="balancyHintsEnabledToggle" class="balancy-switch-input" checked />
+                  <span class="balancy-switch-track" aria-hidden="true">
+                    <span class="balancy-switch-thumb"></span>
+                  </span>
+                </label>
+              </article>
+            </div>
+
+            <article id="webAuditLogSettingsCard" class="card web-settings-panel web-settings-panel--audit web-only-block" hidden>
+              <div class="web-settings-panel__head">
+                <span class="web-settings-panel__icon web-settings-panel__icon--audit" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    <rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" stroke-width="1.6"/>
+                    <path d="M9 12h6M9 16h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <div class="web-settings-panel__copy">
+                  <p class="section-label">Команда</p>
+                  <h2 class="web-settings-panel__title">Журнал изменений</h2>
+                  <p class="muted web-settings-panel__lede">
+                    Кто создал, изменил или удалил операции и переводы: дата, время, сумма и валюта.
+                  </p>
+                </div>
+                <button type="button" id="webOpenAuditLogButton" class="ghost-button web-settings-panel__action">
+                  <span>Открыть журнал изменений</span>
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M14 3h7v7M10 14 21 3M15 9h6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </article>
+
+            <article id="webTeamSettingsCard" class="card web-settings-panel web-settings-panel--team" hidden>
+              <div class="web-settings-panel__head web-settings-panel__head--team">
+                <span class="web-settings-panel__icon web-settings-panel__icon--team" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <div class="web-settings-panel__copy">
+                  <p class="section-label">Команда</p>
+                  <h2 id="webTeamSettingsTitle" class="web-settings-panel__title">Группа</h2>
+                  <p id="webTeamSettingsMeta" class="muted web-team-settings-meta"></p>
+                </div>
+                <button type="button" class="ghost-button web-settings-help-link" id="webTeamInviteHelpButton">
+                  Как пригласить участников?
+                </button>
+              </div>
+
+              <div class="web-team-name-field">
+                <label class="web-team-field-label" for="webTeamNameInput">Группа</label>
+                <div class="web-team-name-row">
+                  <input id="webTeamNameInput" class="web-team-name-input" type="text" maxlength="80" />
+                  <button type="button" id="webTeamRenameButton" class="ghost-button web-team-save-btn">Сохранить</button>
+                </div>
+              </div>
+
+              <div class="web-team-invite-block">
+                <div class="web-team-invite-toolbar">
+                  <div class="web-team-invite-expiry-field">
+                    <label class="web-team-field-label" for="webTeamInviteExpirySelect">Срок действия ссылки</label>
+                    <select id="webTeamInviteExpirySelect" class="web-team-invite-expiry-select">
+                      <option value="1">1 день</option>
+                      <option value="7" selected>7 дней</option>
+                      <option value="30">30 дней</option>
+                      <option value="never">Без срока</option>
+                    </select>
+                  </div>
+                  <button type="button" id="webTeamCopyInviteButton" class="primary-button web-team-copy-invite">
+                    Создать ссылку
+                  </button>
+                </div>
+                <p id="webTeamInviteStatus" class="muted web-team-invite-status" hidden></p>
+                <p class="muted web-team-invite-hint" id="webTeamInviteHint" tabindex="-1">
+                  На странице приглашения можно открыть Balancy в браузере (ПК) или в Telegram (телефон). До 5 участников включая вас.
+                </p>
+                <div id="webTeamInvitesBlock" class="web-team-invites-list-block" hidden>
+                  <p class="web-team-field-label web-team-invites-heading">Активные ссылки</p>
+                  <ul id="webTeamInvitesList" class="web-team-invites-list"></ul>
+                </div>
+              </div>
+
+              <div class="web-team-members-block">
+                <p class="web-team-field-label" id="webTeamMembersHeading">Участники</p>
+                <ul id="webTeamMembersList" class="web-team-members-list"></ul>
+              </div>
+
+              <div class="web-team-leave-block">
+                <button type="button" id="webTeamLeaveButton" class="danger-button web-team-leave" hidden>
+                  Покинуть команду
+                </button>
+                <p id="webTeamLeaveOwnerHint" class="muted web-team-leave-owner-hint" hidden>
+                  Владелец не может покинуть команду.
+                </p>
+              </div>
+              <p id="webTeamSettingsError" class="inline-error web-team-settings-error" hidden></p>
+            </article>
+          </div>
+
+          <section class="card tg-settings-card tg-only-block">
             <div class="section-header">
               <div>
                 <p class="section-label">Приложение</p>
@@ -781,101 +917,19 @@
                 <p class="muted">Карточки с советами на главной, вкладках «Счета», «Категории», «Операции» и в «Истории».</p>
               </div>
               <label class="balancy-switch" title="Включить или отключить подсказки">
-                <input type="checkbox" id="balancyHintsEnabledToggle" class="balancy-switch-input" checked />
+                <input type="checkbox" id="balancyHintsEnabledToggleTg" class="balancy-switch-input" checked />
                 <span class="balancy-switch-track" aria-hidden="true">
                   <span class="balancy-switch-thumb"></span>
                 </span>
               </label>
             </div>
-            <button type="button" class="ghost-button tg-settings-back tg-only-block" data-open-screen="more">← Назад в «Ещё»</button>
-          </section>
-
-          <section id="webAuditLogSettingsCard" class="card web-audit-settings-entry web-only-block" hidden>
-            <div class="section-header">
-              <div>
-                <p class="section-label">Команда</p>
-                <h2>Журнал изменений</h2>
-              </div>
-            </div>
-            <p class="muted web-audit-settings-lede">
-              Кто создал, изменил или удалил операции и переводы: дата, время, сумма и валюта.
-            </p>
-            <button type="button" id="webOpenAuditLogButton" class="primary-button web-open-audit-log-btn">
-              Открыть журнал изменений
-            </button>
-          </section>
-
-          <section id="webTeamSettingsCard" class="card web-team-settings-card" hidden>
-            <div class="section-header">
-              <div>
-                <p class="section-label">Команда</p>
-                <h2 id="webTeamSettingsTitle">Команда</h2>
-              </div>
-            </div>
-            <p id="webTeamSettingsMeta" class="muted web-team-settings-meta"></p>
-            <label class="web-team-field-label" for="webTeamNameInput">Название</label>
-            <div class="web-team-name-row">
-              <input id="webTeamNameInput" class="web-team-name-input" type="text" maxlength="80" />
-              <button type="button" id="webTeamRenameButton" class="ghost-button">Сохранить</button>
-            </div>
-            <div class="web-team-invite-block">
-              <p class="web-team-field-label">Приглашение</p>
-              <p class="muted web-team-invite-hint">
-                На странице приглашения можно открыть Balancy в браузере (ПК) или в Telegram (телефон). До 5 участников включая вас.
-              </p>
-              <label class="web-team-field-label" for="webTeamInviteExpirySelect">Срок действия ссылки</label>
-              <select id="webTeamInviteExpirySelect" class="web-team-invite-expiry-select">
-                <option value="1">1 день</option>
-                <option value="7" selected>7 дней</option>
-                <option value="30">30 дней</option>
-                <option value="never">Без срока</option>
-              </select>
-              <button type="button" id="webTeamCopyInviteButton" class="primary-button web-team-copy-invite">
-                Скопировать ссылку-приглашение
-              </button>
-              <p id="webTeamInviteStatus" class="muted web-team-invite-status" hidden></p>
-              <div id="webTeamInvitesBlock" class="web-team-invites-list-block" hidden>
-                <p class="web-team-field-label">Активные ссылки</p>
-                <ul id="webTeamInvitesList" class="web-team-invites-list"></ul>
-              </div>
-            </div>
-            <div class="web-team-members-block">
-              <p class="web-team-field-label">Участники</p>
-              <ul id="webTeamMembersList" class="web-team-members-list"></ul>
-            </div>
-            <div class="web-team-leave-block">
-              <button type="button" id="webTeamLeaveButton" class="danger-button web-team-leave" hidden>
-                Покинуть команду
-              </button>
-              <p id="webTeamLeaveOwnerHint" class="muted web-team-leave-owner-hint" hidden>
-                Владелец не может покинуть команду.
-              </p>
-            </div>
-            <p id="webTeamSettingsError" class="inline-error web-team-settings-error" hidden></p>
+            <button type="button" class="ghost-button tg-settings-back" data-open-screen="more">← Назад в «Ещё»</button>
           </section>
         </section>
 
         <section id="screen-audit-log" class="screen" data-screen="audit-log">
           <div class="web-audit-log-page">
-            <header class="card web-audit-log-hero">
-              <div class="web-audit-log-hero__layout">
-                <span class="web-audit-log-hero__icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path
-                      d="M12 8v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                      stroke="currentColor"
-                      stroke-width="1.7"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </span>
-                <div class="web-audit-log-hero__copy">
-                  <h1 class="web-audit-log-title">Журнал изменений</h1>
-                  <p class="muted web-audit-log-lede">История операций и переводов в команде.</p>
-                </div>
-              </div>
-            </header>
+
             <div class="web-ops-filter-shell web-audit-log-filter-shell">
               <div class="web-ops-filter-row">
                 <div class="web-ops-filter-cell web-ops-filter-cell--date">
@@ -948,12 +1002,13 @@
                         <option value="all">Все</option>
                         <option value="created">Создание</option>
                         <option value="modified">Изменение</option>
+                        <option value="deleted">Удаление</option>
                       </select>
                     </div>
                   </div>
                 </div>
                 <div class="web-ops-filter-cell web-ops-filter-cell--action">
-                  <button type="button" id="webAuditLogApplyButton" class="primary-button web-audit-log-apply-btn">
+                  <button type="button" id="webAuditLogApplyButton" class="ghost-button web-ops-filter-action web-audit-log-apply-btn">
                     Показать
                   </button>
                 </div>

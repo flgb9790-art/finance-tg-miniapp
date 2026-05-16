@@ -234,6 +234,9 @@ const webTeamCopyInviteButtonElement = document.getElementById("webTeamCopyInvit
 const webTeamInviteExpirySelectElement = document.getElementById("webTeamInviteExpirySelect");
 const webTeamInviteStatusElement = document.getElementById("webTeamInviteStatus");
 const webTeamMembersListElement = document.getElementById("webTeamMembersList");
+const webTeamMembersHeadingElement = document.getElementById("webTeamMembersHeading");
+const webTeamInviteHelpButtonElement = document.getElementById("webTeamInviteHelpButton");
+const webTeamInviteHintElement = document.getElementById("webTeamInviteHint");
 const webTeamSettingsErrorElement = document.getElementById("webTeamSettingsError");
 const webTeamInvitesBlockElement = document.getElementById("webTeamInvitesBlock");
 const webTeamInvitesListElement = document.getElementById("webTeamInvitesList");
@@ -653,11 +656,21 @@ function dismissBalancyHintSession(id) {
   }
 }
 
+function getBalancyHintsToggleElements() {
+  const toggles = [
+    document.querySelector(".web-settings-page #balancyHintsEnabledToggle"),
+    document.querySelector(".tg-settings-card #balancyHintsEnabledToggleTg")
+  ].filter((el) => el instanceof HTMLInputElement);
+
+  return toggles;
+}
+
 function syncBalancyHintsEnabledToggleUi() {
-  const toggle = document.getElementById("balancyHintsEnabledToggle");
-  if (toggle instanceof HTMLInputElement) {
-    toggle.checked = readHintsGloballyEnabled();
-  }
+  const enabled = readHintsGloballyEnabled();
+
+  getBalancyHintsToggleElements().forEach((toggle) => {
+    toggle.checked = enabled;
+  });
 }
 
 function applyBalancyHintsFromState() {
@@ -8488,8 +8501,15 @@ async function loadWebTeamSettings() {
     webTeamNameInputElement.value = title;
   }
 
+  const memberCount = workspace.memberCount ?? 1;
+  const maxMembers = workspace.maxMembers ?? 5;
+
   if (webTeamSettingsMetaElement) {
-    webTeamSettingsMetaElement.textContent = `${workspace.memberCount ?? 1} из ${workspace.maxMembers ?? 5} участников`;
+    webTeamSettingsMetaElement.textContent = `${memberCount} из ${maxMembers} участников`;
+  }
+
+  if (webTeamMembersHeadingElement) {
+    webTeamMembersHeadingElement.textContent = `Участники (${memberCount} из ${maxMembers})`;
   }
 
   const isOwner = workspace.role === "owner";
@@ -8883,7 +8903,9 @@ function getWebAuditLogFilterOptions() {
   const actorUserId = webAuditLogActorFilterElement?.value?.trim() ?? "";
   const actionKindRaw = webAuditLogActionFilterElement?.value?.trim() ?? "all";
   const actionKind =
-    actionKindRaw === "created" || actionKindRaw === "modified" ? actionKindRaw : undefined;
+    actionKindRaw === "created" || actionKindRaw === "modified" || actionKindRaw === "deleted"
+      ? actionKindRaw
+      : undefined;
 
   return { from, to, actorUserId, actionKind };
 }
@@ -9612,6 +9634,11 @@ function attachWorkspaceUi() {
 
   document.getElementById("operationAuditModalBackdrop")?.addEventListener("click", closeOperationAuditModal);
   document.getElementById("operationAuditModalClose")?.addEventListener("click", closeOperationAuditModal);
+
+  webTeamInviteHelpButtonElement?.addEventListener("click", () => {
+    webTeamInviteHintElement?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    webTeamInviteHintElement?.focus?.();
+  });
 
   webTeamCopyInviteButtonElement?.addEventListener("click", () => {
     void (async () => {
@@ -11532,14 +11559,20 @@ document.addEventListener("click", (event) => {
   }
 });
 
-document.getElementById("balancyHintsEnabledToggle")?.addEventListener("change", (event) => {
-  const el = event.target;
-  if (!(el instanceof HTMLInputElement)) {
+function bindBalancyHintsToggleElement(toggle) {
+  if (!(toggle instanceof HTMLInputElement) || toggle.dataset.balancyHintsBound === "1") {
     return;
   }
-  writeHintsGloballyEnabled(el.checked);
-  applyBalancyHintsFromState();
-});
+
+  toggle.dataset.balancyHintsBound = "1";
+  toggle.addEventListener("change", () => {
+    writeHintsGloballyEnabled(toggle.checked);
+    syncBalancyHintsEnabledToggleUi();
+    applyBalancyHintsFromState();
+  });
+}
+
+getBalancyHintsToggleElements().forEach(bindBalancyHintsToggleElement);
 
 document.querySelector("#screen-home .tg-home-quick-actions")?.addEventListener("click", (event) => {
   const target = event.target instanceof Element ? event.target.closest("[data-tg-quick-action]") : null;

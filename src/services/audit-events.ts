@@ -68,7 +68,7 @@ export interface AuditEventDto {
   actor: OperationCreatedByDto | null;
 }
 
-export type AuditActionKindFilter = "created" | "modified";
+export type AuditActionKindFilter = "created" | "modified" | "deleted";
 
 export interface ListAuditEventsOptions {
   limit?: number;
@@ -87,12 +87,7 @@ export interface ListAuditEventsResult {
   total: number;
 }
 
-const MODIFIED_AUDIT_ACTIONS: AuditAction[] = [
-  "updated",
-  "deleted",
-  "photo_added",
-  "photo_removed"
-];
+const MODIFIED_AUDIT_ACTIONS: AuditAction[] = ["updated", "photo_added", "photo_removed"];
 
 function startOfDay(date: Date): Date {
   const result = new Date(date);
@@ -139,7 +134,9 @@ export function parseAuditEventsListQuery(
   const actionKindRaw = firstQueryString(query.actionKind);
 
   const actionKind =
-    actionKindRaw === "created" || actionKindRaw === "modified" ? actionKindRaw : undefined;
+    actionKindRaw === "created" || actionKindRaw === "modified" || actionKindRaw === "deleted"
+      ? actionKindRaw
+      : undefined;
 
   let from: string | undefined;
   let to: string | undefined;
@@ -350,6 +347,8 @@ export async function listAuditEvents(
     query = query.eq("action", "created");
   } else if (options.actionKind === "modified") {
     query = query.in("action", MODIFIED_AUDIT_ACTIONS);
+  } else if (options.actionKind === "deleted") {
+    query = query.eq("action", "deleted");
   }
 
   const { data, error, count } = await query
