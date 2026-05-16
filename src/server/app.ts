@@ -48,6 +48,7 @@ import {
   enrichEntryForClient,
   parseImageUploadPayload,
   removeEntryPhoto,
+  resolveEntryPhotoViewForClient,
   uploadEntryPhoto
 } from "../services/operation-photos.js";
 import {
@@ -1070,6 +1071,28 @@ export function createHttpApp(): express.Express {
 
       res.status(400).json({
         error: error instanceof Error ? error.message : "Failed to delete entry"
+      });
+    }
+  });
+
+  app.get("/api/entries/:entryId/photo/view-url", async (req, res) => {
+    try {
+      const { ws } = await withAuthWorkspace(req);
+      const entryId =
+        typeof req.params.entryId === "string" ? req.params.entryId.trim() : "";
+
+      if (!entryId) {
+        res.status(400).json({ error: "Entry id is required" });
+        return;
+      }
+
+      const result = await resolveEntryPhotoViewForClient(ws.workspaceId, entryId);
+      res.json(result);
+    } catch (error) {
+      console.error("Failed to resolve entry photo view URL", error);
+
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Не удалось открыть фото"
       });
     }
   });

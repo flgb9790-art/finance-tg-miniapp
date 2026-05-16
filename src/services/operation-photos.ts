@@ -186,6 +186,28 @@ export async function uploadEntryPhoto(
   return enrichEntryForClient(updated);
 }
 
+export async function resolveEntryPhotoViewForClient(
+  workspaceId: string,
+  entryId: string
+): Promise<{ photoViewUrl: string | null; hasPhoto: boolean }> {
+  const existing = await getEntryById(entryId, workspaceId);
+
+  if (!existing) {
+    throw new Error("Entry was not found");
+  }
+
+  const path = String(existing.photo_url ?? "").trim();
+
+  if (!path) {
+    return { photoViewUrl: null, hasPhoto: false };
+  }
+
+  return {
+    photoViewUrl: await createSignedPhotoUrl(path),
+    hasPhoto: true
+  };
+}
+
 export async function removeEntryPhoto(
   workspaceId: string,
   entryId: string

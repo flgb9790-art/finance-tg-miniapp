@@ -6203,7 +6203,8 @@ body.web-mode .web-op-entry-form > label.web-op-datetime-field {
   object-fit: cover;
 }
 
-.entry-photo-chip {
+.entry-photo-chip,
+.entry-files-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6214,15 +6215,74 @@ body.web-mode .web-op-entry-form > label.web-op-datetime-field {
   border: 0;
   border-radius: 8px;
   background: rgb(99 102 241 / 0.12);
-  color: inherit;
-  font-size: 14px;
-  line-height: 1;
+  color: rgb(79 70 229);
+  flex-shrink: 0;
   cursor: pointer;
   vertical-align: middle;
 }
 
-.entry-photo-chip:hover {
+.entry-photo-chip:hover,
+.entry-files-chip:hover {
   background: rgb(99 102 241 / 0.2);
+}
+
+.entry-files-chip-svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.web-ops-col-attach {
+  width: 52px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.home-activity-row__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(72px, 34%) auto;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.home-activity-row__leading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.home-activity-row__copy {
+  min-width: 0;
+}
+
+.home-activity-row__title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.home-activity-row__note {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-secondary, #64748b);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  padding: 0 4px;
+}
+
+body.web-mode .web-activity-recent-list .home-activity-row__header,
+body.web-mode .web-home-list-fill .home-activity-row__header {
+  align-items: center;
+}
+
+body.web-mode .web-activity-recent-list .home-activity-row__note,
+body.web-mode .web-home-list-fill .home-activity-row__note {
+  max-width: 180px;
 }
 
 .web-ops-op-note,

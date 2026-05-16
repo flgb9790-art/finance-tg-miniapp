@@ -386,6 +386,7 @@ const state = {
   entryPhotoRemoveOnSave: false,
   entryPhotoPreviewObjectUrl: null,
   entryPhotoExistingViewUrl: null,
+  entryPhotoViewUrlCache: Object.create(null),
   /** Последний ответ GET /api/operations (веб), чтобы не перезагружать при смене вкладки */
   webOperationsLastPayload: null
 };
@@ -1402,6 +1403,11 @@ const ACCOUNT_DELETE_ICON_SVG = `<svg class="icon-action-svg" viewBox="0 0 24 24
   <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
 </svg>`;
 
+const ENTRY_FILES_ICON_SVG = `<svg class="entry-files-chip-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <path d="M14 2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8l-6-6Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+  <path d="M14 2v6h6M10 13h4M10 17h4M10 9h2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+</svg>`;
+
 function getInitData() {
   const value = tg?.initData ?? window.Telegram?.WebApp?.initData ?? "";
   return typeof value === "string" ? value.trim() : "";
@@ -1980,7 +1986,7 @@ function formatOperationAuthorMeta(createdBy, occurredAt) {
 }
 
 function getWebOpsTableColspan() {
-  return shouldShowOperationAuthor() ? 7 : 6;
+  return shouldShowOperationAuthor() ? 8 : 7;
 }
 
 function syncOperationAuthorChrome() {
@@ -2161,7 +2167,7 @@ function buildWebOperationsTableRowHtml(row) {
         <div class="web-ops-cell-op">
           <div class="entry-icon entry-icon-${iconKind}">${getEntryIcon(e.kind)}</div>
           <div>
-            <div class="web-ops-op-title">${opTitle}${buildEntryPhotoChipHtml(e, e.id)}</div>
+            <div class="web-ops-op-title">${opTitle}</div>
             <div class="web-ops-op-sub">${opSub}</div>
             ${noteHtml}
           </div>
@@ -2172,6 +2178,7 @@ function buildWebOperationsTableRowHtml(row) {
       <td class="web-ops-col-num"><span class="${amtClass}">${sign}${amt}</span></td>
       <td>${cur}</td>
       ${authorCell}
+      <td class="web-ops-col-attach">${buildEntryAttachmentsChipHtml(e) || "—"}</td>
       <td class="web-ops-col-actions">${buildOperationActionButtonsHtml("entry", e.id)}</td>
     </tr>`;
   }
@@ -2200,6 +2207,7 @@ function buildWebOperationsTableRowHtml(row) {
     <td class="web-ops-col-num"><span class="web-ops-amount-transfer">−${fromAmt}</span></td>
     <td>${fromCur}</td>
     ${authorCell}
+    <td class="web-ops-col-attach">—</td>
     <td class="web-ops-col-actions">${buildOperationActionButtonsHtml("transfer", t.id)}</td>
   </tr>`;
 }
@@ -2536,12 +2544,120 @@ function populateEntryCurrencyOptions() {
 }
 
 
+function entryHasAttachedPhoto(entry) {
+  if (!entry || typeof entry !== "object") {
+    return false;
+  }
+
+  return Boolean(String(entry.photo_url ?? "").trim());
+}
+
 function getEntryPhotoViewUrl(entry) {
   if (!entry || typeof entry !== "object") {
     return "";
   }
 
-  return String(entry.photoViewUrl ?? entry.photo_url ?? "").trim();
+  const view = String(entry.photoViewUrl ?? "").trim();
+
+  if (view && /^https?:\/\//i.test(view)) {
+    return view;
+  }
+
+  return "";
+}
+
+function rememberEntryPhotoViewUrl(entryId, photoViewUrl) {
+  const id = String(entryId ?? "").trim();
+  const url = String(photoViewUrl ?? "").trim();
+
+  if (!id || !url) {
+    return;
+  }
+
+  state.entryPhotoViewUrlCache[id] = {
+    url,
+    expiresAt: Date.now() + 50 * 60 * 1000
+  };
+
+  state.recentEntries = state.recentEntries.map((row) =>
+    row.id === id ? { ...row, photoViewUrl: url } : row
+  );
+
+  const payload = state.webOperationsLastPayload;
+
+  if (payload && Array.isArray(payload.items)) {
+    state.webOperationsLastPayload = {
+      ...payload,
+      items: payload.items.map((item) => {
+        if (item.kind === "entry" && item.entry?.id === id) {
+          return {
+            ...item,
+            entry: { ...item.entry, photoViewUrl: url }
+          };
+        }
+
+        return item;
+      })
+    };
+  }
+}
+
+async function resolveEntryPhotoViewUrl(entry) {
+  const cachedUrl = getEntryPhotoViewUrl(entry);
+
+  if (cachedUrl) {
+    return cachedUrl;
+  }
+
+  const entryId = String(entry?.id ?? "").trim();
+
+  if (!entryId || !entryHasAttachedPhoto(entry)) {
+    return "";
+  }
+
+  const cached = state.entryPhotoViewUrlCache[entryId];
+
+  if (cached && cached.expiresAt > Date.now() && cached.url) {
+    rememberEntryPhotoViewUrl(entryId, cached.url);
+    return cached.url;
+  }
+
+  const payload = await apiFetch(`/api/entries/${encodeURIComponent(entryId)}/photo/view-url`);
+  const url = String(payload?.photoViewUrl ?? "").trim();
+
+  if (url) {
+    rememberEntryPhotoViewUrl(entryId, url);
+  }
+
+  return url;
+}
+
+async function openEntryPhotoFromChip(button) {
+  const entryId = String(button.getAttribute("data-entry-photo-open") ?? "").trim();
+  let url = String(button.getAttribute("data-entry-photo-view") ?? "").trim();
+
+  if ((!url || !/^https?:\/\//i.test(url)) && entryId) {
+    const entry = findEntryInClientState(entryId);
+
+    try {
+      beginGlobalBusy("Открываем вложения…");
+      url = entry ? await resolveEntryPhotoViewUrl(entry) : "";
+    } catch (error) {
+      console.error(error);
+      setStatus(error instanceof Error ? error.message : "Не удалось открыть фото", "error");
+      return;
+    } finally {
+      endGlobalBusy();
+    }
+  }
+
+  if (!url) {
+    setStatus("Фото недоступно. Проверьте, что миграция storage применена.", "error");
+    return;
+  }
+
+  button.setAttribute("data-entry-photo-view", url);
+  openEntryPhotoViewer(url);
 }
 
 function revokeEntryPhotoPreviewObjectUrl() {
@@ -2714,14 +2830,53 @@ function closeEntryPhotoViewer() {
   }
 }
 
-function buildEntryPhotoChipHtml(entry, entryId) {
-  const url = getEntryPhotoViewUrl(entry);
-
-  if (!url) {
+function buildEntryAttachmentsChipHtml(entry) {
+  if (!entryHasAttachedPhoto(entry)) {
     return "";
   }
 
-  return `<button type="button" class="entry-photo-chip" data-entry-photo-view="${escapeHtml(url)}" title="Открыть фото чека" aria-label="Открыть фото чека">📷</button>`;
+  const entryId = String(entry?.id ?? "").trim();
+
+  if (!entryId) {
+    return "";
+  }
+
+  const url = getEntryPhotoViewUrl(entry);
+  const viewAttr = url ? ` data-entry-photo-view="${escapeHtml(url)}"` : "";
+
+  return `<button type="button" class="entry-photo-chip entry-files-chip" data-entry-photo-open="${escapeHtml(entryId)}"${viewAttr} title="Вложения" aria-label="Открыть вложения">${ENTRY_FILES_ICON_SVG}</button>`;
+}
+
+function buildHomeActivityEntryRowHtml(entry, item) {
+  const amountPrefix = entry.kind === "income" ? "+" : "-";
+  const amountClass = entry.kind === "income" ? "entry-amount-income" : "entry-amount-expense";
+  const createdBy = item?.createdBy ?? resolveOperationCreatedByFromApi(null, entry);
+  const noteHtml = entry.note
+    ? `<span class="home-activity-row__note" title="${escapeHtml(entry.note)}">${escapeHtml(entry.note)}</span>`
+    : "";
+
+  return `
+          <article class="account-item home-activity-row">
+            <div class="account-item-header home-activity-row__header">
+              <div class="item-leading home-activity-row__leading">
+                <div class="entry-icon entry-icon-${escapeHtml(entry.kind)}">${getEntryIcon(entry.kind)}</div>
+                <div class="item-copy home-activity-row__copy">
+                  <div class="account-name home-activity-row__title">
+                    ${escapeHtml(entry.category?.name ?? "Без категории")}
+                    ${buildEntryAttachmentsChipHtml(entry)}
+                  </div>
+                  <div class="account-meta home-activity-row__meta">
+                    ${escapeHtml(entry.account?.name ?? "Счет")} · ${escapeHtml(
+                      formatOperationAuthorMeta(createdBy, entry.occurred_at)
+                    )}
+                  </div>
+                </div>
+              </div>
+              ${noteHtml}
+              ${formatEntryAmountStackHtml(amountPrefix, entry.amount, entry.currency_code, amountClass)}
+            </div>
+          </article>
+        `;
 }
 
 function attachEntryPhotoChrome() {
@@ -2790,12 +2945,12 @@ function attachEntryPhotoChrome() {
       return;
     }
 
-    const photoButton = target.closest("[data-entry-photo-view]");
+    const photoButton = target.closest("[data-entry-photo-open]");
 
-    if (photoButton) {
+    if (photoButton instanceof HTMLButtonElement) {
       event.preventDefault();
       event.stopPropagation();
-      openEntryPhotoViewer(photoButton.getAttribute("data-entry-photo-view"));
+      void openEntryPhotoFromChip(photoButton);
     }
   });
 
@@ -2998,6 +3153,18 @@ function startEntryEdit(entryId) {
   resetEntryPhotoFormState();
   state.entryPhotoExistingViewUrl = getEntryPhotoViewUrl(entry);
   syncEntryPhotoChrome();
+
+  if (!state.entryPhotoExistingViewUrl && entryHasAttachedPhoto(entry)) {
+    void resolveEntryPhotoViewUrl(entry).then((url) => {
+      if (state.editingEntryId !== entry.id || !url) {
+        return;
+      }
+
+      state.entryPhotoExistingViewUrl = url;
+      syncEntryPhotoChrome();
+    });
+  }
+
   syncWebEntryKindCardsFromSelect();
   syncEntryCurrencyFromAccount(false);
   syncEntryAccountAvailabilityLine();
@@ -3590,6 +3757,10 @@ function attachSwipeRowHandlers() {
     }
 
     if (event.pointerType === "mouse" && event.button !== 0) {
+      return;
+    }
+
+    if (event.target.closest("[data-entry-photo-open], .entry-files-chip")) {
       return;
     }
 
@@ -4828,32 +4999,9 @@ function renderRecentEntries(entries) {
         entry.kind === "income" ? "entry-amount-income" : "entry-amount-expense";
       const amountPrefix = entry.kind === "income" ? "+" : "-";
 
-      return `
-        <article class="entry-item">
-          <div class="item-leading">
-            <div class="entry-icon entry-icon-${escapeHtml(entry.kind)}">${getEntryIcon(entry.kind)}</div>
-            <div class="entry-main">
-              <div class="entry-title-row">
-                <strong>${escapeHtml(entry.category?.name ?? "Без категории")}${buildEntryPhotoChipHtml(entry, entry.id)}</strong>
-              </div>
-              <div class="account-meta">
-                ${escapeHtml(entry.account?.name ?? "Счет")} · ${escapeHtml(
-                  formatOperationAuthorMeta(
-                    resolveOperationCreatedByFromApi(null, entry),
-                    entry.occurred_at
-                  )
-                )}
-              </div>
-              ${
-                entry.note
-                  ? `<div class="account-meta">${escapeHtml(entry.note)}</div>`
-                  : ""
-              }
-            </div>
-          </div>
-          ${formatEntryAmountStackHtml(amountPrefix, entry.amount, entry.currency_code, amountClass)}
-        </article>
-      `;
+      return buildHomeActivityEntryRowHtml(entry, {
+        createdBy: resolveOperationCreatedByFromApi(null, entry)
+      });
     })
     .join("");
 }
@@ -5170,14 +5318,13 @@ function buildTgOpsFeedHtmlFromItems(items) {
         const entryRowHtml = `<div class="tg-ops-row" role="listitem">
           <div class="tg-ops-row-icon ${iconClass}" aria-hidden="true">${getEntryIcon(entry.kind)}</div>
           <div class="tg-ops-row-main">
-            <span class="tg-ops-row-title">${escapeHtml(catName)}${buildEntryPhotoChipHtml(entry, entry.id)}</span>
+            <span class="tg-ops-row-title">${escapeHtml(catName)}${buildEntryAttachmentsChipHtml(entry)}</span>
             <span class="tg-ops-row-meta">${escapeHtml(entry.account?.name ?? "Счёт")} · ${escapeHtml(
               formatOperationAuthorMeta(
                 item.createdBy ?? resolveOperationCreatedByFromApi(null, entry),
                 entry.occurred_at
               )
-            )}</span>
-            ${formatEntryNoteLineHtml(entry.note, "tg-ops-row-note")}
+            )}${entry.note ? ` · ${escapeHtml(entry.note)}` : ""}</span>
           </div>
           <div class="tg-ops-amount-stack">
             <span class="tg-ops-amount-val ${amountClass}">${amt}</span>
@@ -5418,30 +5565,7 @@ function buildRecentActivityCombinedHtml(entries, transfers, limit = 12) {
   return combined
     .map((item) => {
       if (item.type === "entry") {
-        const entry = item.payload;
-        const amountPrefix = entry.kind === "income" ? "+" : "-";
-        const amountClass =
-          entry.kind === "income" ? "entry-amount-income" : "entry-amount-expense";
-
-        return `
-          <article class="account-item home-activity-row">
-            <div class="account-item-header">
-              <div class="item-leading">
-                <div class="entry-icon entry-icon-${escapeHtml(entry.kind)}">${getEntryIcon(entry.kind)}</div>
-                <div class="item-copy">
-                  <div class="account-name">${escapeHtml(entry.category?.name ?? "Без категории")}${buildEntryPhotoChipHtml(entry, entry.id)}</div>
-                  <div class="account-meta">
-                    ${escapeHtml(entry.account?.name ?? "Счет")} · ${escapeHtml(
-                      formatOperationAuthorMeta(item.createdBy, entry.occurred_at)
-                    )}
-                  </div>
-                  ${entry.note ? `<div class="account-meta ops-entry-note">${escapeHtml(entry.note)}</div>` : ""}
-                </div>
-              </div>
-              ${formatEntryAmountStackHtml(amountPrefix, entry.amount, entry.currency_code, amountClass)}
-            </div>
-          </article>
-        `;
+        return buildHomeActivityEntryRowHtml(item.payload, item);
       }
 
       const transfer = item.payload;
@@ -8975,6 +9099,10 @@ const RECENT_ENTRIES_LIMIT = 12;
 function mergeRecentEntry(entry) {
   if (!entry?.id) {
     return;
+  }
+
+  if (entry.photoViewUrl) {
+    rememberEntryPhotoViewUrl(entry.id, entry.photoViewUrl);
   }
 
   state.recentEntries = [
