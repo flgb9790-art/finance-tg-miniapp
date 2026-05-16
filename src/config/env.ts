@@ -56,6 +56,8 @@ function resolveListenHost(): string {
 export const env = {
   telegramBotToken: requireEnv("TELEGRAM_BOT_TOKEN"),
   telegramBotUsername: optionalEnv("TELEGRAM_BOT_USERNAME"),
+  /** Короткое имя Mini App из BotFather (/myapps) — для ссылок t.me/bot/app?startapp= */
+  telegramMiniAppShortName: optionalEnv("TELEGRAM_MINI_APP_SHORT_NAME"),
   supabaseUrl: requireEnv("SUPABASE_URL"),
   supabaseServiceRoleKey: requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
   /** Публичный базовый URL (webhook, кнопка «Открыть приложение»). Из APP_URL; без `https://` схема дописывается. */

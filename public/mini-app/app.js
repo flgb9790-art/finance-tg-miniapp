@@ -53,6 +53,8 @@ function parseWebInviteTokenFromLocation() {
 
 parseWebInviteTokenFromLocation();
 
+const TG_LAUNCH_START_PARAM_CACHE_KEY = "balancy_tg_launch_start_param";
+
 /** В TG: клавиатура не сжимает layout — нижняя навигация не «подпрыгивает» над клавиатурой. Веб-версия meta не трогается. */
 function applyTelegramMiniAppViewportFix() {
   if (isWebMode) {
@@ -1322,9 +1324,12 @@ async function waitForTelegramInitData(maxMs = 12000, stepMs = 50) {
   const deadline = Date.now() + maxMs;
 
   while (Date.now() < deadline) {
+    syncInviteFromTelegramStartParam();
+
     const value = getInitData();
 
     if (value) {
+      syncInviteFromTelegramStartParam();
       return value;
     }
 
@@ -1333,33 +1338,94 @@ async function waitForTelegramInitData(maxMs = 12000, stepMs = 50) {
     });
   }
 
+  syncInviteFromTelegramStartParam();
   return "";
 }
 
 const MIN_TG_INVITE_START_PARAM_LEN = 8;
+const TG_START_PARAM_RE = /^[\w-]{8,512}$/;
+
+function normalizeTelegramInviteStartParam(raw) {
+  const t = String(raw ?? "").trim();
+  if (!TG_START_PARAM_RE.test(t)) {
+    return "";
+  }
+
+  return t;
+}
 
 /**
- * Параметр startapp из t.me/... попадает в Mini App как start_param (см. initData).
- * На части клиентов initDataUnsafe заполняется с задержкой — читаем также из строки initData.
+ * start_param из ссылки приглашения: t.me/bot?startattach=… или t.me/bot/app?startapp=…
+ * Дублируется в tgWebAppStartParam (hash) и в initData.start_param.
  */
+function readTelegramInviteStartParamFromLaunchUrl() {
+  try {
+    const hash = window.location.hash.startsWith("#")
+      ? window.location.hash.slice(1)
+      : window.location.hash;
+    const fromHash = normalizeTelegramInviteStartParam(
+      new URLSearchParams(hash).get("tgWebAppStartParam")
+    );
+    if (fromHash) {
+      return fromHash;
+    }
+
+    const fromSearch = normalizeTelegramInviteStartParam(
+      new URLSearchParams(window.location.search).get("tgWebAppStartParam")
+    );
+    if (fromSearch) {
+      return fromSearch;
+    }
+
+    const cached = normalizeTelegramInviteStartParam(
+      sessionStorage.getItem(TG_LAUNCH_START_PARAM_CACHE_KEY)
+    );
+    if (cached) {
+      return cached;
+    }
+  } catch {
+    //
+  }
+
+  return "";
+}
+
+function captureTelegramLaunchStartParamFromUrl() {
+  const sp = readTelegramInviteStartParamFromLaunchUrl();
+  if (!sp) {
+    return;
+  }
+
+  try {
+    sessionStorage.setItem(TG_LAUNCH_START_PARAM_CACHE_KEY, sp);
+    sessionStorage.setItem(WEB_INVITE_TOKEN_SESSION_KEY, sp);
+  } catch {
+    //
+  }
+}
+
+captureTelegramLaunchStartParamFromUrl();
+
 function readTelegramInviteStartParam() {
   try {
+    const fromLaunch = readTelegramInviteStartParamFromLaunchUrl();
+    if (fromLaunch) {
+      return fromLaunch;
+    }
+
     const unsafe = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
-    if (typeof unsafe === "string") {
-      const t = unsafe.trim();
-      if (t.length >= MIN_TG_INVITE_START_PARAM_LEN) {
-        return t;
-      }
+    const fromUnsafe = normalizeTelegramInviteStartParam(unsafe);
+    if (fromUnsafe) {
+      return fromUnsafe;
     }
 
     const raw = getInitData();
     if (raw) {
-      const parsed = new URLSearchParams(raw).get("start_param");
-      if (typeof parsed === "string") {
-        const t = parsed.trim();
-        if (t.length >= MIN_TG_INVITE_START_PARAM_LEN) {
-          return t;
-        }
+      const fromInitData = normalizeTelegramInviteStartParam(
+        new URLSearchParams(raw).get("start_param")
+      );
+      if (fromInitData) {
+        return fromInitData;
       }
     }
   } catch {
@@ -1370,12 +1436,15 @@ function readTelegramInviteStartParam() {
 }
 
 function syncInviteFromTelegramStartParam() {
+  captureTelegramLaunchStartParamFromUrl();
+
   try {
     const sp = readTelegramInviteStartParam();
     if (!sp) {
       return;
     }
 
+    sessionStorage.setItem(TG_LAUNCH_START_PARAM_CACHE_KEY, sp);
     sessionStorage.setItem(WEB_INVITE_TOKEN_SESSION_KEY, sp);
   } catch {
     //
@@ -6475,33 +6544,62 @@ async function fetchWebLoginConfig() {
         typeof payload?.botUsername === "string" && payload.botUsername.trim()
           ? payload.botUsername.trim()
           : null,
+      miniAppShortName:
+        typeof payload?.miniAppShortName === "string" && payload.miniAppShortName.trim()
+          ? payload.miniAppShortName.trim()
+          : null,
       publicAppUrl:
         typeof payload?.publicAppUrl === "string" && payload.publicAppUrl.trim()
           ? payload.publicAppUrl.trim()
           : null
     };
   } catch {
-    webLoginConfigCache = { botUsername: null, publicAppUrl: null };
+    webLoginConfigCache = { botUsername: null, miniAppShortName: null, publicAppUrl: null };
   }
 
   return webLoginConfigCache;
 }
 
 /**
- * Ссылка приглашения: в приоритете t.me/?startapp= — на телефоне открывается приложение Telegram и mini app.
- * Иначе — веб-URL с ?web=1 (браузер без Telegram).
+ * Deep link приглашения в Telegram Mini App.
+ * t.me/bot?startattach=… — кнопка меню бота; t.me/bot/app?startapp=… — Direct Link (имя из BotFather).
+ */
+function buildTelegramWorkspaceInviteDeepLink(botUsername, token, miniAppShortName) {
+  const bot = String(botUsername ?? "")
+    .trim()
+    .replace(/^@+/, "");
+  const cleanToken = String(token ?? "").trim();
+
+  if (!bot || !TG_START_PARAM_RE.test(cleanToken)) {
+    return "";
+  }
+
+  const shortName = String(miniAppShortName ?? "")
+    .trim()
+    .replace(/^\/+|\/+$/g, "");
+
+  if (shortName) {
+    return `https://t.me/${bot}/${shortName}?startapp=${cleanToken}`;
+  }
+
+  return `https://t.me/${bot}?startattach=${cleanToken}`;
+}
+
+/**
+ * Ссылка приглашения: в приоритете t.me (Telegram + mini app), иначе веб ?web=1&invite=.
  */
 async function buildWorkspaceInviteClipboardUrl(token) {
   const cfg = await fetchWebLoginConfig();
   const cleanToken = String(token).trim();
 
-  const botRaw =
-    typeof cfg.botUsername === "string" && cfg.botUsername.trim()
-      ? cfg.botUsername.trim().replace(/^@+/, "")
-      : "";
+  const tgLink = buildTelegramWorkspaceInviteDeepLink(
+    cfg.botUsername,
+    cleanToken,
+    cfg.miniAppShortName
+  );
 
-  if (botRaw) {
-    return `https://t.me/${botRaw}?startapp=${encodeURIComponent(cleanToken)}`;
+  if (tgLink) {
+    return tgLink;
   }
 
   const raw = cfg.publicAppUrl;
@@ -7568,7 +7666,8 @@ async function syncWebLoginTelegramAppHint() {
       return;
     }
 
-    webLoginOpenInTelegramLinkElement.href = `https://t.me/${bot}?startapp=${encodeURIComponent(token)}`;
+    const tgLink = buildTelegramWorkspaceInviteDeepLink(bot, token, cfg.miniAppShortName);
+    webLoginOpenInTelegramLinkElement.href = tgLink || `https://t.me/${bot}?startattach=${token}`;
     webLoginInviteTelegramHintElement.hidden = false;
   } catch {
     webLoginInviteTelegramHintElement.hidden = true;
@@ -8459,6 +8558,8 @@ async function loadApp(options = {}) {
     }
 
     const initDataReady = isWebMode ? "web-session" : await waitForTelegramInitData(12000);
+
+    syncInviteFromTelegramStartParam();
 
     if (!initDataReady && !isWebMode) {
       if (userNameElement) {
