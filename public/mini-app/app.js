@@ -1355,7 +1355,7 @@ function normalizeTelegramInviteStartParam(raw) {
 }
 
 /**
- * start_param из ссылки приглашения: t.me/bot?startattach=… или t.me/bot/app?startapp=…
+ * start_param из ссылки приглашения: t.me/bot?startapp=… или t.me/bot/app?startapp=…
  * Дублируется в tgWebAppStartParam (hash) и в initData.start_param.
  */
 function readTelegramInviteStartParamFromLaunchUrl() {
@@ -6562,7 +6562,9 @@ async function fetchWebLoginConfig() {
 
 /**
  * Deep link приглашения в Telegram Mini App.
- * t.me/bot?startattach=… — кнопка меню бота; t.me/bot/app?startapp=… — Direct Link (имя из BotFather).
+ * Основное приложение (кнопка меню): t.me/bot?startapp=…
+ * Отдельное приложение в BotFather: t.me/bot/shortname?startapp=…
+ * startattach — только для меню вложений (attachment menu), не для обычного Mini App.
  */
 function buildTelegramWorkspaceInviteDeepLink(botUsername, token, miniAppShortName) {
   const bot = String(botUsername ?? "")
@@ -6582,7 +6584,7 @@ function buildTelegramWorkspaceInviteDeepLink(botUsername, token, miniAppShortNa
     return `https://t.me/${bot}/${shortName}?startapp=${cleanToken}`;
   }
 
-  return `https://t.me/${bot}?startattach=${cleanToken}`;
+  return `https://t.me/${bot}?startapp=${cleanToken}`;
 }
 
 /**
@@ -7667,7 +7669,7 @@ async function syncWebLoginTelegramAppHint() {
     }
 
     const tgLink = buildTelegramWorkspaceInviteDeepLink(bot, token, cfg.miniAppShortName);
-    webLoginOpenInTelegramLinkElement.href = tgLink || `https://t.me/${bot}?startattach=${token}`;
+    webLoginOpenInTelegramLinkElement.href = tgLink || `https://t.me/${bot}?startapp=${token}`;
     webLoginInviteTelegramHintElement.hidden = false;
   } catch {
     webLoginInviteTelegramHintElement.hidden = true;
