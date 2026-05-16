@@ -11504,6 +11504,63 @@ body.workspace-invite-gate-open .bottom-nav {
   border-color: rgb(220 38 38 / 0.25);
 }
 
+.web-team-audit-block {
+  margin-top: 14px;
+}
+
+.web-team-audit-hint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.web-team-audit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  max-height: min(360px, 42vh);
+  overflow-y: auto;
+}
+
+.web-team-audit-item {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--fill-subtle);
+}
+
+.web-team-audit-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.web-team-audit-actor {
+  font-size: 13px;
+  font-weight: 650;
+  min-width: 0;
+}
+
+.web-team-audit-time {
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.web-team-audit-summary {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.web-team-audit-empty {
+  margin: 0;
+  font-size: 13px;
+}
+
 .web-team-invites-list-block {
   margin-top: 12px;
 }

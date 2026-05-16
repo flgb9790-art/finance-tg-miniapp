@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260516tg-home-chips-v1";
+        var BALANCY_CLIENT_ASSET_REV = "20260516team-audit-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -827,6 +827,14 @@
             <div class="web-team-members-block">
               <p class="web-team-field-label">Участники</p>
               <ul id="webTeamMembersList" class="web-team-members-list"></ul>
+            </div>
+            <div id="webTeamAuditBlock" class="web-team-audit-block">
+              <p class="web-team-field-label">Журнал изменений</p>
+              <p class="muted web-team-audit-hint">
+                Кто создал, изменил или удалил операции и переводы в этой команде.
+              </p>
+              <ul id="webTeamAuditList" class="web-team-audit-list"></ul>
+              <p id="webTeamAuditEmpty" class="muted web-team-audit-empty" hidden>Записей пока нет</p>
             </div>
             <div class="web-team-leave-block">
               <button type="button" id="webTeamLeaveButton" class="danger-button web-team-leave" hidden>

@@ -238,6 +238,9 @@ const webTeamInvitesBlockElement = document.getElementById("webTeamInvitesBlock"
 const webTeamInvitesListElement = document.getElementById("webTeamInvitesList");
 const webTeamLeaveButtonElement = document.getElementById("webTeamLeaveButton");
 const webTeamLeaveOwnerHintElement = document.getElementById("webTeamLeaveOwnerHint");
+const webTeamAuditBlockElement = document.getElementById("webTeamAuditBlock");
+const webTeamAuditListElement = document.getElementById("webTeamAuditList");
+const webTeamAuditEmptyElement = document.getElementById("webTeamAuditEmpty");
 const webTeamInviteBlockElement = document.querySelector(".web-team-invite-block");
 const tgWorkspaceCardElement = document.getElementById("tgWorkspaceCard");
 const tgWorkspaceActiveMetaElement = document.getElementById("tgWorkspaceActiveMeta");
@@ -8553,11 +8556,100 @@ async function loadWebTeamSettings() {
     } else if (webTeamInvitesBlockElement) {
       webTeamInvitesBlockElement.hidden = true;
     }
+
+    await loadWebTeamAuditLog();
   } catch (error) {
     if (webTeamSettingsErrorElement) {
       webTeamSettingsErrorElement.hidden = false;
       webTeamSettingsErrorElement.textContent =
         error instanceof Error ? error.message : "Не удалось загрузить участников";
+    }
+  }
+}
+
+function formatAuditEventActorLabel(actor) {
+  const name = String(actor?.firstName ?? "").trim();
+
+  if (name) {
+    return name;
+  }
+
+  const username = String(actor?.username ?? "").trim();
+
+  if (username) {
+    return username.startsWith("@") ? username : `@${username}`;
+  }
+
+  return "Участник";
+}
+
+function formatAuditEventTime(value) {
+  if (!value) {
+    return "";
+  }
+
+  try {
+    return new Date(value).toLocaleString("ru-RU", {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  } catch {
+    return "";
+  }
+}
+
+async function loadWebTeamAuditLog() {
+  if (state.workspace?.kind !== "team" || !webTeamAuditListElement) {
+    return;
+  }
+
+  try {
+    const payload = await apiFetch("/api/audit-events?limit=40");
+    const events = Array.isArray(payload?.events) ? payload.events : [];
+
+    webTeamAuditListElement.replaceChildren();
+
+    if (webTeamAuditEmptyElement) {
+      webTeamAuditEmptyElement.textContent = "Записей пока нет";
+      webTeamAuditEmptyElement.hidden = events.length > 0;
+    }
+
+    if (events.length === 0) {
+      return;
+    }
+
+    events.forEach((event) => {
+      const item = document.createElement("li");
+      item.className = "web-team-audit-item";
+
+      const head = document.createElement("div");
+      head.className = "web-team-audit-head";
+
+      const actor = document.createElement("span");
+      actor.className = "web-team-audit-actor";
+      actor.textContent = formatAuditEventActorLabel(event?.actor);
+
+      const time = document.createElement("time");
+      time.className = "muted web-team-audit-time";
+      time.dateTime = String(event?.createdAt ?? "");
+      time.textContent = formatAuditEventTime(event?.createdAt);
+
+      head.append(actor, time);
+
+      const summary = document.createElement("p");
+      summary.className = "web-team-audit-summary";
+      summary.textContent = String(event?.summary ?? "").trim() || "Изменение";
+
+      item.append(head, summary);
+      webTeamAuditListElement.appendChild(item);
+    });
+  } catch (error) {
+    if (webTeamAuditEmptyElement) {
+      webTeamAuditEmptyElement.hidden = false;
+      webTeamAuditEmptyElement.textContent =
+        error instanceof Error ? error.message : "Не удалось загрузить журнал";
     }
   }
 }

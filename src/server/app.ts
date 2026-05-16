@@ -59,6 +59,16 @@ import {
   listOperationsTimeline,
   parseOperationsListQuery
 } from "../services/operations-list.js";
+import {
+  formatEntryAuditSummary,
+  formatTransferAuditSummary,
+  listAuditEvents,
+  recordAuditEvent,
+  type AuditAction,
+  type AuditEntityType
+} from "../services/audit-events.js";
+import type { EntryListItem } from "../services/entries.js";
+import type { TransferListItem } from "../services/transfers.js";
 import { getAppUserById, registerTelegramUser } from "../services/users.js";
 import type { TelegramAppUserRow } from "../services/users.js";
 import {
@@ -71,7 +81,8 @@ import {
   buildWorkspaceApiDto,
   buildWorkspacesListPayload,
   clearActiveWorkspaceCookie,
-  resolveActiveWorkspace
+  resolveActiveWorkspace,
+  type WorkspaceContext
 } from "./workspace-context.js";
 import { registerWorkspaceRoutes } from "./workspace-routes.js";
 import { resolveTelegramBotUsername } from "../lib/telegram-bot-profile.js";
@@ -472,6 +483,57 @@ export function createHttpApp(): express.Express {
     const appUser = await authenticateMiniAppUser(req);
     const ws = await resolveActiveWorkspace(req, appUser);
     return { appUser, ws };
+  }
+
+  function fireTeamAudit(
+    ws: WorkspaceContext,
+    actorUserId: string,
+    payload: {
+      action: AuditAction;
+      entityType: AuditEntityType;
+      entityId: string;
+      summary: string;
+    }
+  ): void {
+    if (ws.workspace.kind !== "team") {
+      return;
+    }
+
+    void recordAuditEvent({
+      workspaceId: ws.workspaceId,
+      actorUserId,
+      ...payload
+    }).catch((error) => {
+      console.error("Failed to record audit event", error);
+    });
+  }
+
+  function fireTeamEntryAudit(
+    ws: WorkspaceContext,
+    actorUserId: string,
+    action: AuditAction,
+    entry: EntryListItem
+  ): void {
+    fireTeamAudit(ws, actorUserId, {
+      action,
+      entityType: "entry",
+      entityId: entry.id,
+      summary: formatEntryAuditSummary(action, entry)
+    });
+  }
+
+  function fireTeamTransferAudit(
+    ws: WorkspaceContext,
+    actorUserId: string,
+    action: AuditAction,
+    transfer: TransferListItem
+  ): void {
+    fireTeamAudit(ws, actorUserId, {
+      action,
+      entityType: "transfer",
+      entityId: transfer.id,
+      summary: formatTransferAuditSummary(action, transfer)
+    });
   }
 
   registerWorkspaceRoutes(app, { authenticateMiniAppUser });
@@ -967,6 +1029,7 @@ export function createHttpApp(): express.Express {
 
       const patch = await buildEntryMutationPatch(ws.workspaceId, reportingCurrency, entry);
       const entryDto = await enrichEntryForClient(entry);
+      fireTeamEntryAudit(ws, appUser.id, "created", entry);
 
       res.status(201).json({ entry: entryDto, patch });
     } catch (error) {
@@ -980,7 +1043,7 @@ export function createHttpApp(): express.Express {
 
   app.patch("/api/entries/:entryId", async (req, res) => {
     try {
-      const { ws } = await withAuthWorkspace(req);
+      const { appUser, ws } = await withAuthWorkspace(req);
       const entryId =
         typeof req.params.entryId === "string" ? req.params.entryId.trim() : "";
 
@@ -1039,6 +1102,7 @@ export function createHttpApp(): express.Express {
 
       const patch = await buildEntryMutationPatch(ws.workspaceId, reportingCurrency, entry);
       const entryDto = await enrichEntryForClient(entry);
+      fireTeamEntryAudit(ws, appUser.id, "updated", entry);
 
       res.json({ entry: entryDto, patch });
     } catch (error) {
@@ -1052,7 +1116,7 @@ export function createHttpApp(): express.Express {
 
   app.delete("/api/entries/:entryId", async (req, res) => {
     try {
-      const { ws } = await withAuthWorkspace(req);
+      const { appUser, ws } = await withAuthWorkspace(req);
       const entryId =
         typeof req.params.entryId === "string" ? req.params.entryId.trim() : "";
 
@@ -1063,6 +1127,7 @@ export function createHttpApp(): express.Express {
 
       const reportingCurrency = await resolveReportingCurrency(req);
       const deleted = await deleteEntry(entryId, ws.workspaceId);
+      fireTeamEntryAudit(ws, appUser.id, "deleted", deleted);
       const patch = await buildLedgerMutationPatch(
         ws.workspaceId,
         reportingCurrency,
@@ -1103,7 +1168,7 @@ export function createHttpApp(): express.Express {
 
   app.post("/api/entries/:entryId/photo", async (req, res) => {
       try {
-        const { ws } = await withAuthWorkspace(req);
+        const { appUser, ws } = await withAuthWorkspace(req);
         const entryId =
           typeof req.params.entryId === "string" ? req.params.entryId.trim() : "";
 
@@ -1114,6 +1179,7 @@ export function createHttpApp(): express.Express {
 
         const { buffer, contentType } = parseImageUploadPayload(req.body);
         const entry = await uploadEntryPhoto(ws.workspaceId, entryId, buffer, contentType);
+        fireTeamEntryAudit(ws, appUser.id, "photo_added", entry);
         const reportingCurrency = await resolveReportingCurrency(req);
         const patch = await buildEntryMutationPatch(ws.workspaceId, reportingCurrency, entry);
 
@@ -1129,7 +1195,7 @@ export function createHttpApp(): express.Express {
 
   app.delete("/api/entries/:entryId/photo", async (req, res) => {
     try {
-      const { ws } = await withAuthWorkspace(req);
+      const { appUser, ws } = await withAuthWorkspace(req);
       const entryId =
         typeof req.params.entryId === "string" ? req.params.entryId.trim() : "";
 
@@ -1139,6 +1205,7 @@ export function createHttpApp(): express.Express {
       }
 
       const entry = await removeEntryPhoto(ws.workspaceId, entryId);
+      fireTeamEntryAudit(ws, appUser.id, "photo_removed", entry);
       const reportingCurrency = await resolveReportingCurrency(req);
       const patch = await buildEntryMutationPatch(ws.workspaceId, reportingCurrency, entry);
 
@@ -1176,7 +1243,7 @@ export function createHttpApp(): express.Express {
 
   app.post("/api/transfers/:transferId/photo", async (req, res) => {
     try {
-      const { ws } = await withAuthWorkspace(req);
+      const { appUser, ws } = await withAuthWorkspace(req);
       const transferId =
         typeof req.params.transferId === "string" ? req.params.transferId.trim() : "";
 
@@ -1187,6 +1254,7 @@ export function createHttpApp(): express.Express {
 
       const { buffer, contentType } = parseImageUploadPayload(req.body);
       const transfer = await uploadTransferPhoto(ws.workspaceId, transferId, buffer, contentType);
+      fireTeamTransferAudit(ws, appUser.id, "photo_added", transfer);
       const reportingCurrency = await resolveReportingCurrency(req);
       const patch = await buildTransferMutationPatch(ws.workspaceId, reportingCurrency);
 
@@ -1202,7 +1270,7 @@ export function createHttpApp(): express.Express {
 
   app.delete("/api/transfers/:transferId/photo", async (req, res) => {
     try {
-      const { ws } = await withAuthWorkspace(req);
+      const { appUser, ws } = await withAuthWorkspace(req);
       const transferId =
         typeof req.params.transferId === "string" ? req.params.transferId.trim() : "";
 
@@ -1212,6 +1280,7 @@ export function createHttpApp(): express.Express {
       }
 
       const transfer = await removeTransferPhoto(ws.workspaceId, transferId);
+      fireTeamTransferAudit(ws, appUser.id, "photo_removed", transfer);
       const reportingCurrency = await resolveReportingCurrency(req);
       const patch = await buildTransferMutationPatch(ws.workspaceId, reportingCurrency);
 
@@ -1279,6 +1348,7 @@ export function createHttpApp(): express.Express {
 
       const patch = await buildTransferMutationPatch(ws.workspaceId, reportingCurrency);
       const transferDto = await enrichTransferForClient(transfer);
+      fireTeamTransferAudit(ws, appUser.id, "created", transfer);
 
       res.status(201).json({ transfer: transferDto, patch });
     } catch (error) {
@@ -1293,7 +1363,7 @@ export function createHttpApp(): express.Express {
 
   app.patch("/api/transfers/:transferId", async (req, res) => {
     try {
-      const { ws } = await withAuthWorkspace(req);
+      const { appUser, ws } = await withAuthWorkspace(req);
       const transferId =
         typeof req.params.transferId === "string" ? req.params.transferId.trim() : "";
 
@@ -1353,6 +1423,7 @@ export function createHttpApp(): express.Express {
 
       const patch = await buildTransferMutationPatch(ws.workspaceId, reportingCurrency);
       const transferDto = await enrichTransferForClient(transfer);
+      fireTeamTransferAudit(ws, appUser.id, "updated", transfer);
 
       res.json({ transfer: transferDto, patch });
     } catch (error) {
@@ -1366,7 +1437,7 @@ export function createHttpApp(): express.Express {
 
   app.delete("/api/transfers/:transferId", async (req, res) => {
     try {
-      const { ws } = await withAuthWorkspace(req);
+      const { appUser, ws } = await withAuthWorkspace(req);
       const transferId =
         typeof req.params.transferId === "string" ? req.params.transferId.trim() : "";
 
@@ -1376,7 +1447,8 @@ export function createHttpApp(): express.Express {
       }
 
       const reportingCurrency = await resolveReportingCurrency(req);
-      await deleteTransfer(transferId, ws.workspaceId);
+      const deleted = await deleteTransfer(transferId, ws.workspaceId);
+      fireTeamTransferAudit(ws, appUser.id, "deleted", deleted);
       const patch = await buildTransferMutationPatch(ws.workspaceId, reportingCurrency);
 
       res.json({ ok: true, patch });
@@ -1385,6 +1457,29 @@ export function createHttpApp(): express.Express {
 
       res.status(400).json({
         error: error instanceof Error ? error.message : "Failed to delete transfer"
+      });
+    }
+  });
+
+  app.get("/api/audit-events", async (req, res) => {
+    try {
+      const { ws } = await withAuthWorkspace(req);
+
+      if (ws.workspace.kind !== "team") {
+        res.status(403).json({ error: "Журнал изменений доступен только в командном режиме" });
+        return;
+      }
+
+      const limitRaw = Number(req.query.limit ?? 50);
+      const limit = Number.isFinite(limitRaw) ? limitRaw : 50;
+      const events = await listAuditEvents(ws.workspaceId, limit);
+
+      res.json({ events });
+    } catch (error) {
+      console.error("Failed to list audit events", error);
+
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Не удалось загрузить журнал изменений"
       });
     }
   });

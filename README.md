@@ -112,7 +112,7 @@ MVP-проект для учета личных финансов через Tele
 
 После деплоя backend и mini app с поддержкой команд:
 
-1. В Supabase SQL Editor по порядку примените миграции из `supabase/migrations/` (минимум `001` … `005_workspaces_mvp.sql`, рекомендуется `006_workspace_transfer_account_indexes.sql`).
+1. В Supabase SQL Editor по порядку примените миграции из `supabase/migrations/` (минимум `001` … `005_workspaces_mvp.sql`, рекомендуется `006_workspace_transfer_account_indexes.sql`, для фото — `007_operation_photos_storage.sql`).
 2. Проверьте базу: `npm run verify:workspaces` (полный проход: `node scripts/verify-phase-1-workspaces.mjs --full`).
 3. Интеграционные тесты сервисов: `npm run test:workspaces` (создаёт и удаляет тестовых пользователей в Supabase).
 4. Перезапустите сервис на Railway.
@@ -143,3 +143,45 @@ MVP-проект для учета личных финансов через Tele
 - `DELETE /api/workspaces/members/:userId` — исключить участника (только владелец)
 - `PATCH` / `DELETE` `/api/entries/:entryId` — изменить или удалить операцию
 - `PATCH` / `DELETE` `/api/transfers/:transferId` — изменить или удалить перевод
+- `GET /api/audit-events?limit=50` — журнал изменений (только командный workspace)
+
+## Журнал изменений (команда)
+
+После применения `008_audit_events.sql` в Supabase:
+
+- В **командном** workspace при создании, изменении и удалении операций и переводов (и при загрузке/удалении фото) пишется запись в `audit_events`.
+- В веб-версии: **Настройки → Команда → Журнал изменений** (виден всем участникам команды).
+- В личном workspace журнал не ведётся и API вернёт 403.
+
+## Вложения (фото / чеки)
+
+После деплоя backend с поддержкой загрузки:
+
+1. Примените `007_operation_photos_storage.sql` в Supabase (bucket `operation-photos`, до 5 МБ, JPEG/PNG/WebP/HEIC).
+2. Перезапустите сервер на Railway (нужен лимит тела запроса **8 МБ** для `POST …/photo` — уже в `app.ts`).
+
+### Поведение
+
+- К операциям и переводам можно прикрепить **одно фото** (форма → сохранение → отдельная загрузка на API).
+- В **истории** (веб-таблица и TG-лента) в колонке «Файлы» / рядом с названием — иконка вложений; по нажатию открывается просмотр (подписанный URL).
+- В **Telegram** длинный комментарий не раздувает строку: иконка сообщения → модальное окно с текстом (главная и история).
+- В **личном и командном** workspace вложения изолированы вместе с остальными данными пространства.
+- При удалении операции/перевода файл в storage удаляется.
+
+### API (фото)
+
+| Method | Path |
+|--------|------|
+| `POST` | `/api/entries/:entryId/photo` — тело `{ imageBase64, contentType }` |
+| `DELETE` | `/api/entries/:entryId/photo` |
+| `GET` | `/api/entries/:entryId/photo/view-url` |
+| `POST` | `/api/transfers/:transferId/photo` |
+| `DELETE` | `/api/transfers/:transferId/photo` |
+| `GET` | `/api/transfers/:transferId/photo/view-url` |
+
+В ответах списков и bootstrap поля `hasPhoto` и `photoViewUrl` (если есть вложение). Путь в БД: `photo_url` в `entries` / `transfers`.
+
+### История операций
+
+- Фильтр «все» (`kind=all`) включает **и операции, и переводы** в одной ленте по дате.
+- Отдельная вкладка/фильтр «переводы» — только переводы.
