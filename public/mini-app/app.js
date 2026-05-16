@@ -1430,6 +1430,30 @@ function buildOperationNoteChipHtml(note) {
   return `<button type="button" class="entry-photo-chip entry-note-chip" data-operation-note-open="${escapeHtml(encoded)}" title="Комментарий" aria-label="Открыть комментарий">${ENTRY_NOTE_ICON_SVG}</button>`;
 }
 
+function buildHomeActivityTitleChipsHtml({ entry = null, transfer = null, includeNote = false } = {}) {
+  const photoChip = entry
+    ? buildEntryAttachmentsChipHtml(entry)
+    : transfer
+      ? buildTransferAttachmentsChipHtml(transfer)
+      : "";
+  const noteChip =
+    includeNote && !useWebLoginFlow()
+      ? buildOperationNoteChipHtml(entry?.note ?? transfer?.note)
+      : "";
+
+  if (!photoChip && !noteChip) {
+    return "";
+  }
+
+  return `<span class="home-activity-row__chips">${photoChip}${noteChip}</span>`;
+}
+
+function buildHomeActivityTitleRowHtml(titleText, chipsHtml = "") {
+  return `<div class="account-name home-activity-row__title">
+                    <span class="home-activity-row__title-text">${escapeHtml(titleText)}</span>${chipsHtml}
+                  </div>`;
+}
+
 function openOperationNoteModal(note) {
   const modal = document.getElementById("operationNoteModal");
   const textEl = document.getElementById("operationNoteModalText");
@@ -3173,7 +3197,10 @@ function buildHomeActivityEntryRowHtml(entry, item) {
     !tgCompactNotes && entry.note
       ? `<span class="home-activity-row__note" title="${escapeHtml(entry.note)}">${escapeHtml(entry.note)}</span>`
       : "";
-  const noteChipHtml = tgCompactNotes ? buildOperationNoteChipHtml(entry.note) : "";
+  const titleChipsHtml = buildHomeActivityTitleChipsHtml({
+    entry,
+    includeNote: tgCompactNotes
+  });
 
   return `
           <article class="account-item home-activity-row">
@@ -3181,10 +3208,7 @@ function buildHomeActivityEntryRowHtml(entry, item) {
               <div class="item-leading home-activity-row__leading">
                 <div class="entry-icon entry-icon-${escapeHtml(entry.kind)}">${getEntryIcon(entry.kind)}</div>
                 <div class="item-copy home-activity-row__copy">
-                  <div class="account-name home-activity-row__title">
-                    ${escapeHtml(entry.category?.name ?? "Без категории")}
-                    ${buildEntryAttachmentsChipHtml(entry)}${noteChipHtml}
-                  </div>
+                  ${buildHomeActivityTitleRowHtml(entry.category?.name ?? "Без категории", titleChipsHtml)}
                   <div class="account-meta home-activity-row__meta">
                     ${escapeHtml(entry.account?.name ?? "Счет")} · ${escapeHtml(
                       formatOperationAuthorMeta(createdBy, entry.occurred_at)
@@ -5976,9 +6000,10 @@ function buildRecentActivityCombinedHtml(entries, transfers, limit = 12) {
             <div class="item-leading">
               <div class="entry-icon entry-icon-transfer">${getEntryIcon("transfer")}</div>
               <div class="item-copy">
-                <div class="account-name">${escapeHtml(transfer.from_account?.name ?? "Счет")} → ${escapeHtml(
-                  transfer.to_account?.name ?? "Счет"
-                )}${buildTransferAttachmentsChipHtml(transfer)}${!useWebLoginFlow() ? buildOperationNoteChipHtml(transfer.note) : ""}</div>
+                ${buildHomeActivityTitleRowHtml(
+                  `${transfer.from_account?.name ?? "Счет"} → ${transfer.to_account?.name ?? "Счет"}`,
+                  buildHomeActivityTitleChipsHtml({ transfer, includeNote: true })
+                )}
                 <div class="account-meta">${escapeHtml(
                   formatOperationAuthorMeta(item.createdBy, transfer.occurred_at)
                 )}</div>

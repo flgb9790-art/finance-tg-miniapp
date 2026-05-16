@@ -6296,8 +6296,27 @@ body.web-mode .web-op-entry-form > label.web-op-datetime-field {
 .home-activity-row__title {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.home-activity-row__title-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-activity-row__chips {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
   gap: 4px;
+}
+
+.home-activity-row__chips .entry-photo-chip,
+.home-activity-row__chips .entry-note-chip {
+  margin-left: 0;
 }
 
 .home-activity-row__note {
