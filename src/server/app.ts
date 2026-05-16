@@ -1,6 +1,7 @@
 import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
+import compression from "compression";
 import express from "express";
 import { env } from "../config/env.js";
 import {
@@ -29,7 +30,6 @@ import {
 } from "../services/exchange-rates.js";
 import { getCurrencyByCode, listActiveCurrencies } from "../services/currencies.js";
 import {
-  buildBootstrapMonthDashboard,
   buildLightRefreshDashboard,
   buildReportExportPayload,
   formatReportResultAsCsv,
@@ -373,6 +373,12 @@ export function createHttpApp(): express.Express {
   const app = express();
   app.set("trust proxy", 1);
 
+  app.use(
+    compression({
+      threshold: 1024
+    })
+  );
+
   app.use(express.json({ limit: "8mb" }));
   app.use(
     express.static(publicPath, {
@@ -653,17 +659,17 @@ export function createHttpApp(): express.Express {
         ]);
 
       let summary = null;
-      let report = null;
+      let homeReport = null;
 
       try {
-        const dashboard = await buildBootstrapMonthDashboard(
+        const dashboard = await buildLightRefreshDashboard(
           ws.workspaceId,
           reportingCurrency,
           accounts,
           categories.length
         );
         summary = dashboard.summary;
-        report = dashboard.report;
+        homeReport = dashboard.homeReport;
       } catch (error) {
         console.error("Failed to build bootstrap dashboard", error);
       }
@@ -678,7 +684,8 @@ export function createHttpApp(): express.Express {
         recentEntries: activity.recentEntries,
         recentTransfers: activity.recentTransfers,
         summary,
-        report
+        homeReport,
+        report: null
       });
     } catch (error) {
       console.error("Failed to bootstrap mini app", error);

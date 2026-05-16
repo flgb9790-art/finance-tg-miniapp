@@ -6122,6 +6122,15 @@ function attachTgActivityOpsChrome() {
     applyTgOpsFiltersForTgList();
   });
 
+  let tgOpsSearchDebounceTimer = null;
+
+  document.getElementById("tgOpsSearchInput")?.addEventListener("input", () => {
+    window.clearTimeout(tgOpsSearchDebounceTimer);
+    tgOpsSearchDebounceTimer = window.setTimeout(() => {
+      applyTgOpsFiltersForTgList();
+    }, 400);
+  });
+
   document.getElementById("tgOpsActivityRefreshButton")?.addEventListener("click", () => {
     if (refreshButton) {
       refreshButton.click();
@@ -10080,7 +10089,7 @@ function resolveFetchUrl(url) {
   }
 }
 
-function buildReportQueryString() {
+function buildReportQueryString(options = {}) {
   const params = new URLSearchParams();
   const period = reportPeriodInput?.value ?? "month";
   params.set("period", period);
@@ -10106,9 +10115,47 @@ function buildReportQueryString() {
     params.set("kind", filterKind);
   }
 
-  params.set("compare", "1");
+  params.set("compare", options.compare === true ? "1" : "0");
 
   return params.toString();
+}
+
+function buildReportCacheKey() {
+  return buildReportQueryString({ compare: false });
+}
+
+let reportCompareRequestId = 0;
+
+async function loadReportCompareInBackground(expectedCacheKey) {
+  const requestId = ++reportCompareRequestId;
+  const query = buildReportQueryString({ compare: true });
+
+  try {
+    const payload = await apiFetch(`/api/reports?${query}`);
+
+    if (requestId !== reportCompareRequestId) {
+      return;
+    }
+
+    if (buildReportCacheKey() !== expectedCacheKey) {
+      return;
+    }
+
+    if (!state.report || typeof state.report !== "object") {
+      return;
+    }
+
+    state.report = {
+      ...state.report,
+      compareToPrevious: payload.report?.compareToPrevious ?? null
+    };
+
+    if (document.body.dataset.appActiveScreen === "reports") {
+      renderReport(state.report);
+    }
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 function reportCsvSuggestedFilename() {
@@ -10227,27 +10274,30 @@ async function apiFetch(url, options = {}) {
 }
 
 async function loadReport(options = {}) {
-  const query = buildReportQueryString();
+  const cacheKey = buildReportCacheKey();
+  const query = buildReportQueryString({ compare: false });
 
-  if (!options.force && screenCacheFresh(screenFetchCache.reports, query)) {
+  if (!options.force && screenCacheFresh(screenFetchCache.reports, cacheKey)) {
     state.report = screenFetchCache.reports.report;
     state.reportExportQuery = screenFetchCache.reports.exportQuery;
     renderReport(state.report);
     await renderReportWebVisuals(state.report);
+    void loadReportCompareInBackground(cacheKey);
     return;
   }
 
   const payload = await apiFetch(`/api/reports?${query}`);
   state.report = payload.report;
-  state.reportExportQuery = query;
+  state.reportExportQuery = cacheKey;
   screenFetchCache.reports = {
-    key: query,
+    key: cacheKey,
     report: payload.report,
-    exportQuery: query,
+    exportQuery: cacheKey,
     at: Date.now()
   };
   renderReport(state.report);
   await renderReportWebVisuals(state.report);
+  void loadReportCompareInBackground(cacheKey);
 }
 
 async function downloadReportCsv() {
@@ -10526,9 +10576,12 @@ function applyDashboardPayload(payload) {
     }
   }
 
-  if (!onReportsScreen && payload.report !== undefined) {
+  if (payload.report === null) {
+    state.report = null;
+    state.reportExportQuery = "";
+  } else if (!onReportsScreen && payload.report !== undefined) {
     state.report = payload.report;
-    state.reportExportQuery = buildReportQueryString();
+    state.reportExportQuery = buildReportCacheKey();
   }
 }
 

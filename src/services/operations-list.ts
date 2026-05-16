@@ -1,6 +1,9 @@
 import type { OperationKind } from "../shared/domain.js";
 import { supabase } from "../lib/supabase.js";
-import { getExchangeRate } from "./exchange-rates.js";
+import {
+  getExchangeRate,
+  preloadExchangeRatesToReportingCurrency
+} from "./exchange-rates.js";
 import { ENTRY_LIST_SELECT, type EntryListItem } from "./entries.js";
 import {
   enrichEntryForClientList,
@@ -422,6 +425,42 @@ async function fetchEntrySummaryRows(
   return (data ?? []) as EntrySummaryRow[];
 }
 
+type EntrySummaryAggregateRow = {
+  currency_code: string;
+  kind: string;
+  total_amount: number | string;
+};
+
+async function fetchEntrySummaryAggregatesViaRpc(
+  workspaceId: string,
+  opts: {
+    from: string;
+    to: string;
+    kind?: OperationKind;
+    accountId?: string;
+    categoryId?: string;
+  }
+): Promise<EntrySummaryAggregateRow[] | null> {
+  const { data, error } = await supabase.rpc("fetch_operations_history_summary", {
+    p_workspace_id: workspaceId,
+    p_from: opts.from,
+    p_to: opts.to,
+    p_kind: opts.kind ?? "all",
+    p_account_id: opts.accountId ?? null,
+    p_category_id: opts.categoryId ?? null
+  });
+
+  if (error) {
+    console.warn(
+      "fetch_operations_history_summary unavailable, using row scan",
+      error.message
+    );
+    return null;
+  }
+
+  return (data ?? []) as EntrySummaryAggregateRow[];
+}
+
 type TimelineRpcRow = {
   row_kind: string;
   row_id: string;
@@ -513,17 +552,21 @@ async function buildHistorySummary(
       ? (query.kind as OperationKind)
       : undefined;
 
-  const summaryRows = await fetchEntrySummaryRows(workspaceId, {
+  const summaryOpts = {
     from: query.from,
     to: query.to,
     accountId: query.accountId,
     categoryId: query.categoryId,
     kind: entryKind
-  });
-  const { income, expense } = await sumEntrySummaryRowsReporting(
-    summaryRows,
-    reportingCurrency
-  );
+  };
+
+  const aggregates = await fetchEntrySummaryAggregatesViaRpc(workspaceId, summaryOpts);
+  const { income, expense } = aggregates
+    ? await sumSummaryAggregatesReporting(aggregates, reportingCurrency)
+    : await sumEntrySummaryRowsReporting(
+        await fetchEntrySummaryRows(workspaceId, summaryOpts),
+        reportingCurrency
+      );
 
   return {
     operationsCount: total,
@@ -537,22 +580,82 @@ async function sumEntrySummaryRowsReporting(
   rows: EntrySummaryRow[],
   reportingCurrency: string
 ): Promise<{ income: number; expense: number }> {
+  const currencyCodes = rows.map((row) => row.currency_code);
+  await preloadExchangeRatesToReportingCurrency(currencyCodes, reportingCurrency);
+
   const rateCache = new Map<string, number>();
 
-  async function convert(amount: number, from: string, to: string): Promise<number> {
-    const key = `${from}:${to}`;
-    if (!rateCache.has(key)) {
-      rateCache.set(key, await getExchangeRate(from, to));
+  await Promise.all(
+    [...new Set(currencyCodes)]
+      .filter((code) => code.length > 0 && code !== reportingCurrency)
+      .map(async (code) => {
+        rateCache.set(
+          `${code}:${reportingCurrency}`,
+          await getExchangeRate(code, reportingCurrency)
+        );
+      })
+  );
+
+  function convert(amount: number, from: string, to: string): number {
+    if (from === to) {
+      return Number(amount.toFixed(2));
     }
-    return Number((amount * (rateCache.get(key) ?? 1)).toFixed(2));
+
+    const rate = rateCache.get(`${from}:${to}`) ?? 1;
+    return Number((amount * rate).toFixed(2));
   }
 
   let income = 0;
   let expense = 0;
 
   for (const e of rows) {
-    const c = await convert(Number(e.amount), e.currency_code, reportingCurrency);
+    const c = convert(Number(e.amount), e.currency_code, reportingCurrency);
     if (e.kind === "income") {
+      income += c;
+    } else {
+      expense += c;
+    }
+  }
+
+  return { income, expense };
+}
+
+async function sumSummaryAggregatesReporting(
+  rows: EntrySummaryAggregateRow[],
+  reportingCurrency: string
+): Promise<{ income: number; expense: number }> {
+  const currencyCodes = rows.map((row) => row.currency_code);
+  await preloadExchangeRatesToReportingCurrency(currencyCodes, reportingCurrency);
+
+  const rateCache = new Map<string, number>();
+
+  await Promise.all(
+    [...new Set(currencyCodes)]
+      .filter((code) => code.length > 0 && code !== reportingCurrency)
+      .map(async (code) => {
+        rateCache.set(
+          `${code}:${reportingCurrency}`,
+          await getExchangeRate(code, reportingCurrency)
+        );
+      })
+  );
+
+  function convert(amount: number, from: string, to: string): number {
+    if (from === to) {
+      return Number(amount.toFixed(2));
+    }
+
+    const rate = rateCache.get(`${from}:${to}`) ?? 1;
+    return Number((amount * rate).toFixed(2));
+  }
+
+  let income = 0;
+  let expense = 0;
+
+  for (const row of rows) {
+    const c = convert(Number(row.total_amount), row.currency_code, reportingCurrency);
+
+    if (row.kind === "income") {
       income += c;
     } else {
       expense += c;
