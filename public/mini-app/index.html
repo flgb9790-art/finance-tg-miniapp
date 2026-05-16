@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260516settings-v2";
+        var BALANCY_CLIENT_ASSET_REV = "20260516settings-v3";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -766,11 +766,6 @@
 
         <section id="screen-settings" class="screen" data-screen="settings">
           <div class="web-settings-page web-only-block">
-            <header class="web-settings-head">
-              <h1 class="web-settings-head__title">Настройки</h1>
-              <p class="web-settings-head__lede muted">Подсказки и отображение советов в интерфейсе.</p>
-            </header>
-
             <div class="web-settings-tiles">
               <article class="web-settings-tile web-settings-tile--static">
                 <span class="web-settings-tile__icon web-settings-tile__icon--app" aria-hidden="true">
@@ -782,6 +777,7 @@
                 <div class="web-settings-tile__body">
                   <p class="section-label">Приложение</p>
                   <h2 class="web-settings-tile__title">Настройки</h2>
+                  <p class="muted web-settings-tile__desc">Параметры приложения: внешний вид, язык и поведение интерфейса.</p>
                 </div>
                 <span class="web-settings-tile__chevron" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -853,7 +849,7 @@
                   <label class="web-team-field-label" for="webTeamNameInput">Название группы</label>
                   <div class="web-team-name-row">
                     <input id="webTeamNameInput" class="web-team-name-input" type="text" maxlength="80" />
-                    <button type="button" id="webTeamRenameButton" class="ghost-button web-team-save-btn">Сохранить</button>
+                    <button type="button" id="webTeamRenameButton" class="ghost-button web-ops-filter-action web-audit-log-apply-btn web-team-save-btn">Сохранить</button>
                   </div>
                 </div>
                 <div class="web-team-control-cell web-team-control-cell--expiry">
