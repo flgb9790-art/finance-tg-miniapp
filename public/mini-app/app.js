@@ -3673,8 +3673,9 @@ function startTransferEdit(transferId) {
   }
 
   if (toAmountInput instanceof HTMLInputElement) {
-    toAmountInput.value = String(transfer.to_amount ?? "");
-    transferToAmountAutofillTag = null;
+    const formattedTo = formatAmountForNumberInput(transfer.to_amount);
+    toAmountInput.value = formattedTo || String(transfer.to_amount ?? "");
+    transferToAmountAutofillTag = formattedTo || null;
   }
 
   if (noteInput instanceof HTMLInputElement) {
@@ -8764,11 +8765,7 @@ function buildAuditEventIconMarkup(event) {
     event?.entityType === "transfer" || event?.details?.kind === "transfer";
 
   if (isTransfer) {
-    return `<span class="web-audit-event-card__icon web-audit-event-card__icon--transfer" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M7 10h10M7 14h10M10 7l-2 3 2 3M14 17l2-3-2-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </span>`;
+    return `<span class="web-audit-event-card__icon web-audit-event-card__icon--transfer" aria-hidden="true">${getEntryIcon("transfer")}</span>`;
   }
 
   if (modifier === "is-created") {
@@ -11142,11 +11139,21 @@ async function handleTransferSubmit(event) {
   const formData = new FormData(transferForm);
   const rawDate = String(formData.get("occurredAt") ?? "");
   const rawToAmount = String(formData.get("toAmount") ?? "").trim();
+  let toAmount = rawToAmount ? Number(rawToAmount) : null;
+
+  if (
+    rawToAmount &&
+    transferToAmountAutofillTag !== null &&
+    rawToAmount === transferToAmountAutofillTag
+  ) {
+    toAmount = null;
+  }
+
   const payload = {
     fromAccountId: String(formData.get("fromAccountId") ?? ""),
     toAccountId: String(formData.get("toAccountId") ?? ""),
     fromAmount: Number(formData.get("fromAmount") ?? 0),
-    toAmount: rawToAmount ? Number(rawToAmount) : null,
+    toAmount,
     note: String(formData.get("note") ?? "").trim(),
     occurredAt: rawDate ? toIsoDate(rawDate) : new Date().toISOString()
   };

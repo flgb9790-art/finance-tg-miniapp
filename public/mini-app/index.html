@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260516audit-design-v1";
+        var BALANCY_CLIENT_ASSET_REV = "20260516audit-polish-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -857,9 +857,6 @@
 
         <section id="screen-audit-log" class="screen" data-screen="audit-log">
           <div class="web-audit-log-page">
-            <button type="button" id="webAuditLogBackButton" class="ghost-button web-audit-log-back">
-              ← Назад в настройки
-            </button>
             <header class="card web-audit-log-hero">
               <div class="web-audit-log-hero__layout">
                 <span class="web-audit-log-hero__icon" aria-hidden="true">
@@ -972,9 +969,9 @@
               <div id="webAuditLogList" class="web-audit-log-list" role="list"></div>
               <p id="webAuditLogEmpty" class="muted web-audit-log-empty card" hidden>Записей пока нет</p>
               <p id="webAuditLogError" class="inline-error web-audit-log-error" hidden></p>
-              <div id="webAuditLogPagination" class="web-audit-log-pagination" hidden>
-                <p id="webAuditLogPageInfo" class="muted web-audit-log-page-info"></p>
-                <div class="web-audit-log-pagination__actions">
+              <div id="webAuditLogPagination" class="web-ops-pagination web-audit-log-pagination" hidden>
+                <p id="webAuditLogPageInfo" class="muted web-ops-page-info web-audit-log-page-info"></p>
+                <div class="web-ops-page-controls web-audit-log-pagination__actions">
                   <button type="button" id="webAuditLogPagePrev" class="web-ops-page-btn" disabled>Назад</button>
                   <button type="button" id="webAuditLogPageNext" class="web-ops-page-btn" disabled>Вперёд</button>
                 </div>

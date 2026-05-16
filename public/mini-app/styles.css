@@ -1761,10 +1761,16 @@ details.currency-breakdown[open] .currency-breakdown-hint::before {
 
 .entry-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 200px);
   align-items: center;
   gap: 10px 12px;
   padding: 12px;
+}
+
+.entry-item > .entry-amount-stack {
+  justify-self: end;
+  width: 100%;
+  max-width: 200px;
 }
 
 .category-item {
@@ -1797,7 +1803,8 @@ details.currency-breakdown[open] .currency-breakdown-hint::before {
 
 .entry-amount-stack.entry-amount-transfer-compact {
   max-width: 200px;
-  min-width: 88px;
+  min-width: 120px;
+  width: 100%;
 }
 
 .entry-transfer-inline-row {
@@ -4614,7 +4621,7 @@ body.web-mode #screen-history .web-ops-filter-shell {
 .web-ops-page-size .web-ops-select {
   box-sizing: border-box;
   min-height: 36px;
-  padding: 8px 12px;
+  padding: 8px 34px 8px 12px;
   border-radius: 12px;
   border: 1px solid rgb(226 232 240);
   background: #fff;
@@ -4622,6 +4629,11 @@ body.web-mode #screen-history .web-ops-filter-shell {
   font-size: 12px;
   font-weight: 600;
   color: rgb(15 23 42);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%2364748b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  background-size: 14px 14px;
 }
 
 .web-ops-table td.web-ops-idle-msg {
@@ -6308,7 +6320,16 @@ body.web-mode .web-op-entry-form > label.web-op-datetime-field {
 
 body.web-mode .web-activity-recent-list .home-activity-row__header,
 body.web-mode .web-home-list-fill .home-activity-row__header {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 26%) minmax(140px, 200px);
   align-items: center;
+}
+
+body.web-mode .web-activity-recent-list .home-activity-row__header > .entry-amount-stack,
+body.web-mode .web-home-list-fill .home-activity-row__header > .entry-amount-stack {
+  justify-self: end;
+  width: 100%;
+  max-width: 200px;
+  min-width: 120px;
 }
 
 body.web-mode .web-activity-recent-list .home-activity-row__note,
@@ -11732,29 +11753,12 @@ body.web-mode #screen-audit-log .web-audit-log-filter-shell {
 }
 
 .web-audit-log-pagination {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px 14px;
   margin-top: 14px;
-  padding: 12px 4px 4px;
-}
-
-.web-audit-log-page-info {
-  margin: 0;
-  font-size: 13px;
-}
-
-.web-audit-log-pagination__actions {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 
 .web-audit-event-card {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1.6fr) minmax(96px, 0.95fr) minmax(52px, 0.55fr) minmax(76px, 0.75fr) minmax(72px, 0.7fr) auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px 14px;
   width: 100%;
@@ -11778,6 +11782,7 @@ body.web-mode #screen-audit-log .web-audit-log-filter-shell {
 .web-audit-event-card__icon svg {
   width: 20px;
   height: 20px;
+  display: block;
 }
 
 .web-audit-event-card__icon--created {
@@ -11801,6 +11806,7 @@ body.web-mode #screen-audit-log .web-audit-log-filter-shell {
 }
 
 .web-audit-event-card__main {
+  flex: 1 1 180px;
   min-width: 0;
 }
 
@@ -11828,10 +11834,12 @@ body.web-mode #screen-audit-log .web-audit-log-filter-shell {
 .web-audit-event-card__time,
 .web-audit-event-card__amount,
 .web-audit-event-card__currency {
+  flex: 0 0 auto;
   font-size: 14px;
   line-height: 1.35;
   color: var(--text);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .web-audit-event-card__amount {
@@ -11840,8 +11848,8 @@ body.web-mode #screen-audit-log .web-audit-log-filter-shell {
 }
 
 .web-audit-event-card__badge {
-  justify-self: end;
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  margin-left: auto;
   padding: 5px 11px;
   border-radius: 999px;
   font-size: 12px;
@@ -11871,81 +11879,50 @@ body.web-mode #screen-audit-log .web-audit-log-filter-shell {
 }
 
 .operation-audit-modal-list .web-audit-event-card {
-  grid-template-columns: auto minmax(0, 1fr);
-  grid-template-areas:
-    "icon main badge"
-    "icon meta badge";
-  gap: 8px 12px;
+  gap: 8px 10px;
 }
 
 .operation-audit-modal-list .web-audit-event-card__date,
 .operation-audit-modal-list .web-audit-event-card__time,
 .operation-audit-modal-list .web-audit-event-card__amount,
 .operation-audit-modal-list .web-audit-event-card__currency {
-  grid-column: 2;
   font-size: 13px;
 }
 
-.operation-audit-modal-list .web-audit-event-card__date::before {
-  content: "";
-}
-
-.operation-audit-modal-list .web-audit-event-card__icon {
-  grid-area: icon;
-}
-
-.operation-audit-modal-list .web-audit-event-card__main {
-  grid-area: main;
-}
-
-.operation-audit-modal-list .web-audit-event-card__badge {
-  grid-area: badge;
-  align-self: start;
-}
-
-@media (max-width: 900px) {
-  .web-audit-event-card {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      "icon main badge"
-      "icon meta meta";
-    gap: 8px 12px;
-  }
-
-  .web-audit-event-card__icon {
-    grid-area: icon;
-  }
-
+@media (max-width: 1100px) {
   .web-audit-event-card__main {
-    grid-area: main;
+    flex: 1 1 100%;
   }
 
   .web-audit-event-card__badge {
-    grid-area: badge;
-    align-self: start;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .web-audit-event-card {
+    align-items: flex-start;
+    gap: 8px 10px;
+  }
+
+  .web-audit-event-card__main {
+    flex: 1 1 calc(100% - 54px);
   }
 
   .web-audit-event-card__date,
   .web-audit-event-card__time,
   .web-audit-event-card__amount,
   .web-audit-event-card__currency {
-    grid-area: meta;
-    display: inline;
-    font-size: 13px;
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
-  .web-audit-event-card__date::after {
-    content: " · ";
-    color: var(--muted);
-  }
-
-  .web-audit-event-card__time::after {
-    content: " · ";
-    color: var(--muted);
-  }
-
-  .web-audit-event-card__amount::after {
-    content: " ";
+  .web-audit-event-card__badge {
+    width: 100%;
+    text-align: center;
+    margin-left: 0;
   }
 }
 

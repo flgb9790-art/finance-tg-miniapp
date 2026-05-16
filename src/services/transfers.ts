@@ -152,7 +152,8 @@ interface ResolvedTransferAmounts {
 }
 
 async function resolveTransferAmounts(
-  input: Pick<CreateTransferInput, "fromAmount" | "toAmount" | "fromAccountId" | "toAccountId" | "workspaceId">
+  input: Pick<CreateTransferInput, "fromAmount" | "toAmount" | "fromAccountId" | "toAccountId" | "workspaceId">,
+  options: { existing?: TransferListItem } = {}
 ): Promise<ResolvedTransferAmounts & { fromAccount: NonNullable<Awaited<ReturnType<typeof getAccountById>>>; toAccount: NonNullable<Awaited<ReturnType<typeof getAccountById>>> }> {
   const fromAccount = await getAccountById(input.fromAccountId, input.workspaceId);
   const toAccount = await getAccountById(input.toAccountId, input.workspaceId);
@@ -173,6 +174,20 @@ async function resolveTransferAmounts(
 
   let resolvedRate = 1;
   let resolvedToAmount = input.toAmount ? roundAmount(input.toAmount) : null;
+  const existing = options.existing;
+
+  if (existing && resolvedToAmount) {
+    const existingFrom = roundAmount(Number(existing.from_amount));
+    const existingTo = roundAmount(Number(existing.to_amount));
+    const fromChanged = fromAmount !== existingFrom;
+    const accountsChanged =
+      input.fromAccountId !== existing.from_account_id ||
+      input.toAccountId !== existing.to_account_id;
+
+    if ((fromChanged || accountsChanged) && resolvedToAmount === existingTo) {
+      resolvedToAmount = null;
+    }
+  }
 
   if (fromAccount.currency_code === toAccount.currency_code) {
     resolvedRate = 1;
@@ -349,7 +364,7 @@ export async function updateTransfer(input: UpdateTransferInput): Promise<Transf
   await reverseTransferBalances(existing, input.workspaceId);
 
   try {
-    const resolved = await resolveTransferAmounts(input);
+    const resolved = await resolveTransferAmounts(input, { existing });
 
     await applyTransferBalances(input.workspaceId, resolved);
 
