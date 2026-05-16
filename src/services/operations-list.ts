@@ -96,8 +96,18 @@ function firstQueryString(value: unknown): string | undefined {
   return undefined;
 }
 
-/** Legacy in-memory path when text search is active. */
+/** Legacy in-memory path when RPC is unavailable. */
 const HISTORY_SEARCH_DB_CAP = 2000;
+
+function sanitizeTimelineSearchQuery(raw: string | undefined): string | null {
+  const trimmed = raw?.trim() ?? "";
+
+  if (!trimmed) {
+    return null;
+  }
+
+  return trimmed.replace(/[%_\\]/g, "");
+}
 /** Per-table fetch cap for paginated history (merge then slice). */
 const HISTORY_MERGE_FETCH_CAP = 800;
 /** Cap FX summary rows for history totals (avoids unbounded scans). */
@@ -526,7 +536,8 @@ async function fetchTimelinePageViaRpc(
     p_account_id: query.accountId ?? null,
     p_category_id: query.categoryId ?? null,
     p_limit: query.limit,
-    p_offset: query.offset
+    p_offset: query.offset,
+    p_query: sanitizeTimelineSearchQuery(query.q)
   });
 
   if (error) {
@@ -883,7 +894,7 @@ export async function listOperationsTimeline(
 ): Promise<OperationsListResult> {
   const q = query.q?.trim() ?? "";
 
-  if (query.historyScope && !q) {
+  if (query.historyScope) {
     return listOperationsTimelineHistoryPaginated(workspaceId, reportingCurrency, query);
   }
 

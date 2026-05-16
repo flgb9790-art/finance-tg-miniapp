@@ -7697,6 +7697,40 @@ function populateCategoryOptions() {
     .join("");
 }
 
+function renderMutationChrome(options = {}) {
+  const screen = document.body.dataset.appActiveScreen ?? "home";
+
+  safeRenderStep("summary", () => renderSummary(state.summary));
+  safeRenderStep("accounts", () => renderAccounts(state.accounts));
+
+  if (screen === "home") {
+    safeRenderStep("homeActivity", () =>
+      renderHomeRecentActivity(state.recentEntries, state.recentTransfers)
+    );
+  }
+
+  if (screen === "activity" || screen === "transfer") {
+    safeRenderStep("recentEntries", () => renderRecentEntries(state.recentEntries));
+    safeRenderStep("recentTransfers", () => renderRecentTransfers(state.recentTransfers));
+
+    if (useWebLoginFlow()) {
+      safeRenderStep("webActivityRecent", () =>
+        renderWebActivityRecentList(state.recentEntries, state.recentTransfers)
+      );
+      safeRenderStep("webTransferRecent", () =>
+        renderWebTransferRecentList(state.recentTransfers)
+      );
+    }
+
+    safeRenderStep("accountOptions", () => populateAccountOptions());
+    safeRenderStep("categoryOptions", () => populateCategoryOptions());
+  }
+
+  if (options.syncWebOperationsHistory) {
+    syncOperationsHistoryAfterMutation();
+  }
+}
+
 function renderAll(options = {}) {
   const screen = options.activeScreen ?? document.body.dataset.appActiveScreen ?? "home";
   const partial = options.partial === true;
@@ -10663,14 +10697,10 @@ function finishMutationFromResponse(response, renderOptions = {}) {
     mergeRecentTransfer(response.transfer);
   }
 
-  afterBootstrapRender({
-    backgroundRefresh: true,
-    partial: true,
-    ...renderOptions
-  });
+  renderMutationChrome(renderOptions);
 
   if (response.patch.syncReport) {
-    void refreshAppData({ backgroundRefresh: true, light: true });
+    scheduleDebouncedBackgroundRefresh(500);
   }
 
   return true;

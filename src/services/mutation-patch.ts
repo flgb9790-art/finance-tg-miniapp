@@ -3,13 +3,11 @@ import { listAccounts } from "./accounts.js";
 import { countActiveCategories, listCategories, type CategoryRow } from "./categories.js";
 import type { EntryListItem } from "./entries.js";
 import {
-  buildDashboardSummaryFromParts,
   computeMonthEntryTotalsInReportingCurrency,
   isOccurredInReportRange,
   resolveReportRange,
   sumAccountsBalanceInReportingCurrency,
-  type DashboardSummary,
-  type ReportResult
+  type DashboardSummary
 } from "./reports.js";
 
 export interface AppMutationPatch {
@@ -44,39 +42,6 @@ async function buildBalancesSummaryPartial(
     ),
     reportingCurrency
   };
-}
-
-async function buildBalanceSummary(
-  workspaceId: string,
-  reportingCurrency: string,
-  accounts: AccountRow[],
-  categoriesCount: number,
-  monthReport?: Awaited<ReturnType<typeof computeMonthEntryTotalsInReportingCurrency>>
-): Promise<DashboardSummary> {
-  const monthRange = resolveReportRange("month");
-  const monthTotals =
-    monthReport ??
-    (await computeMonthEntryTotalsInReportingCurrency(
-      workspaceId,
-      reportingCurrency,
-      monthRange.startDate,
-      monthRange.endDate
-    ));
-
-  const syntheticReport = {
-    incomes: monthTotals.incomes,
-    expenses: monthTotals.expenses,
-    net: monthTotals.net,
-    expenseByCategory: monthTotals.expenseByCategory,
-    ratesUpdatedAt: monthTotals.ratesUpdatedAt
-  } as ReportResult;
-
-  return buildDashboardSummaryFromParts(
-    accounts,
-    categoriesCount,
-    syntheticReport,
-    reportingCurrency
-  );
 }
 
 export async function buildBalancesOnlyMutationPatch(
@@ -137,43 +102,74 @@ export async function buildCategoriesMutationPatch(
   };
 }
 
+async function buildLedgerMutationSummary(
+  workspaceId: string,
+  reportingCurrency: string,
+  accounts: AccountRow[],
+  categoriesCount: number,
+  entryOccurredAt?: string | null
+): Promise<{ summary: DashboardSummary; syncHomeChrome: boolean }> {
+  const summaryBase = await buildBalancesSummaryPartial(
+    accounts,
+    categoriesCount,
+    reportingCurrency
+  );
+
+  const monthRange = resolveReportRange("month");
+  const inMonth = entryOccurredAt
+    ? isOccurredInReportRange(entryOccurredAt, monthRange.startDate, monthRange.endDate)
+    : false;
+
+  if (!inMonth) {
+    return {
+      summary: summaryBase as DashboardSummary,
+      syncHomeChrome: false
+    };
+  }
+
+  const monthTotals = await computeMonthEntryTotalsInReportingCurrency(
+    workspaceId,
+    reportingCurrency,
+    monthRange.startDate,
+    monthRange.endDate
+  );
+
+  return {
+    summary: {
+      ...summaryBase,
+      monthlyIncome: monthTotals.incomes,
+      monthlyExpense: monthTotals.expenses,
+      monthlyNet: monthTotals.net,
+      monthlyExpenseByCategory: monthTotals.expenseByCategory,
+      ratesUpdatedAt: monthTotals.ratesUpdatedAt ?? summaryBase.ratesUpdatedAt ?? null
+    } as DashboardSummary,
+    syncHomeChrome: true
+  };
+}
+
 export async function buildLedgerMutationPatch(
   workspaceId: string,
   reportingCurrency: string,
   entryOccurredAt?: string | null
 ): Promise<AppMutationPatch> {
   try {
-    const monthRange = resolveReportRange("month");
-    const inMonth = entryOccurredAt
-      ? isOccurredInReportRange(entryOccurredAt, monthRange.startDate, monthRange.endDate)
-      : false;
-
     const [accounts, categoriesCount] = await Promise.all([
       listAccounts(workspaceId),
       countActiveCategories(workspaceId)
     ]);
 
-    const monthTotals = inMonth
-      ? await computeMonthEntryTotalsInReportingCurrency(
-          workspaceId,
-          reportingCurrency,
-          monthRange.startDate,
-          monthRange.endDate
-        )
-      : undefined;
-
-    const summary = await buildBalanceSummary(
+    const { summary, syncHomeChrome } = await buildLedgerMutationSummary(
       workspaceId,
       reportingCurrency,
       accounts,
       categoriesCount,
-      monthTotals
+      entryOccurredAt
     );
 
     return {
       accounts,
       summary,
-      syncReport: inMonth
+      syncReport: syncHomeChrome
     };
   } catch (error) {
     console.error("buildLedgerMutationPatch failed, using balances-only patch", error);
@@ -187,39 +183,23 @@ export async function buildEntryMutationPatch(
   entry: EntryListItem
 ): Promise<AppMutationPatch> {
   try {
-    const monthRange = resolveReportRange("month");
-    const inMonth = isOccurredInReportRange(
-      entry.occurred_at,
-      monthRange.startDate,
-      monthRange.endDate
-    );
-
     const [accounts, categoriesCount] = await Promise.all([
       listAccounts(workspaceId),
       countActiveCategories(workspaceId)
     ]);
 
-    const monthTotals = inMonth
-      ? await computeMonthEntryTotalsInReportingCurrency(
-          workspaceId,
-          reportingCurrency,
-          monthRange.startDate,
-          monthRange.endDate
-        )
-      : undefined;
-
-    const summary = await buildBalanceSummary(
+    const { summary, syncHomeChrome } = await buildLedgerMutationSummary(
       workspaceId,
       reportingCurrency,
       accounts,
       categoriesCount,
-      monthTotals
+      entry.occurred_at
     );
 
     return {
       accounts,
       summary,
-      syncReport: inMonth
+      syncReport: syncHomeChrome
     };
   } catch (error) {
     console.error("buildEntryMutationPatch failed, using balances-only patch", error);

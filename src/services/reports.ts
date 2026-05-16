@@ -1,7 +1,11 @@
 import { env } from "../config/env.js";
 import { getCategoryById } from "./categories.js";
 import { listAccounts, type AccountRow } from "./accounts.js";
-import { getExchangeRate, getLatestExchangeRateUpdate } from "./exchange-rates.js";
+import {
+  getExchangeRate,
+  getLatestExchangeRateUpdate,
+  preloadExchangeRatesToReportingCurrency
+} from "./exchange-rates.js";
 import { listRecentEntries } from "./entries.js";
 import {
   enrichEntriesForClientList,
@@ -569,6 +573,44 @@ export type HomeReportChrome = {
   dailySeries: ReportDailyPoint[];
 };
 
+type MonthTotalsEntryRow = {
+  amount: string;
+  currency_code: string;
+  kind: string;
+  occurred_at: string;
+  category: { name: string } | { name: string }[] | null;
+};
+
+function monthTotalsCategoryName(
+  category: MonthTotalsEntryRow["category"]
+): string {
+  if (Array.isArray(category)) {
+    return category[0]?.name ?? "Без категории";
+  }
+
+  return category?.name ?? "Без категории";
+}
+
+/** Slim month scan for dashboards and mutation patches (no full entry joins). */
+async function listEntriesForMonthTotals(
+  workspaceId: string,
+  startDate: string,
+  endDate: string
+): Promise<MonthTotalsEntryRow[]> {
+  const { data, error } = await supabase
+    .from("entries")
+    .select("amount, currency_code, kind, occurred_at, category:categories(name)")
+    .eq("workspace_id", workspaceId)
+    .gte("occurred_at", startDate)
+    .lte("occurred_at", endDate);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as unknown as MonthTotalsEntryRow[];
+}
+
 /** Доходы/расходы месяца в валюте отчёта + данные для мини-графиков на главной. */
 export async function computeMonthEntryTotalsInReportingCurrency(
   workspaceId: string,
@@ -583,24 +625,15 @@ export async function computeMonthEntryTotalsInReportingCurrency(
   ratesUpdatedAt: string | null;
   homeReport: HomeReportChrome;
 }> {
-  const bundle = await resolveReportEntriesBundle({
-    workspaceId,
-    period: "month",
-    startDate,
-    endDate,
-    reportingCurrency
-  });
+  const entries = await listEntriesForMonthTotals(workspaceId, startDate, endDate);
 
-  const currencyCodes = new Set<string>();
-
-  for (const entry of bundle.entries) {
-    currencyCodes.add(String(entry.currency_code ?? ""));
-  }
+  const currencyCodes = entries.map((entry) => String(entry.currency_code ?? ""));
+  await preloadExchangeRatesToReportingCurrency(currencyCodes, reportingCurrency);
 
   const rateCache = new Map<string, number>();
 
   await Promise.all(
-    [...currencyCodes]
+    [...new Set(currencyCodes)]
       .filter((code) => code.length > 0 && code !== reportingCurrency)
       .map(async (code) => {
         rateCache.set(
@@ -636,7 +669,7 @@ export async function computeMonthEntryTotalsInReportingCurrency(
   const dailyMap = new Map<string, { income: number; expense: number }>();
   const sparkByDaySlot = new Map<string, { income: number; expense: number; count: number }>();
 
-  for (const entry of bundle.entries) {
+  for (const entry of entries) {
     const convertedAmount = convertSynced(
       Number(entry.amount),
       entry.currency_code,
@@ -658,7 +691,7 @@ export async function computeMonthEntryTotalsInReportingCurrency(
       sparkBucket.count += 1;
     } else {
       expenses += convertedAmount;
-      const categoryName = entry.category?.name ?? "Без категории";
+      const categoryName = monthTotalsCategoryName(entry.category);
       expenseByCategoryMap.set(
         categoryName,
         (expenseByCategoryMap.get(categoryName) ?? 0) + convertedAmount
