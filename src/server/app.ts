@@ -30,6 +30,7 @@ import {
 import { getCurrencyByCode, listActiveCurrencies } from "../services/currencies.js";
 import {
   buildBootstrapMonthDashboard,
+  buildLightRefreshDashboard,
   buildReportExportPayload,
   formatReportResultAsCsv,
   getRecentActivity,
@@ -577,17 +578,15 @@ export function createHttpApp(): express.Express {
         ]);
 
       let summary = null;
-      let report = null;
 
       try {
-        const dashboard = await buildBootstrapMonthDashboard(
+        const dashboard = await buildLightRefreshDashboard(
           ws.workspaceId,
           reportingCurrency,
           accounts,
           categoriesCount
         );
         summary = dashboard.summary;
-        report = dashboard.report;
       } catch (error) {
         console.error("Failed to build refresh dashboard", error);
       }
@@ -599,7 +598,6 @@ export function createHttpApp(): express.Express {
         recentEntries: typeof activity.recentEntries;
         recentTransfers: typeof activity.recentTransfers;
         summary: typeof summary;
-        report: typeof report;
         categories?: Awaited<ReturnType<typeof listCategories>>;
       } = {
         workspace,
@@ -607,8 +605,7 @@ export function createHttpApp(): express.Express {
         accounts,
         recentEntries: activity.recentEntries,
         recentTransfers: activity.recentTransfers,
-        summary,
-        report
+        summary
       };
 
       if (include.has("categories")) {
@@ -1556,16 +1553,23 @@ export function createHttpApp(): express.Express {
         return;
       }
 
-      const report = await getReport({
-        workspaceId: ws.workspaceId,
-        period: period as "week" | "month" | "quarter" | "year" | "custom",
-        startDate,
-        endDate,
-        reportingCurrency,
-        categoryId,
-        accountId,
-        kind
-      });
+      const compareRaw =
+        typeof req.query.compare === "string" ? req.query.compare.trim().toLowerCase() : "";
+      const compareToPrevious = compareRaw !== "0" && compareRaw !== "false";
+
+      const report = await getReport(
+        {
+          workspaceId: ws.workspaceId,
+          period: period as "week" | "month" | "quarter" | "year" | "custom",
+          startDate,
+          endDate,
+          reportingCurrency,
+          categoryId,
+          accountId,
+          kind
+        },
+        { compareToPrevious }
+      );
 
       res.json({ report });
     } catch (error) {

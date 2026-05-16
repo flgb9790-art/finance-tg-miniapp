@@ -116,8 +116,43 @@ export async function createSignedPhotoUrl(
   return data?.signedUrl ?? null;
 }
 
+function entryHasStoredPhoto(entry: EntryListItem): boolean {
+  return Boolean(String(entry.photo_url ?? "").trim());
+}
+
+/** List/bootstrap: skip Storage signing; client resolves view URL on open. */
+export function enrichEntryForClientList(entry: EntryListItem): EntryForClient {
+  const hasPhoto = entryHasStoredPhoto(entry);
+
+  return {
+    ...entry,
+    hasPhoto,
+    photoViewUrl: null
+  };
+}
+
+export function enrichEntriesForClientList(entries: EntryListItem[]): EntryForClient[] {
+  return entries.map((entry) => enrichEntryForClientList(entry));
+}
+
+export function enrichTransferForClientList(transfer: TransferListItem): TransferForClient {
+  const hasPhoto = Boolean(String(transfer.photo_url ?? "").trim());
+
+  return {
+    ...transfer,
+    hasPhoto,
+    photoViewUrl: null
+  };
+}
+
+export function enrichTransfersForClientList(
+  transfers: TransferListItem[]
+): TransferForClient[] {
+  return transfers.map((transfer) => enrichTransferForClientList(transfer));
+}
+
 export async function enrichEntryForClient(entry: EntryListItem): Promise<EntryForClient> {
-  const hasPhoto = Boolean(String(entry.photo_url ?? "").trim());
+  const hasPhoto = entryHasStoredPhoto(entry);
 
   return {
     ...entry,

@@ -179,19 +179,37 @@ export async function getExchangeRate(
     return existingRate;
   }
 
-  await syncExchangeRates();
-  const syncedRate = await readRate();
+  const reverseRate = await (async () => {
+    const { data, error } = await supabase
+      .from("exchange_rates")
+      .select("rate")
+      .eq("base_currency_code", toCurrencyCode)
+      .eq("quote_currency_code", fromCurrencyCode)
+      .maybeSingle();
 
-  if (syncedRate === null) {
-    throw new Error(`Exchange rate ${fromCurrencyCode} -> ${toCurrencyCode} was not found`);
+    if (error) {
+      throw error;
+    }
+
+    const raw = data ? Number(data.rate) : null;
+    return raw !== null && raw > 0 ? 1 / raw : null;
+  })();
+
+  if (reverseRate !== null) {
+    memoryRateCache.set(cacheKey, {
+      rate: reverseRate,
+      expiresAt: Date.now() + MEMORY_RATE_TTL_MS
+    });
+    return reverseRate;
   }
 
-  memoryRateCache.set(cacheKey, {
-    rate: syncedRate,
-    expiresAt: Date.now() + MEMORY_RATE_TTL_MS
+  void syncExchangeRates().catch((error) => {
+    console.error("Background exchange rate sync failed", error);
   });
 
-  return syncedRate;
+  throw new Error(
+    `Курс ${fromCurrencyCode} → ${toCurrencyCode} ещё не загружен. Подождите синхронизацию курсов или нажмите «Обновить курсы».`
+  );
 }
 
 export async function convertAmount(

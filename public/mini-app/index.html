@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260516home-activity-v1";
+        var BALANCY_CLIENT_ASSET_REV = "20260516perf-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -34,7 +34,7 @@
         document.head.appendChild(link);
       })();
     </script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
   </head>
   <body>
     <div id="appSplash" class="app-splash" role="status" aria-live="polite" aria-label="Загрузка Balancy">
@@ -3197,11 +3197,6 @@
       </div>
     </div>
 
-    <script
-      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
-      crossorigin="anonymous"
-      async
-    ></script>
     <script>
       (function () {
         function showScriptLoadFailure() {

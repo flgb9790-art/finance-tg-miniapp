@@ -426,6 +426,7 @@ let webOpsDatesInitialized = false;
 let webAuditLogDatesInitialized = false;
 let webAuditLogMembersLoadedForWorkspaceId = "";
 let webAuditLogOffset = 0;
+let webAuditLogReloadTimer = null;
 const WEB_AUDIT_LOG_PAGE_SIZE = 10;
 
 /** Лента «Операции» в Telegram: пагинация и запрос к /api/operations */
@@ -460,6 +461,65 @@ let transferToAmountProgrammatic = false;
 
 /** @type {{ trend?: object, category?: object }} */
 let reportChartInstances = { trend: null, category: null };
+
+let chartJsLoadPromise = null;
+
+function ensureChartJsLoaded() {
+  if (typeof window.Chart !== "undefined") {
+    return Promise.resolve();
+  }
+
+  if (chartJsLoadPromise) {
+    return chartJsLoadPromise;
+  }
+
+  chartJsLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js";
+    script.crossOrigin = "anonymous";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => {
+      chartJsLoadPromise = null;
+      reject(new Error("Не удалось загрузить Chart.js"));
+    };
+    document.head.appendChild(script);
+  });
+
+  return chartJsLoadPromise;
+}
+
+const SCREEN_CACHE_TTL_MS = 45_000;
+
+const screenFetchCache = {
+  history: { key: "", payload: null, at: 0 },
+  ledger: { key: "", payload: null, at: 0 },
+  reports: { key: "", report: null, exportQuery: "", at: 0 },
+  auditLog: { key: "", events: null, total: 0, at: 0 },
+  teamMembers: { workspaceId: "", members: null, at: 0 }
+};
+
+function screenCacheFresh(entry, key) {
+  return (
+    entry.key === key &&
+    entry.at > 0 &&
+    Date.now() - entry.at < SCREEN_CACHE_TTL_MS
+  );
+}
+
+function invalidateOperationsScreenCache() {
+  screenFetchCache.history = { key: "", payload: null, at: 0 };
+  screenFetchCache.ledger = { key: "", payload: null, at: 0 };
+}
+
+function invalidateReportsScreenCache() {
+  screenFetchCache.reports = { key: "", report: null, exportQuery: "", at: 0 };
+}
+
+let categoryUiMetaMapCache = null;
+let categoryAccentMapCache = null;
+let accountUiMetaMapCache = null;
+let accountAccentMapCache = null;
 
 const balancySplashStartedAt = Date.now();
 let refreshAppDataDebounceTimer = null;
@@ -2414,14 +2474,23 @@ async function refreshWebOperationsBoard(options = {}) {
     return;
   }
 
+  const cacheKey = buildWebOperationsApiUrl();
+
+  if (!options.force && screenCacheFresh(screenFetchCache.history, cacheKey)) {
+    state.webOperationsLastPayload = screenFetchCache.history.payload;
+    renderWebOperationsFromPayload(screenFetchCache.history.payload);
+    return;
+  }
+
   webOpsTableBody.innerHTML = `<tr><td colspan="${getWebOpsTableColspan()}" class="muted">Загрузка…</td></tr>`;
   if (webOpsEmptyHint) {
     webOpsEmptyHint.hidden = true;
   }
 
   try {
-    const payload = await apiFetch(buildWebOperationsApiUrl());
+    const payload = await apiFetch(cacheKey);
     state.webOperationsLastPayload = payload;
+    screenFetchCache.history = { key: cacheKey, payload, at: Date.now() };
     renderWebOperationsFromPayload(payload);
   } catch (error) {
     console.error(error);
@@ -3497,6 +3566,9 @@ function ensureTgOpsFiltersReady() {
 }
 
 function syncOperationsHistoryAfterMutation() {
+  invalidateOperationsScreenCache();
+  invalidateReportsScreenCache();
+
   if (useWebLoginFlow()) {
     renderWebActivityRecentList(state.recentEntries, state.recentTransfers);
     void refreshWebOperationsBoard({ force: true });
@@ -4581,16 +4653,23 @@ function getAccountIconGlyph(iconKey) {
 }
 
 function readAccountUiMetaMap() {
+  if (accountUiMetaMapCache) {
+    return accountUiMetaMapCache;
+  }
+
   try {
     const raw = window.localStorage.getItem(ACCOUNT_UI_META_STORAGE_KEY);
     const parsed = raw ? JSON.parse(raw) : {};
-    return typeof parsed === "object" && parsed !== null ? parsed : {};
+    accountUiMetaMapCache = typeof parsed === "object" && parsed !== null ? parsed : {};
+    return accountUiMetaMapCache;
   } catch {
-    return {};
+    accountUiMetaMapCache = {};
+    return accountUiMetaMapCache;
   }
 }
 
 function writeAccountUiMetaMap(map) {
+  accountUiMetaMapCache = map;
   try {
     window.localStorage.setItem(ACCOUNT_UI_META_STORAGE_KEY, JSON.stringify(map));
   } catch {
@@ -4918,16 +4997,23 @@ function syncAccountFormTitles() {
 }
 
 function readCategoryAccentMap() {
+  if (categoryAccentMapCache) {
+    return categoryAccentMapCache;
+  }
+
   try {
     const raw = window.localStorage.getItem(CATEGORY_ACCENT_STORAGE_KEY);
     const parsed = raw ? JSON.parse(raw) : {};
-    return typeof parsed === "object" && parsed !== null ? parsed : {};
+    categoryAccentMapCache = typeof parsed === "object" && parsed !== null ? parsed : {};
+    return categoryAccentMapCache;
   } catch {
-    return {};
+    categoryAccentMapCache = {};
+    return categoryAccentMapCache;
   }
 }
 
 function writeCategoryAccentMap(map) {
+  categoryAccentMapCache = map;
   try {
     window.localStorage.setItem(CATEGORY_ACCENT_STORAGE_KEY, JSON.stringify(map));
   } catch {
@@ -4988,16 +5074,23 @@ function syncWebCategoryKindPicksFromSelect() {
 }
 
 function readCategoryUiMetaMap() {
+  if (categoryUiMetaMapCache) {
+    return categoryUiMetaMapCache;
+  }
+
   try {
     const raw = window.localStorage.getItem(CATEGORY_UI_META_STORAGE_KEY);
     const parsed = raw ? JSON.parse(raw) : {};
-    return typeof parsed === "object" && parsed !== null ? parsed : {};
+    categoryUiMetaMapCache = typeof parsed === "object" && parsed !== null ? parsed : {};
+    return categoryUiMetaMapCache;
   } catch {
-    return {};
+    categoryUiMetaMapCache = {};
+    return categoryUiMetaMapCache;
   }
 }
 
 function writeCategoryUiMetaMap(map) {
+  categoryUiMetaMapCache = map;
   try {
     window.localStorage.setItem(CATEGORY_UI_META_STORAGE_KEY, JSON.stringify(map));
   } catch {
@@ -5961,6 +6054,13 @@ async function refreshTgOperationsBoard(options = {}) {
     return;
   }
 
+  const cacheKey = buildTgOperationsApiUrl();
+
+  if (!options.force && screenCacheFresh(screenFetchCache.ledger, cacheKey)) {
+    renderTgOperationsRemotePayloadIntoDom(screenFetchCache.ledger.payload);
+    return;
+  }
+
   root.innerHTML = `<div class="empty-state muted tg-ops-loading">Загрузка…</div>`;
   const nav = document.getElementById("tgOpsPaginationNav");
   if (nav) {
@@ -5969,7 +6069,9 @@ async function refreshTgOperationsBoard(options = {}) {
   }
 
   try {
-    const payload = await apiFetch(buildTgOperationsApiUrl());
+    const cacheKey = buildTgOperationsApiUrl();
+    const payload = await apiFetch(cacheKey);
+    screenFetchCache.ledger = { key: cacheKey, payload, at: Date.now() };
     renderTgOperationsRemotePayloadIntoDom(payload);
   } catch (error) {
     console.error(error);
@@ -6641,11 +6743,17 @@ function renderReportChartsFromReport(report) {
   }
 }
 
-function renderReportWebVisuals(report) {
+async function renderReportWebVisuals(report) {
   renderReportCategoryMatrix(report);
   renderReportPeriodSummary(report);
   drawAllReportSparks(report);
-  renderReportChartsFromReport(report);
+
+  try {
+    await ensureChartJsLoaded();
+    renderReportChartsFromReport(report);
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 function renderReport(report) {
@@ -7580,15 +7688,20 @@ function renderAll(options = {}) {
   }
 
   if (!partial || screen === "home" || screen === "activity" || screen === "transfer") {
-    safeRenderStep("recentEntries", () => renderRecentEntries(state.recentEntries));
-    safeRenderStep("recentTransfers", () => renderRecentTransfers(state.recentTransfers));
-    safeRenderStep("homeActivity", () =>
-      renderHomeRecentActivity(state.recentEntries, state.recentTransfers)
-    );
-    safeRenderStep("webActivityRecent", () =>
-      renderWebActivityRecentList(state.recentEntries, state.recentTransfers)
-    );
-    safeRenderStep("webTransferRecent", () => renderWebTransferRecentList(state.recentTransfers));
+    if (!partial || screen === "home") {
+      safeRenderStep("homeActivity", () =>
+        renderHomeRecentActivity(state.recentEntries, state.recentTransfers)
+      );
+    }
+
+    if (!partial || screen === "activity" || screen === "transfer") {
+      safeRenderStep("recentEntries", () => renderRecentEntries(state.recentEntries));
+      safeRenderStep("recentTransfers", () => renderRecentTransfers(state.recentTransfers));
+      safeRenderStep("webActivityRecent", () =>
+        renderWebActivityRecentList(state.recentEntries, state.recentTransfers)
+      );
+      safeRenderStep("webTransferRecent", () => renderWebTransferRecentList(state.recentTransfers));
+    }
   }
 
   safeRenderStep("report", () => {
@@ -7599,7 +7712,7 @@ function renderAll(options = {}) {
     renderReport(state.report);
 
     if (!useWebLoginFlow() && state.report) {
-      renderReportWebVisuals(state.report);
+      void renderReportWebVisuals(state.report);
     }
   });
 
@@ -9046,13 +9159,49 @@ function renderAuditEventCards(targetElement, events, emptyElement, errorElement
   targetElement.innerHTML = rows.map((event) => buildAuditEventCardHtml(event)).join("");
 }
 
-async function loadWebAuditLogPage() {
+function scheduleWebAuditLogReload() {
+  webAuditLogOffset = 0;
+  window.clearTimeout(webAuditLogReloadTimer);
+  webAuditLogReloadTimer = window.setTimeout(() => {
+    void loadWebAuditLogPage();
+  }, 320);
+}
+
+async function loadWebAuditLogPage(options = {}) {
   if (state.workspace?.kind !== "team" || !webAuditLogListElement) {
     return;
   }
 
   initWebAuditLogFilters();
   await populateWebAuditLogActorFilter();
+
+  const filters = getWebAuditLogFilterOptions();
+  const cacheKey = JSON.stringify({
+    offset: webAuditLogOffset,
+    from: filters.from,
+    to: filters.to,
+    actorUserId: filters.actorUserId,
+    actionKind: filters.actionKind
+  });
+
+  if (
+    !options.force &&
+    screenCacheFresh(screenFetchCache.auditLog, cacheKey) &&
+    Array.isArray(screenFetchCache.auditLog.events)
+  ) {
+    const emptyMessage = hasActiveWebAuditLogFilters()
+      ? "По выбранным фильтрам записей нет"
+      : "Записей пока нет";
+    renderAuditEventCards(
+      webAuditLogListElement,
+      screenFetchCache.auditLog.events,
+      webAuditLogEmptyElement,
+      webAuditLogErrorElement,
+      emptyMessage
+    );
+    syncWebAuditLogPagination(screenFetchCache.auditLog.total, screenFetchCache.auditLog.events.length);
+    return;
+  }
 
   webAuditLogListElement.innerHTML = '<p class="muted web-audit-log-loading">Загрузка журнала…</p>';
 
@@ -9065,7 +9214,6 @@ async function loadWebAuditLogPage() {
     webAuditLogErrorElement.textContent = "";
   }
 
-  const filters = getWebAuditLogFilterOptions();
   const emptyMessage = hasActiveWebAuditLogFilters()
     ? "По выбранным фильтрам записей нет"
     : "Записей пока нет";
@@ -9083,6 +9231,8 @@ async function loadWebAuditLogPage() {
     );
     const events = Array.isArray(payload?.events) ? payload.events : [];
     const total = Number(payload?.total ?? events.length);
+
+    screenFetchCache.auditLog = { key: cacheKey, events, total, at: Date.now() };
 
     renderAuditEventCards(
       webAuditLogListElement,
@@ -9686,25 +9836,13 @@ function attachWorkspaceUi() {
     void loadWebAuditLogPage();
   });
 
-  webAuditLogDateFromElement?.addEventListener("change", () => {
-    webAuditLogOffset = 0;
-    void loadWebAuditLogPage();
-  });
+  webAuditLogDateFromElement?.addEventListener("change", scheduleWebAuditLogReload);
 
-  webAuditLogDateToElement?.addEventListener("change", () => {
-    webAuditLogOffset = 0;
-    void loadWebAuditLogPage();
-  });
+  webAuditLogDateToElement?.addEventListener("change", scheduleWebAuditLogReload);
 
-  webAuditLogActorFilterElement?.addEventListener("change", () => {
-    webAuditLogOffset = 0;
-    void loadWebAuditLogPage();
-  });
+  webAuditLogActorFilterElement?.addEventListener("change", scheduleWebAuditLogReload);
 
-  webAuditLogActionFilterElement?.addEventListener("change", () => {
-    webAuditLogOffset = 0;
-    void loadWebAuditLogPage();
-  });
+  webAuditLogActionFilterElement?.addEventListener("change", scheduleWebAuditLogReload);
 
   webAuditLogPagePrevElement?.addEventListener("click", () => {
     webAuditLogOffset = Math.max(0, webAuditLogOffset - WEB_AUDIT_LOG_PAGE_SIZE);
@@ -9921,6 +10059,8 @@ function buildReportQueryString() {
     params.set("kind", filterKind);
   }
 
+  params.set("compare", "1");
+
   return params.toString();
 }
 
@@ -10039,13 +10179,28 @@ async function apiFetch(url, options = {}) {
   return payload;
 }
 
-async function loadReport() {
+async function loadReport(options = {}) {
   const query = buildReportQueryString();
+
+  if (!options.force && screenCacheFresh(screenFetchCache.reports, query)) {
+    state.report = screenFetchCache.reports.report;
+    state.reportExportQuery = screenFetchCache.reports.exportQuery;
+    renderReport(state.report);
+    await renderReportWebVisuals(state.report);
+    return;
+  }
+
   const payload = await apiFetch(`/api/reports?${query}`);
   state.report = payload.report;
   state.reportExportQuery = query;
+  screenFetchCache.reports = {
+    key: query,
+    report: payload.report,
+    exportQuery: query,
+    at: Date.now()
+  };
   renderReport(state.report);
-  renderReportWebVisuals(state.report);
+  await renderReportWebVisuals(state.report);
 }
 
 async function downloadReportCsv() {
@@ -11449,7 +11604,7 @@ async function handleBuildReport(event) {
   setStatus("Строим отчет...");
 
   try {
-    await loadReport();
+    await loadReport({ force: true });
     setStatus("Отчет обновлен.", "success");
   } catch (error) {
     console.error(error);
@@ -11469,7 +11624,7 @@ async function handleResetReportFilters() {
 
   try {
     resetReportFiltersToDefaults();
-    await loadReport();
+    await loadReport({ force: true });
     setStatus("Фильтры сброшены.", "success");
   } catch (error) {
     console.error(error);

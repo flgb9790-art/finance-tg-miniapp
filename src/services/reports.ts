@@ -3,7 +3,10 @@ import { getCategoryById } from "./categories.js";
 import { listAccounts, type AccountRow } from "./accounts.js";
 import { getExchangeRate, getLatestExchangeRateUpdate } from "./exchange-rates.js";
 import { listRecentEntries } from "./entries.js";
-import { enrichEntriesForClient, enrichTransfersForClient } from "./operation-photos.js";
+import {
+  enrichEntriesForClientList,
+  enrichTransfersForClientList
+} from "./operation-photos.js";
 import { listRecentTransfers } from "./transfers.js";
 import { supabase } from "../lib/supabase.js";
 import type { OperationKind } from "../shared/domain.js";
@@ -718,6 +721,61 @@ export async function buildBootstrapMonthDashboard(
   return { summary, report };
 }
 
+/** Light refresh: month totals for home without full ReportResult payload. */
+export async function buildLightRefreshDashboard(
+  workspaceId: string,
+  reportingCurrency: string,
+  accounts: AccountRow[],
+  categoriesCount: number
+): Promise<{ summary: DashboardSummary }> {
+  const monthRange = resolveReportRange("month");
+  const totals = await computeMonthEntryTotalsInReportingCurrency(
+    workspaceId,
+    reportingCurrency,
+    monthRange.startDate,
+    monthRange.endDate
+  );
+
+  const summary = await buildDashboardSummaryFromParts(
+    accounts,
+    categoriesCount,
+    {
+      period: "month",
+      startDate: monthRange.startDate,
+      endDate: monthRange.endDate,
+      reportingCurrency,
+      incomes: totals.incomes,
+      expenses: totals.expenses,
+      net: totals.net,
+      currentTotalBalance: 0,
+      incomeByCategory: [],
+      expenseByCategory: totals.expenseByCategory,
+      transfersCount: 0,
+      operationsCount: 0,
+      dailySeries: [],
+      monthlySeries: [],
+      sparkLast7Days: {
+        dates: [],
+        income: [],
+        expense: [],
+        net: [],
+        operationCount: []
+      },
+      incomeEntryCount: 0,
+      expenseEntryCount: 0,
+      transfersVolumeReporting: 0,
+      balanceAtPeriodEndReporting: null,
+      balanceAtPeriodStartReporting: null,
+      compareToPrevious: null,
+      categoryMatrix: [],
+      ratesUpdatedAt: totals.ratesUpdatedAt
+    },
+    reportingCurrency
+  );
+
+  return { summary };
+}
+
 export async function getDashboardSummary(
   workspaceId: string,
   reportingCurrency = env.reportingCurrency,
@@ -1251,7 +1309,7 @@ export async function getRecentActivity(workspaceId: string): Promise<{
   ]);
 
   return {
-    recentEntries: await enrichEntriesForClient(recentEntries),
-    recentTransfers: await enrichTransfersForClient(recentTransfers)
+    recentEntries: enrichEntriesForClientList(recentEntries),
+    recentTransfers: enrichTransfersForClientList(recentTransfers)
   };
 }

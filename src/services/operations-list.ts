@@ -3,8 +3,8 @@ import { supabase } from "../lib/supabase.js";
 import { getExchangeRate } from "./exchange-rates.js";
 import { ENTRY_LIST_SELECT, type EntryListItem } from "./entries.js";
 import {
-  enrichEntryForClient,
-  enrichTransferForClient,
+  enrichEntryForClientList,
+  enrichTransferForClientList,
   type EntryForClient,
   type TransferForClient
 } from "./operation-photos.js";
@@ -93,7 +93,16 @@ function firstQueryString(value: unknown): string | undefined {
   return undefined;
 }
 
-const HISTORY_DB_CAP = 4000;
+/** Legacy in-memory path when text search is active. */
+const HISTORY_SEARCH_DB_CAP = 2000;
+/** Per-table fetch cap for paginated history (merge then slice). */
+const HISTORY_MERGE_FETCH_CAP = 800;
+
+type EntrySummaryRow = {
+  amount: string;
+  currency_code: string;
+  kind: OperationKind;
+};
 
 export function parseOperationsListQuery(
   query: Record<string, unknown>
@@ -287,16 +296,14 @@ function matchesSearch(item: OperationTimelineItem, needle: string): boolean {
   return hay.includes(n);
 }
 
-async function serializeTimelineItem(
-  item: OperationTimelineItem
-): Promise<OperationTimelineItemDto> {
+function serializeTimelineItem(item: OperationTimelineItem): OperationTimelineItemDto {
   if (item.kind === "entry") {
     return {
       kind: "entry",
       occurredAt: item.occurredAt,
       createdAt: item.entry.created_at,
       createdBy: toOperationCreatedByDto(item.entry),
-      entry: await enrichEntryForClient(item.entry)
+      entry: enrichEntryForClientList(item.entry)
     };
   }
 
@@ -305,8 +312,139 @@ async function serializeTimelineItem(
     occurredAt: item.occurredAt,
     createdAt: item.transfer.created_at,
     createdBy: toOperationCreatedByDto(item.transfer),
-    transfer: await enrichTransferForClient(item.transfer)
+    transfer: enrichTransferForClientList(item.transfer)
   };
+}
+
+async function countEntriesInRange(
+  workspaceId: string,
+  opts: {
+    from: string;
+    to: string;
+    kind?: OperationKind;
+    accountId?: string;
+    categoryId?: string;
+  }
+): Promise<number> {
+  let q = supabase
+    .from("entries")
+    .select("id", { count: "exact", head: true })
+    .eq("workspace_id", workspaceId)
+    .gte("occurred_at", opts.from)
+    .lte("occurred_at", opts.to);
+
+  if (opts.kind) {
+    q = q.eq("kind", opts.kind);
+  }
+  if (opts.accountId) {
+    q = q.eq("account_id", opts.accountId);
+  }
+  if (opts.categoryId) {
+    q = q.eq("category_id", opts.categoryId);
+  }
+
+  const { count, error } = await q;
+
+  if (error) {
+    throw error;
+  }
+
+  return count ?? 0;
+}
+
+async function countTransfersInRange(
+  workspaceId: string,
+  opts: {
+    from: string;
+    to: string;
+    accountId?: string;
+  }
+): Promise<number> {
+  let q = supabase
+    .from("transfers")
+    .select("id", { count: "exact", head: true })
+    .eq("workspace_id", workspaceId)
+    .gte("occurred_at", opts.from)
+    .lte("occurred_at", opts.to);
+
+  if (opts.accountId) {
+    q = q.or(
+      `from_account_id.eq.${opts.accountId},to_account_id.eq.${opts.accountId}`
+    );
+  }
+
+  const { count, error } = await q;
+
+  if (error) {
+    throw error;
+  }
+
+  return count ?? 0;
+}
+
+async function fetchEntrySummaryRows(
+  workspaceId: string,
+  opts: {
+    from: string;
+    to: string;
+    kind?: OperationKind;
+    accountId?: string;
+    categoryId?: string;
+  }
+): Promise<EntrySummaryRow[]> {
+  let q = supabase
+    .from("entries")
+    .select("amount, currency_code, kind")
+    .eq("workspace_id", workspaceId)
+    .gte("occurred_at", opts.from)
+    .lte("occurred_at", opts.to);
+
+  if (opts.kind) {
+    q = q.eq("kind", opts.kind);
+  }
+  if (opts.accountId) {
+    q = q.eq("account_id", opts.accountId);
+  }
+  if (opts.categoryId) {
+    q = q.eq("category_id", opts.categoryId);
+  }
+
+  const { data, error } = await q;
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as EntrySummaryRow[];
+}
+
+async function sumEntrySummaryRowsReporting(
+  rows: EntrySummaryRow[],
+  reportingCurrency: string
+): Promise<{ income: number; expense: number }> {
+  const rateCache = new Map<string, number>();
+
+  async function convert(amount: number, from: string, to: string): Promise<number> {
+    const key = `${from}:${to}`;
+    if (!rateCache.has(key)) {
+      rateCache.set(key, await getExchangeRate(from, to));
+    }
+    return Number((amount * (rateCache.get(key) ?? 1)).toFixed(2));
+  }
+
+  let income = 0;
+  let expense = 0;
+
+  for (const e of rows) {
+    const c = await convert(Number(e.amount), e.currency_code, reportingCurrency);
+    if (e.kind === "income") {
+      income += c;
+    } else {
+      expense += c;
+    }
+  }
+
+  return { income, expense };
 }
 
 async function sumEntriesReporting(
@@ -338,12 +476,129 @@ async function sumEntriesReporting(
   return { income, expense };
 }
 
+async function listOperationsTimelineHistoryPaginated(
+  workspaceId: string,
+  reportingCurrency: string,
+  query: OperationsListQuery
+): Promise<OperationsListResult> {
+  const base = {
+    from: query.from,
+    to: query.to,
+    accountId: query.accountId
+  };
+
+  const entryKind =
+    query.kind === "income" || query.kind === "expense"
+      ? (query.kind as OperationKind)
+      : undefined;
+
+  const mergeFetch = Math.min(
+    query.offset + query.limit + 40,
+    HISTORY_MERGE_FETCH_CAP
+  );
+
+  let entryTotal = 0;
+  let transferTotal = 0;
+  let entryRows: EntryListItem[] = [];
+  let transferRows: TransferListItem[] = [];
+
+  if (query.categoryId) {
+    entryTotal = await countEntriesInRange(workspaceId, {
+      ...base,
+      categoryId: query.categoryId,
+      kind: entryKind
+    });
+    entryRows = await fetchEntriesWindow(workspaceId, {
+      ...base,
+      categoryId: query.categoryId,
+      kind: entryKind,
+      maxRows: mergeFetch
+    });
+  } else if (query.kind === "transfer") {
+    transferTotal = await countTransfersInRange(workspaceId, base);
+    transferRows = await fetchTransfersWindow(workspaceId, {
+      ...base,
+      maxRows: mergeFetch
+    });
+  } else if (query.kind === "income" || query.kind === "expense") {
+    entryTotal = await countEntriesInRange(workspaceId, {
+      ...base,
+      kind: entryKind
+    });
+    entryRows = await fetchEntriesWindow(workspaceId, {
+      ...base,
+      kind: entryKind,
+      maxRows: mergeFetch
+    });
+  } else {
+    [entryTotal, transferTotal, entryRows, transferRows] = await Promise.all([
+      countEntriesInRange(workspaceId, base),
+      countTransfersInRange(workspaceId, base),
+      fetchEntriesWindow(workspaceId, { ...base, maxRows: mergeFetch }),
+      fetchTransfersWindow(workspaceId, { ...base, maxRows: mergeFetch })
+    ]);
+  }
+
+  const merged: OperationTimelineItem[] = [
+    ...entryRows.map(
+      (entry): OperationTimelineItem => ({
+        kind: "entry",
+        occurredAt: entry.occurred_at,
+        entry
+      })
+    ),
+    ...transferRows.map(
+      (transfer): OperationTimelineItem => ({
+        kind: "transfer",
+        occurredAt: transfer.occurred_at,
+        transfer
+      })
+    )
+  ].sort(
+    (a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
+  );
+
+  const total = entryTotal + transferTotal;
+  const page = merged.slice(query.offset, query.offset + query.limit);
+  const items = page.map((row) => serializeTimelineItem(row));
+
+  const summaryRows = await fetchEntrySummaryRows(workspaceId, {
+    from: query.from,
+    to: query.to,
+    accountId: query.accountId,
+    categoryId: query.categoryId,
+    kind: entryKind
+  });
+  const { income, expense } = await sumEntrySummaryRowsReporting(
+    summaryRows,
+    reportingCurrency
+  );
+
+  return {
+    reportingCurrency,
+    items,
+    total,
+    summary: {
+      operationsCount: total,
+      incomeReporting: income,
+      expenseReporting: expense,
+      netReporting: Number((income - expense).toFixed(2))
+    }
+  };
+}
+
 export async function listOperationsTimeline(
   workspaceId: string,
   reportingCurrency: string,
   query: OperationsListQuery
 ): Promise<OperationsListResult> {
-  const cap = query.historyScope ? HISTORY_DB_CAP : undefined;
+  const q = query.q?.trim() ?? "";
+
+  if (query.historyScope && !q) {
+    return listOperationsTimelineHistoryPaginated(workspaceId, reportingCurrency, query);
+  }
+
+  const cap = query.historyScope ? HISTORY_SEARCH_DB_CAP : undefined;
   const base = {
     from: query.from,
     to: query.to,
@@ -397,7 +652,6 @@ export async function listOperationsTimeline(
     )
   ];
 
-  const q = query.q?.trim() ?? "";
   const filtered = merged
     .filter((item) => matchesSearch(item, q))
     .sort(
@@ -417,7 +671,7 @@ export async function listOperationsTimeline(
   const total = filtered.length;
   const page = filtered.slice(query.offset, query.offset + query.limit);
 
-  const items = await Promise.all(page.map((row) => serializeTimelineItem(row)));
+  const items = page.map((row) => serializeTimelineItem(row));
 
   return {
     reportingCurrency,
