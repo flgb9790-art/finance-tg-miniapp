@@ -11343,6 +11343,27 @@ body.workspace-invite-gate-open .bottom-nav {
   text-overflow: ellipsis;
 }
 
+.web-ops-col-actions {
+  width: 88px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.web-ops-row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.tg-ops-swipe-row {
+  margin-bottom: 6px;
+}
+
+.tg-ops-swipe-row .tg-ops-row {
+  margin: 0;
+}
+
 .tg-workspace-card {
   margin-top: 12px;
 }

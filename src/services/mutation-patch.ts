@@ -128,6 +128,45 @@ export async function buildCategoriesMutationPatch(
   };
 }
 
+export async function buildLedgerMutationPatch(
+  workspaceId: string,
+  reportingCurrency: string,
+  entryOccurredAt?: string | null
+): Promise<AppMutationPatch> {
+  const monthRange = resolveReportRange("month");
+  const inMonth = entryOccurredAt
+    ? isOccurredInReportRange(entryOccurredAt, monthRange.startDate, monthRange.endDate)
+    : false;
+
+  const [accounts, categoriesCount] = await Promise.all([
+    listAccounts(workspaceId),
+    countActiveCategories(workspaceId)
+  ]);
+
+  const monthTotals = inMonth
+    ? await computeMonthEntryTotalsInReportingCurrency(
+        workspaceId,
+        reportingCurrency,
+        monthRange.startDate,
+        monthRange.endDate
+      )
+    : undefined;
+
+  const summary = await buildBalanceSummary(
+    workspaceId,
+    reportingCurrency,
+    accounts,
+    categoriesCount,
+    monthTotals
+  );
+
+  return {
+    accounts,
+    summary,
+    syncReport: inMonth
+  };
+}
+
 export async function buildEntryMutationPatch(
   workspaceId: string,
   reportingCurrency: string,

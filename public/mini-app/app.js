@@ -370,6 +370,8 @@ const state = {
   reportExportQuery: null,
   editingAccountId: null,
   editingCategoryId: null,
+  editingEntryId: null,
+  editingTransferId: null,
   /** Последний ответ GET /api/operations (веб), чтобы не перезагружать при смене вкладки */
   webOperationsLastPayload: null
 };
@@ -1637,6 +1639,22 @@ function toIsoDate(localDateTime) {
   return new Date(localDateTime).toISOString();
 }
 
+function isoToDatetimeLocalValue(iso) {
+  if (!iso) {
+    return getCurrentLocalDateTimeValue();
+  }
+
+  const date = new Date(iso);
+
+  if (Number.isNaN(date.getTime())) {
+    return getCurrentLocalDateTimeValue();
+  }
+
+  const pad = (value) => String(value).padStart(2, "0");
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 function toDateRangeStart(dateValue) {
   return `${dateValue}T00:00`;
 }
@@ -2136,6 +2154,7 @@ function buildWebOperationsTableRowHtml(row) {
       <td class="web-ops-col-num"><span class="${amtClass}">${sign}${amt}</span></td>
       <td>${cur}</td>
       ${authorCell}
+      <td class="web-ops-col-actions">${buildOperationActionButtonsHtml("entry", e.id)}</td>
     </tr>`;
   }
 
@@ -2163,6 +2182,7 @@ function buildWebOperationsTableRowHtml(row) {
     <td class="web-ops-col-num"><span class="web-ops-amount-transfer">−${fromAmt}</span></td>
     <td>${fromCur}</td>
     ${authorCell}
+    <td class="web-ops-col-actions">${buildOperationActionButtonsHtml("transfer", t.id)}</td>
   </tr>`;
 }
 
@@ -2223,6 +2243,8 @@ function closeHelpDocumentationModal() {
 
 function openEntryScreenForKind(kind) {
   closeEntryTypeModal();
+  state.editingEntryId = null;
+  syncEntryFormChrome();
   openScreen("activity");
   if (!entryKindInput) {
     return;
@@ -2500,6 +2522,7 @@ function resetEntryFormToDefaults() {
     return;
   }
 
+  state.editingEntryId = null;
   entryForm.reset();
   entryKindInput.value = "expense";
   entryDateInput.value = getCurrentLocalDateTimeValue();
@@ -2507,6 +2530,202 @@ function resetEntryFormToDefaults() {
   populateEntryCurrencyOptions();
   syncEntryCurrencyFromAccount(true);
   syncWebEntryKindCardsFromSelect();
+  syncEntryFormChrome();
+}
+
+function syncEntryFormChrome() {
+  if (!entrySubmitButton) {
+    return;
+  }
+
+  const editing = Boolean(state.editingEntryId);
+
+  entrySubmitButton.textContent = editing ? "Сохранить изменения" : "Сохранить операцию";
+}
+
+function findEntryInClientState(entryId) {
+  const fromRecent = state.recentEntries.find((item) => item.id === entryId);
+
+  if (fromRecent) {
+    return fromRecent;
+  }
+
+  const items = state.webOperationsLastPayload?.items;
+
+  if (!Array.isArray(items)) {
+    return null;
+  }
+
+  const row = items.find((item) => item.kind === "entry" && item.entry?.id === entryId);
+
+  return row?.entry ?? null;
+}
+
+function findTransferInClientState(transferId) {
+  const fromRecent = state.recentTransfers.find((item) => item.id === transferId);
+
+  if (fromRecent) {
+    return fromRecent;
+  }
+
+  const items = state.webOperationsLastPayload?.items;
+
+  if (!Array.isArray(items)) {
+    return null;
+  }
+
+  const row = items.find((item) => item.kind === "transfer" && item.transfer?.id === transferId);
+
+  return row?.transfer ?? null;
+}
+
+function buildOperationActionButtonsHtml(kind, id) {
+  const safeId = escapeHtml(id);
+
+  if (kind === "entry") {
+    return `<div class="web-ops-row-actions">
+      <button type="button" class="web-categories-icon-btn" data-entry-edit-id="${safeId}" title="Редактировать" aria-label="Редактировать операцию">${ACCOUNT_EDIT_ICON_SVG}</button>
+      <button type="button" class="web-categories-icon-btn web-categories-icon-btn--danger" data-entry-delete-id="${safeId}" title="Удалить" aria-label="Удалить операцию">${ACCOUNT_DELETE_ICON_SVG}</button>
+    </div>`;
+  }
+
+  return `<div class="web-ops-row-actions">
+    <button type="button" class="web-categories-icon-btn" data-transfer-edit-id="${safeId}" title="Редактировать" aria-label="Редактировать перевод">${ACCOUNT_EDIT_ICON_SVG}</button>
+    <button type="button" class="web-categories-icon-btn web-categories-icon-btn--danger" data-transfer-delete-id="${safeId}" title="Удалить" aria-label="Удалить перевод">${ACCOUNT_DELETE_ICON_SVG}</button>
+  </div>`;
+}
+
+function buildOperationSwipeActionsHtml(kind, id) {
+  const safeId = escapeHtml(id);
+
+  if (kind === "entry") {
+    return `<button class="icon-action-button" type="button" data-entry-edit-id="${safeId}" title="Редактировать" aria-label="Редактировать операцию">${ACCOUNT_EDIT_ICON_SVG}</button>
+      <button class="icon-action-button icon-action-button-danger" type="button" data-entry-delete-id="${safeId}" title="Удалить" aria-label="Удалить операцию">${ACCOUNT_DELETE_ICON_SVG}</button>`;
+  }
+
+  return `<button class="icon-action-button" type="button" data-transfer-edit-id="${safeId}" title="Редактировать" aria-label="Редактировать перевод">${ACCOUNT_EDIT_ICON_SVG}</button>
+    <button class="icon-action-button icon-action-button-danger" type="button" data-transfer-delete-id="${safeId}" title="Удалить" aria-label="Удалить перевод">${ACCOUNT_DELETE_ICON_SVG}</button>`;
+}
+
+function wrapTgOpsRowWithSwipeActions(innerRowHtml, kind, id) {
+  return `<div class="swipe-row tg-ops-swipe-row">
+    <div class="swipe-row-actions" aria-hidden="true">
+      ${buildOperationSwipeActionsHtml(kind, id)}
+    </div>
+    <div class="swipe-row-sheet">${innerRowHtml}</div>
+  </div>`;
+}
+
+function startEntryEdit(entryId) {
+  collapseSwipeRowsExcept(null);
+
+  const entry = findEntryInClientState(entryId);
+
+  if (!entry) {
+    setStatus("Операция не найдена. Обновите список и попробуйте снова.", "error");
+    return;
+  }
+
+  state.editingEntryId = entry.id;
+  populateAccountOptions();
+  entryKindInput.value = entry.kind;
+  entryAccountInput.value = entry.account_id;
+  populateCategoryOptions();
+  entryCategoryInput.value = entry.category_id ?? "";
+  if (entryAmountInput) {
+    entryAmountInput.value = String(entry.amount ?? "");
+  }
+  populateEntryCurrencyOptions();
+  if (entryCurrencyInput) {
+    entryCurrencyInput.value = entry.currency_code ?? "";
+  }
+  if (entryDateInput) {
+    entryDateInput.value = isoToDatetimeLocalValue(entry.occurred_at);
+  }
+  const noteInput = document.getElementById("entryNoteInput");
+  if (noteInput instanceof HTMLInputElement) {
+    noteInput.value = entry.note ?? "";
+  }
+  syncWebEntryKindCardsFromSelect();
+  syncEntryCurrencyFromAccount(false);
+  syncEntryAccountAvailabilityLine();
+  syncEntryFormChrome();
+  setStatus("Измените поля и нажмите «Сохранить».", "success");
+  openScreen("activity");
+
+  window.requestAnimationFrame(() => {
+    entryAmountInput?.focus({ preventScroll: true });
+  });
+}
+
+function startTransferEdit(transferId) {
+  collapseSwipeRowsExcept(null);
+
+  const transfer = findTransferInClientState(transferId);
+
+  if (!transfer) {
+    setStatus("Перевод не найден. Обновите список и попробуйте снова.", "error");
+    return;
+  }
+
+  state.editingTransferId = transfer.id;
+  transferReturnScreen = document.body.dataset.appActiveScreen || "history";
+  closeEntryTypeModal();
+  openScreen("transfer");
+  populateAccountOptions();
+  transferFromAccountInput.value = transfer.from_account_id;
+  transferToAccountInput.value = transfer.to_account_id;
+  const fromAmountInput = document.getElementById("transferFromAmountInput");
+  const toAmountInput = document.getElementById("transferToAmountInput");
+  const noteInput = transferForm?.querySelector('[name="note"]');
+
+  if (fromAmountInput instanceof HTMLInputElement) {
+    fromAmountInput.value = String(transfer.from_amount ?? "");
+  }
+
+  if (toAmountInput instanceof HTMLInputElement) {
+    toAmountInput.value = String(transfer.to_amount ?? "");
+    transferToAmountAutofillTag = null;
+  }
+
+  if (noteInput instanceof HTMLInputElement) {
+    noteInput.value = transfer.note ?? "";
+  }
+
+  if (transferDateInput) {
+    transferDateInput.value = isoToDatetimeLocalValue(transfer.occurred_at);
+  }
+
+  syncTransferFormChrome();
+  syncWebTransferAmountCurrencyUi();
+  setStatus("Измените поля перевода и нажмите «Сохранить».", "success");
+}
+
+function resetTransferFormToDefaults() {
+  state.editingTransferId = null;
+
+  if (transferForm) {
+    transferForm.reset();
+  }
+
+  transferToAmountAutofillTag = null;
+  transferToAmountProgrammatic = false;
+
+  if (transferDateInput) {
+    transferDateInput.value = getCurrentLocalDateTimeValue();
+  }
+
+  syncTransferFormChrome();
+}
+
+function syncTransferFormChrome() {
+  if (!transferSubmitButton) {
+    return;
+  }
+
+  const editing = Boolean(state.editingTransferId);
+
+  transferSubmitButton.textContent = editing ? "Сохранить изменения" : "Сохранить перевод";
 }
 
 const WEB_DASH_SPARK_DAY_COUNT = 7;
@@ -4575,7 +4794,7 @@ function buildTgOpsFeedHtmlFromItems(items) {
         const amt = escapeHtml(`${prefix}${formatMoneyAmount(entry.amount)}`);
         const ccy = escapeHtml(entry.currency_code || "");
 
-        parts.push(`<div class="tg-ops-row" role="listitem">
+        const entryRowHtml = `<div class="tg-ops-row" role="listitem">
           <div class="tg-ops-row-icon ${iconClass}" aria-hidden="true">${getEntryIcon(entry.kind)}</div>
           <div class="tg-ops-row-main">
             <span class="tg-ops-row-title">${escapeHtml(catName)}</span>
@@ -4590,12 +4809,14 @@ function buildTgOpsFeedHtmlFromItems(items) {
             <span class="tg-ops-amount-val ${amountClass}">${amt}</span>
             <span class="tg-ops-amount-ccy">${ccy}</span>
           </div>
-        </div>`);
+        </div>`;
+
+        parts.push(wrapTgOpsRowWithSwipeActions(entryRowHtml, "entry", entry.id));
       } else {
         const transfer = item.payload;
         const title = `${transfer.from_account?.name ?? "Счёт"} → ${transfer.to_account?.name ?? "Счёт"}`;
 
-        parts.push(`<div class="tg-ops-row" role="listitem">
+        const transferRowHtml = `<div class="tg-ops-row" role="listitem">
           <div class="tg-ops-row-icon tg-ops-row-icon--transfer" aria-hidden="true">${getEntryIcon("transfer")}</div>
           <div class="tg-ops-row-main">
             <span class="tg-ops-row-title">${escapeHtml(title)}</span>
@@ -4607,7 +4828,9 @@ function buildTgOpsFeedHtmlFromItems(items) {
             )}</span>
           </div>
           ${formatTgOpsTransferAmountCell(transfer)}
-        </div>`);
+        </div>`;
+
+        parts.push(wrapTgOpsRowWithSwipeActions(transferRowHtml, "transfer", transfer.id));
       }
     }
   }
@@ -5770,16 +5993,7 @@ function swapWebTransferAccounts() {
 }
 
 function exitTransferScreen() {
-  if (transferForm) {
-    transferForm.reset();
-  }
-
-  transferToAmountAutofillTag = null;
-  transferToAmountProgrammatic = false;
-
-  if (transferDateInput) {
-    transferDateInput.value = getCurrentLocalDateTimeValue();
-  }
+  resetTransferFormToDefaults();
 
   const back = transferReturnScreen || "home";
   openScreen(back);
@@ -5787,6 +6001,7 @@ function exitTransferScreen() {
 }
 
 function openTransferScreen() {
+  resetTransferFormToDefaults();
   transferReturnScreen = document.body.dataset.appActiveScreen || "home";
   transferToAmountAutofillTag = null;
   transferToAmountProgrammatic = false;
@@ -9157,13 +9372,14 @@ async function handleDeleteCategory(categoryId) {
   }
 }
 
-async function handleCreateEntry(event) {
+async function handleEntrySubmit(event) {
   event.preventDefault();
 
   if (!entryForm) {
     return;
   }
 
+  const isEditing = Boolean(state.editingEntryId);
   const formData = new FormData(entryForm);
   const rawDate = String(formData.get("occurredAt") ?? "");
   const accountCurrency = readEntryAccountCurrency();
@@ -9186,24 +9402,36 @@ async function handleCreateEntry(event) {
   if (entrySubmitButton) {
     entrySubmitButton.disabled = true;
   }
-  setStatus("Сохраняем операцию...");
-  beginGlobalBusy("Сохраняем операцию…");
+  setStatus(isEditing ? "Сохраняем изменения…" : "Сохраняем операцию...");
+  beginGlobalBusy(isEditing ? "Сохраняем изменения…" : "Сохраняем операцию…");
 
   try {
-    const response = await apiFetch("/api/entries", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+    const response = await apiFetch(
+      isEditing
+        ? `/api/entries/${encodeURIComponent(state.editingEntryId)}`
+        : "/api/entries",
+      {
+        method: isEditing ? "PATCH" : "POST",
+        body: JSON.stringify(payload)
+      }
+    );
 
     resetEntryFormToDefaults();
-    setStatus("Операция сохранена.", "success");
+    setStatus(isEditing ? "Операция обновлена." : "Операция сохранена.", "success");
 
-    if (!finishMutationFromResponse(response)) {
-      await refreshAppData({ backgroundRefresh: true, light: true });
+    if (
+      !finishMutationFromResponse(response, {
+        syncWebOperationsHistory: true
+      })
+    ) {
+      await refreshAppData({ backgroundRefresh: true, light: true, syncWebOperationsHistory: true });
     }
   } catch (error) {
     console.error(error);
-    setStatus(error instanceof Error ? error.message : "Не удалось сохранить операцию", "error");
+    setStatus(
+      error instanceof Error ? error.message : "Не удалось сохранить операцию",
+      "error"
+    );
   } finally {
     endGlobalBusy();
     if (entrySubmitButton) {
@@ -9212,9 +9440,55 @@ async function handleCreateEntry(event) {
   }
 }
 
-async function handleCreateTransfer(event) {
+async function handleDeleteEntry(entryId) {
+  const confirmed = window.confirm("Удалить эту операцию? Баланс счёта будет пересчитан.");
+
+  if (!confirmed) {
+    return;
+  }
+
+  setStatus("Удаляем операцию...");
+  beginGlobalBusy("Удаляем операцию…");
+
+  try {
+    const response = await apiFetch(`/api/entries/${encodeURIComponent(entryId)}`, {
+      method: "DELETE"
+    });
+
+    if (state.editingEntryId === entryId) {
+      resetEntryFormToDefaults();
+    }
+
+    state.recentEntries = state.recentEntries.filter((row) => row.id !== entryId);
+
+    setStatus("Операция удалена.", "success");
+
+    if (
+      !finishMutationFromResponse(response, {
+        syncWebOperationsHistory: true
+      })
+    ) {
+      await refreshAppData({ backgroundRefresh: true, light: true, syncWebOperationsHistory: true });
+    }
+  } catch (error) {
+    console.error(error);
+    setStatus(
+      error instanceof Error ? error.message : "Не удалось удалить операцию",
+      "error"
+    );
+  } finally {
+    endGlobalBusy();
+  }
+}
+
+async function handleTransferSubmit(event) {
   event.preventDefault();
 
+  if (!transferForm) {
+    return;
+  }
+
+  const isEditing = Boolean(state.editingTransferId);
   const formData = new FormData(transferForm);
   const rawDate = String(formData.get("occurredAt") ?? "");
   const rawToAmount = String(formData.get("toAmount") ?? "").trim();
@@ -9228,33 +9502,83 @@ async function handleCreateTransfer(event) {
   };
 
   transferSubmitButton.disabled = true;
-  setStatus("Сохраняем перевод...");
-  beginGlobalBusy("Сохраняем перевод…");
+  setStatus(isEditing ? "Сохраняем изменения…" : "Сохраняем перевод...");
+  beginGlobalBusy(isEditing ? "Сохраняем изменения…" : "Сохраняем перевод…");
 
   try {
-    const response = await apiFetch("/api/transfers", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+    const response = await apiFetch(
+      isEditing
+        ? `/api/transfers/${encodeURIComponent(state.editingTransferId)}`
+        : "/api/transfers",
+      {
+        method: isEditing ? "PATCH" : "POST",
+        body: JSON.stringify(payload)
+      }
+    );
 
-    transferForm.reset();
-    transferDateInput.value = getCurrentLocalDateTimeValue();
-    transferToAmountAutofillTag = null;
-    transferToAmountProgrammatic = false;
-    setStatus("Перевод сохранен.", "success");
+    resetTransferFormToDefaults();
+    setStatus(isEditing ? "Перевод обновлён." : "Перевод сохранен.", "success");
 
-    if (!finishMutationFromResponse(response)) {
-      await refreshAppData({ backgroundRefresh: true, light: true });
+    if (
+      !finishMutationFromResponse(response, {
+        syncWebOperationsHistory: true
+      })
+    ) {
+      await refreshAppData({ backgroundRefresh: true, light: true, syncWebOperationsHistory: true });
     }
 
     const back = transferReturnScreen || "home";
     openScreen(back);
   } catch (error) {
     console.error(error);
-    setStatus(error instanceof Error ? error.message : "Не удалось сохранить перевод", "error");
+    setStatus(
+      error instanceof Error ? error.message : "Не удалось сохранить перевод",
+      "error"
+    );
   } finally {
     endGlobalBusy();
     transferSubmitButton.disabled = false;
+  }
+}
+
+async function handleDeleteTransfer(transferId) {
+  const confirmed = window.confirm("Удалить этот перевод? Балансы счетов будут пересчитаны.");
+
+  if (!confirmed) {
+    return;
+  }
+
+  setStatus("Удаляем перевод...");
+  beginGlobalBusy("Удаляем перевод…");
+
+  try {
+    const response = await apiFetch(`/api/transfers/${encodeURIComponent(transferId)}`, {
+      method: "DELETE"
+    });
+
+    if (state.editingTransferId === transferId) {
+      resetTransferFormToDefaults();
+    }
+
+    state.recentTransfers = state.recentTransfers.filter((row) => row.id !== transferId);
+
+    setStatus("Перевод удалён.", "success");
+
+    if (
+      !finishMutationFromResponse(response, {
+        syncWebOperationsHistory: true
+      })
+    ) {
+      await refreshAppData({ backgroundRefresh: true, light: true, syncWebOperationsHistory: true });
+    }
+  } catch (error) {
+    console.error(error);
+    setStatus(
+      error instanceof Error ? error.message : "Не удалось удалить перевод",
+      "error"
+    );
+  } finally {
+    endGlobalBusy();
   }
 }
 
@@ -9392,6 +9716,60 @@ function handleOpenScreenButtonClick(button) {
   } else if (label?.includes("Перевод")) {
     document.getElementById("transferFromAmountInput")?.focus({ preventScroll: true });
   }
+}
+
+let operationsActionsListenerAttached = false;
+
+function attachOperationsActionsListener() {
+  if (operationsActionsListenerAttached) {
+    return;
+  }
+
+  operationsActionsListenerAttached = true;
+
+  const onOperationsClick = (event) => {
+    const target = event.target;
+
+    if (!(target instanceof Element)) {
+      return;
+    }
+
+    const editEntryControl = target.closest("[data-entry-edit-id]");
+    const deleteEntryControl = target.closest("[data-entry-delete-id]");
+    const editTransferControl = target.closest("[data-transfer-edit-id]");
+    const deleteTransferControl = target.closest("[data-transfer-delete-id]");
+
+    const entryEditId = editEntryControl?.dataset.entryEditId;
+    const entryDeleteId = deleteEntryControl?.dataset.entryDeleteId;
+    const transferEditId = editTransferControl?.dataset.transferEditId;
+    const transferDeleteId = deleteTransferControl?.dataset.transferDeleteId;
+
+    if (entryEditId) {
+      collapseSwipeRowsExcept(null);
+      startEntryEdit(entryEditId);
+      return;
+    }
+
+    if (entryDeleteId) {
+      collapseSwipeRowsExcept(null);
+      void handleDeleteEntry(entryDeleteId);
+      return;
+    }
+
+    if (transferEditId) {
+      collapseSwipeRowsExcept(null);
+      startTransferEdit(transferEditId);
+      return;
+    }
+
+    if (transferDeleteId) {
+      collapseSwipeRowsExcept(null);
+      void handleDeleteTransfer(transferDeleteId);
+    }
+  };
+
+  webOpsTableBody?.addEventListener("click", onOperationsClick);
+  document.getElementById("tgActivityCombinedList")?.addEventListener("click", onOperationsClick);
 }
 
 function attachCategoryListsListener() {
@@ -9811,6 +10189,7 @@ document.getElementById("entryTypeOpenTransferButton")?.addEventListener("click"
 
 attachAccountsListListener();
 attachSwipeRowHandlers();
+attachOperationsActionsListener();
 attachCategoryListsListener();
 attachCategoryFormSharedChrome();
 attachWebCategoriesChrome();
@@ -9889,7 +10268,7 @@ cancelCategoryEditButton?.addEventListener("click", () => {
 });
 
 entryForm?.addEventListener("submit", (event) => {
-  void handleCreateEntry(event);
+  void handleEntrySubmit(event);
 });
 
 entrySubmitButton?.addEventListener("click", () => {
@@ -9897,7 +10276,7 @@ entrySubmitButton?.addEventListener("click", () => {
 });
 
 transferForm?.addEventListener("submit", (event) => {
-  void handleCreateTransfer(event);
+  void handleTransferSubmit(event);
 });
 
 transferSubmitButton?.addEventListener("click", () => {

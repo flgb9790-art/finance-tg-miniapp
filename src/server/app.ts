@@ -18,6 +18,8 @@ import {
 } from "../services/categories.js";
 import {
   createEntry,
+  deleteEntry,
+  updateEntry
 } from "../services/entries.js";
 import {
   convertFxPreview,
@@ -38,9 +40,10 @@ import {
   buildBalancesOnlyMutationPatch,
   buildCategoriesMutationPatch,
   buildEntryMutationPatch,
+  buildLedgerMutationPatch,
   buildTransferMutationPatch
 } from "../services/mutation-patch.js";
-import { createTransfer } from "../services/transfers.js";
+import { createTransfer, deleteTransfer, updateTransfer } from "../services/transfers.js";
 import {
   listOperationsTimeline,
   parseOperationsListQuery
@@ -963,6 +966,106 @@ export function createHttpApp(): express.Express {
     }
   });
 
+  app.patch("/api/entries/:entryId", async (req, res) => {
+    try {
+      const { ws } = await withAuthWorkspace(req);
+      const entryId =
+        typeof req.params.entryId === "string" ? req.params.entryId.trim() : "";
+
+      if (!entryId) {
+        res.status(400).json({ error: "Entry id is required" });
+        return;
+      }
+
+      const kind =
+        typeof req.body?.kind === "string" ? req.body.kind.trim() : "";
+      const accountId =
+        typeof req.body?.accountId === "string" ? req.body.accountId.trim() : "";
+      const categoryId =
+        typeof req.body?.categoryId === "string"
+          ? req.body.categoryId.trim()
+          : "";
+      const amount = Number(req.body?.amount ?? 0);
+      const currencyCode =
+        typeof req.body?.currencyCode === "string" ? req.body.currencyCode.trim() : "";
+      const note =
+        typeof req.body?.note === "string" && req.body.note.trim()
+          ? req.body.note.trim()
+          : null;
+      const occurredAt =
+        typeof req.body?.occurredAt === "string" && req.body.occurredAt.trim()
+          ? req.body.occurredAt.trim()
+          : new Date().toISOString();
+
+      if (!["income", "expense"].includes(kind)) {
+        res.status(400).json({ error: "Operation kind is invalid" });
+        return;
+      }
+
+      if (!accountId || !categoryId) {
+        res.status(400).json({ error: "Account and category are required" });
+        return;
+      }
+
+      if (Number.isNaN(amount) || amount <= 0) {
+        res.status(400).json({ error: "Amount must be greater than 0" });
+        return;
+      }
+
+      const reportingCurrency = await resolveReportingCurrency(req);
+      const entry = await updateEntry({
+        entryId,
+        workspaceId: ws.workspaceId,
+        kind: kind as OperationKind,
+        accountId,
+        categoryId,
+        amount,
+        currencyCode: currencyCode || null,
+        note,
+        occurredAt
+      });
+
+      const patch = await buildEntryMutationPatch(ws.workspaceId, reportingCurrency, entry);
+
+      res.json({ entry, patch });
+    } catch (error) {
+      console.error("Failed to update entry from mini app", error);
+
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Failed to update entry"
+      });
+    }
+  });
+
+  app.delete("/api/entries/:entryId", async (req, res) => {
+    try {
+      const { ws } = await withAuthWorkspace(req);
+      const entryId =
+        typeof req.params.entryId === "string" ? req.params.entryId.trim() : "";
+
+      if (!entryId) {
+        res.status(400).json({ error: "Entry id is required" });
+        return;
+      }
+
+      const reportingCurrency = await resolveReportingCurrency(req);
+      const deleted = await deleteEntry(entryId, ws.workspaceId);
+      const patch = await buildLedgerMutationPatch(
+        ws.workspaceId,
+        reportingCurrency,
+        deleted.occurred_at
+      );
+
+      res.json({ ok: true, patch });
+    } catch (error) {
+      console.error("Failed to delete entry from mini app", error);
+
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Failed to delete entry"
+      });
+    }
+  });
+
   app.post("/api/transfers", async (req, res) => {
     try {
       const { appUser, ws } = await withAuthWorkspace(req);
@@ -1024,6 +1127,103 @@ export function createHttpApp(): express.Express {
       res.status(400).json({
         error:
           error instanceof Error ? error.message : "Failed to create transfer"
+      });
+    }
+  });
+
+  app.patch("/api/transfers/:transferId", async (req, res) => {
+    try {
+      const { ws } = await withAuthWorkspace(req);
+      const transferId =
+        typeof req.params.transferId === "string" ? req.params.transferId.trim() : "";
+
+      if (!transferId) {
+        res.status(400).json({ error: "Transfer id is required" });
+        return;
+      }
+
+      const fromAccountId =
+        typeof req.body?.fromAccountId === "string"
+          ? req.body.fromAccountId.trim()
+          : "";
+      const toAccountId =
+        typeof req.body?.toAccountId === "string"
+          ? req.body.toAccountId.trim()
+          : "";
+      const fromAmount = Number(req.body?.fromAmount ?? 0);
+      const toAmount =
+        req.body?.toAmount === null || req.body?.toAmount === undefined || req.body?.toAmount === ""
+          ? null
+          : Number(req.body?.toAmount);
+      const note =
+        typeof req.body?.note === "string" && req.body.note.trim()
+          ? req.body.note.trim()
+          : null;
+      const occurredAt =
+        typeof req.body?.occurredAt === "string" && req.body.occurredAt.trim()
+          ? req.body.occurredAt.trim()
+          : new Date().toISOString();
+
+      if (!fromAccountId || !toAccountId) {
+        res.status(400).json({ error: "Both accounts are required" });
+        return;
+      }
+
+      if (Number.isNaN(fromAmount) || fromAmount <= 0) {
+        res.status(400).json({ error: "Transfer amount must be greater than 0" });
+        return;
+      }
+
+      if (toAmount !== null && (Number.isNaN(toAmount) || toAmount <= 0)) {
+        res.status(400).json({ error: "Target amount must be greater than 0" });
+        return;
+      }
+
+      const reportingCurrency = await resolveReportingCurrency(req);
+      const transfer = await updateTransfer({
+        transferId,
+        workspaceId: ws.workspaceId,
+        fromAccountId,
+        toAccountId,
+        fromAmount,
+        toAmount,
+        note,
+        occurredAt
+      });
+
+      const patch = await buildTransferMutationPatch(ws.workspaceId, reportingCurrency);
+
+      res.json({ transfer, patch });
+    } catch (error) {
+      console.error("Failed to update transfer from mini app", error);
+
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Failed to update transfer"
+      });
+    }
+  });
+
+  app.delete("/api/transfers/:transferId", async (req, res) => {
+    try {
+      const { ws } = await withAuthWorkspace(req);
+      const transferId =
+        typeof req.params.transferId === "string" ? req.params.transferId.trim() : "";
+
+      if (!transferId) {
+        res.status(400).json({ error: "Transfer id is required" });
+        return;
+      }
+
+      const reportingCurrency = await resolveReportingCurrency(req);
+      await deleteTransfer(transferId, ws.workspaceId);
+      const patch = await buildTransferMutationPatch(ws.workspaceId, reportingCurrency);
+
+      res.json({ ok: true, patch });
+    } catch (error) {
+      console.error("Failed to delete transfer from mini app", error);
+
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Failed to delete transfer"
       });
     }
   });
