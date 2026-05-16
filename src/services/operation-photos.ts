@@ -16,6 +16,7 @@ const ALLOWED_MIME = new Set([
 
 export type EntryForClient = EntryListItem & {
   photoViewUrl: string | null;
+  hasPhoto: boolean;
 };
 
 function extensionForMime(mime: string): string {
@@ -102,9 +103,12 @@ export async function createSignedPhotoUrl(
 }
 
 export async function enrichEntryForClient(entry: EntryListItem): Promise<EntryForClient> {
+  const hasPhoto = Boolean(String(entry.photo_url ?? "").trim());
+
   return {
     ...entry,
-    photoViewUrl: await createSignedPhotoUrl(entry.photo_url)
+    hasPhoto,
+    photoViewUrl: hasPhoto ? await createSignedPhotoUrl(entry.photo_url) : null
   };
 }
 

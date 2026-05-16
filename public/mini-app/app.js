@@ -2549,6 +2549,14 @@ function entryHasAttachedPhoto(entry) {
     return false;
   }
 
+  if (entry.hasPhoto === true) {
+    return true;
+  }
+
+  if (getEntryPhotoViewUrl(entry)) {
+    return true;
+  }
+
   return Boolean(String(entry.photo_url ?? "").trim());
 }
 
@@ -2580,7 +2588,7 @@ function rememberEntryPhotoViewUrl(entryId, photoViewUrl) {
   };
 
   state.recentEntries = state.recentEntries.map((row) =>
-    row.id === id ? { ...row, photoViewUrl: url } : row
+    row.id === id ? { ...row, photoViewUrl: url, hasPhoto: true } : row
   );
 
   const payload = state.webOperationsLastPayload;
@@ -2592,7 +2600,7 @@ function rememberEntryPhotoViewUrl(entryId, photoViewUrl) {
         if (item.kind === "entry" && item.entry?.id === id) {
           return {
             ...item,
-            entry: { ...item.entry, photoViewUrl: url }
+            entry: { ...item.entry, photoViewUrl: url, hasPhoto: true }
           };
         }
 
@@ -2787,13 +2795,18 @@ function readFileAsDataUrl(file) {
 
 async function uploadEntryPhotoForId(entryId, file) {
   const compressed = await compressEntryPhotoFile(file);
-  const imageBase64 = await readFileAsDataUrl(compressed);
+  const dataUrl = await readFileAsDataUrl(compressed);
+  const dataUrlMatch = /^data:([^;]+);base64,(.+)$/i.exec(dataUrl);
+  const contentType = String(dataUrlMatch?.[1] ?? compressed.type ?? "image/jpeg")
+    .trim()
+    .toLowerCase();
+  const imageBase64 = String(dataUrlMatch?.[2] ?? dataUrl).trim();
 
   return apiFetch(`/api/entries/${encodeURIComponent(entryId)}/photo`, {
     method: "POST",
     body: JSON.stringify({
       imageBase64,
-      contentType: compressed.type || "image/jpeg"
+      contentType
     })
   });
 }
@@ -9929,30 +9942,35 @@ async function handleEntrySubmit(event) {
     ).trim();
 
     let photoWarning = "";
+    const hadPendingPhoto = Boolean(state.entryPhotoPendingFile);
+    const hadPhotoRemoval = Boolean(state.entryPhotoRemoveOnSave);
 
-    if (savedEntryId) {
+    if (savedEntryId && (hadPendingPhoto || hadPhotoRemoval)) {
       try {
-        if (state.entryPhotoRemoveOnSave) {
+        if (hadPhotoRemoval) {
           response = await removeEntryPhotoForId(savedEntryId);
-        } else if (state.entryPhotoPendingFile) {
+        } else if (hadPendingPhoto) {
           response = await uploadEntryPhotoForId(savedEntryId, state.entryPhotoPendingFile);
         }
       } catch (photoError) {
         console.error(photoError);
         photoWarning =
-          photoError instanceof Error ? photoError.message : "Не удалось обновить фото";
+          photoError instanceof Error ? photoError.message : "Не удалось сохранить фото";
       }
     }
 
     resetEntryFormToDefaults();
-    setStatus(
-      photoWarning
-        ? `Операция сохранена. ${photoWarning}`
-        : isEditing
-          ? "Операция обновлена."
-          : "Операция сохранена.",
-      photoWarning ? "error" : "success"
-    );
+
+    if (photoWarning) {
+      setStatus(`Операция сохранена, но фото не загружено: ${photoWarning}`, "error");
+    } else if (hadPendingPhoto || hadPhotoRemoval) {
+      setStatus(
+        isEditing ? "Операция и фото обновлены." : "Операция и фото сохранены.",
+        "success"
+      );
+    } else {
+      setStatus(isEditing ? "Операция обновлена." : "Операция сохранена.", "success");
+    }
 
     if (
       !finishMutationFromResponse(response, {

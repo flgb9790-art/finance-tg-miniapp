@@ -353,7 +353,7 @@ export function createHttpApp(): express.Express {
   const app = express();
   app.set("trust proxy", 1);
 
-  app.use(express.json());
+  app.use(express.json({ limit: "8mb" }));
   app.use(
     express.static(publicPath, {
       setHeaders(res, absolutePathOnDisk) {
@@ -1097,10 +1097,7 @@ export function createHttpApp(): express.Express {
     }
   });
 
-  app.post(
-    "/api/entries/:entryId/photo",
-    express.json({ limit: "8mb" }),
-    async (req, res) => {
+  app.post("/api/entries/:entryId/photo", async (req, res) => {
       try {
         const { ws } = await withAuthWorkspace(req);
         const entryId =
@@ -1124,8 +1121,7 @@ export function createHttpApp(): express.Express {
           error: error instanceof Error ? error.message : "Не удалось загрузить фото"
         });
       }
-    }
-  );
+  });
 
   app.delete("/api/entries/:entryId/photo", async (req, res) => {
     try {
