@@ -167,7 +167,8 @@ const WEB_PAGE_TITLES = {
   accounts: "Счета",
   more: "Ещё",
   transfer: "Перевод между счетами",
-  settings: "Настройки"
+  settings: "Настройки",
+  "audit-log": "Журнал изменений"
 };
 
 const userNameElement = document.getElementById("userName");
@@ -238,9 +239,18 @@ const webTeamInvitesBlockElement = document.getElementById("webTeamInvitesBlock"
 const webTeamInvitesListElement = document.getElementById("webTeamInvitesList");
 const webTeamLeaveButtonElement = document.getElementById("webTeamLeaveButton");
 const webTeamLeaveOwnerHintElement = document.getElementById("webTeamLeaveOwnerHint");
-const webTeamAuditBlockElement = document.getElementById("webTeamAuditBlock");
-const webTeamAuditListElement = document.getElementById("webTeamAuditList");
-const webTeamAuditEmptyElement = document.getElementById("webTeamAuditEmpty");
+const webAuditLogSettingsCardElement = document.getElementById("webAuditLogSettingsCard");
+const webOpenAuditLogButtonElement = document.getElementById("webOpenAuditLogButton");
+const webAuditLogBackButtonElement = document.getElementById("webAuditLogBackButton");
+const webAuditLogListElement = document.getElementById("webAuditLogList");
+const webAuditLogEmptyElement = document.getElementById("webAuditLogEmpty");
+const webAuditLogErrorElement = document.getElementById("webAuditLogError");
+const operationAuditModalElement = document.getElementById("operationAuditModal");
+const operationAuditModalTitleElement = document.getElementById("operationAuditModalTitle");
+const operationAuditModalMetaElement = document.getElementById("operationAuditModalMeta");
+const operationAuditModalListElement = document.getElementById("operationAuditModalList");
+const operationAuditModalEmptyElement = document.getElementById("operationAuditModalEmpty");
+const operationAuditModalErrorElement = document.getElementById("operationAuditModalError");
 const webTeamInviteBlockElement = document.querySelector(".web-team-invite-block");
 const tgWorkspaceCardElement = document.getElementById("tgWorkspaceCard");
 const tgWorkspaceActiveMetaElement = document.getElementById("tgWorkspaceActiveMeta");
@@ -372,6 +382,7 @@ const state = {
   user: null,
   workspace: null,
   workspaces: [],
+  auditLogReturnScreen: "settings",
   accounts: [],
   categories: [],
   currencies: [],
@@ -1411,6 +1422,11 @@ const ACCOUNT_DELETE_ICON_SVG = `<svg class="icon-action-svg" viewBox="0 0 24 24
   <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
 </svg>`;
 
+const OPERATION_AUDIT_ICON_SVG = `<svg class="icon-action-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.7"/>
+  <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
 const ENTRY_FILES_ICON_SVG = `<svg class="entry-files-chip-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
   <path d="M14 2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8l-6-6Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
   <path d="M14 2v6h6M10 13h4M10 17h4M10 9h2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
@@ -1535,10 +1551,15 @@ function attachOperationNoteChrome() {
       return;
     }
 
-    const modal = document.getElementById("operationNoteModal");
+    const noteModal = document.getElementById("operationNoteModal");
 
-    if (modal && !modal.hidden) {
+    if (noteModal && !noteModal.hidden) {
       closeOperationNoteModal();
+      return;
+    }
+
+    if (operationAuditModalElement && !operationAuditModalElement.hidden) {
+      closeOperationAuditModal();
     }
   });
 }
@@ -1997,6 +2018,10 @@ function openScreen(screenName) {
 
   if (nextScreen === "settings" && state.workspace?.kind === "team") {
     void loadWebTeamSettings();
+  }
+
+  if (nextScreen === "audit-log") {
+    void loadWebAuditLogPage();
   }
 
   applyBalancyHintsFromState();
@@ -2541,7 +2566,8 @@ function syncWebPageTitle(screenName) {
     reports: "Сводка за период, графики и выгрузка CSV в валюте отчёта.",
     categories: "Создавайте, редактируйте и управляйте категориями доходов и расходов.",
     accounts: "Управляйте своими счетами: создавайте, редактируйте и удаляйте.",
-    settings: "Подсказки и отображение советов в интерфейсе."
+    settings: "Подсказки и отображение советов в интерфейсе.",
+    "audit-log": "Создание, изменение и удаление операций и переводов в команде."
   };
   const subtitleCompactByScreen = {
     home: "Баланс и операции за месяц.",
@@ -2552,7 +2578,8 @@ function syncWebPageTitle(screenName) {
     reports: "Сводка и графики за период.",
     categories: "Категории доходов и расходов.",
     accounts: "Счета и балансы.",
-    settings: "Настройки приложения."
+    settings: "Настройки приложения.",
+    "audit-log": "Журнал изменений команды."
   };
   const subtitle = subtitleByScreen[key];
   const subtitleCompact = subtitleCompactByScreen[key] ?? subtitle;
@@ -3494,17 +3521,35 @@ function findTransferInClientState(transferId) {
   return row?.transfer ?? null;
 }
 
+function shouldShowWebOperationAuditButton() {
+  return useWebLoginFlow() && state.workspace?.kind === "team";
+}
+
+function buildOperationAuditButtonHtml(kind, id) {
+  if (!shouldShowWebOperationAuditButton()) {
+    return "";
+  }
+
+  const safeKind = escapeHtml(kind);
+  const safeId = escapeHtml(id);
+
+  return `<button type="button" class="web-categories-icon-btn" data-operation-audit-kind="${safeKind}" data-operation-audit-id="${safeId}" title="История изменений" aria-label="История изменений операции">${OPERATION_AUDIT_ICON_SVG}</button>`;
+}
+
 function buildOperationActionButtonsHtml(kind, id) {
   const safeId = escapeHtml(id);
+  const auditButton = buildOperationAuditButtonHtml(kind, id);
 
   if (kind === "entry") {
     return `<div class="web-ops-row-actions">
+      ${auditButton}
       <button type="button" class="web-categories-icon-btn" data-entry-edit-id="${safeId}" title="Редактировать" aria-label="Редактировать операцию">${ACCOUNT_EDIT_ICON_SVG}</button>
       <button type="button" class="web-categories-icon-btn web-categories-icon-btn--danger" data-entry-delete-id="${safeId}" title="Удалить" aria-label="Удалить операцию">${ACCOUNT_DELETE_ICON_SVG}</button>
     </div>`;
   }
 
   return `<div class="web-ops-row-actions">
+    ${auditButton}
     <button type="button" class="web-categories-icon-btn" data-transfer-edit-id="${safeId}" title="Редактировать" aria-label="Редактировать перевод">${ACCOUNT_EDIT_ICON_SVG}</button>
     <button type="button" class="web-categories-icon-btn web-categories-icon-btn--danger" data-transfer-delete-id="${safeId}" title="Удалить" aria-label="Удалить перевод">${ACCOUNT_DELETE_ICON_SVG}</button>
   </div>`;
@@ -8557,7 +8602,6 @@ async function loadWebTeamSettings() {
       webTeamInvitesBlockElement.hidden = true;
     }
 
-    await loadWebTeamAuditLog();
   } catch (error) {
     if (webTeamSettingsErrorElement) {
       webTeamSettingsErrorElement.hidden = false;
@@ -8583,74 +8627,334 @@ function formatAuditEventActorLabel(actor) {
   return "Участник";
 }
 
-function formatAuditEventTime(value) {
+function formatAuditEventDate(value) {
   if (!value) {
-    return "";
+    return "—";
   }
 
   try {
-    return new Date(value).toLocaleString("ru-RU", {
+    return new Date(value).toLocaleDateString("ru-RU", {
       day: "numeric",
-      month: "short",
+      month: "long",
+      year: "numeric"
+    });
+  } catch {
+    return "—";
+  }
+}
+
+function formatAuditEventTimeOnly(value) {
+  if (!value) {
+    return "—";
+  }
+
+  try {
+    return new Date(value).toLocaleTimeString("ru-RU", {
       hour: "2-digit",
       minute: "2-digit"
     });
   } catch {
-    return "";
+    return "—";
   }
 }
 
-async function loadWebTeamAuditLog() {
-  if (state.workspace?.kind !== "team" || !webTeamAuditListElement) {
+function formatAuditActionLabel(action) {
+  switch (action) {
+    case "created":
+      return "Создание";
+    case "updated":
+      return "Изменение";
+    case "deleted":
+      return "Удаление";
+    case "photo_added":
+      return "Фото прикреплено";
+    case "photo_removed":
+      return "Фото удалено";
+    default:
+      return "Событие";
+  }
+}
+
+function resolveAuditOperationLabel(event) {
+  const details = event?.details ?? {};
+  const fromDetails = String(details.operationLabel ?? "").trim();
+
+  if (fromDetails) {
+    return fromDetails;
+  }
+
+  const summary = String(event?.summary ?? "").trim();
+
+  if (summary.includes(":")) {
+    return summary.split(":").slice(1).join(":").trim() || summary;
+  }
+
+  return summary || "Операция";
+}
+
+function formatAuditAmountFromEvent(event) {
+  const details = event?.details ?? {};
+
+  if (event?.entityType === "transfer") {
+    const fromAmount = details.fromAmount ?? details.amount;
+    const toAmount = details.toAmount;
+
+    if (fromAmount && toAmount) {
+      return `${formatMoneyAmount(fromAmount)} → ${formatMoneyAmount(toAmount)}`;
+    }
+  }
+
+  if (details.amount) {
+    return formatMoneyAmount(details.amount);
+  }
+
+  return "—";
+}
+
+function formatAuditCurrencyFromEvent(event) {
+  const details = event?.details ?? {};
+
+  if (event?.entityType === "transfer") {
+    const fromCur = String(details.fromCurrencyCode ?? details.currencyCode ?? "").trim();
+    const toCur = String(details.toCurrencyCode ?? "").trim();
+
+    if (fromCur && toCur && fromCur !== toCur) {
+      return `${fromCur} → ${toCur}`;
+    }
+
+    return fromCur || toCur || "—";
+  }
+
+  return String(details.currencyCode ?? "").trim() || "—";
+}
+
+function buildAuditEventCardHtml(event) {
+  const operation = escapeHtml(resolveAuditOperationLabel(event));
+  const action = escapeHtml(formatAuditActionLabel(event?.action));
+  const actor = escapeHtml(formatAuditEventActorLabel(event?.actor));
+  const date = escapeHtml(formatAuditEventDate(event?.createdAt));
+  const time = escapeHtml(formatAuditEventTimeOnly(event?.createdAt));
+  const amount = escapeHtml(formatAuditAmountFromEvent(event));
+  const currency = escapeHtml(formatAuditCurrencyFromEvent(event));
+  const kindLabel = escapeHtml(String(event?.details?.operationKindLabel ?? "").trim());
+
+  return `<article class="web-audit-event-card" role="listitem">
+    <header class="web-audit-event-card__head">
+      <h3 class="web-audit-event-card__title">${operation}</h3>
+      <span class="web-audit-event-card__badge">${action}</span>
+    </header>
+    <dl class="web-audit-event-card__dl">
+      <div><dt>Кто</dt><dd>${actor}</dd></div>
+      <div><dt>Дата</dt><dd>${date}</dd></div>
+      <div><dt>Время</dt><dd>${time}</dd></div>
+      <div><dt>Сумма</dt><dd>${amount}</dd></div>
+      <div><dt>Валюта</dt><dd>${currency}</dd></div>
+      ${kindLabel ? `<div><dt>Тип</dt><dd>${kindLabel}</dd></div>` : ""}
+    </dl>
+  </article>`;
+}
+
+function buildAuditEventsApiUrl(options = {}) {
+  const params = new URLSearchParams();
+  const limit = Number(options.limit ?? 80);
+
+  params.set("limit", String(Number.isFinite(limit) ? limit : 80));
+
+  if (options.entityType && options.entityId) {
+    params.set("entityType", options.entityType);
+    params.set("entityId", options.entityId);
+  }
+
+  if (options.ascending) {
+    params.set("order", "asc");
+  }
+
+  return `/api/audit-events?${params.toString()}`;
+}
+
+function renderAuditEventCards(targetElement, events, emptyElement, errorElement) {
+  if (!targetElement) {
     return;
   }
 
+  if (errorElement) {
+    errorElement.hidden = true;
+    errorElement.textContent = "";
+  }
+
+  const rows = Array.isArray(events) ? events : [];
+
+  if (emptyElement) {
+    emptyElement.textContent = "Записей пока нет";
+    emptyElement.hidden = rows.length > 0;
+  }
+
+  if (rows.length === 0) {
+    targetElement.replaceChildren();
+    return;
+  }
+
+  targetElement.innerHTML = rows.map((event) => buildAuditEventCardHtml(event)).join("");
+}
+
+async function loadWebAuditLogPage() {
+  if (state.workspace?.kind !== "team" || !webAuditLogListElement) {
+    return;
+  }
+
+  webAuditLogListElement.innerHTML = `<p class="muted">Загрузка журнала…</p>`;
+
+  if (webAuditLogEmptyElement) {
+    webAuditLogEmptyElement.hidden = true;
+  }
+
   try {
-    const payload = await apiFetch("/api/audit-events?limit=40");
+    const payload = await apiFetch(buildAuditEventsApiUrl({ limit: 80 }));
+    renderAuditEventCards(
+      webAuditLogListElement,
+      payload?.events,
+      webAuditLogEmptyElement,
+      webAuditLogErrorElement
+    );
+  } catch (error) {
+    webAuditLogListElement.replaceChildren();
+
+    if (webAuditLogErrorElement) {
+      webAuditLogErrorElement.hidden = false;
+      webAuditLogErrorElement.textContent =
+        error instanceof Error ? error.message : "Не удалось загрузить журнал";
+    }
+  }
+}
+
+function closeOperationAuditModal() {
+  if (operationAuditModalElement) {
+    operationAuditModalElement.hidden = true;
+  }
+
+  if (operationAuditModalListElement) {
+    operationAuditModalListElement.replaceChildren();
+  }
+
+  if (operationAuditModalMetaElement) {
+    operationAuditModalMetaElement.textContent = "";
+  }
+
+  if (operationAuditModalEmptyElement) {
+    operationAuditModalEmptyElement.hidden = true;
+  }
+
+  if (operationAuditModalErrorElement) {
+    operationAuditModalErrorElement.hidden = true;
+    operationAuditModalErrorElement.textContent = "";
+  }
+}
+
+async function openOperationAuditModal({ entityType, entityId, operationLabel }) {
+  const type = String(entityType ?? "").trim();
+  const id = String(entityId ?? "").trim();
+  const label = String(operationLabel ?? "").trim() || "Операция";
+
+  if (!type || !id || !operationAuditModalElement) {
+    return;
+  }
+
+  if (operationAuditModalTitleElement) {
+    operationAuditModalTitleElement.textContent = "История изменений";
+  }
+
+  if (operationAuditModalMetaElement) {
+    operationAuditModalMetaElement.textContent = label;
+  }
+
+  if (operationAuditModalListElement) {
+    operationAuditModalListElement.innerHTML = `<li class="muted">Загрузка…</li>`;
+  }
+
+  if (operationAuditModalEmptyElement) {
+    operationAuditModalEmptyElement.hidden = true;
+  }
+
+  if (operationAuditModalErrorElement) {
+    operationAuditModalErrorElement.hidden = true;
+    operationAuditModalErrorElement.textContent = "";
+  }
+
+  operationAuditModalElement.hidden = false;
+
+  try {
+    const payload = await apiFetch(
+      buildAuditEventsApiUrl({
+        entityType: type,
+        entityId: id,
+        limit: 100,
+        ascending: true
+      })
+    );
     const events = Array.isArray(payload?.events) ? payload.events : [];
 
-    webTeamAuditListElement.replaceChildren();
-
-    if (webTeamAuditEmptyElement) {
-      webTeamAuditEmptyElement.textContent = "Записей пока нет";
-      webTeamAuditEmptyElement.hidden = events.length > 0;
-    }
-
-    if (events.length === 0) {
+    if (!operationAuditModalListElement) {
       return;
     }
 
-    events.forEach((event) => {
-      const item = document.createElement("li");
-      item.className = "web-team-audit-item";
+    if (events.length === 0) {
+      operationAuditModalListElement.replaceChildren();
 
-      const head = document.createElement("div");
-      head.className = "web-team-audit-head";
+      if (operationAuditModalEmptyElement) {
+        operationAuditModalEmptyElement.hidden = false;
+      }
 
-      const actor = document.createElement("span");
-      actor.className = "web-team-audit-actor";
-      actor.textContent = formatAuditEventActorLabel(event?.actor);
-
-      const time = document.createElement("time");
-      time.className = "muted web-team-audit-time";
-      time.dateTime = String(event?.createdAt ?? "");
-      time.textContent = formatAuditEventTime(event?.createdAt);
-
-      head.append(actor, time);
-
-      const summary = document.createElement("p");
-      summary.className = "web-team-audit-summary";
-      summary.textContent = String(event?.summary ?? "").trim() || "Изменение";
-
-      item.append(head, summary);
-      webTeamAuditListElement.appendChild(item);
-    });
-  } catch (error) {
-    if (webTeamAuditEmptyElement) {
-      webTeamAuditEmptyElement.hidden = false;
-      webTeamAuditEmptyElement.textContent =
-        error instanceof Error ? error.message : "Не удалось загрузить журнал";
+      return;
     }
+
+    operationAuditModalListElement.innerHTML = events
+      .map((event) => `<li>${buildAuditEventCardHtml(event)}</li>`)
+      .join("");
+  } catch (error) {
+    if (operationAuditModalListElement) {
+      operationAuditModalListElement.replaceChildren();
+    }
+
+    if (operationAuditModalErrorElement) {
+      operationAuditModalErrorElement.hidden = false;
+      operationAuditModalErrorElement.textContent =
+        error instanceof Error ? error.message : "Не удалось загрузить историю";
+    }
+  }
+}
+
+function openOperationAuditFromButton(button) {
+  const entityType = String(button.getAttribute("data-operation-audit-kind") ?? "").trim();
+  const entityId = String(button.getAttribute("data-operation-audit-id") ?? "").trim();
+
+  if (!entityType || !entityId) {
+    return;
+  }
+
+  let operationLabel = "";
+
+  if (entityType === "entry") {
+    const entry = findEntryInClientState(entityId);
+    operationLabel = entry?.category?.name ?? "Операция";
+  } else if (entityType === "transfer") {
+    const transfer = findTransferInClientState(entityId);
+    operationLabel = transfer
+      ? `${transfer.from_account?.name ?? "Счёт"} → ${transfer.to_account?.name ?? "Счёт"}`
+      : "Перевод";
+  }
+
+  void openOperationAuditModal({ entityType, entityId, operationLabel });
+}
+
+function syncWebAuditLogChrome() {
+  const show = useWebLoginFlow() && state.workspace?.kind === "team";
+
+  if (webAuditLogSettingsCardElement) {
+    webAuditLogSettingsCardElement.hidden = !show;
+  }
+
+  if (show && document.body.dataset.appActiveScreen === "history" && state.webOperationsLastPayload) {
+    renderWebOperationsFromPayload(state.webOperationsLastPayload);
   }
 }
 
@@ -8823,6 +9127,7 @@ function syncWorkspaceChrome() {
   renderWebWorkspaceSwitcher();
   renderTgWorkspaceTools();
   syncWebTeamSettingsCardVisibility();
+  syncWebAuditLogChrome();
   syncWebProfile();
 
   if (useWebLoginFlow()) {
@@ -9024,6 +9329,18 @@ function attachWorkspaceUi() {
     hideWorkspaceInviteGate();
     void continueWorkspaceBootAfterInviteGate();
   });
+
+  webOpenAuditLogButtonElement?.addEventListener("click", () => {
+    state.auditLogReturnScreen = "settings";
+    openScreen("audit-log");
+  });
+
+  webAuditLogBackButtonElement?.addEventListener("click", () => {
+    openScreen(state.auditLogReturnScreen || "settings");
+  });
+
+  document.getElementById("operationAuditModalBackdrop")?.addEventListener("click", closeOperationAuditModal);
+  document.getElementById("operationAuditModalClose")?.addEventListener("click", closeOperationAuditModal);
 
   webTeamCopyInviteButtonElement?.addEventListener("click", () => {
     void (async () => {
@@ -10827,10 +11144,18 @@ function attachOperationsActionsListener() {
       return;
     }
 
+    const auditControl = target.closest("[data-operation-audit-kind][data-operation-audit-id]");
     const editEntryControl = target.closest("[data-entry-edit-id]");
     const deleteEntryControl = target.closest("[data-entry-delete-id]");
     const editTransferControl = target.closest("[data-transfer-edit-id]");
     const deleteTransferControl = target.closest("[data-transfer-delete-id]");
+
+    if (auditControl instanceof HTMLButtonElement) {
+      event.preventDefault();
+      event.stopPropagation();
+      openOperationAuditFromButton(auditControl);
+      return;
+    }
 
     const entryEditId = editEntryControl?.dataset.entryEditId;
     const entryDeleteId = deleteEntryControl?.dataset.entryDeleteId;

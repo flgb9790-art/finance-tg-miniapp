@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260516team-audit-v1";
+        var BALANCY_CLIENT_ASSET_REV = "20260516audit-page-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -790,6 +790,21 @@
             <button type="button" class="ghost-button tg-settings-back tg-only-block" data-open-screen="more">← Назад в «Ещё»</button>
           </section>
 
+          <section id="webAuditLogSettingsCard" class="card web-audit-settings-entry web-only-block" hidden>
+            <div class="section-header">
+              <div>
+                <p class="section-label">Команда</p>
+                <h2>Журнал изменений</h2>
+              </div>
+            </div>
+            <p class="muted web-audit-settings-lede">
+              Кто создал, изменил или удалил операции и переводы: дата, время, сумма и валюта.
+            </p>
+            <button type="button" id="webOpenAuditLogButton" class="primary-button web-open-audit-log-btn">
+              Открыть журнал изменений
+            </button>
+          </section>
+
           <section id="webTeamSettingsCard" class="card web-team-settings-card" hidden>
             <div class="section-header">
               <div>
@@ -828,14 +843,6 @@
               <p class="web-team-field-label">Участники</p>
               <ul id="webTeamMembersList" class="web-team-members-list"></ul>
             </div>
-            <div id="webTeamAuditBlock" class="web-team-audit-block">
-              <p class="web-team-field-label">Журнал изменений</p>
-              <p class="muted web-team-audit-hint">
-                Кто создал, изменил или удалил операции и переводы в этой команде.
-              </p>
-              <ul id="webTeamAuditList" class="web-team-audit-list"></ul>
-              <p id="webTeamAuditEmpty" class="muted web-team-audit-empty" hidden>Записей пока нет</p>
-            </div>
             <div class="web-team-leave-block">
               <button type="button" id="webTeamLeaveButton" class="danger-button web-team-leave" hidden>
                 Покинуть команду
@@ -846,6 +853,24 @@
             </div>
             <p id="webTeamSettingsError" class="inline-error web-team-settings-error" hidden></p>
           </section>
+        </section>
+
+        <section id="screen-audit-log" class="screen" data-screen="audit-log">
+          <div class="web-audit-log-page">
+            <button type="button" id="webAuditLogBackButton" class="ghost-button web-audit-log-back">
+              ← Назад в настройки
+            </button>
+            <header class="web-audit-log-head">
+              <p class="section-label">Команда</p>
+              <h1 class="web-audit-log-title">Журнал изменений</h1>
+              <p class="muted web-audit-log-lede">
+                Создание, правки и удаление операций и переводов с указанием автора, даты, времени, суммы и валюты.
+              </p>
+            </header>
+            <div id="webAuditLogList" class="web-audit-log-list" role="list"></div>
+            <p id="webAuditLogEmpty" class="muted web-audit-log-empty" hidden>Записей пока нет</p>
+            <p id="webAuditLogError" class="inline-error web-audit-log-error" hidden></p>
+          </div>
         </section>
 
         <section id="screen-accounts" class="screen" data-screen="accounts">
@@ -2906,6 +2931,27 @@
       <div class="entry-photo-modal-sheet" role="dialog" aria-modal="true" aria-label="Фото чека">
         <button type="button" id="entryPhotoModalClose" class="entry-photo-modal-close" aria-label="Закрыть">×</button>
         <img id="entryPhotoModalImg" class="entry-photo-modal-img" alt="Фото чека" />
+      </div>
+    </div>
+
+    <div id="operationAuditModal" class="entry-photo-modal operation-audit-modal" hidden>
+      <div id="operationAuditModalBackdrop" class="entry-photo-modal-backdrop"></div>
+      <div
+        class="entry-photo-modal-sheet operation-audit-modal-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="operationAuditModalTitle"
+      >
+        <button type="button" id="operationAuditModalClose" class="entry-photo-modal-close" aria-label="Закрыть">
+          ×
+        </button>
+        <h2 id="operationAuditModalTitle" class="operation-audit-modal-title">История изменений</h2>
+        <p id="operationAuditModalMeta" class="muted operation-audit-modal-meta"></p>
+        <ul id="operationAuditModalList" class="operation-audit-modal-list"></ul>
+        <p id="operationAuditModalEmpty" class="muted operation-audit-modal-empty" hidden>
+          Изменений по этой операции пока нет
+        </p>
+        <p id="operationAuditModalError" class="inline-error operation-audit-modal-error" hidden></p>
       </div>
     </div>
 

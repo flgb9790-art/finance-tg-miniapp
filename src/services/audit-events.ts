@@ -15,6 +15,20 @@ export type AuditAction =
 
 export type AuditEntityType = "entry" | "transfer";
 
+export interface AuditEventDetails {
+  operationLabel?: string | null;
+  operationKindLabel?: string | null;
+  kind?: "income" | "expense" | "transfer" | null;
+  amount?: string | null;
+  currencyCode?: string | null;
+  accountName?: string | null;
+  categoryName?: string | null;
+  fromAmount?: string | null;
+  fromCurrencyCode?: string | null;
+  toAmount?: string | null;
+  toCurrencyCode?: string | null;
+}
+
 export interface RecordAuditEventInput {
   workspaceId: string;
   actorUserId: string;
@@ -22,6 +36,7 @@ export interface RecordAuditEventInput {
   entityType: AuditEntityType;
   entityId: string;
   summary: string;
+  details?: AuditEventDetails | null;
 }
 
 interface AuditActorProfile {
@@ -37,6 +52,7 @@ interface AuditEventRow {
   entity_type: AuditEntityType;
   entity_id: string;
   summary: string;
+  details: AuditEventDetails | null;
   created_at: string;
   actor: AuditActorProfile | null;
 }
@@ -47,8 +63,16 @@ export interface AuditEventDto {
   entityType: AuditEntityType;
   entityId: string;
   summary: string;
+  details: AuditEventDetails;
   createdAt: string;
   actor: OperationCreatedByDto | null;
+}
+
+export interface ListAuditEventsOptions {
+  limit?: number;
+  entityType?: AuditEntityType;
+  entityId?: string;
+  ascending?: boolean;
 }
 
 const AUDIT_EVENT_SELECT = `
@@ -57,6 +81,7 @@ const AUDIT_EVENT_SELECT = `
   entity_type,
   entity_id,
   summary,
+  details,
   created_at,
   actor:app_users!actor_user_id(id, first_name, last_name, username)
 `;
@@ -117,12 +142,50 @@ function withActionPrefix(action: AuditAction, entityLabel: string, core: string
   }
 }
 
+export function buildEntryAuditDetails(entry: EntryListItem): AuditEventDetails {
+  return {
+    kind: entry.kind,
+    operationLabel: entry.category?.name ?? "Без категории",
+    operationKindLabel: entry.kind === "income" ? "Доход" : "Расход",
+    amount: String(entry.amount),
+    currencyCode: entry.currency_code,
+    accountName: entry.account?.name ?? null,
+    categoryName: entry.category?.name ?? null
+  };
+}
+
+export function buildTransferAuditDetails(transfer: TransferListItem): AuditEventDetails {
+  const fromAccount = transfer.from_account?.name ?? "Счёт";
+  const toAccount = transfer.to_account?.name ?? "Счёт";
+
+  return {
+    kind: "transfer",
+    operationLabel: `Перевод: ${fromAccount} → ${toAccount}`,
+    operationKindLabel: "Перевод",
+    amount: String(transfer.from_amount),
+    currencyCode: transfer.from_currency_code,
+    fromAmount: String(transfer.from_amount),
+    fromCurrencyCode: transfer.from_currency_code,
+    toAmount: String(transfer.to_amount),
+    toCurrencyCode: transfer.to_currency_code,
+    accountName: `${fromAccount} → ${toAccount}`
+  };
+}
+
 export function formatEntryAuditSummary(action: AuditAction, entry: EntryListItem): string {
   return withActionPrefix(action, "операция", describeEntryCore(entry));
 }
 
 export function formatTransferAuditSummary(action: AuditAction, transfer: TransferListItem): string {
   return withActionPrefix(action, "перевод", describeTransferCore(transfer));
+}
+
+function normalizeAuditDetails(value: unknown): AuditEventDetails {
+  if (!value || typeof value !== "object") {
+    return {};
+  }
+
+  return value as AuditEventDetails;
 }
 
 function toAuditEventDto(row: AuditEventRow): AuditEventDto {
@@ -132,6 +195,7 @@ function toAuditEventDto(row: AuditEventRow): AuditEventDto {
     entityType: row.entity_type,
     entityId: row.entity_id,
     summary: row.summary,
+    details: normalizeAuditDetails(row.details),
     createdAt: row.created_at,
     actor: toOperationCreatedByDto({
       created_by: row.actor
@@ -152,7 +216,8 @@ export async function recordAuditEvent(input: RecordAuditEventInput): Promise<vo
     action: input.action,
     entity_type: input.entityType,
     entity_id: input.entityId,
-    summary
+    summary,
+    details: input.details ?? {}
   });
 
   if (error) {
@@ -160,14 +225,25 @@ export async function recordAuditEvent(input: RecordAuditEventInput): Promise<vo
   }
 }
 
-export async function listAuditEvents(workspaceId: string, limit = 50): Promise<AuditEventDto[]> {
-  const cappedLimit = Math.min(Math.max(1, limit), 100);
+export async function listAuditEvents(
+  workspaceId: string,
+  options: ListAuditEventsOptions = {}
+): Promise<AuditEventDto[]> {
+  const cappedLimit = Math.min(Math.max(1, options.limit ?? 50), 100);
+  const entityId = String(options.entityId ?? "").trim();
+  const entityType = options.entityType;
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("audit_events")
     .select(AUDIT_EVENT_SELECT)
-    .eq("workspace_id", workspaceId)
-    .order("created_at", { ascending: false })
+    .eq("workspace_id", workspaceId);
+
+  if (entityType && entityId) {
+    query = query.eq("entity_type", entityType).eq("entity_id", entityId);
+  }
+
+  const { data, error } = await query
+    .order("created_at", { ascending: Boolean(options.ascending) })
     .limit(cappedLimit);
 
   if (error) {

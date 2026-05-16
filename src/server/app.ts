@@ -60,12 +60,15 @@ import {
   parseOperationsListQuery
 } from "../services/operations-list.js";
 import {
+  buildEntryAuditDetails,
+  buildTransferAuditDetails,
   formatEntryAuditSummary,
   formatTransferAuditSummary,
   listAuditEvents,
   recordAuditEvent,
   type AuditAction,
-  type AuditEntityType
+  type AuditEntityType,
+  type AuditEventDetails
 } from "../services/audit-events.js";
 import type { EntryListItem } from "../services/entries.js";
 import type { TransferListItem } from "../services/transfers.js";
@@ -493,6 +496,7 @@ export function createHttpApp(): express.Express {
       entityType: AuditEntityType;
       entityId: string;
       summary: string;
+      details?: AuditEventDetails | null;
     }
   ): void {
     if (ws.workspace.kind !== "team") {
@@ -518,7 +522,8 @@ export function createHttpApp(): express.Express {
       action,
       entityType: "entry",
       entityId: entry.id,
-      summary: formatEntryAuditSummary(action, entry)
+      summary: formatEntryAuditSummary(action, entry),
+      details: buildEntryAuditDetails(entry)
     });
   }
 
@@ -532,7 +537,8 @@ export function createHttpApp(): express.Express {
       action,
       entityType: "transfer",
       entityId: transfer.id,
-      summary: formatTransferAuditSummary(action, transfer)
+      summary: formatTransferAuditSummary(action, transfer),
+      details: buildTransferAuditDetails(transfer)
     });
   }
 
@@ -1472,7 +1478,21 @@ export function createHttpApp(): express.Express {
 
       const limitRaw = Number(req.query.limit ?? 50);
       const limit = Number.isFinite(limitRaw) ? limitRaw : 50;
-      const events = await listAuditEvents(ws.workspaceId, limit);
+      const entityTypeRaw =
+        typeof req.query.entityType === "string" ? req.query.entityType.trim() : "";
+      const entityId =
+        typeof req.query.entityId === "string" ? req.query.entityId.trim() : "";
+      const ascending = req.query.order === "asc";
+
+      const entityType =
+        entityTypeRaw === "entry" || entityTypeRaw === "transfer" ? entityTypeRaw : undefined;
+
+      const events = await listAuditEvents(ws.workspaceId, {
+        limit,
+        entityType,
+        entityId: entityId || undefined,
+        ascending
+      });
 
       res.json({ events });
     } catch (error) {
