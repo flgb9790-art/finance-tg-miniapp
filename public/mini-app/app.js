@@ -65,8 +65,18 @@ function writePersistedWorkspaceId(workspaceId) {
   }
 }
 
-function resolveWorkspaceIdForApiHeader() {
-  return String(state.workspace?.id ?? "").trim() || readPersistedWorkspaceId();
+function resolveWorkspaceIdForApiHeader(preferredId) {
+  const explicit = String(preferredId ?? "").trim();
+  if (explicit) {
+    return explicit;
+  }
+
+  const persisted = readPersistedWorkspaceId();
+  if (persisted) {
+    return persisted;
+  }
+
+  return String(state.workspace?.id ?? "").trim();
 }
 
 /** В этом заходе по URL был ?invite= — нужно сбросить веб-сессию, иначе чужой balancy_session откроет чужой аккаунт. */
@@ -6999,16 +7009,31 @@ async function switchWebWorkspace(workspaceId) {
 
   writePersistedWorkspaceId(id);
 
-  await apiFetch("/api/workspaces/switch", {
+  const target = Array.isArray(state.workspaces)
+    ? state.workspaces.find((item) => item.id === id)
+    : undefined;
+
+  if (target) {
+    state.workspace = target;
+    syncWorkspaceChrome();
+  }
+
+  const switchPayload = await apiFetch("/api/workspaces/switch", {
     method: "POST",
-    body: JSON.stringify({ workspaceId: id })
+    body: JSON.stringify({ workspaceId: id }),
+    preferredWorkspaceId: id
   });
+
+  if (switchPayload?.workspace) {
+    applyWorkspacePayload({ workspace: switchPayload.workspace });
+  }
 
   state.webOperationsLastPayload = null;
   await refreshAppData({
     globalBusy: true,
     busyMessage: "Переключаем пространство…",
-    syncWebOperationsHistory: true
+    syncWebOperationsHistory: true,
+    preferredWorkspaceId: id
   });
 }
 
@@ -7904,7 +7929,7 @@ async function apiFetch(url, options = {}) {
     headers["x-telegram-init-data"] = initData;
   }
 
-  const workspaceId = resolveWorkspaceIdForApiHeader();
+  const workspaceId = resolveWorkspaceIdForApiHeader(options.preferredWorkspaceId);
   if (workspaceId) {
     headers["x-balancy-workspace-id"] = workspaceId;
   }
@@ -8446,7 +8471,12 @@ async function refreshAppData(options = {}) {
       /* Older WebViews: no AbortSignal.timeout */
     }
 
-    const fetchOptions = bootstrapAbort !== undefined ? { signal: bootstrapAbort } : {};
+    const fetchOptions = {
+      ...(bootstrapAbort !== undefined ? { signal: bootstrapAbort } : {}),
+      ...(options.preferredWorkspaceId
+        ? { preferredWorkspaceId: options.preferredWorkspaceId }
+        : {})
+    };
     const payload = await apiFetch(buildAppDataApiUrl(options), fetchOptions);
 
     if (options.light) {
