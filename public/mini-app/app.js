@@ -11546,7 +11546,9 @@ async function handleTransferSubmit(event) {
     occurredAt: rawDate ? toIsoDate(rawDate) : new Date().toISOString()
   };
 
-  transferSubmitButton.disabled = true;
+  if (transferSubmitButton) {
+    transferSubmitButton.disabled = true;
+  }
   setStatus(isEditing ? "Сохраняем изменения…" : "Сохраняем перевод...");
   beginGlobalBusy(isEditing ? "Сохраняем изменения…" : "Сохраняем перевод…");
 

@@ -46,6 +46,34 @@ export function invalidateExchangeRateMemoryCache(): void {
   memoryRateCache.clear();
 }
 
+let exchangeRatesSyncInFlight: Promise<{
+  syncedPairs: number;
+  updatedAt: string;
+}> | null = null;
+
+/** One in-flight sync for concurrent cache misses (mutations, forms). */
+async function syncExchangeRatesOnMiss(): Promise<void> {
+  if (!exchangeRatesSyncInFlight) {
+    exchangeRatesSyncInFlight = syncExchangeRates().finally(() => {
+      exchangeRatesSyncInFlight = null;
+    });
+  }
+
+  try {
+    await exchangeRatesSyncInFlight;
+  } catch (error) {
+    console.error("Exchange rate sync on cache miss failed", error);
+  }
+}
+
+function rememberRate(fromCurrencyCode: string, toCurrencyCode: string, rate: number): number {
+  memoryRateCache.set(memoryRateCacheKey(fromCurrencyCode, toCurrencyCode), {
+    rate,
+    expiresAt: Date.now() + MEMORY_RATE_TTL_MS
+  });
+  return rate;
+}
+
 export async function syncExchangeRates(): Promise<{
   syncedPairs: number;
   updatedAt: string;
@@ -138,21 +166,10 @@ export async function preloadExchangeRatesToReportingCurrency(
   );
 }
 
-export async function getExchangeRate(
+async function lookupExchangeRate(
   fromCurrencyCode: string,
   toCurrencyCode: string
-): Promise<number> {
-  if (fromCurrencyCode === toCurrencyCode) {
-    return 1;
-  }
-
-  const cacheKey = memoryRateCacheKey(fromCurrencyCode, toCurrencyCode);
-  const cached = memoryRateCache.get(cacheKey);
-
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.rate;
-  }
-
+): Promise<number | null> {
   async function readDirectRate(): Promise<number | null> {
     const { data, error } = await supabase
       .from("exchange_rates")
@@ -204,53 +221,62 @@ export async function getExchangeRate(
   const existingRate = await readDirectRate();
 
   if (existingRate !== null && existingRate > 0) {
-    memoryRateCache.set(cacheKey, {
-      rate: existingRate,
-      expiresAt: Date.now() + MEMORY_RATE_TTL_MS
-    });
     return existingRate;
   }
 
-  const reverseRate = await (async () => {
-    const { data, error } = await supabase
-      .from("exchange_rates")
-      .select("rate")
-      .eq("base_currency_code", toCurrencyCode)
-      .eq("quote_currency_code", fromCurrencyCode)
-      .maybeSingle();
+  const { data, error } = await supabase
+    .from("exchange_rates")
+    .select("rate")
+    .eq("base_currency_code", toCurrencyCode)
+    .eq("quote_currency_code", fromCurrencyCode)
+    .maybeSingle();
 
-    if (error) {
-      throw error;
-    }
-
-    const raw = data ? Number(data.rate) : null;
-    return raw !== null && raw > 0 ? roundRate(1 / raw) : null;
-  })();
-
-  if (reverseRate !== null) {
-    memoryRateCache.set(cacheKey, {
-      rate: reverseRate,
-      expiresAt: Date.now() + MEMORY_RATE_TTL_MS
-    });
-    return reverseRate;
+  if (error) {
+    throw error;
   }
 
-  const viaUsd = await deriveViaUsd();
+  const reverseRaw = data ? Number(data.rate) : null;
 
-  if (viaUsd !== null) {
-    memoryRateCache.set(cacheKey, {
-      rate: viaUsd,
-      expiresAt: Date.now() + MEMORY_RATE_TTL_MS
-    });
-    return viaUsd;
+  if (reverseRaw !== null && reverseRaw > 0) {
+    return roundRate(1 / reverseRaw);
   }
 
-  void syncExchangeRates().catch((error) => {
-    console.error("Background exchange rate sync failed", error);
-  });
+  return deriveViaUsd();
+}
+
+export async function getExchangeRate(
+  fromCurrencyCode: string,
+  toCurrencyCode: string
+): Promise<number> {
+  const from = fromCurrencyCode.trim().toUpperCase();
+  const to = toCurrencyCode.trim().toUpperCase();
+
+  if (from === to) {
+    return 1;
+  }
+
+  const cacheKey = memoryRateCacheKey(from, to);
+  const cached = memoryRateCache.get(cacheKey);
+
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.rate;
+  }
+
+  let resolved = await lookupExchangeRate(from, to);
+
+  if (resolved !== null && resolved > 0) {
+    return rememberRate(from, to, resolved);
+  }
+
+  await syncExchangeRatesOnMiss();
+  resolved = await lookupExchangeRate(from, to);
+
+  if (resolved !== null && resolved > 0) {
+    return rememberRate(from, to, resolved);
+  }
 
   throw new Error(
-    `Курс ${fromCurrencyCode} → ${toCurrencyCode} ещё не загружен. Подождите синхронизацию курсов или нажмите «Обновить курсы».`
+    `Курс ${from} → ${to} ещё не загружен. Подождите синхронизацию курсов или нажмите «Обновить курсы».`
   );
 }
 

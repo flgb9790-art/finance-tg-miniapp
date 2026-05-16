@@ -83,15 +83,19 @@ export async function buildBalancesOnlyMutationPatch(
   workspaceId: string,
   reportingCurrency: string
 ): Promise<AppMutationPatch> {
-  const [accounts, categoriesCount] = await Promise.all([
-    listAccounts(workspaceId),
-    countActiveCategories(workspaceId)
-  ]);
+  const accounts = await listAccounts(workspaceId);
 
-  return {
-    accounts,
-    summary: await buildBalancesSummaryPartial(accounts, categoriesCount, reportingCurrency)
-  };
+  try {
+    const categoriesCount = await countActiveCategories(workspaceId);
+
+    return {
+      accounts,
+      summary: await buildBalancesSummaryPartial(accounts, categoriesCount, reportingCurrency)
+    };
+  } catch (error) {
+    console.error("buildBalancesOnlyMutationPatch failed, returning accounts only", error);
+    return { accounts };
+  }
 }
 
 export async function buildAccountsMutationPatch(
@@ -105,7 +109,12 @@ export async function buildTransferMutationPatch(
   workspaceId: string,
   reportingCurrency: string
 ): Promise<AppMutationPatch> {
-  return buildBalancesOnlyMutationPatch(workspaceId, reportingCurrency);
+  try {
+    return await buildBalancesOnlyMutationPatch(workspaceId, reportingCurrency);
+  } catch (error) {
+    console.error("buildTransferMutationPatch failed, returning accounts only", error);
+    return { accounts: await listAccounts(workspaceId) };
+  }
 }
 
 export async function buildCategoriesMutationPatch(
@@ -133,38 +142,43 @@ export async function buildLedgerMutationPatch(
   reportingCurrency: string,
   entryOccurredAt?: string | null
 ): Promise<AppMutationPatch> {
-  const monthRange = resolveReportRange("month");
-  const inMonth = entryOccurredAt
-    ? isOccurredInReportRange(entryOccurredAt, monthRange.startDate, monthRange.endDate)
-    : false;
+  try {
+    const monthRange = resolveReportRange("month");
+    const inMonth = entryOccurredAt
+      ? isOccurredInReportRange(entryOccurredAt, monthRange.startDate, monthRange.endDate)
+      : false;
 
-  const [accounts, categoriesCount] = await Promise.all([
-    listAccounts(workspaceId),
-    countActiveCategories(workspaceId)
-  ]);
+    const [accounts, categoriesCount] = await Promise.all([
+      listAccounts(workspaceId),
+      countActiveCategories(workspaceId)
+    ]);
 
-  const monthTotals = inMonth
-    ? await computeMonthEntryTotalsInReportingCurrency(
-        workspaceId,
-        reportingCurrency,
-        monthRange.startDate,
-        monthRange.endDate
-      )
-    : undefined;
+    const monthTotals = inMonth
+      ? await computeMonthEntryTotalsInReportingCurrency(
+          workspaceId,
+          reportingCurrency,
+          monthRange.startDate,
+          monthRange.endDate
+        )
+      : undefined;
 
-  const summary = await buildBalanceSummary(
-    workspaceId,
-    reportingCurrency,
-    accounts,
-    categoriesCount,
-    monthTotals
-  );
+    const summary = await buildBalanceSummary(
+      workspaceId,
+      reportingCurrency,
+      accounts,
+      categoriesCount,
+      monthTotals
+    );
 
-  return {
-    accounts,
-    summary,
-    syncReport: inMonth
-  };
+    return {
+      accounts,
+      summary,
+      syncReport: inMonth
+    };
+  } catch (error) {
+    console.error("buildLedgerMutationPatch failed, using balances-only patch", error);
+    return buildBalancesOnlyMutationPatch(workspaceId, reportingCurrency);
+  }
 }
 
 export async function buildEntryMutationPatch(
@@ -172,38 +186,43 @@ export async function buildEntryMutationPatch(
   reportingCurrency: string,
   entry: EntryListItem
 ): Promise<AppMutationPatch> {
-  const monthRange = resolveReportRange("month");
-  const inMonth = isOccurredInReportRange(
-    entry.occurred_at,
-    monthRange.startDate,
-    monthRange.endDate
-  );
+  try {
+    const monthRange = resolveReportRange("month");
+    const inMonth = isOccurredInReportRange(
+      entry.occurred_at,
+      monthRange.startDate,
+      monthRange.endDate
+    );
 
-  const [accounts, categoriesCount] = await Promise.all([
-    listAccounts(workspaceId),
-    countActiveCategories(workspaceId)
-  ]);
+    const [accounts, categoriesCount] = await Promise.all([
+      listAccounts(workspaceId),
+      countActiveCategories(workspaceId)
+    ]);
 
-  const monthTotals = inMonth
-    ? await computeMonthEntryTotalsInReportingCurrency(
-        workspaceId,
-        reportingCurrency,
-        monthRange.startDate,
-        monthRange.endDate
-      )
-    : undefined;
+    const monthTotals = inMonth
+      ? await computeMonthEntryTotalsInReportingCurrency(
+          workspaceId,
+          reportingCurrency,
+          monthRange.startDate,
+          monthRange.endDate
+        )
+      : undefined;
 
-  const summary = await buildBalanceSummary(
-    workspaceId,
-    reportingCurrency,
-    accounts,
-    categoriesCount,
-    monthTotals
-  );
+    const summary = await buildBalanceSummary(
+      workspaceId,
+      reportingCurrency,
+      accounts,
+      categoriesCount,
+      monthTotals
+    );
 
-  return {
-    accounts,
-    summary,
-    syncReport: inMonth
-  };
+    return {
+      accounts,
+      summary,
+      syncReport: inMonth
+    };
+  } catch (error) {
+    console.error("buildEntryMutationPatch failed, using balances-only patch", error);
+    return buildBalancesOnlyMutationPatch(workspaceId, reportingCurrency);
+  }
 }
