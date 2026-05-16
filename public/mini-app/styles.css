@@ -11750,17 +11750,24 @@ body.web-mode #screen-audit-log {
 }
 
 .web-ops-col-actions {
-  width: 112px;
+  width: 1%;
+  min-width: 124px;
   text-align: right;
   white-space: nowrap;
 }
 
 .web-ops-row-actions {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
+  gap: 2px;
+}
+
+.web-ops-row-actions .web-categories-icon-btn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
 }
 
 body:not(.web-mode) .tg-ops-swipe-row.swipe-row {
