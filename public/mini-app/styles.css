@@ -7772,10 +7772,6 @@ body.web-mode .report-period-controls .balancy-filter-pill {
 .report-apply-btn {
   flex: 0 0 auto;
   align-self: flex-end;
-  min-height: 40px;
-  padding-left: 18px;
-  padding-right: 18px;
-  border-radius: 10px;
 }
 
 .report-period-actions {
@@ -11005,8 +11001,10 @@ body.web-mode #screen-settings {
 .web-settings-page {
   display: grid;
   gap: 14px;
-  max-width: 1120px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .web-settings-head__title {
@@ -11096,8 +11094,10 @@ body.web-mode #screen-settings {
 
 .web-settings-panel {
   margin: 0;
-  padding: 16px 18px;
+  padding: 20px 22px;
   border-radius: 18px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .web-settings-panel__head {
@@ -11160,10 +11160,6 @@ body.web-mode #screen-settings {
   align-items: center;
   gap: 8px;
   margin-left: auto;
-  padding: 8px 12px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -11173,30 +11169,31 @@ body.web-mode #screen-settings {
   flex-shrink: 0;
 }
 
-.web-settings-help-link {
-  margin-left: auto;
-  padding: 6px 10px;
-  border: 0;
-  background: transparent;
-  color: var(--balancy-ui-1);
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.web-settings-help-link:hover {
-  background: var(--balancy-ui-1-soft);
-}
-
-.web-team-name-field {
-  margin-top: 16px;
-}
-
-.web-team-invite-toolbar {
+.web-team-controls-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px 12px;
-  align-items: end;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0;
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.web-team-control-cell {
+  min-width: 0;
+  padding: 14px 16px;
+  border-right: 1px solid var(--line);
+}
+
+.web-team-control-cell:last-child {
+  border-right: 0;
+}
+
+.web-team-control-cell--link {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .web-team-save-btn {
@@ -11211,10 +11208,18 @@ body.web-mode #screen-settings {
 }
 
 .web-team-copy-invite {
-  min-height: var(--form-control-min-height);
-  padding-left: 16px;
-  padding-right: 16px;
-  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 38px;
+}
+
+.web-team-copy-invite svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 .web-team-invites-heading {
@@ -11236,8 +11241,17 @@ body.web-mode #screen-settings {
 .web-audit-log-page {
   display: grid;
   gap: 12px;
-  max-width: 1120px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+body.web-mode #screen-audit-log .web-ops-filter-shell,
+body.web-mode #screen-audit-log .web-audit-log-feed,
+body.web-mode #screen-audit-log .web-audit-log-empty {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .web-audit-log-feed {
@@ -11257,19 +11271,23 @@ body.web-mode #screen-settings {
     grid-template-columns: 1fr;
   }
 
-  .web-settings-panel__action,
-  .web-settings-help-link {
+  .web-settings-panel__action {
     margin-left: 0;
     width: 100%;
     justify-content: center;
   }
 
-  .web-team-invite-toolbar {
+  .web-team-controls-row {
     grid-template-columns: 1fr;
   }
 
-  .web-team-copy-invite {
-    width: 100%;
+  .web-team-control-cell {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .web-team-control-cell:last-child {
+    border-bottom: 0;
   }
 }
 
@@ -12164,7 +12182,26 @@ body.workspace-invite-gate-open .bottom-nav {
 
 
 .web-team-invites-list-block {
-  margin-top: 12px;
+  margin-top: 14px;
+}
+
+.web-team-invites-heading {
+  margin-bottom: 10px;
+}
+
+.web-team-invites-table-head,
+.web-team-invite-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 10px 16px;
+  align-items: center;
+}
+
+.web-team-invites-table-head {
+  padding: 0 12px 8px;
+  font-size: 12px;
+  font-weight: 650;
+  color: rgb(100 116 139);
 }
 
 .web-team-invites-list {
@@ -12180,33 +12217,108 @@ body.workspace-invite-gate-open .bottom-nav {
 }
 
 .web-team-invite-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px 12px;
-  align-items: center;
-  padding: 10px 12px;
+  padding: 11px 12px;
   border-top: 1px solid var(--line);
+  font-size: 13px;
 }
 
 .web-team-invite-item:first-child {
   border-top: 0;
 }
 
+.web-team-invite-item-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.web-team-invite-item-link svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: rgb(100 116 139);
+}
+
+.web-team-invite-item-created,
+.web-team-invite-item-expires {
+  color: rgb(71 85 105);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .web-team-invite-item-actions {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 6px;
 }
 
-.web-team-invite-copy,
-.web-team-invite-revoke {
-  flex-shrink: 0;
+.web-team-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: rgb(71 85 105);
+  cursor: pointer;
 }
 
-.web-team-invite-item-label {
-  font-size: 13px;
+.web-team-icon-btn svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.web-team-icon-btn:hover {
+  background: rgb(248 250 252);
+  color: var(--balancy-ui-1);
+  border-color: rgb(67 56 202 / 0.2);
+}
+
+.web-team-invite-revoke:hover {
+  color: #dc2626;
+  border-color: rgb(220 38 38 / 0.25);
+  background: rgb(254 242 242);
+}
+
+@media (max-width: 760px) {
+  .web-team-invites-table-head {
+    display: none;
+  }
+
+  .web-team-invite-item {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "link actions"
+      "created actions"
+      "expires actions";
+    gap: 4px 10px;
+  }
+
+  .web-team-invite-item-link {
+    grid-area: link;
+  }
+
+  .web-team-invite-item-created {
+    grid-area: created;
+  }
+
+  .web-team-invite-item-expires {
+    grid-area: expires;
+  }
+
+  .web-team-invite-item-actions {
+    grid-area: actions;
+    align-self: center;
+  }
 }
 
 .web-team-leave-block {

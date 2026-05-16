@@ -235,8 +235,6 @@ const webTeamInviteExpirySelectElement = document.getElementById("webTeamInviteE
 const webTeamInviteStatusElement = document.getElementById("webTeamInviteStatus");
 const webTeamMembersListElement = document.getElementById("webTeamMembersList");
 const webTeamMembersHeadingElement = document.getElementById("webTeamMembersHeading");
-const webTeamInviteHelpButtonElement = document.getElementById("webTeamInviteHelpButton");
-const webTeamInviteHintElement = document.getElementById("webTeamInviteHint");
 const webTeamSettingsErrorElement = document.getElementById("webTeamSettingsError");
 const webTeamInvitesBlockElement = document.getElementById("webTeamInvitesBlock");
 const webTeamInvitesListElement = document.getElementById("webTeamInvitesList");
@@ -9227,6 +9225,50 @@ function formatWorkspaceInviteCreatedAt(value) {
   }
 }
 
+function formatWorkspaceInviteTableDate(value) {
+  if (!value) {
+    return "—";
+  }
+
+  try {
+    return new Date(value).toLocaleString("ru-RU", {
+      day: "numeric",
+      month: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  } catch {
+    return "—";
+  }
+}
+
+function formatWorkspaceInviteTableExpiry(expiresAt) {
+  if (!expiresAt) {
+    return "Без срока";
+  }
+
+  try {
+    const expires = new Date(expiresAt);
+
+    return expires.toLocaleString("ru-RU", {
+      day: "numeric",
+      month: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  } catch {
+    return "—";
+  }
+}
+
+const WEB_TEAM_ICON_COPY = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
+
+const WEB_TEAM_ICON_TRASH = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 4v6m4-6v6M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+const WEB_TEAM_ICON_LINK = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 13a3 3 0 0 0 4.2 0l2.8-2.8a3 3 0 0 0-4.2-4.2l-1 1M14 11a3 3 0 0 0-4.2 0L7 13.8a3 3 0 0 0 4.2 4.2l1-1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
+
 function parseWebTeamInviteExpiryDays() {
   const raw = webTeamInviteExpirySelectElement?.value ?? "7";
 
@@ -9289,28 +9331,42 @@ async function loadWebTeamInvitesList() {
 
     if (webTeamInvitesBlockElement) {
       webTeamInvitesBlockElement.hidden = invites.length === 0;
+
+      const heading = webTeamInvitesBlockElement.querySelector(".web-team-invites-heading");
+
+      if (heading) {
+        heading.textContent =
+          invites.length > 0 ? `Активные ссылки (${invites.length})` : "Активные ссылки";
+      }
     }
 
-    invites.forEach((invite) => {
+    invites.forEach((invite, index) => {
       const item = document.createElement("li");
       item.className = "web-team-invite-item";
 
       const tokenStr = typeof invite.token === "string" ? invite.token : "";
-      const tokenHint =
-        tokenStr.length > 14 ? `${tokenStr.slice(0, 8)}…${tokenStr.slice(-6)}` : tokenStr;
 
-      const label = document.createElement("span");
-      label.className = "web-team-invite-item-label";
-      const expiryLabel = formatWorkspaceInviteExpiryLabel(invite.expiresAt);
-      label.textContent = `${formatWorkspaceInviteCreatedAt(invite.createdAt)} · ${expiryLabel} · ${tokenHint}`;
+      const linkCol = document.createElement("span");
+      linkCol.className = "web-team-invite-item-link";
+      linkCol.innerHTML = `${WEB_TEAM_ICON_LINK}<span>Ссылка #${index + 1}</span>`;
+
+      const createdCol = document.createElement("span");
+      createdCol.className = "web-team-invite-item-created";
+      createdCol.textContent = formatWorkspaceInviteTableDate(invite.createdAt);
+
+      const expiryCol = document.createElement("span");
+      expiryCol.className = "web-team-invite-item-expires";
+      expiryCol.textContent = formatWorkspaceInviteTableExpiry(invite.expiresAt);
 
       const actions = document.createElement("div");
       actions.className = "web-team-invite-item-actions";
 
       const copyButton = document.createElement("button");
       copyButton.type = "button";
-      copyButton.className = "ghost-button web-team-invite-copy";
-      copyButton.textContent = "Копировать";
+      copyButton.className = "web-team-icon-btn web-team-invite-copy";
+      copyButton.setAttribute("aria-label", "Копировать ссылку");
+      copyButton.title = "Копировать";
+      copyButton.innerHTML = WEB_TEAM_ICON_COPY;
       copyButton.addEventListener("click", () => {
         void (async () => {
           if (!tokenStr) {
@@ -9330,8 +9386,10 @@ async function loadWebTeamInvitesList() {
 
       const revokeButton = document.createElement("button");
       revokeButton.type = "button";
-      revokeButton.className = "ghost-button web-team-invite-revoke";
-      revokeButton.textContent = "Отозвать";
+      revokeButton.className = "web-team-icon-btn web-team-invite-revoke";
+      revokeButton.setAttribute("aria-label", "Удалить ссылку");
+      revokeButton.title = "Удалить";
+      revokeButton.innerHTML = WEB_TEAM_ICON_TRASH;
       revokeButton.addEventListener("click", () => {
         void (async () => {
           try {
@@ -9351,7 +9409,7 @@ async function loadWebTeamInvitesList() {
       });
 
       actions.append(copyButton, revokeButton);
-      item.append(label, actions);
+      item.append(linkCol, createdCol, expiryCol, actions);
       webTeamInvitesListElement.appendChild(item);
     });
   } catch (error) {
@@ -9634,11 +9692,6 @@ function attachWorkspaceUi() {
 
   document.getElementById("operationAuditModalBackdrop")?.addEventListener("click", closeOperationAuditModal);
   document.getElementById("operationAuditModalClose")?.addEventListener("click", closeOperationAuditModal);
-
-  webTeamInviteHelpButtonElement?.addEventListener("click", () => {
-    webTeamInviteHintElement?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    webTeamInviteHintElement?.focus?.();
-  });
 
   webTeamCopyInviteButtonElement?.addEventListener("click", () => {
     void (async () => {

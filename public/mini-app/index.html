@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260516settings-v1";
+        var BALANCY_CLIENT_ASSET_REV = "20260516settings-v2";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -775,8 +775,8 @@
               <article class="web-settings-tile web-settings-tile--static">
                 <span class="web-settings-tile__icon web-settings-tile__icon--app" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="1.6"/>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.36.46.58 1.03.58 1.65s-.22 1.19-.58 1.65Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/>
+                    <path d="M12 3v2M12 19v2M5 5l1.5 1.5M17.5 17.5 19 19M3 12h2M19 12h2M5 19l1.5-1.5M17.5 6.5 19 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
                   </svg>
                 </span>
                 <div class="web-settings-tile__body">
@@ -825,20 +825,20 @@
                     Кто создал, изменил или удалил операции и переводы: дата, время, сумма и валюта.
                   </p>
                 </div>
-                <button type="button" id="webOpenAuditLogButton" class="ghost-button web-settings-panel__action">
+                <button type="button" id="webOpenAuditLogButton" class="ghost-button web-ops-filter-action web-audit-log-apply-btn web-settings-panel__action">
                   <span>Открыть журнал изменений</span>
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M14 3h7v7M10 14 21 3M15 9h6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M14 3h7v7M10 14 21 3M15 9h6v6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </button>
               </div>
             </article>
 
-            <article id="webTeamSettingsCard" class="card web-settings-panel web-settings-panel--team" hidden>
+                        <article id="webTeamSettingsCard" class="card web-settings-panel web-settings-panel--team" hidden>
               <div class="web-settings-panel__head web-settings-panel__head--team">
                 <span class="web-settings-panel__icon web-settings-panel__icon--team" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </span>
                 <div class="web-settings-panel__copy">
@@ -846,40 +846,46 @@
                   <h2 id="webTeamSettingsTitle" class="web-settings-panel__title">Группа</h2>
                   <p id="webTeamSettingsMeta" class="muted web-team-settings-meta"></p>
                 </div>
-                <button type="button" class="ghost-button web-settings-help-link" id="webTeamInviteHelpButton">
-                  Как пригласить участников?
-                </button>
               </div>
 
-              <div class="web-team-name-field">
-                <label class="web-team-field-label" for="webTeamNameInput">Группа</label>
-                <div class="web-team-name-row">
-                  <input id="webTeamNameInput" class="web-team-name-input" type="text" maxlength="80" />
-                  <button type="button" id="webTeamRenameButton" class="ghost-button web-team-save-btn">Сохранить</button>
+              <div class="web-team-controls-row">
+                <div class="web-team-control-cell web-team-control-cell--name">
+                  <label class="web-team-field-label" for="webTeamNameInput">Название группы</label>
+                  <div class="web-team-name-row">
+                    <input id="webTeamNameInput" class="web-team-name-input" type="text" maxlength="80" />
+                    <button type="button" id="webTeamRenameButton" class="ghost-button web-team-save-btn">Сохранить</button>
+                  </div>
+                </div>
+                <div class="web-team-control-cell web-team-control-cell--expiry">
+                  <label class="web-team-field-label" for="webTeamInviteExpirySelect">Срок действия ссылки приглашения</label>
+                  <select id="webTeamInviteExpirySelect" class="web-team-invite-expiry-select">
+                    <option value="1">1 день</option>
+                    <option value="7" selected>7 дней</option>
+                    <option value="30">30 дней</option>
+                    <option value="never">Без срока</option>
+                  </select>
+                </div>
+                <div class="web-team-control-cell web-team-control-cell--link">
+                  <span class="web-team-field-label">Ссылка приглашения</span>
+                  <button type="button" id="webTeamCopyInviteButton" class="ghost-button web-ops-filter-action web-audit-log-apply-btn web-team-copy-invite">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M10 13a3 3 0 0 0 4.2 0l2.8-2.8a3 3 0 0 0-4.2-4.2l-1 1M14 11a3 3 0 0 0-4.2 0L7 13.8a3 3 0 0 0 4.2 4.2l1-1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                    </svg>
+                    <span>Создать ссылку</span>
+                  </button>
                 </div>
               </div>
 
               <div class="web-team-invite-block">
-                <div class="web-team-invite-toolbar">
-                  <div class="web-team-invite-expiry-field">
-                    <label class="web-team-field-label" for="webTeamInviteExpirySelect">Срок действия ссылки</label>
-                    <select id="webTeamInviteExpirySelect" class="web-team-invite-expiry-select">
-                      <option value="1">1 день</option>
-                      <option value="7" selected>7 дней</option>
-                      <option value="30">30 дней</option>
-                      <option value="never">Без срока</option>
-                    </select>
-                  </div>
-                  <button type="button" id="webTeamCopyInviteButton" class="primary-button web-team-copy-invite">
-                    Создать ссылку
-                  </button>
-                </div>
                 <p id="webTeamInviteStatus" class="muted web-team-invite-status" hidden></p>
-                <p class="muted web-team-invite-hint" id="webTeamInviteHint" tabindex="-1">
-                  На странице приглашения можно открыть Balancy в браузере (ПК) или в Telegram (телефон). До 5 участников включая вас.
-                </p>
                 <div id="webTeamInvitesBlock" class="web-team-invites-list-block" hidden>
                   <p class="web-team-field-label web-team-invites-heading">Активные ссылки</p>
+                  <div class="web-team-invites-table-head" aria-hidden="true">
+                    <span>Ссылка</span>
+                    <span>Создана</span>
+                    <span>Действует до</span>
+                    <span>Действия</span>
+                  </div>
                   <ul id="webTeamInvitesList" class="web-team-invites-list"></ul>
                 </div>
               </div>
@@ -899,9 +905,8 @@
               </div>
               <p id="webTeamSettingsError" class="inline-error web-team-settings-error" hidden></p>
             </article>
-          </div>
 
-          <section class="card tg-settings-card tg-only-block">
+<section class="card tg-settings-card tg-only-block">
             <div class="section-header">
               <div>
                 <p class="section-label">Приложение</p>
@@ -2114,7 +2119,7 @@
                   </div>
                 </div>
                 <div class="web-ops-filter-cell web-ops-filter-cell--action">
-                  <button id="webOpsApplyButton" class="primary-button web-ops-filter-apply" type="button">
+                  <button id="webOpsApplyButton" class="ghost-button web-ops-filter-action web-audit-log-apply-btn" type="button">
                     Показать
                   </button>
                 </div>
@@ -2681,10 +2686,10 @@
                       </div>
                     </div>
                     <div class="report-period-actions">
-                      <button type="button" id="reportResetFiltersButton" class="report-reset-btn">
+                      <button type="button" id="reportResetFiltersButton" class="ghost-button web-ops-filter-action web-audit-log-reset-btn">
                         Сбросить
                       </button>
-                      <button id="reportSubmitButton" class="primary-button report-apply-btn" type="button">
+                      <button id="reportSubmitButton" class="ghost-button web-ops-filter-action web-audit-log-apply-btn" type="button">
                         Показать
                       </button>
                     </div>
