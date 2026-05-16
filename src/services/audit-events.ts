@@ -72,6 +72,7 @@ export type AuditActionKindFilter = "created" | "modified";
 
 export interface ListAuditEventsOptions {
   limit?: number;
+  offset?: number;
   entityType?: AuditEntityType;
   entityId?: string;
   ascending?: boolean;
@@ -79,6 +80,11 @@ export interface ListAuditEventsOptions {
   to?: string;
   actorUserId?: string;
   actionKind?: AuditActionKindFilter;
+}
+
+export interface ListAuditEventsResult {
+  events: AuditEventDto[];
+  total: number;
 }
 
 const MODIFIED_AUDIT_ACTIONS: AuditAction[] = [
@@ -311,14 +317,15 @@ export async function recordAuditEvent(input: RecordAuditEventInput): Promise<vo
 export async function listAuditEvents(
   workspaceId: string,
   options: ListAuditEventsOptions = {}
-): Promise<AuditEventDto[]> {
+): Promise<ListAuditEventsResult> {
   const cappedLimit = Math.min(Math.max(1, options.limit ?? 50), 100);
+  const offset = Math.max(0, Math.floor(Number(options.offset ?? 0) || 0));
   const entityId = String(options.entityId ?? "").trim();
   const entityType = options.entityType;
 
   let query = supabase
     .from("audit_events")
-    .select(AUDIT_EVENT_SELECT)
+    .select(AUDIT_EVENT_SELECT, { count: "exact" })
     .eq("workspace_id", workspaceId);
 
   if (entityType && entityId) {
@@ -345,13 +352,16 @@ export async function listAuditEvents(
     query = query.in("action", MODIFIED_AUDIT_ACTIONS);
   }
 
-  const { data, error } = await query
+  const { data, error, count } = await query
     .order("created_at", { ascending: Boolean(options.ascending) })
-    .limit(cappedLimit);
+    .range(offset, offset + cappedLimit - 1);
 
   if (error) {
     throw error;
   }
 
-  return ((data ?? []) as unknown as AuditEventRow[]).map(toAuditEventDto);
+  return {
+    events: ((data ?? []) as unknown as AuditEventRow[]).map(toAuditEventDto),
+    total: typeof count === "number" ? count : 0
+  };
 }

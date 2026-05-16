@@ -1479,6 +1479,8 @@ export function createHttpApp(): express.Express {
 
       const limitRaw = Number(req.query.limit ?? 50);
       const limit = Number.isFinite(limitRaw) ? limitRaw : 50;
+      const offsetRaw = Number(req.query.offset ?? 0);
+      const offset = Number.isFinite(offsetRaw) && offsetRaw >= 0 ? Math.floor(offsetRaw) : 0;
       const entityTypeRaw =
         typeof req.query.entityType === "string" ? req.query.entityType.trim() : "";
       const entityId =
@@ -1500,15 +1502,16 @@ export function createHttpApp(): express.Express {
         return;
       }
 
-      const events = await listAuditEvents(ws.workspaceId, {
+      const result = await listAuditEvents(ws.workspaceId, {
         limit,
+        offset,
         entityType,
         entityId: entityId || undefined,
         ascending,
         ...listFilters
       });
 
-      res.json({ events });
+      res.json({ events: result.events, total: result.total });
     } catch (error) {
       console.error("Failed to list audit events", error);
 

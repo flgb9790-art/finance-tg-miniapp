@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260516audit-filters-v1";
+        var BALANCY_CLIENT_ASSET_REV = "20260516audit-design-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -861,11 +861,23 @@
               ← Назад в настройки
             </button>
             <header class="card web-audit-log-hero">
-              <p class="section-label">Команда</p>
-              <h1 class="web-audit-log-title">Журнал изменений</h1>
-              <p class="muted web-audit-log-lede">
-                Создание, правки и удаление операций и переводов с указанием автора, даты, времени, суммы и валюты.
-              </p>
+              <div class="web-audit-log-hero__layout">
+                <span class="web-audit-log-hero__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M12 8v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </span>
+                <div class="web-audit-log-hero__copy">
+                  <h1 class="web-audit-log-title">Журнал изменений</h1>
+                  <p class="muted web-audit-log-lede">История операций и переводов в команде.</p>
+                </div>
+              </div>
             </header>
             <div class="web-ops-filter-shell web-audit-log-filter-shell">
               <div class="web-ops-filter-row">
@@ -960,6 +972,13 @@
               <div id="webAuditLogList" class="web-audit-log-list" role="list"></div>
               <p id="webAuditLogEmpty" class="muted web-audit-log-empty card" hidden>Записей пока нет</p>
               <p id="webAuditLogError" class="inline-error web-audit-log-error" hidden></p>
+              <div id="webAuditLogPagination" class="web-audit-log-pagination" hidden>
+                <p id="webAuditLogPageInfo" class="muted web-audit-log-page-info"></p>
+                <div class="web-audit-log-pagination__actions">
+                  <button type="button" id="webAuditLogPagePrev" class="web-ops-page-btn" disabled>Назад</button>
+                  <button type="button" id="webAuditLogPageNext" class="web-ops-page-btn" disabled>Вперёд</button>
+                </div>
+              </div>
             </div>
           </div>
         </section>

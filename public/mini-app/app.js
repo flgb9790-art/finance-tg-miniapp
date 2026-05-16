@@ -251,6 +251,10 @@ const webAuditLogActorFilterElement = document.getElementById("webAuditLogActorF
 const webAuditLogActionFilterElement = document.getElementById("webAuditLogActionFilter");
 const webAuditLogApplyButtonElement = document.getElementById("webAuditLogApplyButton");
 const webAuditLogResetButtonElement = document.getElementById("webAuditLogResetButton");
+const webAuditLogPaginationElement = document.getElementById("webAuditLogPagination");
+const webAuditLogPageInfoElement = document.getElementById("webAuditLogPageInfo");
+const webAuditLogPagePrevElement = document.getElementById("webAuditLogPagePrev");
+const webAuditLogPageNextElement = document.getElementById("webAuditLogPageNext");
 const operationAuditModalElement = document.getElementById("operationAuditModal");
 const operationAuditModalTitleElement = document.getElementById("operationAuditModalTitle");
 const operationAuditModalMetaElement = document.getElementById("operationAuditModalMeta");
@@ -420,6 +424,8 @@ let webOpsOffset = 0;
 let webOpsDatesInitialized = false;
 let webAuditLogDatesInitialized = false;
 let webAuditLogMembersLoadedForWorkspaceId = "";
+let webAuditLogOffset = 0;
+const WEB_AUDIT_LOG_PAGE_SIZE = 10;
 
 /** Лента «Операции» в Telegram: пагинация и запрос к /api/operations */
 const TG_OPS_PAGE_SIZE = 12;
@@ -8752,6 +8758,42 @@ function auditEventActionModifier(action) {
   }
 }
 
+function buildAuditEventIconMarkup(event) {
+  const modifier = auditEventActionModifier(event?.action);
+  const isTransfer =
+    event?.entityType === "transfer" || event?.details?.kind === "transfer";
+
+  if (isTransfer) {
+    return `<span class="web-audit-event-card__icon web-audit-event-card__icon--transfer" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M7 10h10M7 14h10M10 7l-2 3 2 3M14 17l2-3-2-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>`;
+  }
+
+  if (modifier === "is-created") {
+    return `<span class="web-audit-event-card__icon web-audit-event-card__icon--created" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 7v10M7 12h10" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+      </svg>
+    </span>`;
+  }
+
+  if (modifier === "is-deleted") {
+    return `<span class="web-audit-event-card__icon web-audit-event-card__icon--deleted" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M9 9h6M10 9l.5-2h3L14 9m-5 0v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>`;
+  }
+
+  return `<span class="web-audit-event-card__icon web-audit-event-card__icon--updated" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M5 9h14v10H5V9Zm2-4h10l2 4H5l2-4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+    </svg>
+  </span>`;
+}
+
 function buildAuditEventCardHtml(event) {
   const operation = escapeHtml(resolveAuditOperationLabel(event));
   const action = escapeHtml(formatAuditActionLabel(event?.action));
@@ -8760,28 +8802,22 @@ function buildAuditEventCardHtml(event) {
   const time = escapeHtml(formatAuditEventTimeOnly(event?.createdAt));
   const amount = escapeHtml(formatAuditAmountFromEvent(event));
   const currency = escapeHtml(formatAuditCurrencyFromEvent(event));
-  const kindLabel = escapeHtml(String(event?.details?.operationKindLabel ?? "").trim());
   const modifier = auditEventActionModifier(event?.action);
+  const icon = buildAuditEventIconMarkup(event);
 
   return `<article class="web-audit-event-card web-audit-event-card--${modifier}" role="listitem">
-    <span class="web-audit-event-card__accent" aria-hidden="true"></span>
-    <div class="web-audit-event-card__inner">
-      <div class="web-audit-event-card__top">
-        <h3 class="web-audit-event-card__title">${operation}</h3>
-        <span class="web-audit-event-card__badge">${action}</span>
-      </div>
-      <dl class="web-audit-event-card__grid">
-      <div><dt>Кто</dt><dd>${actor}</dd></div>
-      <div><dt>Дата</dt><dd>${date}</dd></div>
-      <div><dt>Время</dt><dd>${time}</dd></div>
-      <div><dt>Сумма</dt><dd class="web-audit-event-card__amount">${amount}</dd></div>
-      <div><dt>Валюта</dt><dd>${currency}</dd></div>
-      ${kindLabel ? `<div><dt>Тип</dt><dd>${kindLabel}</dd></div>` : ""}
-      </dl>
+    ${icon}
+    <div class="web-audit-event-card__main">
+      <h3 class="web-audit-event-card__title">${operation}</h3>
+      <p class="web-audit-event-card__actor muted">${actor}</p>
     </div>
+    <span class="web-audit-event-card__date">${date}</span>
+    <span class="web-audit-event-card__time">${time}</span>
+    <span class="web-audit-event-card__amount">${amount}</span>
+    <span class="web-audit-event-card__currency">${currency}</span>
+    <span class="web-audit-event-card__badge">${action}</span>
   </article>`;
 }
-
 
 function initWebAuditLogFilters() {
   if (!webAuditLogDateFromElement || !webAuditLogDateToElement) {
@@ -8877,6 +8913,34 @@ function resetWebAuditLogFilters() {
   }
 }
 
+function syncWebAuditLogPagination(total, itemsCount) {
+  const totalCount = Number(total ?? 0);
+  const count = Number(itemsCount ?? 0);
+
+  if (webAuditLogPaginationElement) {
+    webAuditLogPaginationElement.hidden = totalCount <= 0;
+  }
+
+  if (webAuditLogPageInfoElement) {
+    if (totalCount <= 0 || count <= 0) {
+      webAuditLogPageInfoElement.textContent = "Показано 0 из 0";
+    } else {
+      const from = webAuditLogOffset + 1;
+      const to = webAuditLogOffset + count;
+      webAuditLogPageInfoElement.textContent = `Показано ${from}–${to} из ${totalCount}`;
+    }
+  }
+
+  if (webAuditLogPagePrevElement) {
+    webAuditLogPagePrevElement.disabled = webAuditLogOffset <= 0;
+  }
+
+  if (webAuditLogPageNextElement) {
+    webAuditLogPageNextElement.disabled =
+      webAuditLogOffset + count >= totalCount || count <= 0;
+  }
+}
+
 function buildAuditEventsApiUrl(options = {}) {
   const params = new URLSearchParams();
   const limit = Number(options.limit ?? 80);
@@ -8906,6 +8970,12 @@ function buildAuditEventsApiUrl(options = {}) {
 
   if (options.actionKind) {
     params.set("actionKind", options.actionKind);
+  }
+
+  const offset = Number(options.offset ?? 0);
+
+  if (Number.isFinite(offset) && offset > 0) {
+    params.set("offset", String(Math.floor(offset)));
   }
 
   return `/api/audit-events?${params.toString()}`;
@@ -8963,22 +9033,28 @@ async function loadWebAuditLogPage() {
   try {
     const payload = await apiFetch(
       buildAuditEventsApiUrl({
-        limit: 100,
+        limit: WEB_AUDIT_LOG_PAGE_SIZE,
+        offset: webAuditLogOffset,
         from: filters.from || undefined,
         to: filters.to || undefined,
         actorUserId: filters.actorUserId || undefined,
         actionKind: filters.actionKind
       })
     );
+    const events = Array.isArray(payload?.events) ? payload.events : [];
+    const total = Number(payload?.total ?? events.length);
+
     renderAuditEventCards(
       webAuditLogListElement,
-      payload?.events,
+      events,
       webAuditLogEmptyElement,
       webAuditLogErrorElement,
       emptyMessage
     );
+    syncWebAuditLogPagination(total, events.length);
   } catch (error) {
     webAuditLogListElement.replaceChildren();
+    syncWebAuditLogPagination(0, 0);
 
     if (webAuditLogErrorElement) {
       webAuditLogErrorElement.hidden = false;
@@ -9495,27 +9571,43 @@ function attachWorkspaceUi() {
   });
 
   webAuditLogApplyButtonElement?.addEventListener("click", () => {
+    webAuditLogOffset = 0;
     void loadWebAuditLogPage();
   });
 
   webAuditLogResetButtonElement?.addEventListener("click", () => {
     resetWebAuditLogFilters();
+    webAuditLogOffset = 0;
     void loadWebAuditLogPage();
   });
 
   webAuditLogDateFromElement?.addEventListener("change", () => {
+    webAuditLogOffset = 0;
     void loadWebAuditLogPage();
   });
 
   webAuditLogDateToElement?.addEventListener("change", () => {
+    webAuditLogOffset = 0;
     void loadWebAuditLogPage();
   });
 
   webAuditLogActorFilterElement?.addEventListener("change", () => {
+    webAuditLogOffset = 0;
     void loadWebAuditLogPage();
   });
 
   webAuditLogActionFilterElement?.addEventListener("change", () => {
+    webAuditLogOffset = 0;
+    void loadWebAuditLogPage();
+  });
+
+  webAuditLogPagePrevElement?.addEventListener("click", () => {
+    webAuditLogOffset = Math.max(0, webAuditLogOffset - WEB_AUDIT_LOG_PAGE_SIZE);
+    void loadWebAuditLogPage();
+  });
+
+  webAuditLogPageNextElement?.addEventListener("click", () => {
+    webAuditLogOffset += WEB_AUDIT_LOG_PAGE_SIZE;
     void loadWebAuditLogPage();
   });
 
