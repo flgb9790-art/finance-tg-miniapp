@@ -11028,6 +11028,16 @@ body:not(.web-mode) .tg-settings-page .web-settings-tiles {
   grid-template-columns: 1fr;
 }
 
+body:not(.web-mode) #screen-settings #webTeamSettingsCard.web-settings-panel {
+  padding: 14px 14px 16px;
+}
+
+body:not(.web-mode) #screen-settings #webTeamSettingsCard .web-settings-panel__head--team {
+  margin: 0;
+  flex-direction: row;
+  align-items: center;
+}
+
 .tg-audit-log-back {
   width: 100%;
   margin: 0 0 4px;
