@@ -43,7 +43,6 @@ export function renderInviteLandingHtml(options: {
 }): string {
   const token = options.token.trim();
   const webUrl = buildInviteWebBrowserUrl(options.appUrl, token);
-  const tgMiniAppUrl = buildInviteTelegramWebAppUrl(options.appUrl, token);
   const tgStartUrl = options.botUsername
     ? buildInviteBotDeepLink(options.botUsername, token)
     : null;
@@ -113,17 +112,16 @@ export function renderInviteLandingHtml(options: {
       <a class="btn btn-primary" href="${esc(webUrl)}">Открыть в браузере</a>
       ${
         tgStartUrl
-          ? `<a class="btn btn-secondary" href="${esc(tgStartUrl)}">Открыть в Telegram (чат с ботом)</a>`
+          ? `<a class="btn btn-secondary" href="${esc(tgStartUrl)}">Telegram App</a>`
           : ""
       }
-      <a class="btn btn-secondary" href="${esc(tgMiniAppUrl)}">Открыть Mini App (если уже в Telegram)</a>
       ${
         tgWebUrl
           ? `<a class="btn btn-ghost" href="${esc(tgWebUrl)}">Telegram Web</a>`
           : ""
       }
     </div>
-    <p class="note">На телефоне удобнее «Telegram» — откроется чат с ботом и кнопка «Открыть приглашение».</p>
+    <p class="note">На телефоне удобнее Telegram App — откроется чат с ботом и кнопка «Открыть приглашение».</p>
   </main>
 </body>
 </html>`;

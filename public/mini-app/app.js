@@ -14,6 +14,7 @@ function useWebLoginFlow() {
 }
 const WEB_WORKSPACE_MODE_SEEN_KEY = "balancy_web_workspace_mode_seen_v1";
 const WEB_INVITE_TOKEN_SESSION_KEY = "balancy_web_invite_token";
+const ACTIVE_WORKSPACE_ID_KEY = "balancy_active_workspace_id_v1";
 
 /** Есть реальная сессия mini app (не просто заглушка Telegram). */
 function isTelegramMiniAppWithInitData() {
@@ -23,6 +24,49 @@ function isTelegramMiniAppWithInitData() {
   } catch {
     return false;
   }
+}
+
+function isTelegramWebClient() {
+  try {
+    const platform = String(window.Telegram?.WebApp?.platform ?? "").toLowerCase();
+    if (platform === "web" || platform === "weba") {
+      return true;
+    }
+  } catch {
+    //
+  }
+
+  try {
+    return /web\.telegram\.org/i.test(document.referrer || "");
+  } catch {
+    return false;
+  }
+}
+
+function readPersistedWorkspaceId() {
+  try {
+    return localStorage.getItem(ACTIVE_WORKSPACE_ID_KEY)?.trim() || "";
+  } catch {
+    return "";
+  }
+}
+
+function writePersistedWorkspaceId(workspaceId) {
+  const id = String(workspaceId ?? "").trim();
+
+  try {
+    if (id) {
+      localStorage.setItem(ACTIVE_WORKSPACE_ID_KEY, id);
+    } else {
+      localStorage.removeItem(ACTIVE_WORKSPACE_ID_KEY);
+    }
+  } catch {
+    //
+  }
+}
+
+function resolveWorkspaceIdForApiHeader() {
+  return String(state.workspace?.id ?? "").trim() || readPersistedWorkspaceId();
 }
 
 /** В этом заходе по URL был ?invite= — нужно сбросить веб-сессию, иначе чужой balancy_session откроет чужой аккаунт. */
@@ -6704,6 +6748,7 @@ function clearPendingWebInviteToken() {
 function applyWorkspacePayload(payload) {
   if (payload?.workspace && typeof payload.workspace === "object") {
     state.workspace = payload.workspace;
+    writePersistedWorkspaceId(payload.workspace.id);
   }
 
   if (Array.isArray(payload?.workspaces)) {
@@ -6952,6 +6997,8 @@ async function switchWebWorkspace(workspaceId) {
     return;
   }
 
+  writePersistedWorkspaceId(id);
+
   await apiFetch("/api/workspaces/switch", {
     method: "POST",
     body: JSON.stringify({ workspaceId: id })
@@ -7067,7 +7114,11 @@ function buildWorkspaceSwitcherButton(workspace, options = {}) {
 }
 
 function renderWebWorkspaceSwitcher() {
-  if (!useWebLoginFlow() || !webWorkspaceSwitcherElement || !webWorkspaceSwitcherListElement) {
+  if (
+    (!useWebLoginFlow() && !isTelegramWebClient()) ||
+    !webWorkspaceSwitcherElement ||
+    !webWorkspaceSwitcherListElement
+  ) {
     return;
   }
 
@@ -7851,6 +7902,11 @@ async function apiFetch(url, options = {}) {
 
   if (initData) {
     headers["x-telegram-init-data"] = initData;
+  }
+
+  const workspaceId = resolveWorkspaceIdForApiHeader();
+  if (workspaceId) {
+    headers["x-balancy-workspace-id"] = workspaceId;
   }
 
   if (headers["Content-Type"] === undefined) {

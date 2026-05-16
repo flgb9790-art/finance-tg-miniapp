@@ -47,29 +47,54 @@ function parseCookies(req: Request): Record<string, string> {
   }, {});
 }
 
+async function workspaceContextForId(
+  appUserId: string,
+  workspaceId: string
+): Promise<WorkspaceContext | null> {
+  const membership = await getWorkspaceMembership(workspaceId, appUserId);
+
+  if (!membership) {
+    return null;
+  }
+
+  const workspace = await getWorkspaceById(workspaceId);
+
+  if (!workspace) {
+    return null;
+  }
+
+  return {
+    appUserId,
+    workspaceId: workspace.id,
+    role: membership.role,
+    workspace
+  };
+}
+
 export async function resolveActiveWorkspace(
   req: Request,
   appUser: TelegramAppUserRow
 ): Promise<WorkspaceContext> {
   await ensurePersonalWorkspace(appUser.id);
 
+  const headerWorkspaceId = req.header("x-balancy-workspace-id")?.trim();
+
+  if (headerWorkspaceId) {
+    const fromHeader = await workspaceContextForId(appUser.id, headerWorkspaceId);
+
+    if (fromHeader) {
+      return fromHeader;
+    }
+  }
+
   const cookies = parseCookies(req);
   const requestedWorkspaceId = cookies[workspaceCookieName]?.trim();
 
   if (requestedWorkspaceId) {
-    const membership = await getWorkspaceMembership(requestedWorkspaceId, appUser.id);
+    const fromCookie = await workspaceContextForId(appUser.id, requestedWorkspaceId);
 
-    if (membership) {
-      const workspace = await getWorkspaceById(requestedWorkspaceId);
-
-      if (workspace) {
-        return {
-          appUserId: appUser.id,
-          workspaceId: workspace.id,
-          role: membership.role,
-          workspace
-        };
-      }
+    if (fromCookie) {
+      return fromCookie;
     }
   }
 
