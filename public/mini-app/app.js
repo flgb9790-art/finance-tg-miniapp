@@ -3242,10 +3242,31 @@ function attachSwipeRowHandlers() {
     }
 
     const actionHost = event.target.closest(
-      "[data-account-edit-id],[data-account-delete-id],[data-category-edit-id],[data-category-delete-id]"
+      "[data-account-edit-id],[data-account-delete-id],[data-category-edit-id],[data-category-delete-id],[data-entry-edit-id],[data-entry-delete-id],[data-transfer-edit-id],[data-transfer-delete-id]"
     );
 
     if (actionHost?.closest(".swipe-row-actions")) {
+      const entryEditId = actionHost.dataset.entryEditId;
+      const entryDeleteId = actionHost.dataset.entryDeleteId;
+      const transferEditId = actionHost.dataset.transferEditId;
+      const transferDeleteId = actionHost.dataset.transferDeleteId;
+
+      if (entryEditId || entryDeleteId || transferEditId || transferDeleteId) {
+        event.preventDefault();
+        event.stopPropagation();
+        collapseSwipeRowsExcept(null);
+
+        if (entryEditId) {
+          startEntryEdit(entryEditId);
+        } else if (entryDeleteId) {
+          void handleDeleteEntry(entryDeleteId);
+        } else if (transferEditId) {
+          startTransferEdit(transferEditId);
+        } else if (transferDeleteId) {
+          void handleDeleteTransfer(transferDeleteId);
+        }
+      }
+
       return;
     }
 
