@@ -46,10 +46,14 @@ import {
 import { createTransfer, deleteTransfer, updateTransfer } from "../services/transfers.js";
 import {
   enrichEntryForClient,
+  enrichTransferForClient,
   parseImageUploadPayload,
   removeEntryPhoto,
+  removeTransferPhoto,
   resolveEntryPhotoViewForClient,
-  uploadEntryPhoto
+  resolveTransferPhotoViewForClient,
+  uploadEntryPhoto,
+  uploadTransferPhoto
 } from "../services/operation-photos.js";
 import {
   listOperationsTimeline,
@@ -1148,6 +1152,79 @@ export function createHttpApp(): express.Express {
     }
   });
 
+  app.get("/api/transfers/:transferId/photo/view-url", async (req, res) => {
+    try {
+      const { ws } = await withAuthWorkspace(req);
+      const transferId =
+        typeof req.params.transferId === "string" ? req.params.transferId.trim() : "";
+
+      if (!transferId) {
+        res.status(400).json({ error: "Transfer id is required" });
+        return;
+      }
+
+      const result = await resolveTransferPhotoViewForClient(ws.workspaceId, transferId);
+      res.json(result);
+    } catch (error) {
+      console.error("Failed to resolve transfer photo view URL", error);
+
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Не удалось открыть фото"
+      });
+    }
+  });
+
+  app.post("/api/transfers/:transferId/photo", async (req, res) => {
+    try {
+      const { ws } = await withAuthWorkspace(req);
+      const transferId =
+        typeof req.params.transferId === "string" ? req.params.transferId.trim() : "";
+
+      if (!transferId) {
+        res.status(400).json({ error: "Transfer id is required" });
+        return;
+      }
+
+      const { buffer, contentType } = parseImageUploadPayload(req.body);
+      const transfer = await uploadTransferPhoto(ws.workspaceId, transferId, buffer, contentType);
+      const reportingCurrency = await resolveReportingCurrency(req);
+      const patch = await buildTransferMutationPatch(ws.workspaceId, reportingCurrency);
+
+      res.json({ transfer, patch });
+    } catch (error) {
+      console.error("Failed to upload transfer photo", error);
+
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Не удалось загрузить фото"
+      });
+    }
+  });
+
+  app.delete("/api/transfers/:transferId/photo", async (req, res) => {
+    try {
+      const { ws } = await withAuthWorkspace(req);
+      const transferId =
+        typeof req.params.transferId === "string" ? req.params.transferId.trim() : "";
+
+      if (!transferId) {
+        res.status(400).json({ error: "Transfer id is required" });
+        return;
+      }
+
+      const transfer = await removeTransferPhoto(ws.workspaceId, transferId);
+      const reportingCurrency = await resolveReportingCurrency(req);
+      const patch = await buildTransferMutationPatch(ws.workspaceId, reportingCurrency);
+
+      res.json({ transfer, patch });
+    } catch (error) {
+      console.error("Failed to remove transfer photo", error);
+
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Не удалось удалить фото"
+      });
+    }
+  });
+
   app.post("/api/transfers", async (req, res) => {
     try {
       const { appUser, ws } = await withAuthWorkspace(req);
@@ -1201,8 +1278,9 @@ export function createHttpApp(): express.Express {
       });
 
       const patch = await buildTransferMutationPatch(ws.workspaceId, reportingCurrency);
+      const transferDto = await enrichTransferForClient(transfer);
 
-      res.status(201).json({ transfer, patch });
+      res.status(201).json({ transfer: transferDto, patch });
     } catch (error) {
       console.error("Failed to create transfer from mini app", error);
 
@@ -1274,8 +1352,9 @@ export function createHttpApp(): express.Express {
       });
 
       const patch = await buildTransferMutationPatch(ws.workspaceId, reportingCurrency);
+      const transferDto = await enrichTransferForClient(transfer);
 
-      res.json({ transfer, patch });
+      res.json({ transfer: transferDto, patch });
     } catch (error) {
       console.error("Failed to update transfer from mini app", error);
 

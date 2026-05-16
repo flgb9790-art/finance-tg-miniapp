@@ -1,5 +1,10 @@
 import { supabase } from "../lib/supabase.js";
 import { ENTRY_LIST_SELECT, getEntryById, type EntryListItem } from "./entries.js";
+import {
+  getTransferById,
+  TRANSFER_LIST_SELECT,
+  type TransferListItem
+} from "./transfers.js";
 
 export const OPERATION_PHOTOS_BUCKET = "operation-photos";
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
@@ -15,6 +20,11 @@ const ALLOWED_MIME = new Set([
 ]);
 
 export type EntryForClient = EntryListItem & {
+  photoViewUrl: string | null;
+  hasPhoto: boolean;
+};
+
+export type TransferForClient = TransferListItem & {
   photoViewUrl: string | null;
   hasPhoto: boolean;
 };
@@ -35,6 +45,10 @@ function extensionForMime(mime: string): string {
 
 function buildEntryPhotoPath(workspaceId: string, entryId: string, mime: string): string {
   return `${workspaceId}/entries/${entryId}.${extensionForMime(mime)}`;
+}
+
+function buildTransferPhotoPath(workspaceId: string, transferId: string, mime: string): string {
+  return `${workspaceId}/transfers/${transferId}.${extensionForMime(mime)}`;
 }
 
 function isExternalPhotoUrl(value: string): boolean {
@@ -116,6 +130,24 @@ export async function enrichEntriesForClient(
   entries: EntryListItem[]
 ): Promise<EntryForClient[]> {
   return Promise.all(entries.map((entry) => enrichEntryForClient(entry)));
+}
+
+export async function enrichTransferForClient(
+  transfer: TransferListItem
+): Promise<TransferForClient> {
+  const hasPhoto = Boolean(String(transfer.photo_url ?? "").trim());
+
+  return {
+    ...transfer,
+    hasPhoto,
+    photoViewUrl: hasPhoto ? await createSignedPhotoUrl(transfer.photo_url) : null
+  };
+}
+
+export async function enrichTransfersForClient(
+  transfers: TransferListItem[]
+): Promise<TransferForClient[]> {
+  return Promise.all(transfers.map((transfer) => enrichTransferForClient(transfer)));
 }
 
 export async function deleteStoredPhoto(storagePath: string | null | undefined): Promise<void> {
@@ -228,4 +260,102 @@ export async function removeEntryPhoto(
 
   const updated = await updateEntryPhotoPath(entryId, workspaceId, null);
   return enrichEntryForClient(updated);
+}
+
+async function updateTransferPhotoPath(
+  transferId: string,
+  workspaceId: string,
+  photoPath: string | null
+): Promise<TransferListItem> {
+  const { data, error } = await supabase
+    .from("transfers")
+    .update({ photo_url: photoPath })
+    .eq("id", transferId)
+    .eq("workspace_id", workspaceId)
+    .select(TRANSFER_LIST_SELECT)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    throw new Error("Supabase did not return the updated transfer");
+  }
+
+  return data as TransferListItem;
+}
+
+export async function uploadTransferPhoto(
+  workspaceId: string,
+  transferId: string,
+  buffer: Buffer,
+  contentType: string
+): Promise<TransferForClient> {
+  const existing = await getTransferById(transferId, workspaceId);
+
+  if (!existing) {
+    throw new Error("Transfer was not found");
+  }
+
+  const storagePath = buildTransferPhotoPath(workspaceId, transferId, contentType);
+
+  if (existing.photo_url && existing.photo_url !== storagePath) {
+    await deleteStoredPhoto(existing.photo_url);
+  }
+
+  const { error: uploadError } = await supabase.storage
+    .from(OPERATION_PHOTOS_BUCKET)
+    .upload(storagePath, buffer, {
+      contentType,
+      upsert: true,
+      cacheControl: "3600"
+    });
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  const updated = await updateTransferPhotoPath(transferId, workspaceId, storagePath);
+  return enrichTransferForClient(updated);
+}
+
+export async function resolveTransferPhotoViewForClient(
+  workspaceId: string,
+  transferId: string
+): Promise<{ photoViewUrl: string | null; hasPhoto: boolean }> {
+  const existing = await getTransferById(transferId, workspaceId);
+
+  if (!existing) {
+    throw new Error("Transfer was not found");
+  }
+
+  const path = String(existing.photo_url ?? "").trim();
+
+  if (!path) {
+    return { photoViewUrl: null, hasPhoto: false };
+  }
+
+  return {
+    photoViewUrl: await createSignedPhotoUrl(path),
+    hasPhoto: true
+  };
+}
+
+export async function removeTransferPhoto(
+  workspaceId: string,
+  transferId: string
+): Promise<TransferForClient> {
+  const existing = await getTransferById(transferId, workspaceId);
+
+  if (!existing) {
+    throw new Error("Transfer was not found");
+  }
+
+  if (existing.photo_url) {
+    await deleteStoredPhoto(existing.photo_url);
+  }
+
+  const updated = await updateTransferPhotoPath(transferId, workspaceId, null);
+  return enrichTransferForClient(updated);
 }

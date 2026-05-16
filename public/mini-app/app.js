@@ -387,6 +387,11 @@ const state = {
   entryPhotoPreviewObjectUrl: null,
   entryPhotoExistingViewUrl: null,
   entryPhotoViewUrlCache: Object.create(null),
+  transferPhotoPendingFile: null,
+  transferPhotoRemoveOnSave: false,
+  transferPhotoPreviewObjectUrl: null,
+  transferPhotoExistingViewUrl: null,
+  transferPhotoViewUrlCache: Object.create(null),
   /** Последний ответ GET /api/operations (веб), чтобы не перезагружать при смене вкладки */
   webOperationsLastPayload: null
 };
@@ -2207,7 +2212,7 @@ function buildWebOperationsTableRowHtml(row) {
     <td class="web-ops-col-num"><span class="web-ops-amount-transfer">−${fromAmt}</span></td>
     <td>${fromCur}</td>
     ${authorCell}
-    <td class="web-ops-col-attach">—</td>
+    <td class="web-ops-col-attach">${buildTransferAttachmentsChipHtml(t) || "—"}</td>
     <td class="web-ops-col-actions">${buildOperationActionButtonsHtml("transfer", t.id)}</td>
   </tr>`;
 }
@@ -2860,6 +2865,202 @@ function buildEntryAttachmentsChipHtml(entry) {
   return `<button type="button" class="entry-photo-chip entry-files-chip" data-entry-photo-open="${escapeHtml(entryId)}"${viewAttr} title="Вложения" aria-label="Открыть вложения">${ENTRY_FILES_ICON_SVG}</button>`;
 }
 
+function getTransferPhotoViewUrl(transfer) {
+  return getEntryPhotoViewUrl(transfer);
+}
+
+function rememberTransferPhotoViewUrl(transferId, photoViewUrl) {
+  const id = String(transferId ?? "").trim();
+  const url = String(photoViewUrl ?? "").trim();
+
+  if (!id || !url) {
+    return;
+  }
+
+  state.transferPhotoViewUrlCache[id] = {
+    url,
+    expiresAt: Date.now() + 50 * 60 * 1000
+  };
+
+  state.recentTransfers = state.recentTransfers.map((row) =>
+    row.id === id ? { ...row, photoViewUrl: url, hasPhoto: true } : row
+  );
+
+  const payload = state.webOperationsLastPayload;
+
+  if (payload && Array.isArray(payload.items)) {
+    state.webOperationsLastPayload = {
+      ...payload,
+      items: payload.items.map((item) => {
+        if (item.kind === "transfer" && item.transfer?.id === id) {
+          return {
+            ...item,
+            transfer: { ...item.transfer, photoViewUrl: url, hasPhoto: true }
+          };
+        }
+
+        return item;
+      })
+    };
+  }
+}
+
+async function resolveTransferPhotoViewUrl(transfer) {
+  const cachedUrl = getTransferPhotoViewUrl(transfer);
+
+  if (cachedUrl) {
+    return cachedUrl;
+  }
+
+  const transferId = String(transfer?.id ?? "").trim();
+
+  if (!transferId || !entryHasAttachedPhoto(transfer)) {
+    return "";
+  }
+
+  const cached = state.transferPhotoViewUrlCache[transferId];
+
+  if (cached && cached.expiresAt > Date.now() && cached.url) {
+    rememberTransferPhotoViewUrl(transferId, cached.url);
+    return cached.url;
+  }
+
+  const payload = await apiFetch(`/api/transfers/${encodeURIComponent(transferId)}/photo/view-url`);
+  const url = String(payload?.photoViewUrl ?? "").trim();
+
+  if (url) {
+    rememberTransferPhotoViewUrl(transferId, url);
+  }
+
+  return url;
+}
+
+async function openTransferPhotoFromChip(button) {
+  const transferId = String(button.getAttribute("data-transfer-photo-open") ?? "").trim();
+  let url = String(button.getAttribute("data-transfer-photo-view") ?? "").trim();
+
+  if ((!url || !/^https?:\/\//i.test(url)) && transferId) {
+    const transfer = findTransferInClientState(transferId);
+
+    try {
+      beginGlobalBusy("Открываем вложения…");
+      url = transfer ? await resolveTransferPhotoViewUrl(transfer) : "";
+    } catch (error) {
+      console.error(error);
+      setStatus(error instanceof Error ? error.message : "Не удалось открыть фото", "error");
+      return;
+    } finally {
+      endGlobalBusy();
+    }
+  }
+
+  if (!url) {
+    setStatus("Фото недоступно. Проверьте, что миграция storage применена.", "error");
+    return;
+  }
+
+  button.setAttribute("data-transfer-photo-view", url);
+  openEntryPhotoViewer(url);
+}
+
+function revokeTransferPhotoPreviewObjectUrl() {
+  if (state.transferPhotoPreviewObjectUrl) {
+    try {
+      URL.revokeObjectURL(state.transferPhotoPreviewObjectUrl);
+    } catch {
+      //
+    }
+    state.transferPhotoPreviewObjectUrl = null;
+  }
+}
+
+function resetTransferPhotoFormState() {
+  state.transferPhotoPendingFile = null;
+  state.transferPhotoRemoveOnSave = false;
+  state.transferPhotoExistingViewUrl = null;
+  revokeTransferPhotoPreviewObjectUrl();
+  syncTransferPhotoChrome();
+}
+
+function syncTransferPhotoChrome() {
+  const preview = document.getElementById("transferPhotoPreview");
+  const previewImg = document.getElementById("transferPhotoPreviewImg");
+  const pickButton = document.getElementById("transferPhotoPickButton");
+  const removeButton = document.getElementById("transferPhotoRemoveButton");
+  const viewButton = document.getElementById("transferPhotoViewButton");
+
+  const pendingUrl = state.transferPhotoPreviewObjectUrl;
+  const existingUrl =
+    !state.transferPhotoRemoveOnSave && !state.transferPhotoPendingFile
+      ? state.transferPhotoExistingViewUrl
+      : "";
+  const displayUrl = pendingUrl || existingUrl || "";
+
+  if (preview instanceof HTMLElement) {
+    preview.hidden = !displayUrl;
+  }
+
+  if (previewImg instanceof HTMLImageElement) {
+    previewImg.src = displayUrl || "";
+  }
+
+  const hasPhoto = Boolean(displayUrl);
+  const hasPending = Boolean(state.transferPhotoPendingFile);
+
+  if (removeButton instanceof HTMLButtonElement) {
+    removeButton.hidden = !(hasPhoto || hasPending);
+  }
+
+  if (viewButton instanceof HTMLButtonElement) {
+    viewButton.hidden = !hasPhoto;
+  }
+
+  if (pickButton instanceof HTMLButtonElement) {
+    pickButton.textContent = hasPhoto ? "Заменить фото" : "Прикрепить фото";
+  }
+}
+
+async function uploadTransferPhotoForId(transferId, file) {
+  const compressed = await compressEntryPhotoFile(file);
+  const dataUrl = await readFileAsDataUrl(compressed);
+  const dataUrlMatch = /^data:([^;]+);base64,(.+)$/i.exec(dataUrl);
+  const contentType = String(dataUrlMatch?.[1] ?? compressed.type ?? "image/jpeg")
+    .trim()
+    .toLowerCase();
+  const imageBase64 = String(dataUrlMatch?.[2] ?? dataUrl).trim();
+
+  return apiFetch(`/api/transfers/${encodeURIComponent(transferId)}/photo`, {
+    method: "POST",
+    body: JSON.stringify({
+      imageBase64,
+      contentType
+    })
+  });
+}
+
+async function removeTransferPhotoForId(transferId) {
+  return apiFetch(`/api/transfers/${encodeURIComponent(transferId)}/photo`, {
+    method: "DELETE"
+  });
+}
+
+function buildTransferAttachmentsChipHtml(transfer) {
+  if (!entryHasAttachedPhoto(transfer)) {
+    return "";
+  }
+
+  const transferId = String(transfer?.id ?? "").trim();
+
+  if (!transferId) {
+    return "";
+  }
+
+  const url = getTransferPhotoViewUrl(transfer);
+  const viewAttr = url ? ` data-transfer-photo-view="${escapeHtml(url)}"` : "";
+
+  return `<button type="button" class="entry-photo-chip entry-files-chip" data-transfer-photo-open="${escapeHtml(transferId)}"${viewAttr} title="Вложения" aria-label="Открыть вложения">${ENTRY_FILES_ICON_SVG}</button>`;
+}
+
 function buildHomeActivityEntryRowHtml(entry, item) {
   const amountPrefix = entry.kind === "income" ? "+" : "-";
   const amountClass = entry.kind === "income" ? "entry-amount-income" : "entry-amount-expense";
@@ -2964,6 +3165,15 @@ function attachEntryPhotoChrome() {
       event.preventDefault();
       event.stopPropagation();
       void openEntryPhotoFromChip(photoButton);
+      return;
+    }
+
+    const transferPhotoButton = target.closest("[data-transfer-photo-open]");
+
+    if (transferPhotoButton instanceof HTMLButtonElement) {
+      event.preventDefault();
+      event.stopPropagation();
+      void openTransferPhotoFromChip(transferPhotoButton);
     }
   });
 
@@ -2977,6 +3187,61 @@ function attachEntryPhotoChrome() {
     if (modal && !modal.hidden) {
       closeEntryPhotoViewer();
     }
+  });
+}
+
+function attachTransferPhotoChrome() {
+  if (window.__balancyTransferPhotoChromeAttached) {
+    return;
+  }
+
+  window.__balancyTransferPhotoChromeAttached = true;
+
+  const input = document.getElementById("transferPhotoInput");
+  const pickButton = document.getElementById("transferPhotoPickButton");
+  const removeButton = document.getElementById("transferPhotoRemoveButton");
+  const viewButton = document.getElementById("transferPhotoViewButton");
+
+  pickButton?.addEventListener("click", () => {
+    input?.click();
+  });
+
+  input?.addEventListener("change", () => {
+    const file = input.files?.[0] ?? null;
+
+    if (!(file instanceof File)) {
+      return;
+    }
+
+    void (async () => {
+      try {
+        const compressed = await compressEntryPhotoFile(file);
+        revokeTransferPhotoPreviewObjectUrl();
+        state.transferPhotoPendingFile = compressed;
+        state.transferPhotoRemoveOnSave = false;
+        state.transferPhotoPreviewObjectUrl = URL.createObjectURL(compressed);
+        syncTransferPhotoChrome();
+      } catch (error) {
+        setStatus(error instanceof Error ? error.message : "Не удалось обработать фото", "error");
+      } finally {
+        input.value = "";
+      }
+    })();
+  });
+
+  removeButton?.addEventListener("click", () => {
+    revokeTransferPhotoPreviewObjectUrl();
+    state.transferPhotoPendingFile = null;
+    state.transferPhotoRemoveOnSave = Boolean(state.transferPhotoExistingViewUrl);
+    syncTransferPhotoChrome();
+  });
+
+  viewButton?.addEventListener("click", () => {
+    const url =
+      state.transferPhotoPreviewObjectUrl ||
+      (!state.transferPhotoRemoveOnSave ? state.transferPhotoExistingViewUrl : "");
+
+    openEntryPhotoViewer(url);
   });
 }
 
@@ -3228,6 +3493,21 @@ function startTransferEdit(transferId) {
     transferDateInput.value = isoToDatetimeLocalValue(transfer.occurred_at);
   }
 
+  resetTransferPhotoFormState();
+  state.transferPhotoExistingViewUrl = getTransferPhotoViewUrl(transfer);
+  syncTransferPhotoChrome();
+
+  if (!state.transferPhotoExistingViewUrl && entryHasAttachedPhoto(transfer)) {
+    void resolveTransferPhotoViewUrl(transfer).then((url) => {
+      if (state.editingTransferId !== transfer.id || !url) {
+        return;
+      }
+
+      state.transferPhotoExistingViewUrl = url;
+      syncTransferPhotoChrome();
+    });
+  }
+
   syncTransferFormChrome();
   syncWebTransferAmountCurrencyUi();
   setStatus("Измените поля перевода и нажмите «Сохранить».", "success");
@@ -3235,6 +3515,7 @@ function startTransferEdit(transferId) {
 
 function resetTransferFormToDefaults() {
   state.editingTransferId = null;
+  resetTransferPhotoFormState();
 
   if (transferForm) {
     transferForm.reset();
@@ -5048,7 +5329,7 @@ function renderRecentTransfers(transfers) {
               <div class="entry-title-row">
                 <strong>${escapeHtml(transfer.from_account?.name ?? "Счет")} → ${escapeHtml(
                   transfer.to_account?.name ?? "Счет"
-                )}</strong>
+                )}</strong>${buildTransferAttachmentsChipHtml(transfer)}
               </div>
               <div class="transfer-meta">${escapeHtml(
                 formatOperationAuthorMeta(
@@ -5353,7 +5634,7 @@ function buildTgOpsFeedHtmlFromItems(items) {
         const transferRowHtml = `<div class="tg-ops-row" role="listitem">
           <div class="tg-ops-row-icon tg-ops-row-icon--transfer" aria-hidden="true">${getEntryIcon("transfer")}</div>
           <div class="tg-ops-row-main">
-            <span class="tg-ops-row-title">${escapeHtml(title)}</span>
+            <span class="tg-ops-row-title">${escapeHtml(title)}${buildTransferAttachmentsChipHtml(transfer)}</span>
             <span class="tg-ops-row-meta">${escapeHtml(
               formatOperationAuthorMeta(
                 item.createdBy ?? resolveOperationCreatedByFromApi(null, transfer),
@@ -5591,7 +5872,7 @@ function buildRecentActivityCombinedHtml(entries, transfers, limit = 12) {
               <div class="item-copy">
                 <div class="account-name">${escapeHtml(transfer.from_account?.name ?? "Счет")} → ${escapeHtml(
                   transfer.to_account?.name ?? "Счет"
-                )}</div>
+                )}${buildTransferAttachmentsChipHtml(transfer)}</div>
                 <div class="account-meta">${escapeHtml(
                   formatOperationAuthorMeta(item.createdBy, transfer.occurred_at)
                 )}</div>
@@ -5627,7 +5908,7 @@ function buildWebRecentTransfersHtml(transfers, limit = WEB_RECENT_SIDEBAR_LIMIT
               <div class="item-copy">
                 <div class="account-name">${escapeHtml(transfer.from_account?.name ?? "Счет")} → ${escapeHtml(
                   transfer.to_account?.name ?? "Счет"
-                )}</div>
+                )}${buildTransferAttachmentsChipHtml(transfer)}</div>
                 <div class="account-meta">${escapeHtml(formatDateTime(transfer.occurred_at))}</div>
               </div>
             </div>
@@ -9129,6 +9410,10 @@ function mergeRecentTransfer(transfer) {
     return;
   }
 
+  if (transfer.photoViewUrl) {
+    rememberTransferPhotoViewUrl(transfer.id, transfer.photoViewUrl);
+  }
+
   state.recentTransfers = [
     transfer,
     ...state.recentTransfers.filter((row) => row.id !== transfer.id)
@@ -10059,7 +10344,7 @@ async function handleTransferSubmit(event) {
   beginGlobalBusy(isEditing ? "Сохраняем изменения…" : "Сохраняем перевод…");
 
   try {
-    const response = await apiFetch(
+    let response = await apiFetch(
       isEditing
         ? `/api/transfers/${encodeURIComponent(state.editingTransferId)}`
         : "/api/transfers",
@@ -10069,8 +10354,40 @@ async function handleTransferSubmit(event) {
       }
     );
 
+    const savedTransferId = String(
+      response?.transfer?.id ?? (isEditing ? state.editingTransferId : "") ?? ""
+    ).trim();
+
+    let photoWarning = "";
+    const hadPendingPhoto = Boolean(state.transferPhotoPendingFile);
+    const hadPhotoRemoval = Boolean(state.transferPhotoRemoveOnSave);
+
+    if (savedTransferId && (hadPendingPhoto || hadPhotoRemoval)) {
+      try {
+        if (hadPhotoRemoval) {
+          response = await removeTransferPhotoForId(savedTransferId);
+        } else if (hadPendingPhoto) {
+          response = await uploadTransferPhotoForId(savedTransferId, state.transferPhotoPendingFile);
+        }
+      } catch (photoError) {
+        console.error(photoError);
+        photoWarning =
+          photoError instanceof Error ? photoError.message : "Не удалось сохранить фото";
+      }
+    }
+
     resetTransferFormToDefaults();
-    setStatus(isEditing ? "Перевод обновлён." : "Перевод сохранен.", "success");
+
+    if (photoWarning) {
+      setStatus(`Перевод сохранён, но фото не загружено: ${photoWarning}`, "error");
+    } else if (hadPendingPhoto || hadPhotoRemoval) {
+      setStatus(
+        isEditing ? "Перевод и фото обновлены." : "Перевод и фото сохранены.",
+        "success"
+      );
+    } else {
+      setStatus(isEditing ? "Перевод обновлён." : "Перевод сохранен.", "success");
+    }
 
     if (
       !finishMutationFromResponse(response, {
@@ -10744,6 +11061,7 @@ attachAccountsListListener();
 attachSwipeRowHandlers();
 attachOperationsActionsListener();
 attachEntryPhotoChrome();
+attachTransferPhotoChrome();
 attachCategoryListsListener();
 attachCategoryFormSharedChrome();
 attachWebCategoriesChrome();

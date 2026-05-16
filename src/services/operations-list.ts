@@ -2,7 +2,12 @@ import type { OperationKind } from "../shared/domain.js";
 import { supabase } from "../lib/supabase.js";
 import { getExchangeRate } from "./exchange-rates.js";
 import { ENTRY_LIST_SELECT, type EntryListItem } from "./entries.js";
-import { enrichEntryForClient, type EntryForClient } from "./operation-photos.js";
+import {
+  enrichEntryForClient,
+  enrichTransferForClient,
+  type EntryForClient,
+  type TransferForClient
+} from "./operation-photos.js";
 import {
   toOperationCreatedByDto,
   type OperationCreatedByDto
@@ -61,7 +66,7 @@ export type OperationTimelineItemDto = {
   createdAt: string;
   createdBy: OperationCreatedByDto | null;
   entry?: EntryForClient;
-  transfer?: TransferListItem;
+  transfer?: TransferForClient;
 };
 
 export interface OperationsListResult {
@@ -300,7 +305,7 @@ async function serializeTimelineItem(
     occurredAt: item.occurredAt,
     createdAt: item.transfer.created_at,
     createdBy: toOperationCreatedByDto(item.transfer),
-    transfer: item.transfer
+    transfer: await enrichTransferForClient(item.transfer)
   };
 }
 

@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260516entry-photos-v4";
+        var BALANCY_CLIENT_ASSET_REV = "20260516transfer-photos-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -1399,6 +1399,31 @@
                   <span>Комментарий</span>
                   <input id="transferNoteInput" name="note" placeholder="Необязательно" type="text" />
                 </label>
+
+                <div class="entry-photo-field web-transfer-photo-field">
+                  <span>Фото / чек</span>
+                  <div class="entry-photo-actions">
+                    <input
+                      id="transferPhotoInput"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/*"
+                      capture="environment"
+                      hidden
+                    />
+                    <button type="button" id="transferPhotoPickButton" class="ghost-button">
+                      Прикрепить фото
+                    </button>
+                    <button type="button" id="transferPhotoRemoveButton" class="ghost-button" hidden>
+                      Убрать фото
+                    </button>
+                    <button type="button" id="transferPhotoViewButton" class="ghost-button" hidden>
+                      Открыть
+                    </button>
+                  </div>
+                  <div id="transferPhotoPreview" class="entry-photo-preview" hidden>
+                    <img id="transferPhotoPreviewImg" alt="Превью вложения" />
+                  </div>
+                </div>
 
                 <div class="tg-transfer-security tg-only-block" role="status">
                   <span class="tg-transfer-security-ico" aria-hidden="true">

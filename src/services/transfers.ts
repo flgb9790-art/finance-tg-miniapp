@@ -1,6 +1,7 @@
 import { supabase } from "../lib/supabase.js";
 import { convertAmount, getExchangeRate } from "./exchange-rates.js";
 import { getAccountById, updateAccountBalance } from "./accounts.js";
+import { deleteStoredPhoto } from "./operation-photos.js";
 
 export interface TransferRow {
   id: string;
@@ -319,6 +320,10 @@ export async function deleteTransfer(
   }
 
   await reverseTransferBalances(existing, workspaceId);
+
+  if (existing.photo_url) {
+    await deleteStoredPhoto(existing.photo_url);
+  }
 
   const { error } = await supabase
     .from("transfers")

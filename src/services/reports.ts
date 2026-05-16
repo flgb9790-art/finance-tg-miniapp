@@ -3,7 +3,7 @@ import { getCategoryById } from "./categories.js";
 import { listAccounts, type AccountRow } from "./accounts.js";
 import { getExchangeRate, getLatestExchangeRateUpdate } from "./exchange-rates.js";
 import { listRecentEntries } from "./entries.js";
-import { enrichEntriesForClient } from "./operation-photos.js";
+import { enrichEntriesForClient, enrichTransfersForClient } from "./operation-photos.js";
 import { listRecentTransfers } from "./transfers.js";
 import { supabase } from "../lib/supabase.js";
 import type { OperationKind } from "../shared/domain.js";
@@ -1252,6 +1252,6 @@ export async function getRecentActivity(workspaceId: string): Promise<{
 
   return {
     recentEntries: await enrichEntriesForClient(recentEntries),
-    recentTransfers
+    recentTransfers: await enrichTransfersForClient(recentTransfers)
   };
 }
