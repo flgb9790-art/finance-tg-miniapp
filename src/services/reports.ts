@@ -2,11 +2,12 @@ import { env } from "../config/env.js";
 import { getCategoryById } from "./categories.js";
 import { listAccounts, type AccountRow } from "./accounts.js";
 import {
+  convertAmount,
   getExchangeRate,
   getLatestExchangeRateUpdate,
   preloadExchangeRatesToReportingCurrency
 } from "./exchange-rates.js";
-import { listRecentEntries } from "./entries.js";
+import { listRecentEntries, type EntryListItem } from "./entries.js";
 import {
   enrichEntriesForClientList,
   enrichTransfersForClientList
@@ -16,6 +17,16 @@ import { supabase } from "../lib/supabase.js";
 import type { OperationKind } from "../shared/domain.js";
 
 export type ReportPeriod = "week" | "month" | "quarter" | "year" | "custom";
+export type ReportDetailLevel = "light" | "full";
+
+/** Additive month totals for mutation patches (client merges into state.summary). */
+export interface SummaryMonthDelta {
+  monthlyIncomeDelta: number;
+  monthlyExpenseDelta: number;
+  monthlyNetDelta: number;
+  expenseCategoryName: string | null;
+  expenseCategoryDelta: number;
+}
 
 export interface ReportCategoryMatrixRow {
   categoryName: string;
@@ -488,7 +499,7 @@ export async function buildReportExportPayload(input: {
   const bundle = await resolveReportEntriesBundle(input);
 
   const [report, operations] = await Promise.all([
-    aggregateReportFromBundle(input, bundle),
+    aggregateReportFromBundle(input, bundle, { detail: "full" }),
     buildReportOperationCsvRows(bundle)
   ]);
 
@@ -730,6 +741,37 @@ export async function computeMonthEntryTotalsInReportingCurrency(
   };
 }
 
+export async function computeEntryMonthSummaryDelta(
+  entry: Pick<EntryListItem, "amount" | "currency_code" | "kind" | "category">,
+  reportingCurrency: string
+): Promise<SummaryMonthDelta> {
+  const converted = await convertAmount(
+    Number(entry.amount),
+    entry.currency_code,
+    reportingCurrency
+  );
+
+  if (entry.kind === "income") {
+    return {
+      monthlyIncomeDelta: converted,
+      monthlyExpenseDelta: 0,
+      monthlyNetDelta: converted,
+      expenseCategoryName: null,
+      expenseCategoryDelta: 0
+    };
+  }
+
+  const expenseCategoryName = entry.category?.name ?? "Без категории";
+
+  return {
+    monthlyIncomeDelta: 0,
+    monthlyExpenseDelta: converted,
+    monthlyNetDelta: Number((-converted).toFixed(2)),
+    expenseCategoryName,
+    expenseCategoryDelta: converted
+  };
+}
+
 export async function buildDashboardSummaryFromParts(
   accounts: AccountRow[],
   categoriesCount: number,
@@ -885,10 +927,11 @@ export async function getDashboardSummary(
 async function aggregateReportFromBundle(
   input: { workspaceId: string; period: ReportPeriod },
   bundle: ReportEntriesBundle,
-  options?: { accounts?: AccountRow[] }
+  options?: { accounts?: AccountRow[]; detail?: ReportDetailLevel }
 ): Promise<ReportResult> {
   const { startDate, endDate, reportingCurrency, entries, appliedCategory } = bundle;
   const hasEntryFilters = Boolean(appliedCategory || bundle.accountId || bundle.kind);
+  const light = options?.detail === "light";
 
   const accountsPromise =
     options?.accounts !== undefined
@@ -898,7 +941,9 @@ async function aggregateReportFromBundle(
   const [transfers, accounts, entriesAfterPeriod] = await Promise.all([
     listTransfersByRange(input.workspaceId, startDate, endDate),
     accountsPromise,
-    listEntriesStrictlyAfter(input.workspaceId, endDate)
+    light
+      ? Promise.resolve([] as Awaited<ReturnType<typeof listEntriesStrictlyAfter>>)
+      : listEntriesStrictlyAfter(input.workspaceId, endDate)
   ]);
 
   const currencyCodes = new Set<string>();
@@ -1044,17 +1089,19 @@ async function aggregateReportFromBundle(
   });
 
   const monthKeys = enumerateMonthsInclusive(startDate, endDate);
-  const monthlySeries: ReportMonthlyPoint[] = monthKeys.map((mk) => {
-    const bucket = monthlyMap.get(mk) ?? { income: 0, expense: 0 };
-    const inc = Number(bucket.income.toFixed(2));
-    const exp = Number(bucket.expense.toFixed(2));
-    return {
-      monthKey: mk,
-      income: inc,
-      expense: exp,
-      net: Number((inc - exp).toFixed(2))
-    };
-  });
+  const monthlySeries: ReportMonthlyPoint[] = light
+    ? []
+    : monthKeys.map((mk) => {
+        const bucket = monthlyMap.get(mk) ?? { income: 0, expense: 0 };
+        const inc = Number(bucket.income.toFixed(2));
+        const exp = Number(bucket.expense.toFixed(2));
+        return {
+          monthKey: mk,
+          income: inc,
+          expense: exp,
+          net: Number((inc - exp).toFixed(2))
+        };
+      });
 
   const operationsCount =
     entries.length + (appliedCategory ? 0 : transfers.length);
@@ -1068,60 +1115,66 @@ async function aggregateReportFromBundle(
     );
   }
 
-  let netUnfilteredPeriod = 0;
+  let balanceAtPeriodEndReporting: number | null = null;
+  let balanceAtPeriodStartReporting: number | null = null;
+  let categoryMatrix: ReportCategoryMatrixRow[] = [];
 
-  if (hasEntryFilters) {
-    const unfilteredPeriodEntries = await listEntriesByRange(
-      input.workspaceId,
-      startDate,
-      endDate,
-      undefined
-    );
+  if (!light) {
+    let netUnfilteredPeriod = 0;
 
-    for (const entry of unfilteredPeriodEntries) {
+    if (hasEntryFilters) {
+      const unfilteredPeriodEntries = await listEntriesByRange(
+        input.workspaceId,
+        startDate,
+        endDate,
+        undefined
+      );
+
+      for (const entry of unfilteredPeriodEntries) {
+        const convertedAmount = convertSynced(
+          Number(entry.amount),
+          entry.currency_code,
+          reportingCurrency
+        );
+        netUnfilteredPeriod += entry.kind === "income" ? convertedAmount : -convertedAmount;
+      }
+    } else {
+      netUnfilteredPeriod = incomes - expenses;
+    }
+
+    let netAfterPeriod = 0;
+    for (const row of entriesAfterPeriod) {
       const convertedAmount = convertSynced(
-        Number(entry.amount),
-        entry.currency_code,
+        row.amount,
+        row.currency_code,
         reportingCurrency
       );
-      netUnfilteredPeriod += entry.kind === "income" ? convertedAmount : -convertedAmount;
+      netAfterPeriod += row.kind === "income" ? convertedAmount : -convertedAmount;
     }
-  } else {
-    netUnfilteredPeriod = incomes - expenses;
-  }
 
-  let netAfterPeriod = 0;
-  for (const row of entriesAfterPeriod) {
-    const convertedAmount = convertSynced(
-      row.amount,
-      row.currency_code,
-      reportingCurrency
+    balanceAtPeriodEndReporting = Number(
+      (currentTotalBalance - netAfterPeriod).toFixed(2)
     );
-    netAfterPeriod += row.kind === "income" ? convertedAmount : -convertedAmount;
+    balanceAtPeriodStartReporting = Number(
+      (balanceAtPeriodEndReporting - netUnfilteredPeriod).toFixed(2)
+    );
+
+    const categoryNames = new Set<string>([
+      ...incomeByCategoryMap.keys(),
+      ...expenseByCategoryMap.keys()
+    ]);
+    const totalExpenseForShare = expenses > 0 ? expenses : 0;
+    categoryMatrix = Array.from(categoryNames)
+      .map((categoryName) => {
+        const inc = Number((incomeByCategoryMap.get(categoryName) ?? 0).toFixed(2));
+        const exp = Number((expenseByCategoryMap.get(categoryName) ?? 0).toFixed(2));
+        const net = Number((inc - exp).toFixed(2));
+        const expenseShare =
+          totalExpenseForShare > 0 ? Number((exp / totalExpenseForShare).toFixed(4)) : 0;
+        return { categoryName, income: inc, expense: exp, net, expenseShare };
+      })
+      .sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
   }
-
-  const balanceAtPeriodEndReporting = Number(
-    (currentTotalBalance - netAfterPeriod).toFixed(2)
-  );
-  const balanceAtPeriodStartReporting = Number(
-    (balanceAtPeriodEndReporting - netUnfilteredPeriod).toFixed(2)
-  );
-
-  const categoryNames = new Set<string>([
-    ...incomeByCategoryMap.keys(),
-    ...expenseByCategoryMap.keys()
-  ]);
-  const totalExpenseForShare = expenses > 0 ? expenses : 0;
-  const categoryMatrix: ReportCategoryMatrixRow[] = Array.from(categoryNames)
-    .map((categoryName) => {
-      const inc = Number((incomeByCategoryMap.get(categoryName) ?? 0).toFixed(2));
-      const exp = Number((expenseByCategoryMap.get(categoryName) ?? 0).toFixed(2));
-      const net = Number((inc - exp).toFixed(2));
-      const expenseShare =
-        totalExpenseForShare > 0 ? Number((exp / totalExpenseForShare).toFixed(4)) : 0;
-      return { categoryName, income: inc, expense: exp, net, expenseShare };
-    })
-    .sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
 
   return {
     period: input.period,
@@ -1159,19 +1212,24 @@ function pctChange(current: number, previous: number): number | null {
   return Number((((current - previous) / previous) * 100).toFixed(1));
 }
 
-async function buildReportFromInput(input: {
-  workspaceId: string;
-  period: ReportPeriod;
-  startDate?: string;
-  endDate?: string;
-  reportingCurrency?: string;
-  categoryId?: string;
-  accountId?: string;
-  kind?: OperationKind;
-}): Promise<ReportResult> {
+async function buildReportFromInput(
+  input: {
+    workspaceId: string;
+    period: ReportPeriod;
+    startDate?: string;
+    endDate?: string;
+    reportingCurrency?: string;
+    categoryId?: string;
+    accountId?: string;
+    kind?: OperationKind;
+  },
+  options?: { detail?: ReportDetailLevel }
+): Promise<ReportResult> {
   const bundle = await resolveReportEntriesBundle(input);
 
-  return aggregateReportFromBundle(input, bundle);
+  return aggregateReportFromBundle(input, bundle, {
+    detail: options?.detail ?? "full"
+  });
 }
 
 async function computeCompareToPrevious(
@@ -1199,12 +1257,15 @@ async function computeCompareToPrevious(
   const prevStartDay = startOfDay(new Date(prevStartMs));
   const prevEndDay = endOfDay(new Date(prevEndMs));
 
-  const prev = await buildReportFromInput({
-    ...input,
-    period: "custom",
-    startDate: prevStartDay.toISOString().slice(0, 10),
-    endDate: prevEndDay.toISOString().slice(0, 10)
-  });
+  const prev = await buildReportFromInput(
+    {
+      ...input,
+      period: "custom",
+      startDate: prevStartDay.toISOString().slice(0, 10),
+      endDate: prevEndDay.toISOString().slice(0, 10)
+    },
+    { detail: "light" }
+  );
 
   return {
     incomePct: pctChange(main.incomes, prev.incomes),
@@ -1226,9 +1287,11 @@ export async function getReport(
     accountId?: string;
     kind?: OperationKind;
   },
-  options?: { compareToPrevious?: boolean }
+  options?: { compareToPrevious?: boolean; detail?: ReportDetailLevel }
 ): Promise<ReportResult> {
-  const report = await buildReportFromInput(input);
+  const report = await buildReportFromInput(input, {
+    detail: options?.detail ?? "full"
+  });
 
   if (options?.compareToPrevious !== false) {
     report.compareToPrevious = await computeCompareToPrevious(input, report);

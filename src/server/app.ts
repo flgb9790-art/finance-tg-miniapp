@@ -1053,7 +1053,9 @@ export function createHttpApp(): express.Express {
         occurredAt
       });
 
-      const patch = await buildEntryMutationPatch(ws.workspaceId, reportingCurrency, entry);
+      const patch = await buildEntryMutationPatch(ws.workspaceId, reportingCurrency, entry, {
+        monthPatchSign: 1
+      });
       const entryDto = await enrichEntryForClient(entry);
       fireTeamEntryAudit(ws, appUser.id, "created", entry);
 
@@ -1207,7 +1209,9 @@ export function createHttpApp(): express.Express {
         const entry = await uploadEntryPhoto(ws.workspaceId, entryId, buffer, contentType);
         fireTeamEntryAudit(ws, appUser.id, "photo_added", entry);
         const reportingCurrency = await resolveReportingCurrency(req);
-        const patch = await buildEntryMutationPatch(ws.workspaceId, reportingCurrency, entry);
+        const patch = await buildEntryMutationPatch(ws.workspaceId, reportingCurrency, entry, {
+          balancesOnly: true
+        });
 
         res.json({ entry, patch });
       } catch (error) {
@@ -1233,7 +1237,9 @@ export function createHttpApp(): express.Express {
       const entry = await removeEntryPhoto(ws.workspaceId, entryId);
       fireTeamEntryAudit(ws, appUser.id, "photo_removed", entry);
       const reportingCurrency = await resolveReportingCurrency(req);
-      const patch = await buildEntryMutationPatch(ws.workspaceId, reportingCurrency, entry);
+      const patch = await buildEntryMutationPatch(ws.workspaceId, reportingCurrency, entry, {
+        balancesOnly: true
+      });
 
       res.json({ entry, patch });
     } catch (error) {
@@ -1579,6 +1585,10 @@ export function createHttpApp(): express.Express {
         typeof req.query.compare === "string" ? req.query.compare.trim().toLowerCase() : "";
       const compareToPrevious = compareRaw !== "0" && compareRaw !== "false";
 
+      const detailRaw =
+        typeof req.query.detail === "string" ? req.query.detail.trim().toLowerCase() : "";
+      const detail = detailRaw === "full" ? "full" : detailRaw === "light" ? "light" : "full";
+
       const report = await getReport(
         {
           workspaceId: ws.workspaceId,
@@ -1590,7 +1600,7 @@ export function createHttpApp(): express.Express {
           accountId,
           kind
         },
-        { compareToPrevious }
+        { compareToPrevious, detail }
       );
 
       res.json({ report });

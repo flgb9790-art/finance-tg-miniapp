@@ -7734,8 +7734,25 @@ function renderMutationChrome(options = {}) {
 function renderAll(options = {}) {
   const screen = options.activeScreen ?? document.body.dataset.appActiveScreen ?? "home";
   const partial = options.partial === true;
+  const needsSummaryChrome =
+    !partial ||
+    screen === "home" ||
+    screen === "activity" ||
+    screen === "accounts" ||
+    screen === "reports" ||
+    screen === "transfer";
+  const needsFormSelectors =
+    !partial ||
+    screen === "home" ||
+    screen === "activity" ||
+    screen === "transfer" ||
+    screen === "accounts" ||
+    screen === "reports" ||
+    screen === "ledger";
 
-  safeRenderStep("summary", () => renderSummary(state.summary));
+  if (needsSummaryChrome) {
+    safeRenderStep("summary", () => renderSummary(state.summary));
+  }
 
   if (!partial || screen === "accounts" || screen === "home" || screen === "activity" || screen === "transfer") {
     safeRenderStep("accounts", () => renderAccounts(state.accounts));
@@ -7778,15 +7795,7 @@ function renderAll(options = {}) {
     }
   });
 
-  if (
-    !partial ||
-    screen === "activity" ||
-    screen === "transfer" ||
-    screen === "accounts" ||
-    screen === "reports" ||
-    screen === "home" ||
-    screen === "ledger"
-  ) {
+  if (needsFormSelectors) {
     safeRenderStep("accountOptions", () => populateAccountOptions());
     safeRenderStep("categoryOptions", () => populateCategoryOptions());
   }
@@ -10151,6 +10160,12 @@ function buildReportQueryString(options = {}) {
 
   params.set("compare", options.compare === true ? "1" : "0");
 
+  if (options.detail === "full") {
+    params.set("detail", "full");
+  } else if (options.detail === "light") {
+    params.set("detail", "light");
+  }
+
   return params.toString();
 }
 
@@ -10159,6 +10174,47 @@ function buildReportCacheKey() {
 }
 
 let reportCompareRequestId = 0;
+let reportFullDetailsRequestId = 0;
+
+async function loadReportFullDetailsInBackground(expectedCacheKey) {
+  const requestId = ++reportFullDetailsRequestId;
+  const query = buildReportQueryString({ compare: false, detail: "full" });
+
+  try {
+    const payload = await apiFetch(`/api/reports?${query}`);
+
+    if (requestId !== reportFullDetailsRequestId) {
+      return;
+    }
+
+    if (buildReportCacheKey() !== expectedCacheKey) {
+      return;
+    }
+
+    if (!state.report || typeof state.report !== "object" || !payload.report) {
+      return;
+    }
+
+    const full = payload.report;
+    state.report = {
+      ...state.report,
+      balanceAtPeriodStartReporting: full.balanceAtPeriodStartReporting ?? null,
+      balanceAtPeriodEndReporting: full.balanceAtPeriodEndReporting ?? null,
+      categoryMatrix: Array.isArray(full.categoryMatrix) ? full.categoryMatrix : [],
+      monthlySeries: Array.isArray(full.monthlySeries) ? full.monthlySeries : []
+    };
+
+    if (screenFetchCache.reports?.key === expectedCacheKey) {
+      screenFetchCache.reports.report = state.report;
+    }
+
+    if (document.body.dataset.appActiveScreen === "reports") {
+      void renderReportWebVisuals(state.report);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+}
 
 async function loadReportCompareInBackground(expectedCacheKey) {
   const requestId = ++reportCompareRequestId;
@@ -10309,13 +10365,14 @@ async function apiFetch(url, options = {}) {
 
 async function loadReport(options = {}) {
   const cacheKey = buildReportCacheKey();
-  const query = buildReportQueryString({ compare: false });
+  const query = buildReportQueryString({ compare: false, detail: "light" });
 
   if (!options.force && screenCacheFresh(screenFetchCache.reports, cacheKey)) {
     state.report = screenFetchCache.reports.report;
     state.reportExportQuery = screenFetchCache.reports.exportQuery;
     renderReport(state.report);
     await renderReportWebVisuals(state.report);
+    void loadReportFullDetailsInBackground(cacheKey);
     void loadReportCompareInBackground(cacheKey);
     return;
   }
@@ -10331,6 +10388,7 @@ async function loadReport(options = {}) {
   };
   renderReport(state.report);
   await renderReportWebVisuals(state.report);
+  void loadReportFullDetailsInBackground(cacheKey);
   void loadReportCompareInBackground(cacheKey);
 }
 
@@ -10651,6 +10709,54 @@ function mergeRecentTransfer(transfer) {
   ].slice(0, WEB_RECENT_SIDEBAR_LIMIT);
 }
 
+function applySummaryMonthDelta(summary, delta) {
+  if (!summary || !delta) {
+    return;
+  }
+
+  summary.monthlyIncome = Number(
+    ((summary.monthlyIncome ?? 0) + Number(delta.monthlyIncomeDelta ?? 0)).toFixed(2)
+  );
+  summary.monthlyExpense = Number(
+    ((summary.monthlyExpense ?? 0) + Number(delta.monthlyExpenseDelta ?? 0)).toFixed(2)
+  );
+  summary.monthlyNet = Number(
+    ((summary.monthlyNet ?? 0) + Number(delta.monthlyNetDelta ?? 0)).toFixed(2)
+  );
+
+  const categoryDelta = Number(delta.expenseCategoryDelta ?? 0);
+  const categoryName = delta.expenseCategoryName;
+
+  if (!categoryName || Math.abs(categoryDelta) < 0.0005) {
+    return;
+  }
+
+  const reportingCode = summary.reportingCurrency ?? "";
+  const list = Array.isArray(summary.monthlyExpenseByCategory)
+    ? [...summary.monthlyExpenseByCategory]
+    : [];
+  const index = list.findIndex((row) => row.categoryName === categoryName);
+
+  if (index >= 0) {
+    const nextTotal = Number((Number(list[index].total ?? 0) + categoryDelta).toFixed(2));
+
+    if (nextTotal <= 0.009) {
+      list.splice(index, 1);
+    } else {
+      list[index] = { ...list[index], total: nextTotal };
+    }
+  } else if (categoryDelta > 0) {
+    list.push({
+      categoryName,
+      total: Number(categoryDelta.toFixed(2)),
+      currencyCode: reportingCode
+    });
+  }
+
+  list.sort((left, right) => Number(right.total ?? 0) - Number(left.total ?? 0));
+  summary.monthlyExpenseByCategory = list;
+}
+
 function applyMutationPatch(patch) {
   if (!patch) {
     return;
@@ -10667,7 +10773,15 @@ function applyMutationPatch(patch) {
   if (patch.summary) {
     const next = patch.summary;
 
-    if (
+    if (next.summaryMonthDelta) {
+      if (!state.summary) {
+        state.summary = { reportingCurrency: next.reportingCurrency ?? "" };
+      }
+
+      applySummaryMonthDelta(state.summary, next.summaryMonthDelta);
+      const { summaryMonthDelta: _omit, ...rest } = next;
+      Object.assign(state.summary, rest);
+    } else if (
       state.summary &&
       next.monthlyIncome === undefined &&
       next.monthlyExpense === undefined &&

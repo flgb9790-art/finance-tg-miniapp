@@ -3,17 +3,19 @@ import { listAccounts } from "./accounts.js";
 import { countActiveCategories, listCategories, type CategoryRow } from "./categories.js";
 import type { EntryListItem } from "./entries.js";
 import {
+  computeEntryMonthSummaryDelta,
   computeMonthEntryTotalsInReportingCurrency,
   isOccurredInReportRange,
   resolveReportRange,
   sumAccountsBalanceInReportingCurrency,
-  type DashboardSummary
+  type DashboardSummary,
+  type SummaryMonthDelta
 } from "./reports.js";
 
 export interface AppMutationPatch {
   accounts?: AccountRow[];
   categories?: CategoryRow[];
-  summary?: DashboardSummary | Partial<DashboardSummary>;
+  summary?: (Partial<DashboardSummary> & { summaryMonthDelta?: SummaryMonthDelta }) | DashboardSummary;
   syncReport?: boolean;
 }
 
@@ -107,8 +109,9 @@ async function buildLedgerMutationSummary(
   reportingCurrency: string,
   accounts: AccountRow[],
   categoriesCount: number,
-  entryOccurredAt?: string | null
-): Promise<{ summary: DashboardSummary; syncHomeChrome: boolean }> {
+  entryOccurredAt?: string | null,
+  monthEntryPatch?: { entry: EntryListItem; sign: 1 | -1 }
+): Promise<{ summary: AppMutationPatch["summary"]; syncHomeChrome: boolean }> {
   const summaryBase = await buildBalancesSummaryPartial(
     accounts,
     categoriesCount,
@@ -122,9 +125,39 @@ async function buildLedgerMutationSummary(
 
   if (!inMonth) {
     return {
-      summary: summaryBase as DashboardSummary,
+      summary: summaryBase,
       syncHomeChrome: false
     };
+  }
+
+  if (monthEntryPatch) {
+    try {
+      const raw = await computeEntryMonthSummaryDelta(
+        monthEntryPatch.entry,
+        reportingCurrency
+      );
+      const sign = monthEntryPatch.sign;
+      const summaryMonthDelta: SummaryMonthDelta = {
+        monthlyIncomeDelta: Number((sign * raw.monthlyIncomeDelta).toFixed(2)),
+        monthlyExpenseDelta: Number((sign * raw.monthlyExpenseDelta).toFixed(2)),
+        monthlyNetDelta: Number((sign * raw.monthlyNetDelta).toFixed(2)),
+        expenseCategoryName: raw.expenseCategoryName,
+        expenseCategoryDelta: Number((sign * raw.expenseCategoryDelta).toFixed(2))
+      };
+
+      return {
+        summary: {
+          ...summaryBase,
+          summaryMonthDelta
+        },
+        syncHomeChrome: true
+      };
+    } catch (error) {
+      console.error(
+        "incremental month summary delta failed, falling back to full month scan",
+        error
+      );
+    }
   }
 
   const monthTotals = await computeMonthEntryTotalsInReportingCurrency(
@@ -150,7 +183,8 @@ async function buildLedgerMutationSummary(
 export async function buildLedgerMutationPatch(
   workspaceId: string,
   reportingCurrency: string,
-  entryOccurredAt?: string | null
+  entryOccurredAt?: string | null,
+  options?: { monthEntry?: EntryListItem }
 ): Promise<AppMutationPatch> {
   try {
     const [accounts, categoriesCount] = await Promise.all([
@@ -158,12 +192,18 @@ export async function buildLedgerMutationPatch(
       countActiveCategories(workspaceId)
     ]);
 
+    const monthEntryPatch =
+      options?.monthEntry !== undefined
+        ? { entry: options.monthEntry, sign: -1 as const }
+        : undefined;
+
     const { summary, syncHomeChrome } = await buildLedgerMutationSummary(
       workspaceId,
       reportingCurrency,
       accounts,
       categoriesCount,
-      entryOccurredAt
+      entryOccurredAt,
+      monthEntryPatch
     );
 
     return {
@@ -180,20 +220,31 @@ export async function buildLedgerMutationPatch(
 export async function buildEntryMutationPatch(
   workspaceId: string,
   reportingCurrency: string,
-  entry: EntryListItem
+  entry: EntryListItem,
+  options?: { monthPatchSign?: 1 | -1; balancesOnly?: boolean }
 ): Promise<AppMutationPatch> {
+  if (options?.balancesOnly) {
+    return buildBalancesOnlyMutationPatch(workspaceId, reportingCurrency);
+  }
+
   try {
     const [accounts, categoriesCount] = await Promise.all([
       listAccounts(workspaceId),
       countActiveCategories(workspaceId)
     ]);
 
+    const monthEntryPatch =
+      options?.monthPatchSign !== undefined
+        ? { entry, sign: options.monthPatchSign }
+        : undefined;
+
     const { summary, syncHomeChrome } = await buildLedgerMutationSummary(
       workspaceId,
       reportingCurrency,
       accounts,
       categoriesCount,
-      entry.occurred_at
+      entry.occurred_at,
+      monthEntryPatch
     );
 
     return {
