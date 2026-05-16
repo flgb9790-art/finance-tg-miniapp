@@ -2144,6 +2144,9 @@ function buildWebOperationsTableRowHtml(row) {
     const iconKind = escapeHtml(e.kind);
     const opTitle = escapeHtml(e.category?.name ?? "Без категории");
     const opSub = escapeHtml(formatKind(e.kind));
+    const noteHtml = e.note
+      ? `<div class="web-ops-op-note">${escapeHtml(e.note)}</div>`
+      : "";
     const acc = escapeHtml(e.account?.name ?? "Счёт");
     const cat = escapeHtml(e.category?.name ?? "—");
     const cur = escapeHtml(e.currency_code ?? "");
@@ -2160,6 +2163,7 @@ function buildWebOperationsTableRowHtml(row) {
           <div>
             <div class="web-ops-op-title">${opTitle}${buildEntryPhotoChipHtml(e, e.id)}</div>
             <div class="web-ops-op-sub">${opSub}</div>
+            ${noteHtml}
           </div>
         </div>
       </td>
@@ -2200,12 +2204,12 @@ function buildWebOperationsTableRowHtml(row) {
   </tr>`;
 }
 
-async function refreshWebOperationsBoard() {
+async function refreshWebOperationsBoard(options = {}) {
   if (!webOperationsRoot || !webOpsTableBody) {
     return;
   }
 
-  if (document.body.dataset.appActiveScreen !== "history") {
+  if (!options.force && document.body.dataset.appActiveScreen !== "history") {
     return;
   }
 
@@ -2816,6 +2820,21 @@ function resetEntryFormToDefaults() {
   state.editingEntryId = null;
   resetEntryPhotoFormState();
   entryForm.reset();
+
+  if (entryAmountInput instanceof HTMLInputElement) {
+    entryAmountInput.value = "";
+  }
+
+  const noteInput = document.getElementById("entryNoteInput");
+  if (noteInput instanceof HTMLInputElement) {
+    noteInput.value = "";
+  }
+
+  const photoInput = document.getElementById("entryPhotoInput");
+  if (photoInput instanceof HTMLInputElement) {
+    photoInput.value = "";
+  }
+
   entryKindInput.value = "expense";
   entryDateInput.value = getCurrentLocalDateTimeValue();
   populateCategoryOptions();
@@ -2823,6 +2842,44 @@ function resetEntryFormToDefaults() {
   syncEntryCurrencyFromAccount(true);
   syncWebEntryKindCardsFromSelect();
   syncEntryFormChrome();
+  syncEntryPhotoChrome();
+}
+
+function formatEntryNoteLineHtml(note, className = "ops-entry-note") {
+  const text = String(note ?? "").trim();
+
+  if (!text) {
+    return "";
+  }
+
+  return `<span class="${className}">${escapeHtml(text)}</span>`;
+}
+
+function ensureTgOpsFiltersReady() {
+  if (useWebLoginFlow()) {
+    return false;
+  }
+
+  ensureTgOpsDefaultDates();
+
+  if (!tgOpsFilterSnapshotInitialized) {
+    Object.assign(tgOpsAppliedFilter, readTgOpsFilterFromDom());
+    tgOpsFilterSnapshotInitialized = true;
+  }
+
+  return true;
+}
+
+function syncOperationsHistoryAfterMutation() {
+  if (useWebLoginFlow()) {
+    renderWebActivityRecentList(state.recentEntries, state.recentTransfers);
+    void refreshWebOperationsBoard({ force: true });
+    return;
+  }
+
+  if (ensureTgOpsFiltersReady()) {
+    void refreshTgOperationsBoard({ force: true });
+  }
 }
 
 function syncEntryFormChrome() {
@@ -4777,7 +4834,7 @@ function renderRecentEntries(entries) {
             <div class="entry-icon entry-icon-${escapeHtml(entry.kind)}">${getEntryIcon(entry.kind)}</div>
             <div class="entry-main">
               <div class="entry-title-row">
-                <strong>${escapeHtml(entry.category?.name ?? "Без категории")}</strong>
+                <strong>${escapeHtml(entry.category?.name ?? "Без категории")}${buildEntryPhotoChipHtml(entry, entry.id)}</strong>
               </div>
               <div class="account-meta">
                 ${escapeHtml(entry.account?.name ?? "Счет")} · ${escapeHtml(
@@ -5120,6 +5177,7 @@ function buildTgOpsFeedHtmlFromItems(items) {
                 entry.occurred_at
               )
             )}</span>
+            ${formatEntryNoteLineHtml(entry.note, "tg-ops-row-note")}
           </div>
           <div class="tg-ops-amount-stack">
             <span class="tg-ops-amount-val ${amountClass}">${amt}</span>
@@ -5230,7 +5288,7 @@ function renderTgOperationsRemotePayloadIntoDom(payload) {
   renderTgOpsPaginationMarkup(total, tgOpsPageOffset, TG_OPS_PAGE_SIZE);
 }
 
-async function refreshTgOperationsBoard() {
+async function refreshTgOperationsBoard(options = {}) {
   if (useWebLoginFlow()) {
     return;
   }
@@ -5241,10 +5299,12 @@ async function refreshTgOperationsBoard() {
   if (!root) {
     return;
   }
-  if (document.body.dataset.appActiveScreen !== "ledger") {
+  if (!options.force && document.body.dataset.appActiveScreen !== "ledger") {
     return;
   }
-  if (!tgOpsFilterSnapshotInitialized) {
+  if (options.force) {
+    ensureTgOpsFiltersReady();
+  } else if (!tgOpsFilterSnapshotInitialized) {
     return;
   }
 
@@ -5369,12 +5429,13 @@ function buildRecentActivityCombinedHtml(entries, transfers, limit = 12) {
               <div class="item-leading">
                 <div class="entry-icon entry-icon-${escapeHtml(entry.kind)}">${getEntryIcon(entry.kind)}</div>
                 <div class="item-copy">
-                  <div class="account-name">${escapeHtml(entry.category?.name ?? "Без категории")}</div>
+                  <div class="account-name">${escapeHtml(entry.category?.name ?? "Без категории")}${buildEntryPhotoChipHtml(entry, entry.id)}</div>
                   <div class="account-meta">
                     ${escapeHtml(entry.account?.name ?? "Счет")} · ${escapeHtml(
                       formatOperationAuthorMeta(item.createdBy, entry.occurred_at)
                     )}
                   </div>
+                  ${entry.note ? `<div class="account-meta ops-entry-note">${escapeHtml(entry.note)}</div>` : ""}
                 </div>
               </div>
               ${formatEntryAmountStackHtml(amountPrefix, entry.amount, entry.currency_code, amountClass)}
@@ -9098,9 +9159,10 @@ function afterBootstrapRender(options = {}) {
 
   if (activeScreen === "history") {
     populateWebOperationsFilterSelects();
-    if (options.syncWebOperationsHistory) {
-      void refreshWebOperationsBoard();
-    }
+  }
+
+  if (options.syncWebOperationsHistory) {
+    syncOperationsHistoryAfterMutation();
   }
 
   if (activeScreen === "reports" && options.syncWebOperationsHistory) {
@@ -9738,16 +9800,31 @@ async function handleEntrySubmit(event) {
       response?.entry?.id ?? (isEditing ? state.editingEntryId : "") ?? ""
     ).trim();
 
+    let photoWarning = "";
+
     if (savedEntryId) {
-      if (state.entryPhotoRemoveOnSave) {
-        response = await removeEntryPhotoForId(savedEntryId);
-      } else if (state.entryPhotoPendingFile) {
-        response = await uploadEntryPhotoForId(savedEntryId, state.entryPhotoPendingFile);
+      try {
+        if (state.entryPhotoRemoveOnSave) {
+          response = await removeEntryPhotoForId(savedEntryId);
+        } else if (state.entryPhotoPendingFile) {
+          response = await uploadEntryPhotoForId(savedEntryId, state.entryPhotoPendingFile);
+        }
+      } catch (photoError) {
+        console.error(photoError);
+        photoWarning =
+          photoError instanceof Error ? photoError.message : "Не удалось обновить фото";
       }
     }
 
     resetEntryFormToDefaults();
-    setStatus(isEditing ? "Операция обновлена." : "Операция сохранена.", "success");
+    setStatus(
+      photoWarning
+        ? `Операция сохранена. ${photoWarning}`
+        : isEditing
+          ? "Операция обновлена."
+          : "Операция сохранена.",
+      photoWarning ? "error" : "success"
+    );
 
     if (
       !finishMutationFromResponse(response, {
