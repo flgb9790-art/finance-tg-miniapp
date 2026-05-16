@@ -245,6 +245,12 @@ const webAuditLogBackButtonElement = document.getElementById("webAuditLogBackBut
 const webAuditLogListElement = document.getElementById("webAuditLogList");
 const webAuditLogEmptyElement = document.getElementById("webAuditLogEmpty");
 const webAuditLogErrorElement = document.getElementById("webAuditLogError");
+const webAuditLogDateFromElement = document.getElementById("webAuditLogDateFrom");
+const webAuditLogDateToElement = document.getElementById("webAuditLogDateTo");
+const webAuditLogActorFilterElement = document.getElementById("webAuditLogActorFilter");
+const webAuditLogActionFilterElement = document.getElementById("webAuditLogActionFilter");
+const webAuditLogApplyButtonElement = document.getElementById("webAuditLogApplyButton");
+const webAuditLogResetButtonElement = document.getElementById("webAuditLogResetButton");
 const operationAuditModalElement = document.getElementById("operationAuditModal");
 const operationAuditModalTitleElement = document.getElementById("operationAuditModalTitle");
 const operationAuditModalMetaElement = document.getElementById("operationAuditModalMeta");
@@ -412,6 +418,8 @@ const state = {
 
 let webOpsOffset = 0;
 let webOpsDatesInitialized = false;
+let webAuditLogDatesInitialized = false;
+let webAuditLogMembersLoadedForWorkspaceId = "";
 
 /** Лента «Операции» в Telegram: пагинация и запрос к /api/operations */
 const TG_OPS_PAGE_SIZE = 12;
@@ -8774,6 +8782,101 @@ function buildAuditEventCardHtml(event) {
   </article>`;
 }
 
+
+function initWebAuditLogFilters() {
+  if (!webAuditLogDateFromElement || !webAuditLogDateToElement) {
+    return;
+  }
+
+  if (!webAuditLogDatesInitialized) {
+    webAuditLogDatesInitialized = true;
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 29);
+    webAuditLogDateToElement.value = end.toISOString().slice(0, 10);
+    webAuditLogDateFromElement.value = start.toISOString().slice(0, 10);
+  }
+}
+
+async function populateWebAuditLogActorFilter() {
+  if (!webAuditLogActorFilterElement || state.workspace?.kind !== "team") {
+    return;
+  }
+
+  const workspaceId = String(state.workspace?.id ?? "").trim();
+  const previous = webAuditLogActorFilterElement.value;
+
+  if (workspaceId && workspaceId === webAuditLogMembersLoadedForWorkspaceId) {
+    if (previous && Array.from(webAuditLogActorFilterElement.options).some((opt) => opt.value === previous)) {
+      webAuditLogActorFilterElement.value = previous;
+    }
+    return;
+  }
+
+  webAuditLogActorFilterElement.innerHTML = '<option value="">Все участники</option>';
+
+  try {
+    const payload = await apiFetch("/api/workspaces/members");
+    const members = Array.isArray(payload?.members) ? payload.members : [];
+
+    members.forEach((member) => {
+      const userId = String(member?.userId ?? "").trim();
+
+      if (!userId) {
+        return;
+      }
+
+      const option = document.createElement("option");
+      option.value = userId;
+      option.textContent = formatWorkspaceMemberLabel(member);
+      webAuditLogActorFilterElement.appendChild(option);
+    });
+
+    webAuditLogMembersLoadedForWorkspaceId = workspaceId;
+  } catch {
+    webAuditLogMembersLoadedForWorkspaceId = "";
+  }
+
+  if (previous && Array.from(webAuditLogActorFilterElement.options).some((opt) => opt.value === previous)) {
+    webAuditLogActorFilterElement.value = previous;
+  }
+}
+
+function getWebAuditLogFilterOptions() {
+  const from = webAuditLogDateFromElement?.value?.trim() ?? "";
+  const to = webAuditLogDateToElement?.value?.trim() ?? "";
+  const actorUserId = webAuditLogActorFilterElement?.value?.trim() ?? "";
+  const actionKindRaw = webAuditLogActionFilterElement?.value?.trim() ?? "all";
+  const actionKind =
+    actionKindRaw === "created" || actionKindRaw === "modified" ? actionKindRaw : undefined;
+
+  return { from, to, actorUserId, actionKind };
+}
+
+function hasActiveWebAuditLogFilters() {
+  const { from, to, actorUserId, actionKind } = getWebAuditLogFilterOptions();
+
+  return Boolean(from || to || actorUserId || actionKind);
+}
+
+function resetWebAuditLogFilters() {
+  if (webAuditLogDateFromElement) {
+    webAuditLogDateFromElement.value = "";
+  }
+
+  if (webAuditLogDateToElement) {
+    webAuditLogDateToElement.value = "";
+  }
+
+  if (webAuditLogActorFilterElement) {
+    webAuditLogActorFilterElement.value = "";
+  }
+
+  if (webAuditLogActionFilterElement) {
+    webAuditLogActionFilterElement.value = "all";
+  }
+}
+
 function buildAuditEventsApiUrl(options = {}) {
   const params = new URLSearchParams();
   const limit = Number(options.limit ?? 80);
@@ -8787,6 +8890,22 @@ function buildAuditEventsApiUrl(options = {}) {
 
   if (options.ascending) {
     params.set("order", "asc");
+  }
+
+  if (options.from) {
+    params.set("from", options.from);
+  }
+
+  if (options.to) {
+    params.set("to", options.to);
+  }
+
+  if (options.actorUserId) {
+    params.set("actorUserId", options.actorUserId);
+  }
+
+  if (options.actionKind) {
+    params.set("actionKind", options.actionKind);
   }
 
   return `/api/audit-events?${params.toString()}`;
@@ -8822,19 +8941,41 @@ async function loadWebAuditLogPage() {
     return;
   }
 
-  webAuditLogListElement.innerHTML = `<p class="muted">Загрузка журнала…</p>`;
+  initWebAuditLogFilters();
+  await populateWebAuditLogActorFilter();
+
+  webAuditLogListElement.innerHTML = '<p class="muted web-audit-log-loading">Загрузка журнала…</p>';
 
   if (webAuditLogEmptyElement) {
     webAuditLogEmptyElement.hidden = true;
   }
 
+  if (webAuditLogErrorElement) {
+    webAuditLogErrorElement.hidden = true;
+    webAuditLogErrorElement.textContent = "";
+  }
+
+  const filters = getWebAuditLogFilterOptions();
+  const emptyMessage = hasActiveWebAuditLogFilters()
+    ? "По выбранным фильтрам записей нет"
+    : "Записей пока нет";
+
   try {
-    const payload = await apiFetch(buildAuditEventsApiUrl({ limit: 80 }));
+    const payload = await apiFetch(
+      buildAuditEventsApiUrl({
+        limit: 100,
+        from: filters.from || undefined,
+        to: filters.to || undefined,
+        actorUserId: filters.actorUserId || undefined,
+        actionKind: filters.actionKind
+      })
+    );
     renderAuditEventCards(
       webAuditLogListElement,
       payload?.events,
       webAuditLogEmptyElement,
-      webAuditLogErrorElement
+      webAuditLogErrorElement,
+      emptyMessage
     );
   } catch (error) {
     webAuditLogListElement.replaceChildren();
@@ -9351,6 +9492,31 @@ function attachWorkspaceUi() {
 
   webAuditLogBackButtonElement?.addEventListener("click", () => {
     openScreen(state.auditLogReturnScreen || "settings");
+  });
+
+  webAuditLogApplyButtonElement?.addEventListener("click", () => {
+    void loadWebAuditLogPage();
+  });
+
+  webAuditLogResetButtonElement?.addEventListener("click", () => {
+    resetWebAuditLogFilters();
+    void loadWebAuditLogPage();
+  });
+
+  webAuditLogDateFromElement?.addEventListener("change", () => {
+    void loadWebAuditLogPage();
+  });
+
+  webAuditLogDateToElement?.addEventListener("change", () => {
+    void loadWebAuditLogPage();
+  });
+
+  webAuditLogActorFilterElement?.addEventListener("change", () => {
+    void loadWebAuditLogPage();
+  });
+
+  webAuditLogActionFilterElement?.addEventListener("change", () => {
+    void loadWebAuditLogPage();
   });
 
   document.getElementById("operationAuditModalBackdrop")?.addEventListener("click", closeOperationAuditModal);

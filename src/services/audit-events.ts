@@ -68,11 +68,94 @@ export interface AuditEventDto {
   actor: OperationCreatedByDto | null;
 }
 
+export type AuditActionKindFilter = "created" | "modified";
+
 export interface ListAuditEventsOptions {
   limit?: number;
   entityType?: AuditEntityType;
   entityId?: string;
   ascending?: boolean;
+  from?: string;
+  to?: string;
+  actorUserId?: string;
+  actionKind?: AuditActionKindFilter;
+}
+
+const MODIFIED_AUDIT_ACTIONS: AuditAction[] = [
+  "updated",
+  "deleted",
+  "photo_added",
+  "photo_removed"
+];
+
+function startOfDay(date: Date): Date {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
+
+function endOfDay(date: Date): Date {
+  const result = new Date(date);
+  result.setHours(23, 59, 59, 999);
+  return result;
+}
+
+function parseIsoOrDateOnly(raw: string): Date {
+  const trimmed = raw.trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return new Date(`${trimmed}T12:00:00`);
+  }
+
+  return new Date(trimmed);
+}
+
+function firstQueryString(value: unknown): string | undefined {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  if (Array.isArray(value) && typeof value[0] === "string") {
+    const trimmed = value[0].trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  return undefined;
+}
+
+export function parseAuditEventsListQuery(
+  query: Record<string, unknown>
+): Pick<ListAuditEventsOptions, "from" | "to" | "actorUserId" | "actionKind"> {
+  const fromRaw = firstQueryString(query.from);
+  const toRaw = firstQueryString(query.to);
+  const actorUserId = firstQueryString(query.actorUserId);
+  const actionKindRaw = firstQueryString(query.actionKind);
+
+  const actionKind =
+    actionKindRaw === "created" || actionKindRaw === "modified" ? actionKindRaw : undefined;
+
+  let from: string | undefined;
+  let to: string | undefined;
+
+  if (fromRaw) {
+    from = startOfDay(parseIsoOrDateOnly(fromRaw)).toISOString();
+  }
+
+  if (toRaw) {
+    to = endOfDay(parseIsoOrDateOnly(toRaw)).toISOString();
+  }
+
+  if (from && to && new Date(from).getTime() > new Date(to).getTime()) {
+    throw new Error("Дата «С» не может быть позже даты «По»");
+  }
+
+  return {
+    from,
+    to,
+    actorUserId,
+    actionKind
+  };
 }
 
 const AUDIT_EVENT_SELECT = `
@@ -240,6 +323,26 @@ export async function listAuditEvents(
 
   if (entityType && entityId) {
     query = query.eq("entity_type", entityType).eq("entity_id", entityId);
+  }
+
+  const actorUserId = String(options.actorUserId ?? "").trim();
+
+  if (actorUserId) {
+    query = query.eq("actor_user_id", actorUserId);
+  }
+
+  if (options.from) {
+    query = query.gte("created_at", options.from);
+  }
+
+  if (options.to) {
+    query = query.lte("created_at", options.to);
+  }
+
+  if (options.actionKind === "created") {
+    query = query.eq("action", "created");
+  } else if (options.actionKind === "modified") {
+    query = query.in("action", MODIFIED_AUDIT_ACTIONS);
   }
 
   const { data, error } = await query

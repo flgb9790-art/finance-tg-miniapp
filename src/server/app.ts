@@ -68,7 +68,8 @@ import {
   recordAuditEvent,
   type AuditAction,
   type AuditEntityType,
-  type AuditEventDetails
+  type AuditEventDetails,
+  parseAuditEventsListQuery
 } from "../services/audit-events.js";
 import type { EntryListItem } from "../services/entries.js";
 import type { TransferListItem } from "../services/transfers.js";
@@ -1487,11 +1488,24 @@ export function createHttpApp(): express.Express {
       const entityType =
         entityTypeRaw === "entry" || entityTypeRaw === "transfer" ? entityTypeRaw : undefined;
 
+      let listFilters;
+
+      try {
+        listFilters = parseAuditEventsListQuery(req.query as Record<string, unknown>);
+      } catch (parseError) {
+        res.status(400).json({
+          error:
+            parseError instanceof Error ? parseError.message : "Некорректные параметры фильтра"
+        });
+        return;
+      }
+
       const events = await listAuditEvents(ws.workspaceId, {
         limit,
         entityType,
         entityId: entityId || undefined,
-        ascending
+        ascending,
+        ...listFilters
       });
 
       res.json({ events });

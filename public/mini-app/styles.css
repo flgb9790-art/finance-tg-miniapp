@@ -11661,6 +11661,17 @@ body.web-mode #screen-audit-log {
   line-height: 1.45;
 }
 
+body.web-mode #screen-audit-log .web-audit-log-filter-shell {
+  width: 100%;
+  margin: 0 0 14px;
+}
+
+.web-audit-log-apply-btn,
+.web-audit-log-reset-btn {
+  min-height: 40px;
+  white-space: nowrap;
+}
+
 .web-audit-log-feed {
   width: 100%;
   min-width: 0;

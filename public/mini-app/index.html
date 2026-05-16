@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260516audit-modals-v1";
+        var BALANCY_CLIENT_ASSET_REV = "20260516audit-filters-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -867,7 +867,96 @@
                 Создание, правки и удаление операций и переводов с указанием автора, даты, времени, суммы и валюты.
               </p>
             </header>
+            <div class="web-ops-filter-shell web-audit-log-filter-shell">
+              <div class="web-ops-filter-row">
+                <div class="web-ops-filter-cell web-ops-filter-cell--date">
+                  <div class="balancy-filter-pill">
+                    <span class="balancy-filter-pill__prefix balancy-filter-pill__prefix--narrow" aria-hidden="true">С</span>
+                    <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                    <div class="balancy-filter-pill__body balancy-filter-pill__body--date">
+                      <input
+                        id="webAuditLogDateFrom"
+                        class="web-ops-filter-date"
+                        type="date"
+                        aria-label="С (дата начала периода)"
+                      />
+                      <button
+                        type="button"
+                        class="balancy-filter-pill__date-open"
+                        aria-label="Открыть календарь"
+                        title="Календарь"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" stroke-width="1.6" />
+                          <path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="web-ops-filter-cell web-ops-filter-cell--date">
+                  <div class="balancy-filter-pill">
+                    <span class="balancy-filter-pill__prefix balancy-filter-pill__prefix--narrow" aria-hidden="true">По</span>
+                    <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                    <div class="balancy-filter-pill__body balancy-filter-pill__body--date">
+                      <input
+                        id="webAuditLogDateTo"
+                        class="web-ops-filter-date"
+                        type="date"
+                        aria-label="По (дата окончания периода)"
+                      />
+                      <button
+                        type="button"
+                        class="balancy-filter-pill__date-open"
+                        aria-label="Открыть календарь"
+                        title="Календарь"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" stroke-width="1.6" />
+                          <path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="web-ops-filter-cell web-ops-filter-cell--grow">
+                  <div class="balancy-filter-pill">
+                    <span class="balancy-filter-pill__prefix" aria-hidden="true">Участник</span>
+                    <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                    <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
+                      <select id="webAuditLogActorFilter" class="web-ops-filter-select" aria-label="Участник">
+                        <option value="">Все участники</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="web-ops-filter-cell web-ops-filter-cell--grow">
+                  <div class="balancy-filter-pill">
+                    <span class="balancy-filter-pill__prefix" aria-hidden="true">Тип</span>
+                    <span class="balancy-filter-pill__rule" aria-hidden="true"></span>
+                    <div class="balancy-filter-pill__body balancy-filter-pill__body--select">
+                      <select id="webAuditLogActionFilter" class="web-ops-filter-select" aria-label="Тип изменения">
+                        <option value="all">Все</option>
+                        <option value="created">Создание</option>
+                        <option value="modified">Изменение</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="web-ops-filter-cell web-ops-filter-cell--action">
+                  <button type="button" id="webAuditLogApplyButton" class="primary-button web-audit-log-apply-btn">
+                    Показать
+                  </button>
+                </div>
+                <div class="web-ops-filter-cell web-ops-filter-cell--action">
+                  <button type="button" id="webAuditLogResetButton" class="ghost-button web-audit-log-reset-btn">
+                    Сбросить
+                  </button>
+                </div>
+              </div>
+            </div>
             <div class="web-audit-log-feed">
+
               <div id="webAuditLogList" class="web-audit-log-list" role="list"></div>
               <p id="webAuditLogEmpty" class="muted web-audit-log-empty card" hidden>Записей пока нет</p>
               <p id="webAuditLogError" class="inline-error web-audit-log-error" hidden></p>
