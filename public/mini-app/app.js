@@ -6059,10 +6059,10 @@ function buildRecentActivityCombinedHtml(entries, transfers, limit = 12) {
 
       return `
         <article class="account-item home-activity-row">
-          <div class="account-item-header">
-            <div class="item-leading">
+          <div class="account-item-header home-activity-row__header">
+            <div class="item-leading home-activity-row__leading">
               <div class="entry-icon entry-icon-transfer">${getEntryIcon("transfer")}</div>
-              <div class="item-copy">
+              <div class="item-copy home-activity-row__copy">
                 ${buildHomeActivityTitleRowHtml(
                   `${transfer.from_account?.name ?? "Счет"} → ${transfer.to_account?.name ?? "Счет"}`,
                   buildHomeActivityTitleChipsHtml({ transfer, includeNote: true })
@@ -6096,10 +6096,10 @@ function buildWebRecentTransfersHtml(transfers, limit = WEB_RECENT_SIDEBAR_LIMIT
     .map((transfer) => {
       return `
         <article class="account-item home-activity-row">
-          <div class="account-item-header">
-            <div class="item-leading">
+          <div class="account-item-header home-activity-row__header">
+            <div class="item-leading home-activity-row__leading">
               <div class="entry-icon entry-icon-transfer">${getEntryIcon("transfer")}</div>
-              <div class="item-copy">
+              <div class="item-copy home-activity-row__copy">
                 <div class="account-name">${escapeHtml(transfer.from_account?.name ?? "Счет")} → ${escapeHtml(
                   transfer.to_account?.name ?? "Счет"
                 )}${buildTransferAttachmentsChipHtml(transfer)}</div>
@@ -8808,10 +8808,12 @@ function buildAuditEventCardHtml(event) {
       <h3 class="web-audit-event-card__title">${operation}</h3>
       <p class="web-audit-event-card__actor muted">${actor}</p>
     </div>
-    <span class="web-audit-event-card__date">${date}</span>
-    <span class="web-audit-event-card__time">${time}</span>
-    <span class="web-audit-event-card__amount">${amount}</span>
-    <span class="web-audit-event-card__currency">${currency}</span>
+    <div class="web-audit-event-card__meta">
+      <span class="web-audit-event-card__date">${date}</span>
+      <span class="web-audit-event-card__time">${time}</span>
+      <span class="web-audit-event-card__amount">${amount}</span>
+      <span class="web-audit-event-card__currency">${currency}</span>
+    </div>
     <span class="web-audit-event-card__badge">${action}</span>
   </article>`;
 }
