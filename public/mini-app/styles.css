@@ -10701,6 +10701,52 @@ body:not(.web-mode) #screen-home .web-home-foot-cta-ghost {
   background: transparent;
 }
 
+body:not(.web-mode) #screen-home .web-home-col-card .web-home-card-main,
+body:not(.web-mode) #screen-home #homeRecentActivityList {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+body:not(.web-mode) #screen-home #homeRecentActivityList .home-activity-row {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+body:not(.web-mode) #screen-home #homeRecentActivityList .home-activity-row__header {
+  justify-content: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+body:not(.web-mode) #screen-home #homeRecentActivityList .home-activity-row__leading {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+body:not(.web-mode) #screen-home #homeRecentActivityList .home-activity-row__header > .entry-amount-stack {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 46%;
+  margin-left: auto;
+}
+
+body:not(.web-mode) #screen-home #homeRecentActivityList .entry-amount-stack.entry-amount-transfer-compact {
+  min-width: 0;
+  max-width: 100%;
+  width: auto;
+}
+
+body:not(.web-mode) #screen-home #homeRecentActivityList .entry-transfer-inline-row {
+  gap: 4px;
+}
+
+body:not(.web-mode) #screen-home #homeRecentActivityList .entry-transfer-sum-row .entry-amount-value {
+  font-size: 13px;
+}
+
 body:not(.web-mode) .web-day-tip {
   display: flex;
   align-items: flex-start;
