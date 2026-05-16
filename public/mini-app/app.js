@@ -272,7 +272,6 @@ const tgCreateTeamNameInputElement = document.getElementById("tgCreateTeamNameIn
 const tgCreateTeamSubmitButtonElement = document.getElementById("tgCreateTeamSubmitButton");
 const tgCreateTeamCancelButtonElement = document.getElementById("tgCreateTeamCancelButton");
 const tgCreateTeamErrorElement = document.getElementById("tgCreateTeamError");
-const tgMoreOpenAuditLogButtonElement = document.getElementById("tgMoreOpenAuditLogButton");
 
 const webOpenSettingsButton = document.getElementById("webOpenSettingsButton");
 const webNewEntryMenu = document.getElementById("webNewEntryMenu");
@@ -658,7 +657,7 @@ function dismissBalancyHintSession(id) {
 function getBalancyHintsToggleElements() {
   const toggles = [
     document.querySelector(".web-settings-page #balancyHintsEnabledToggle"),
-    document.querySelector(".tg-settings-card #balancyHintsEnabledToggleTg")
+    document.querySelector(".tg-settings-page #balancyHintsEnabledToggleTg")
   ].filter((el) => el instanceof HTMLInputElement);
 
   return toggles;
@@ -1971,8 +1970,7 @@ function openScreen(screenName) {
       (nextScreen === "ledger" ||
         nextScreen === "reports" ||
         nextScreen === "instruction" ||
-        nextScreen === "settings" ||
-        nextScreen === "audit-log")
+        nextScreen === "settings")
     ) {
       active = true;
     }
@@ -8451,7 +8449,17 @@ function showTgCreateTeamPanel() {
     return;
   }
 
+  const hasTeam = Array.isArray(state.workspaces)
+    ? state.workspaces.some((item) => item.kind === "team")
+    : false;
+
+  if (hasTeam) {
+    hideTgCreateTeamPanel();
+    return;
+  }
+
   tgCreateTeamPanelElement.hidden = false;
+  tgCreateTeamPanelElement.removeAttribute("hidden");
 
   if (tgWorkspaceCreateTeamButtonElement) {
     tgWorkspaceCreateTeamButtonElement.hidden = true;
@@ -8464,6 +8472,7 @@ function showTgCreateTeamPanel() {
 function hideTgCreateTeamPanel() {
   if (tgCreateTeamPanelElement) {
     tgCreateTeamPanelElement.hidden = true;
+    tgCreateTeamPanelElement.setAttribute("hidden", "");
   }
 
   if (tgCreateTeamNameInputElement) {
@@ -9209,17 +9218,10 @@ function openOperationAuditFromButton(button) {
 }
 
 function syncWebAuditLogChrome() {
-  const showTeamAudit = state.workspace?.kind === "team";
-  const hasTeam = Array.isArray(state.workspaces)
-    ? state.workspaces.some((item) => item.kind === "team")
-    : false;
+  const showTeamAudit = useWebLoginFlow() && state.workspace?.kind === "team";
 
   if (webAuditLogSettingsCardElement) {
     webAuditLogSettingsCardElement.hidden = !showTeamAudit;
-  }
-
-  if (tgMoreOpenAuditLogButtonElement) {
-    tgMoreOpenAuditLogButtonElement.hidden = !hasTeam;
   }
 
   if (
@@ -9667,10 +9669,6 @@ function attachWorkspaceUi() {
   webOpenAuditLogButtonElement?.addEventListener("click", () => {
     state.auditLogReturnScreen = "settings";
     openScreen("audit-log");
-  });
-
-  tgMoreOpenAuditLogButtonElement?.addEventListener("click", () => {
-    state.auditLogReturnScreen = "more";
   });
 
   webAuditLogBackButtonElement?.addEventListener("click", () => {

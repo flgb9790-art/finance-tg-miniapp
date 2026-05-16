@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260516mobile-settings-v1";
+        var BALANCY_CLIENT_ASSET_REV = "20260516mobile-settings-v2";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -721,19 +721,10 @@
               Инструкция, история операций и отчёты. Счета, категории и новые записи — в нижнем меню.
             </p>
             <div class="tg-more-screen-actions tg-more-screen-actions--stack">
-              <button type="button" class="ghost-button" data-open-screen="settings">Настройки</button>
-              <button type="button" class="ghost-button" data-open-screen="instruction">Инструкция</button>
-              <button type="button" class="ghost-button tg-only-block" data-open-screen="ledger">История</button>
-              <button type="button" class="ghost-button" data-open-screen="reports">Отчёты</button>
-              <button
-                type="button"
-                class="ghost-button tg-only-block"
-                id="tgMoreOpenAuditLogButton"
-                data-open-screen="audit-log"
-                hidden
-              >
-                Журнал изменений
-              </button>
+              <button type="button" class="ghost-button tg-more-menu-btn" data-open-screen="settings">Настройки</button>
+              <button type="button" class="ghost-button tg-more-menu-btn" data-open-screen="instruction">Инструкция</button>
+              <button type="button" class="ghost-button tg-more-menu-btn tg-only-block" data-open-screen="ledger">История</button>
+              <button type="button" class="ghost-button tg-more-menu-btn" data-open-screen="reports">Отчёты</button>
             </div>
           </section>
           <section id="tgWorkspaceCard" class="card tg-workspace-card tg-only-block">
@@ -815,6 +806,9 @@
           </div>
 
           <div class="tg-settings-page tg-only-block">
+            <button type="button" class="ghost-button tg-settings-back tg-settings-back--top" data-open-screen="more">
+              ← Назад в «Ещё»
+            </button>
             <div class="web-settings-tiles">
               <article class="web-settings-tile web-settings-tile--static">
                 <span class="web-settings-tile__icon web-settings-tile__icon--app" aria-hidden="true">
@@ -848,10 +842,9 @@
                 </label>
               </article>
             </div>
-            <button type="button" class="ghost-button tg-settings-back" data-open-screen="more">← Назад в «Ещё»</button>
           </div>
 
-            <article id="webAuditLogSettingsCard" class="card web-settings-panel web-settings-panel--audit" hidden>
+          <article id="webAuditLogSettingsCard" class="card web-settings-panel web-settings-panel--audit web-only-block" hidden>
               <div class="web-settings-panel__head">
                 <span class="web-settings-panel__icon web-settings-panel__icon--audit" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -876,7 +869,7 @@
               </div>
             </article>
 
-                        <article id="webTeamSettingsCard" class="card web-settings-panel web-settings-panel--team" hidden>
+            <article id="webTeamSettingsCard" class="card web-settings-panel web-settings-panel--team web-only-block" hidden>
               <div class="web-settings-panel__head web-settings-panel__head--team">
                 <span class="web-settings-panel__icon web-settings-panel__icon--team" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">

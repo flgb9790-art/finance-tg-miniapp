@@ -10829,6 +10829,27 @@ body:not(.web-mode) #screen-more .tg-more-screen-actions .ghost-button {
   box-sizing: border-box;
 }
 
+body:not(.web-mode) #screen-more .tg-more-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--fill-subtle);
+  color: var(--text);
+  font-weight: 650;
+  box-sizing: border-box;
+}
+
+body:not(.web-mode) #screen-more .tg-more-menu-btn:active {
+  background: var(--fill-strong);
+}
+
 /* --- Подсказки Balancy (закрытие до перезагрузки; глобальное отключение в «Настройки») --- */
 .balancy-hint-card {
   display: flex;
@@ -10980,11 +11001,15 @@ body:not(.web-mode) #screen-more .tg-more-screen-actions .ghost-button {
 
 .tg-settings-back {
   width: 100%;
-  margin-top: 16px;
 }
 
-body:not(.web-mode) #screen-settings {
-  display: grid;
+.tg-settings-back--top {
+  margin: 0 0 4px;
+  min-height: 40px;
+  justify-content: center;
+}
+
+body:not(.web-mode) #screen-settings.screen-active {
   gap: 12px;
   padding: 0 12px 20px;
   box-sizing: border-box;
@@ -12554,6 +12579,10 @@ body:not(.web-mode) .tg-ops-day-group + .tg-ops-swipe-row .tg-ops-row {
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid var(--line);
+}
+
+.tg-create-team-panel[hidden] {
+  display: none !important;
 }
 
 .tg-create-team-label {
