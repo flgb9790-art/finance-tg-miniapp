@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260516ops-actions-row-v1";
+        var BALANCY_CLIENT_ASSET_REV = "20260516audit-modals-v1";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -860,16 +860,18 @@
             <button type="button" id="webAuditLogBackButton" class="ghost-button web-audit-log-back">
               ← Назад в настройки
             </button>
-            <header class="web-audit-log-head">
+            <header class="card web-audit-log-hero">
               <p class="section-label">Команда</p>
               <h1 class="web-audit-log-title">Журнал изменений</h1>
               <p class="muted web-audit-log-lede">
                 Создание, правки и удаление операций и переводов с указанием автора, даты, времени, суммы и валюты.
               </p>
             </header>
-            <div id="webAuditLogList" class="web-audit-log-list" role="list"></div>
-            <p id="webAuditLogEmpty" class="muted web-audit-log-empty" hidden>Записей пока нет</p>
-            <p id="webAuditLogError" class="inline-error web-audit-log-error" hidden></p>
+            <div class="web-audit-log-feed">
+              <div id="webAuditLogList" class="web-audit-log-list" role="list"></div>
+              <p id="webAuditLogEmpty" class="muted web-audit-log-empty card" hidden>Записей пока нет</p>
+              <p id="webAuditLogError" class="inline-error web-audit-log-error" hidden></p>
+            </div>
           </div>
         </section>
 
@@ -2926,43 +2928,79 @@
     </div>
 
 
-    <div id="entryPhotoModal" class="entry-photo-modal" hidden>
-      <div id="entryPhotoModalBackdrop" class="entry-photo-modal-backdrop"></div>
-      <div class="entry-photo-modal-sheet" role="dialog" aria-modal="true" aria-label="Фото чека">
-        <button type="button" id="entryPhotoModalClose" class="entry-photo-modal-close" aria-label="Закрыть">×</button>
-        <img id="entryPhotoModalImg" class="entry-photo-modal-img" alt="Фото чека" />
+    <div id="entryPhotoModal" class="balancy-app-modal balancy-photo-modal entry-photo-modal" hidden>
+      <div id="entryPhotoModalBackdrop" class="balancy-app-modal__backdrop entry-photo-modal-backdrop"></div>
+      <div
+        class="balancy-app-modal__panel balancy-photo-modal__panel entry-photo-modal-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="entryPhotoModalTitle"
+      >
+        <header class="balancy-app-modal__head balancy-photo-modal__head">
+          <div class="balancy-app-modal__head-copy">
+            <p class="section-label">Вложение</p>
+            <h2 id="entryPhotoModalTitle" class="balancy-app-modal__title">Фото операции</h2>
+          </div>
+          <button type="button" id="entryPhotoModalClose" class="balancy-app-modal__close entry-photo-modal-close" aria-label="Закрыть">
+            ×
+          </button>
+        </header>
+        <div class="balancy-photo-modal__body">
+          <img id="entryPhotoModalImg" class="entry-photo-modal-img balancy-photo-modal__img" alt="Фото операции" />
+        </div>
       </div>
     </div>
 
-    <div id="operationAuditModal" class="entry-photo-modal operation-audit-modal" hidden>
-      <div id="operationAuditModalBackdrop" class="entry-photo-modal-backdrop"></div>
+    <div id="operationAuditModal" class="balancy-app-modal operation-audit-modal entry-photo-modal" hidden>
+      <div id="operationAuditModalBackdrop" class="balancy-app-modal__backdrop entry-photo-modal-backdrop"></div>
       <div
-        class="entry-photo-modal-sheet operation-audit-modal-sheet"
+        class="balancy-app-modal__panel operation-audit-modal-sheet entry-photo-modal-sheet"
         role="dialog"
         aria-modal="true"
         aria-labelledby="operationAuditModalTitle"
       >
-        <button type="button" id="operationAuditModalClose" class="entry-photo-modal-close" aria-label="Закрыть">
-          ×
-        </button>
-        <h2 id="operationAuditModalTitle" class="operation-audit-modal-title">История изменений</h2>
-        <p id="operationAuditModalMeta" class="muted operation-audit-modal-meta"></p>
-        <ul id="operationAuditModalList" class="operation-audit-modal-list"></ul>
-        <p id="operationAuditModalEmpty" class="muted operation-audit-modal-empty" hidden>
-          Изменений по этой операции пока нет
-        </p>
-        <p id="operationAuditModalError" class="inline-error operation-audit-modal-error" hidden></p>
+        <header class="balancy-app-modal__head">
+          <div class="balancy-app-modal__head-copy">
+            <p class="section-label">Операция</p>
+            <h2 id="operationAuditModalTitle" class="balancy-app-modal__title">История изменений</h2>
+            <p id="operationAuditModalMeta" class="muted balancy-app-modal__subtitle operation-audit-modal-meta"></p>
+          </div>
+          <button type="button" id="operationAuditModalClose" class="balancy-app-modal__close entry-photo-modal-close" aria-label="Закрыть">
+            ×
+          </button>
+        </header>
+        <div class="balancy-app-modal__body operation-audit-modal__body">
+          <div id="operationAuditModalList" class="operation-audit-modal-list web-audit-log-list" role="list"></div>
+          <p id="operationAuditModalEmpty" class="muted operation-audit-modal-empty balancy-app-modal__empty" hidden>
+            Изменений по этой операции пока нет
+          </p>
+          <p id="operationAuditModalError" class="inline-error operation-audit-modal-error" hidden></p>
+        </div>
       </div>
     </div>
 
-    <div id="operationNoteModal" class="entry-photo-modal operation-note-modal" hidden>
-      <div id="operationNoteModalBackdrop" class="entry-photo-modal-backdrop"></div>
-      <div class="entry-photo-modal-sheet operation-note-modal-sheet" role="dialog" aria-modal="true" aria-label="Комментарий">
-        <button type="button" id="operationNoteModalClose" class="entry-photo-modal-close" aria-label="Закрыть">×</button>
-        <p id="operationNoteModalText" class="operation-note-modal-text"></p>
+    <div id="operationNoteModal" class="balancy-app-modal operation-note-modal entry-photo-modal" hidden>
+      <div id="operationNoteModalBackdrop" class="balancy-app-modal__backdrop entry-photo-modal-backdrop"></div>
+      <div
+        class="balancy-app-modal__panel operation-note-modal-sheet entry-photo-modal-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="operationNoteModalTitle"
+      >
+        <header class="balancy-app-modal__head">
+          <div class="balancy-app-modal__head-copy">
+            <p class="section-label">Операция</p>
+            <h2 id="operationNoteModalTitle" class="balancy-app-modal__title">Комментарий</h2>
+          </div>
+          <button type="button" id="operationNoteModalClose" class="balancy-app-modal__close entry-photo-modal-close" aria-label="Закрыть">
+            ×
+          </button>
+        </header>
+        <div class="balancy-app-modal__body operation-note-modal__body">
+          <p id="operationNoteModalText" class="operation-note-modal-text"></p>
+        </div>
       </div>
     </div>
-
     <div id="globalBusyOverlay" class="global-busy-overlay" hidden>
       <div class="global-busy-card" role="status">
         <div class="global-busy-spinner" aria-hidden="true"></div>

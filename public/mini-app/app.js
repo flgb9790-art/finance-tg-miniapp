@@ -8728,6 +8728,22 @@ function formatAuditCurrencyFromEvent(event) {
   return String(details.currencyCode ?? "").trim() || "—";
 }
 
+function auditEventActionModifier(action) {
+  switch (action) {
+    case "created":
+      return "is-created";
+    case "updated":
+      return "is-updated";
+    case "deleted":
+      return "is-deleted";
+    case "photo_added":
+    case "photo_removed":
+      return "is-photo";
+    default:
+      return "";
+  }
+}
+
 function buildAuditEventCardHtml(event) {
   const operation = escapeHtml(resolveAuditOperationLabel(event));
   const action = escapeHtml(formatAuditActionLabel(event?.action));
@@ -8737,20 +8753,24 @@ function buildAuditEventCardHtml(event) {
   const amount = escapeHtml(formatAuditAmountFromEvent(event));
   const currency = escapeHtml(formatAuditCurrencyFromEvent(event));
   const kindLabel = escapeHtml(String(event?.details?.operationKindLabel ?? "").trim());
+  const modifier = auditEventActionModifier(event?.action);
 
-  return `<article class="web-audit-event-card" role="listitem">
-    <header class="web-audit-event-card__head">
-      <h3 class="web-audit-event-card__title">${operation}</h3>
-      <span class="web-audit-event-card__badge">${action}</span>
-    </header>
-    <dl class="web-audit-event-card__dl">
+  return `<article class="web-audit-event-card web-audit-event-card--${modifier}" role="listitem">
+    <span class="web-audit-event-card__accent" aria-hidden="true"></span>
+    <div class="web-audit-event-card__inner">
+      <div class="web-audit-event-card__top">
+        <h3 class="web-audit-event-card__title">${operation}</h3>
+        <span class="web-audit-event-card__badge">${action}</span>
+      </div>
+      <dl class="web-audit-event-card__grid">
       <div><dt>Кто</dt><dd>${actor}</dd></div>
       <div><dt>Дата</dt><dd>${date}</dd></div>
       <div><dt>Время</dt><dd>${time}</dd></div>
-      <div><dt>Сумма</dt><dd>${amount}</dd></div>
+      <div><dt>Сумма</dt><dd class="web-audit-event-card__amount">${amount}</dd></div>
       <div><dt>Валюта</dt><dd>${currency}</dd></div>
       ${kindLabel ? `<div><dt>Тип</dt><dd>${kindLabel}</dd></div>` : ""}
-    </dl>
+      </dl>
+    </div>
   </article>`;
 }
 
@@ -8772,7 +8792,7 @@ function buildAuditEventsApiUrl(options = {}) {
   return `/api/audit-events?${params.toString()}`;
 }
 
-function renderAuditEventCards(targetElement, events, emptyElement, errorElement) {
+function renderAuditEventCards(targetElement, events, emptyElement, errorElement, emptyMessage = "Записей пока нет") {
   if (!targetElement) {
     return;
   }
@@ -8785,7 +8805,7 @@ function renderAuditEventCards(targetElement, events, emptyElement, errorElement
   const rows = Array.isArray(events) ? events : [];
 
   if (emptyElement) {
-    emptyElement.textContent = "Записей пока нет";
+    emptyElement.textContent = emptyMessage;
     emptyElement.hidden = rows.length > 0;
   }
 
@@ -8868,7 +8888,7 @@ async function openOperationAuditModal({ entityType, entityId, operationLabel })
   }
 
   if (operationAuditModalListElement) {
-    operationAuditModalListElement.innerHTML = `<li class="muted">Загрузка…</li>`;
+    operationAuditModalListElement.innerHTML = '<p class="muted web-audit-log-loading">Загрузка…</p>';
   }
 
   if (operationAuditModalEmptyElement) {
@@ -8897,19 +8917,13 @@ async function openOperationAuditModal({ entityType, entityId, operationLabel })
       return;
     }
 
-    if (events.length === 0) {
-      operationAuditModalListElement.replaceChildren();
-
-      if (operationAuditModalEmptyElement) {
-        operationAuditModalEmptyElement.hidden = false;
-      }
-
-      return;
-    }
-
-    operationAuditModalListElement.innerHTML = events
-      .map((event) => `<li>${buildAuditEventCardHtml(event)}</li>`)
-      .join("");
+    renderAuditEventCards(
+      operationAuditModalListElement,
+      events,
+      operationAuditModalEmptyElement,
+      operationAuditModalErrorElement,
+      "Изменений по этой операции пока нет"
+    );
   } catch (error) {
     if (operationAuditModalListElement) {
       operationAuditModalListElement.replaceChildren();
