@@ -14,6 +14,7 @@ import {
   ensurePersonalWorkspace,
   getWorkspaceMembership,
   leaveTeamWorkspace,
+  removeTeamWorkspaceMember,
   listActiveWorkspaceInvites,
   listWorkspacesForUser,
   revokeWorkspaceInvite,
@@ -142,10 +143,25 @@ describe("workspaces integration", () => {
     const accepted = await acceptWorkspaceInvite(invite.token, memberUserId);
     assert.equal(accepted.workspace.id, team.id);
     assert.equal(accepted.membership.role, "editor");
+    assert.equal(accepted.joined, true);
+
+    const acceptedAgain = await acceptWorkspaceInvite(invite.token, memberUserId);
+    assert.equal(acceptedAgain.joined, false);
     assert.equal(await userHasTeamWorkspace(memberUserId), true);
 
     const memberMembership = await getWorkspaceMembership(team.id, memberUserId);
     assert.ok(memberMembership);
+  });
+
+  it("allows owner to remove a member", async () => {
+    await removeTeamWorkspaceMember(teamWorkspaceId, ownerUserId, memberUserId);
+    assert.equal(await getWorkspaceMembership(teamWorkspaceId, memberUserId), null);
+    assert.equal(await userHasTeamWorkspace(memberUserId), false);
+
+    const invite = await createWorkspaceInvite(teamWorkspaceId, ownerUserId);
+    const rejoined = await acceptWorkspaceInvite(invite.token, memberUserId);
+    assert.equal(rejoined.membership.role, "editor");
+    assert.equal(rejoined.joined, true);
   });
 
   it("prevents owner from leaving and allows member to leave", async () => {
@@ -161,6 +177,31 @@ describe("workspaces integration", () => {
     await leaveTeamWorkspace(teamWorkspaceId, memberUserId);
     assert.equal(await getWorkspaceMembership(teamWorkspaceId, memberUserId), null);
     assert.equal(await userHasTeamWorkspace(memberUserId), false);
+  });
+
+  it("sets invite expiry on create", async () => {
+    const never = await createWorkspaceInvite(teamWorkspaceId, ownerUserId, {
+      expiresInDays: null
+    });
+    assert.equal(never.expires_at, null);
+
+    const week = await createWorkspaceInvite(teamWorkspaceId, ownerUserId, {
+      expiresInDays: 7
+    });
+    assert.ok(week.expires_at);
+    const expiresMs = new Date(week.expires_at!).getTime();
+    const minMs = Date.now() + 6 * 24 * 60 * 60 * 1000;
+    const maxMs = Date.now() + 8 * 24 * 60 * 60 * 1000;
+    assert.ok(expiresMs >= minMs && expiresMs <= maxMs);
+
+    await assert.rejects(
+      () => createWorkspaceInvite(teamWorkspaceId, ownerUserId, { expiresInDays: 0 }),
+      (error: unknown) => {
+        assert.ok(error instanceof WorkspaceError);
+        assert.equal(error.code, "invalid_expiry");
+        return true;
+      }
+    );
   });
 
   it("revokes invites and lists workspaces for owner", async () => {

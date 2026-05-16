@@ -7,17 +7,20 @@ import {
   countWorkspaceMembers,
   createTeamWorkspace,
   createWorkspaceInvite,
+  DEFAULT_INVITE_EXPIRES_DAYS,
   ensurePersonalWorkspace,
   getActiveInviteByToken,
   getPersonalWorkspaceForUser,
   getWorkspaceById,
   leaveTeamWorkspace,
+  removeTeamWorkspaceMember,
   listActiveWorkspaceInvites,
   listWorkspaceMembersWithProfiles,
   listWorkspacesForUser,
   revokeWorkspaceInvite,
   updateTeamWorkspaceName
 } from "../services/workspaces.js";
+import { notifyTeamJoinAccepted } from "../services/team-telegram-notify.js";
 import {
   buildWorkspaceApiDto,
   buildWorkspacesListPayload,
@@ -211,7 +214,8 @@ export function registerWorkspaceRoutes(app: Express, deps: WorkspaceRoutesDeps)
         invites: invites.map((invite) => ({
           id: invite.id,
           token: invite.token,
-          createdAt: invite.created_at
+          createdAt: invite.created_at,
+          expiresAt: invite.expires_at
         }))
       });
     } catch (error) {
@@ -225,14 +229,33 @@ export function registerWorkspaceRoutes(app: Express, deps: WorkspaceRoutesDeps)
   app.post("/api/workspaces/invites", async (req, res) => {
     try {
       const { appUser, ws } = await requireWorkspaceContext(req, deps);
-      const invite = await createWorkspaceInvite(ws.workspaceId, appUser.id);
+
+      let expiresInDays: number | null | undefined = DEFAULT_INVITE_EXPIRES_DAYS;
+
+      if (req.body && Object.prototype.hasOwnProperty.call(req.body, "expiresInDays")) {
+        const raw = req.body.expiresInDays;
+
+        if (raw === null) {
+          expiresInDays = null;
+        } else if (typeof raw === "number" && Number.isFinite(raw)) {
+          expiresInDays = raw;
+        } else {
+          res.status(400).json({
+            error: "expiresInDays must be a number of days or null for no expiry"
+          });
+          return;
+        }
+      }
+
+      const invite = await createWorkspaceInvite(ws.workspaceId, appUser.id, { expiresInDays });
 
       res.status(201).json({
         invite: {
           id: invite.id,
           token: invite.token,
           workspaceId: invite.workspace_id,
-          createdAt: invite.created_at
+          createdAt: invite.created_at,
+          expiresAt: invite.expires_at
         }
       });
     } catch (error) {
@@ -291,6 +314,13 @@ export function registerWorkspaceRoutes(app: Express, deps: WorkspaceRoutesDeps)
       const result = await acceptWorkspaceInvite(token, appUser.id);
       setActiveWorkspaceCookie(res, result.workspace.id);
 
+      void notifyTeamJoinAccepted({
+        joined: result.joined,
+        workspaceName: result.workspace.name,
+        memberAppUser: appUser,
+        ownerAppUserId: result.workspace.owner_user_id
+      });
+
       res.json({
         workspace: toWorkspaceListItemDto({
           ...result.workspace,
@@ -329,6 +359,36 @@ export function registerWorkspaceRoutes(app: Express, deps: WorkspaceRoutesDeps)
       });
     } catch (error) {
       console.error("Failed to revoke workspace invite", error);
+      res.status(workspaceErrorStatus(error)).json({
+        error: workspaceErrorMessage(error)
+      });
+    }
+  });
+
+  app.delete("/api/workspaces/members/:userId", async (req, res) => {
+    try {
+      const { appUser, ws } = await requireWorkspaceContext(req, deps);
+      const targetUserId =
+        typeof req.params.userId === "string" ? req.params.userId.trim() : "";
+
+      if (!targetUserId) {
+        res.status(400).json({ error: "userId is required" });
+        return;
+      }
+
+      if (ws.workspace.kind !== "team") {
+        res.status(400).json({ error: "Members can only be removed from team workspaces" });
+        return;
+      }
+
+      await removeTeamWorkspaceMember(ws.workspaceId, appUser.id, targetUserId);
+
+      res.json({
+        removedUserId: targetUserId,
+        memberCount: await countWorkspaceMembers(ws.workspaceId)
+      });
+    } catch (error) {
+      console.error("Failed to remove workspace member", error);
       res.status(workspaceErrorStatus(error)).json({
         error: workspaceErrorMessage(error)
       });

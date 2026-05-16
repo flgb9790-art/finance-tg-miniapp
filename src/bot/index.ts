@@ -6,6 +6,7 @@ import TelegramBot from "node-telegram-bot-api";
 import { env } from "../config/env.js";
 import { createAccount, listAccounts } from "../services/accounts.js";
 import { registerTelegramUser } from "../services/users.js";
+import { setTeamNotifyTelegramBot } from "../services/team-telegram-notify.js";
 import { ensurePersonalWorkspace } from "../services/workspaces.js";
 import {
   buildInviteTelegramWebAppUrl,
@@ -558,6 +559,7 @@ export function attachTelegramBotRoutes(app: Express): TelegramBot {
     polling: !useWebhook
   });
 
+  setTeamNotifyTelegramBot(bot);
   registerTelegramHandlers(bot);
   scheduleBotCommandMenu(bot);
   scheduleBotProfile(bot);

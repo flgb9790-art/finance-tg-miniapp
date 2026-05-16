@@ -11197,6 +11197,18 @@ body.workspace-invite-gate-open .bottom-nav {
   font-size: 13px;
 }
 
+.web-team-invite-expiry-select {
+  width: 100%;
+  min-height: var(--form-control-min-height);
+  margin: 0 0 10px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  padding: var(--form-control-padding-y) var(--form-control-padding-x);
+  font: inherit;
+  background: var(--input-bg);
+  color: var(--text);
+}
+
 .web-team-copy-invite {
   width: 100%;
 }
@@ -11222,6 +11234,25 @@ body.workspace-invite-gate-open .bottom-nav {
   padding: 8px 10px;
   border-radius: 10px;
   background: var(--fill-subtle);
+}
+
+.web-team-member-name {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.web-team-member-trailing {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.web-team-member-remove {
+  font-size: 12px;
+  padding: 6px 10px;
+  color: var(--danger);
+  border-color: rgb(220 38 38 / 0.25);
 }
 
 .web-team-invites-list-block {

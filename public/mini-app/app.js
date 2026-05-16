@@ -220,6 +220,7 @@ const webTeamSettingsMetaElement = document.getElementById("webTeamSettingsMeta"
 const webTeamNameInputElement = document.getElementById("webTeamNameInput");
 const webTeamRenameButtonElement = document.getElementById("webTeamRenameButton");
 const webTeamCopyInviteButtonElement = document.getElementById("webTeamCopyInviteButton");
+const webTeamInviteExpirySelectElement = document.getElementById("webTeamInviteExpirySelect");
 const webTeamInviteStatusElement = document.getElementById("webTeamInviteStatus");
 const webTeamMembersListElement = document.getElementById("webTeamMembersList");
 const webTeamSettingsErrorElement = document.getElementById("webTeamSettingsError");
@@ -7322,18 +7323,85 @@ async function loadWebTeamSettings() {
         empty.textContent = "Пока нет участников";
         webTeamMembersListElement.appendChild(empty);
       } else {
+        const currentUserId = String(state.user?.id ?? "").trim();
+
         members.forEach((member) => {
           const item = document.createElement("li");
           item.className = "web-team-member-item";
 
           const name = document.createElement("span");
+          name.className = "web-team-member-name";
           name.textContent = formatWorkspaceMemberLabel(member);
+
+          const trailing = document.createElement("div");
+          trailing.className = "web-team-member-trailing";
 
           const role = document.createElement("span");
           role.className = "muted web-team-member-role";
           role.textContent = member.role === "owner" ? "Владелец" : "Участник";
 
-          item.append(name, role);
+          trailing.append(role);
+
+          const memberUserId = String(member.userId ?? "").trim();
+          const canRemove =
+            isOwner &&
+            member.role !== "owner" &&
+            memberUserId &&
+            memberUserId !== currentUserId;
+
+          if (canRemove) {
+            const removeButton = document.createElement("button");
+            removeButton.type = "button";
+            removeButton.className = "ghost-button web-team-member-remove";
+            removeButton.textContent = "Исключить";
+            removeButton.addEventListener("click", () => {
+              void (async () => {
+                const label = formatWorkspaceMemberLabel(member);
+                const confirmed = window.confirm(`Исключить «${label}» из команды?`);
+
+                if (!confirmed) {
+                  return;
+                }
+
+                if (webTeamSettingsErrorElement) {
+                  webTeamSettingsErrorElement.hidden = true;
+                  webTeamSettingsErrorElement.textContent = "";
+                }
+
+                try {
+                  removeButton.disabled = true;
+                  await apiFetch(
+                    `/api/workspaces/members/${encodeURIComponent(memberUserId)}`,
+                    { method: "DELETE" }
+                  );
+
+                  if (state.workspace) {
+                    const nextCount = Math.max(1, (state.workspace.memberCount ?? 1) - 1);
+                    state.workspace = { ...state.workspace, memberCount: nextCount };
+                    const idx = state.workspaces.findIndex((item) => item.id === state.workspace.id);
+                    if (idx >= 0) {
+                      state.workspaces[idx] = { ...state.workspaces[idx], memberCount: nextCount };
+                    }
+                  }
+
+                  await loadWebTeamSettings();
+                  syncWorkspaceChrome();
+                  setStatus("Участник исключён из команды", "success");
+                } catch (error) {
+                  if (webTeamSettingsErrorElement) {
+                    webTeamSettingsErrorElement.hidden = false;
+                    webTeamSettingsErrorElement.textContent =
+                      error instanceof Error ? error.message : "Не удалось исключить участника";
+                  }
+                } finally {
+                  removeButton.disabled = false;
+                }
+              })();
+            });
+            trailing.append(removeButton);
+          }
+
+          item.append(name, trailing);
           webTeamMembersListElement.appendChild(item);
         });
       }
@@ -7370,6 +7438,55 @@ function formatWorkspaceInviteCreatedAt(value) {
   }
 }
 
+function parseWebTeamInviteExpiryDays() {
+  const raw = webTeamInviteExpirySelectElement?.value ?? "7";
+
+  if (raw === "never") {
+    return null;
+  }
+
+  const days = Number(raw);
+  return Number.isFinite(days) && days > 0 ? days : 7;
+}
+
+function formatWorkspaceInviteExpiryLabel(expiresAt) {
+  if (!expiresAt) {
+    return "Без срока";
+  }
+
+  try {
+    const expires = new Date(expiresAt);
+    const formatted = expires.toLocaleString("ru-RU", {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+    if (expires.getTime() <= Date.now()) {
+      return `Истекла ${formatted}`;
+    }
+
+    return `До ${formatted}`;
+  } catch {
+    return "Срок неизвестен";
+  }
+}
+
+function formatWorkspaceInviteCopyStatus(expiresAt) {
+  if (!expiresAt) {
+    return "Ссылка скопирована (без срока)";
+  }
+
+  const label = formatWorkspaceInviteExpiryLabel(expiresAt);
+
+  if (label.startsWith("До ")) {
+    return `Ссылка скопирована (действует ${label.slice(3)})`;
+  }
+
+  return `Ссылка скопирована (${label.toLowerCase()})`;
+}
+
 async function loadWebTeamInvitesList() {
   if (state.workspace?.role !== "owner" || !webTeamInvitesListElement) {
     return;
@@ -7395,7 +7512,8 @@ async function loadWebTeamInvitesList() {
 
       const label = document.createElement("span");
       label.className = "web-team-invite-item-label";
-      label.textContent = `${formatWorkspaceInviteCreatedAt(invite.createdAt)} · ${tokenHint}`;
+      const expiryLabel = formatWorkspaceInviteExpiryLabel(invite.expiresAt);
+      label.textContent = `${formatWorkspaceInviteCreatedAt(invite.createdAt)} · ${expiryLabel} · ${tokenHint}`;
 
       const actions = document.createElement("div");
       actions.className = "web-team-invite-item-actions";
@@ -7682,7 +7800,11 @@ function attachWorkspaceUi() {
       }
 
       try {
-        const payload = await apiFetch("/api/workspaces/invites", { method: "POST" });
+        const expiresInDays = parseWebTeamInviteExpiryDays();
+        const payload = await apiFetch("/api/workspaces/invites", {
+          method: "POST",
+          body: JSON.stringify({ expiresInDays })
+        });
         const token = payload?.invite?.token;
 
         if (!token) {
@@ -7694,7 +7816,9 @@ function attachWorkspaceUi() {
 
         if (webTeamInviteStatusElement) {
           webTeamInviteStatusElement.hidden = false;
-          webTeamInviteStatusElement.textContent = "Ссылка скопирована в буфер обмена";
+          webTeamInviteStatusElement.textContent = formatWorkspaceInviteCopyStatus(
+            payload?.invite?.expiresAt ?? null
+          );
         }
 
         await loadWebTeamInvitesList();

@@ -42,8 +42,11 @@ export type WorkspaceErrorCode =
   | "team_full"
   | "invite_revoked"
   | "invite_expired"
+  | "invalid_expiry"
   | "already_member"
   | "team_already_exists";
+
+export const DEFAULT_INVITE_EXPIRES_DAYS = 7;
 
 export class WorkspaceError extends Error {
   readonly code: WorkspaceErrorCode;
@@ -434,9 +437,30 @@ export async function listWorkspaceMembers(
   return (data ?? []) as WorkspaceMemberRow[];
 }
 
+function computeInviteExpiresAt(expiresInDays: number | null | undefined): string | null {
+  if (expiresInDays === null) {
+    return null;
+  }
+
+  const days =
+    expiresInDays === undefined ? DEFAULT_INVITE_EXPIRES_DAYS : Math.floor(Number(expiresInDays));
+
+  if (!Number.isFinite(days) || days < 1 || days > 365) {
+    throw new WorkspaceError(
+      "invalid_expiry",
+      "Срок приглашения: укажите от 1 до 365 дней или «без срока»"
+    );
+  }
+
+  const expires = new Date();
+  expires.setUTCDate(expires.getUTCDate() + days);
+  return expires.toISOString();
+}
+
 export async function createWorkspaceInvite(
   workspaceId: string,
-  createdByUserId: string
+  createdByUserId: string,
+  options: { expiresInDays?: number | null } = {}
 ): Promise<WorkspaceInviteRow> {
   const workspace = await getWorkspaceById(workspaceId);
 
@@ -450,12 +474,15 @@ export async function createWorkspaceInvite(
     throw new WorkspaceError("forbidden", "Only the team owner can create invites");
   }
 
+  const expiresAt = computeInviteExpiresAt(options.expiresInDays);
+
   const { data, error } = await supabase
     .from("workspace_invites")
     .insert({
       workspace_id: workspaceId,
       token: generateInviteToken(),
-      created_by_user_id: createdByUserId
+      created_by_user_id: createdByUserId,
+      expires_at: expiresAt
     })
     .select()
     .single();
@@ -499,7 +526,7 @@ export async function getActiveInviteByToken(token: string): Promise<{
   }
 
   if (inviteRow.expires_at && new Date(inviteRow.expires_at).getTime() <= Date.now()) {
-    throw new WorkspaceError("invite_expired", "This invite link has expired");
+    throw new WorkspaceError("invite_expired", "Срок действия ссылки приглашения истёк");
   }
 
   const workspace = await getWorkspaceById(inviteRow.workspace_id);
@@ -558,7 +585,7 @@ export async function revokeWorkspaceInvite(
 export async function acceptWorkspaceInvite(
   token: string,
   userId: string
-): Promise<{ workspace: WorkspaceRow; membership: WorkspaceMemberRow }> {
+): Promise<{ workspace: WorkspaceRow; membership: WorkspaceMemberRow; joined: boolean }> {
   const preview = await getActiveInviteByToken(token);
 
   if (!preview) {
@@ -572,7 +599,8 @@ export async function acceptWorkspaceInvite(
   if (existingMembership) {
     return {
       workspace,
-      membership: existingMembership
+      membership: existingMembership,
+      joined: false
     };
   }
 
@@ -610,7 +638,8 @@ export async function acceptWorkspaceInvite(
 
   return {
     workspace,
-    membership: membership as WorkspaceMemberRow
+    membership: membership as WorkspaceMemberRow,
+    joined: true
   };
 }
 
@@ -665,7 +694,58 @@ export async function listActiveWorkspaceInvites(
     throw error;
   }
 
-  return (data ?? []) as WorkspaceInviteRow[];
+  const now = Date.now();
+
+  return ((data ?? []) as WorkspaceInviteRow[]).filter((invite) => {
+    if (!invite.expires_at) {
+      return true;
+    }
+
+    return new Date(invite.expires_at).getTime() > now;
+  });
+}
+
+export async function removeTeamWorkspaceMember(
+  workspaceId: string,
+  actorUserId: string,
+  targetUserId: string
+): Promise<void> {
+  const workspace = await getWorkspaceById(workspaceId);
+
+  if (!workspace || workspace.kind !== "team") {
+    throw new WorkspaceError("not_found", "Team workspace not found");
+  }
+
+  const actor = await assertWorkspaceMember(workspaceId, actorUserId);
+
+  if (actor.role !== "owner") {
+    throw new WorkspaceError("forbidden", "Only the team owner can remove members");
+  }
+
+  if (actorUserId === targetUserId) {
+    throw new WorkspaceError("forbidden", "Владелец не может исключить себя");
+  }
+
+  const target = await getWorkspaceMembership(workspaceId, targetUserId);
+
+  if (!target) {
+    throw new WorkspaceError("not_found", "Member not found in this team");
+  }
+
+  if (target.role === "owner") {
+    throw new WorkspaceError("forbidden", "Cannot remove the team owner");
+  }
+
+  const { error } = await supabase
+    .from("workspace_members")
+    .delete()
+    .eq("workspace_id", workspaceId)
+    .eq("user_id", targetUserId);
+
+  if (error) {
+    logSupabaseError("removeTeamWorkspaceMember", error);
+    throw error;
+  }
 }
 
 export async function leaveTeamWorkspace(
