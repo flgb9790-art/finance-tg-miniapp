@@ -8,7 +8,7 @@ import { createAccount, listAccounts } from "../services/accounts.js";
 import { registerTelegramUser } from "../services/users.js";
 import { ensurePersonalWorkspace } from "../services/workspaces.js";
 import {
-  buildInviteWebAppUrl,
+  buildInviteTelegramWebAppUrl,
   isValidWorkspaceInviteToken
 } from "../server/invite-landing.js";
 import type { AccountType } from "../shared/domain.js";
@@ -78,7 +78,7 @@ function buildWorkspaceInviteOpenMarkup(token: string): TelegramBot.InlineKeyboa
     return { inline_keyboard: [] };
   }
 
-  const inviteUrl = buildInviteWebAppUrl(base, token);
+  const inviteUrl = buildInviteTelegramWebAppUrl(base, token);
 
   return {
     inline_keyboard: [[{ text: "Открыть приглашение", web_app: { url: inviteUrl } }]]
@@ -90,7 +90,7 @@ async function sendWorkspaceInviteMessage(
   chatId: number,
   token: string
 ): Promise<void> {
-  const inviteUrl = buildInviteWebAppUrl((env.appUrl ?? "").trim(), token);
+  const inviteUrl = buildInviteTelegramWebAppUrl((env.appUrl ?? "").trim(), token);
 
   await bot.sendMessage(
     chatId,

@@ -1,5 +1,17 @@
 const tg = window.Telegram?.WebApp;
-const isWebMode = new URLSearchParams(window.location.search).get("web") === "1";
+
+/** Веб-вход (Login Widget). Внутри Telegram Mini App всегда false, даже если в URL есть ?web=1. */
+function useWebLoginFlow() {
+  if (isTelegramMiniAppWithInitData()) {
+    return false;
+  }
+
+  try {
+    return new URLSearchParams(window.location.search).get("web") === "1";
+  } catch {
+    return false;
+  }
+}
 const WEB_WORKSPACE_MODE_SEEN_KEY = "balancy_web_workspace_mode_seen_v1";
 const WEB_INVITE_TOKEN_SESSION_KEY = "balancy_web_invite_token";
 
@@ -38,8 +50,12 @@ function parseWebInviteTokenFromLocation() {
       return;
     }
 
+    if (isTelegramMiniAppWithInitData()) {
+      params.delete("web");
+    }
+
     sessionStorage.setItem(WEB_INVITE_TOKEN_SESSION_KEY, token);
-    webInviteCapturedThisPageLoad = true;
+    webInviteCapturedThisPageLoad = !isTelegramMiniAppWithInitData();
     params.delete("invite");
     const nextQuery = params.toString();
     const nextUrl = nextQuery
@@ -57,7 +73,7 @@ const TG_LAUNCH_START_PARAM_CACHE_KEY = "balancy_tg_launch_start_param";
 
 /** В TG: клавиатура не сжимает layout — нижняя навигация не «подпрыгивает» над клавиатурой. Веб-версия meta не трогается. */
 function applyTelegramMiniAppViewportFix() {
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     return;
   }
 
@@ -602,7 +618,7 @@ function endGlobalBusy() {
 let balancyTgViewportListenersBound = false;
 
 function syncTelegramLayoutViewportVar() {
-  if (isWebMode || !tg) {
+  if (useWebLoginFlow() || !tg) {
     return;
   }
   const stable = Number(tg.viewportStableHeight);
@@ -619,7 +635,7 @@ function syncTelegramLayoutViewportVar() {
 }
 
 function bindTelegramViewportListeners() {
-  if (balancyTgViewportListenersBound || isWebMode || !tg) {
+  if (balancyTgViewportListenersBound || useWebLoginFlow() || !tg) {
     return;
   }
   balancyTgViewportListenersBound = true;
@@ -643,7 +659,7 @@ let webLoginWidgetMounted = false;
 let webLoginConfigCache = null;
 
 function attachTelegramPullToRefresh() {
-  if (balancyPullRefreshAttached || isWebMode || typeof window === "undefined") {
+  if (balancyPullRefreshAttached || useWebLoginFlow() || typeof window === "undefined") {
     return;
   }
   balancyPullRefreshAttached = true;
@@ -838,7 +854,7 @@ function attachTelegramPullToRefresh() {
 }
 
 function performTelegramGestureBack() {
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     return false;
   }
 
@@ -868,7 +884,7 @@ function performTelegramGestureBack() {
 }
 
 function attachTelegramEdgeSwipeBack() {
-  if (balancyEdgeSwipeBackAttached || isWebMode || typeof window === "undefined") {
+  if (balancyEdgeSwipeBackAttached || useWebLoginFlow() || typeof window === "undefined") {
     return;
   }
   balancyEdgeSwipeBackAttached = true;
@@ -1007,7 +1023,7 @@ function scheduleScrollFieldIntoView(element) {
   }
 
   const run = () => {
-    const useNearest = !isWebMode;
+    const useNearest = !useWebLoginFlow();
     element.scrollIntoView({
       block: useNearest ? "nearest" : "center",
       behavior: useNearest ? "auto" : "smooth",
@@ -1589,7 +1605,7 @@ function formatCurrencyOption(currency) {
 }
 
 function scrollTelegramAppShellToTop() {
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     return;
   }
 
@@ -1616,7 +1632,7 @@ function scrollTelegramAppShellToTop() {
 
 /** Прокрутка активного экрана в Telegram так, чтобы якорь оказался у верхнего края (под шапкой). */
 function scrollTgContentToElement(element) {
-  if (isWebMode || !element || !(element instanceof HTMLElement)) {
+  if (useWebLoginFlow() || !element || !(element instanceof HTMLElement)) {
     return;
   }
 
@@ -1653,7 +1669,7 @@ function resolveTgGlobalScreenTitle(screenName) {
 }
 
 function syncTgGlobalScreenChrome(screenName) {
-  if (isWebMode || !tgGlobalScreenTitleElement) {
+  if (useWebLoginFlow() || !tgGlobalScreenTitleElement) {
     return;
   }
 
@@ -1675,7 +1691,7 @@ function openScreen(screenName) {
     const target = button.dataset.openScreen ?? "";
     let active = target === nextScreen;
     if (
-      !isWebMode &&
+      !useWebLoginFlow() &&
       target === "more" &&
       (nextScreen === "ledger" || nextScreen === "reports" || nextScreen === "instruction" || nextScreen === "settings")
     ) {
@@ -1695,7 +1711,7 @@ function openScreen(screenName) {
     button.classList.toggle("is-active", nextScreen === "transfer");
   });
 
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     syncWebPageTitle(nextScreen);
     closeWebNewEntryMenu();
     closeWebNavDrawer();
@@ -1721,7 +1737,7 @@ function openScreen(screenName) {
     destroyReportCharts();
   }
 
-  if (!isWebMode && nextScreen === "ledger") {
+  if (!useWebLoginFlow() && nextScreen === "ledger") {
     populateTgActivityFilterSelects();
     ensureTgOpsDefaultDates();
     Object.assign(tgOpsAppliedFilter, readTgOpsFilterFromDom());
@@ -1730,24 +1746,24 @@ function openScreen(screenName) {
     void refreshTgOperationsBoard();
   }
 
-  if (!isWebMode && nextScreen === "activity") {
+  if (!useWebLoginFlow() && nextScreen === "activity") {
     populateTgActivityFilterSelects();
     syncWebEntryKindCardsFromSelect();
   }
 
-  if (!isWebMode && prevScreen !== nextScreen) {
+  if (!useWebLoginFlow() && prevScreen !== nextScreen) {
     const overlayEnter = nextScreen === "transfer";
     if (!overlayEnter) {
       telegramGestureBackTarget = prevScreen;
     }
   }
 
-  if (!isWebMode) {
+  if (!useWebLoginFlow()) {
     syncTgGlobalScreenChrome(nextScreen);
     scrollTelegramAppShellToTop();
   }
 
-  if (isWebMode && nextScreen === "home") {
+  if (useWebLoginFlow() && nextScreen === "home") {
     window.requestAnimationFrame(() => syncWebDashSparkCharts());
   }
 
@@ -2164,7 +2180,7 @@ function openEntryScreenForKind(kind) {
   const activityTop =
     document.querySelector("#screen-activity .web-activity-compose") ?? document.getElementById("screen-activity");
 
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         if (activityTop instanceof HTMLElement) {
@@ -2229,7 +2245,7 @@ function startAccountEdit(accountId) {
   setAccountsStatus("Режим редактирования: измените данные ниже и нажмите «Сохранить изменения».", "success");
   openScreen("accounts");
 
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         accountForm?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -2249,7 +2265,7 @@ function startAccountEdit(accountId) {
 }
 
 function syncWebPageTitle(screenName) {
-  if (!isWebMode || !webPageTitleElement) {
+  if (!useWebLoginFlow() || !webPageTitleElement) {
     return;
   }
 
@@ -2545,7 +2561,7 @@ function renderWebDashSparkChart(container, spark, mode) {
 }
 
 function syncWebDashSparkCharts() {
-  if (!isWebMode) {
+  if (!useWebLoginFlow()) {
     return;
   }
 
@@ -2556,7 +2572,7 @@ function syncWebDashSparkCharts() {
 }
 
 function renderWebDesktopDashboard(summary) {
-  if (!isWebMode) {
+  if (!useWebLoginFlow()) {
     return;
   }
 
@@ -2720,7 +2736,7 @@ function renderAccountsList(targetElement, accounts, emptyDescription) {
   }
 
   if (accounts.length === 0) {
-    if (isWebMode && targetElement === accountsListElement) {
+    if (useWebLoginFlow() && targetElement === accountsListElement) {
       targetElement.innerHTML = `
         <div class="web-accounts-cards-grid">
           <div class="empty-state">
@@ -2740,7 +2756,7 @@ function renderAccountsList(targetElement, accounts, emptyDescription) {
     return;
   }
 
-  if (isWebMode && targetElement === accountsListElement) {
+  if (useWebLoginFlow() && targetElement === accountsListElement) {
     targetElement.innerHTML = `<div class="web-accounts-cards-grid">${accounts
       .map((account) => {
         const accent = resolveAccountCardAccent(account);
@@ -3070,7 +3086,7 @@ function attachSwipeRowHandlers() {
 function renderTgAccountsSummary(accounts) {
   const card = document.getElementById("tgAccountsSummaryCard");
   const dl = document.getElementById("tgAccountsSummaryDl");
-  if (!card || !dl || isWebMode) {
+  if (!card || !dl || useWebLoginFlow()) {
     return;
   }
 
@@ -3568,7 +3584,7 @@ function syncAccountFormTitles() {
       ? "Измените данные счёта и нажмите «Сохранить изменения»."
       : "Заполните данные для создания счёта.";
   }
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     accountFormTitleElement.textContent = editing ? "Редактировать счёт" : "Добавить новый счёт";
     submitButton.textContent = editing ? "Сохранить изменения" : "Создать счёт";
   } else {
@@ -3863,7 +3879,7 @@ function attachCategoryFormSharedChrome() {
 
   const accentHidden = document.getElementById("categoryAccentInput");
   if (accentHidden && !String(accentHidden.value ?? "").trim()) {
-    if (!isWebMode) {
+    if (!useWebLoginFlow()) {
       applyDefaultCategoryAccentSwatch();
     }
   }
@@ -3957,7 +3973,7 @@ function renderWebCategoriesTableSection(kind, categories) {
 }
 
 function renderWebCategoriesTable(categories) {
-  if (!isWebMode) {
+  if (!useWebLoginFlow()) {
     return;
   }
 
@@ -3966,7 +3982,7 @@ function renderWebCategoriesTable(categories) {
 }
 
 function attachWebCategoriesChrome() {
-  if (!isWebMode || webCategoriesChromeAttached) {
+  if (!useWebLoginFlow() || webCategoriesChromeAttached) {
     return;
   }
   webCategoriesChromeAttached = true;
@@ -3979,7 +3995,7 @@ function syncCategoryFormChrome() {
 
   const editing = Boolean(state.editingCategoryId);
 
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     categoryFormTitleElement.textContent = editing ? "Редактировать категорию" : "Добавить категорию";
     categorySubmitButton.textContent = "Сохранить";
   } else {
@@ -3988,7 +4004,7 @@ function syncCategoryFormChrome() {
   }
 
   if (cancelCategoryEditButton) {
-    if (isWebMode) {
+    if (useWebLoginFlow()) {
       cancelCategoryEditButton.classList.remove("hidden-button");
     } else {
       cancelCategoryEditButton.classList.toggle("hidden-button", !editing);
@@ -4001,11 +4017,11 @@ function resetCategoryForm() {
   categoryForm.reset();
   const kindInput = document.getElementById("categoryKindInput");
   if (kindInput) {
-    kindInput.value = isWebMode ? "income" : "expense";
+    kindInput.value = useWebLoginFlow() ? "income" : "expense";
   }
   syncWebCategoryKindPicksFromSelect();
   clearWebCategoryAccentSelection();
-  if (!isWebMode) {
+  if (!useWebLoginFlow()) {
     applyDefaultCategoryAccentSwatch();
   }
   const desc = document.getElementById("categoryDescriptionInput");
@@ -4043,7 +4059,7 @@ function startCategoryEdit(categoryId) {
   setStatus("Отредактируйте поля и нажмите «Сохранить».", "success");
   openScreen("categories");
 
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     renderWebCategoriesTable(state.categories);
     window.requestAnimationFrame(() => {
       document.getElementById("categoryNameInput")?.focus({ preventScroll: true });
@@ -4129,7 +4145,7 @@ function renderCategories(categories) {
   renderList(incomeCategoriesListElement, incomeCategories);
   renderList(expenseCategoriesListElement, expenseCategories);
 
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     renderWebCategoriesTable(categories);
   }
 
@@ -4137,7 +4153,7 @@ function renderCategories(categories) {
 }
 
 function renderRecentEntries(entries) {
-  if (!isWebMode && document.getElementById("tgActivityCombinedList")) {
+  if (!useWebLoginFlow() && document.getElementById("tgActivityCombinedList")) {
     populateTgActivityFilterSelects();
     if (document.body.dataset.appActiveScreen === "ledger" && tgOpsFilterSnapshotInitialized) {
       void refreshTgOperationsBoard();
@@ -4196,7 +4212,7 @@ function renderRecentEntries(entries) {
 }
 
 function renderRecentTransfers(transfers) {
-  if (!isWebMode && document.getElementById("tgActivityCombinedList")) {
+  if (!useWebLoginFlow() && document.getElementById("tgActivityCombinedList")) {
     return;
   }
 
@@ -4321,7 +4337,7 @@ function toLocalYmdFromDateValue(d) {
 }
 
 function ensureTgOpsDefaultDates() {
-  if (isWebMode || tgOpsDefaultDatesInitialized) {
+  if (useWebLoginFlow() || tgOpsDefaultDatesInitialized) {
     return;
   }
   const fromEl = document.getElementById("tgOpsDateFrom");
@@ -4338,7 +4354,7 @@ function ensureTgOpsDefaultDates() {
 }
 
 function populateTgActivityFilterSelects() {
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     return;
   }
 
@@ -4393,7 +4409,7 @@ function readTgOpsFilterFromDom() {
 }
 
 function applyTgOpsFiltersForTgList() {
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     return;
   }
   Object.assign(tgOpsAppliedFilter, readTgOpsFilterFromDom());
@@ -4403,7 +4419,7 @@ function applyTgOpsFiltersForTgList() {
 }
 
 function resetTgOpsFiltersToDefaults() {
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     return;
   }
   const fromEl = document.getElementById("tgOpsDateFrom");
@@ -4621,7 +4637,7 @@ function renderTgOperationsRemotePayloadIntoDom(payload) {
 }
 
 async function refreshTgOperationsBoard() {
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     return;
   }
   if (document.body.dataset.appActiveScreen === "transfer") {
@@ -4664,7 +4680,7 @@ async function refreshTgOperationsBoard() {
 }
 
 function attachTgActivityOpsChrome() {
-  if (isWebMode || tgActivityOpsChromeAttached) {
+  if (useWebLoginFlow() || tgActivityOpsChromeAttached) {
     return;
   }
   tgActivityOpsChromeAttached = true;
@@ -4832,7 +4848,7 @@ function buildWebRecentTransfersHtml(transfers, limit = WEB_RECENT_SIDEBAR_LIMIT
 }
 
 function renderWebTransferRecentList(transfers) {
-  if (!isWebMode || !webTransferRecentListElement) {
+  if (!useWebLoginFlow() || !webTransferRecentListElement) {
     return;
   }
 
@@ -4840,7 +4856,7 @@ function renderWebTransferRecentList(transfers) {
 }
 
 function renderWebActivityRecentList(entries, transfers) {
-  if (!isWebMode || !webActivityRecentListElement) {
+  if (!useWebLoginFlow() || !webActivityRecentListElement) {
     return;
   }
 
@@ -5316,8 +5332,8 @@ function renderReportChartsFromReport(report) {
       cutout: "62%",
       plugins: {
         legend: {
-          position: isWebMode ? "right" : "bottom",
-          labels: { boxWidth: 10, font: { size: isWebMode ? 11 : 10 }, padding: isWebMode ? 12 : 8 }
+          position: useWebLoginFlow() ? "right" : "bottom",
+          labels: { boxWidth: 10, font: { size: useWebLoginFlow() ? 11 : 10 }, padding: useWebLoginFlow() ? 12 : 8 }
         },
         tooltip: {
           callbacks: {
@@ -5449,7 +5465,7 @@ function renderReport(report) {
       : "Когда появятся расходы, здесь будет разбивка по статьям."
   );
 
-  const canExport = Boolean(report && (isWebMode || getInitData()));
+  const canExport = Boolean(report && (useWebLoginFlow() || getInitData()));
 
   if (reportDownloadCsvButton) {
     reportDownloadCsvButton.disabled = !canExport;
@@ -5459,7 +5475,7 @@ function renderReport(report) {
     reportCsvStatementButton.disabled = !canExport;
   }
 
-  if (!isWebMode && document.body.dataset.appActiveScreen === "reports") {
+  if (!useWebLoginFlow() && document.body.dataset.appActiveScreen === "reports") {
     syncTgGlobalScreenChrome("reports");
   }
 }
@@ -5720,7 +5736,7 @@ function openTransferScreen() {
   transferToAmountAutofillTag = null;
   transferToAmountProgrammatic = false;
   closeEntryTypeModal();
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     closeWebNewEntryMenu();
     closeWebProfileDropdown();
   }
@@ -6304,7 +6320,7 @@ function renderAll(options = {}) {
 
     renderReport(state.report);
 
-    if (!isWebMode && state.report) {
+    if (!useWebLoginFlow() && state.report) {
       renderReportWebVisuals(state.report);
     }
   });
@@ -6337,7 +6353,7 @@ function renderAll(options = {}) {
 }
 
 function syncWebProfile() {
-  if (!isWebMode) {
+  if (!useWebLoginFlow()) {
     return;
   }
 
@@ -6391,7 +6407,7 @@ function closeWebNavDrawer() {
 }
 
 function openWebNavDrawer() {
-  if (!isWebMode || window.innerWidth > 900) {
+  if (!useWebLoginFlow() || window.innerWidth > 900) {
     return;
   }
 
@@ -6413,7 +6429,7 @@ function toggleWebNavDrawer() {
 }
 
 function positionWebSidebarProfileDropdown() {
-  if (!isWebMode || !webProfileDropdown || !webProfileToggleButton) {
+  if (!useWebLoginFlow() || !webProfileDropdown || !webProfileToggleButton) {
     return;
   }
 
@@ -7051,7 +7067,7 @@ function buildWorkspaceSwitcherButton(workspace, options = {}) {
 }
 
 function renderWebWorkspaceSwitcher() {
-  if (!isWebMode || !webWorkspaceSwitcherElement || !webWorkspaceSwitcherListElement) {
+  if (!useWebLoginFlow() || !webWorkspaceSwitcherElement || !webWorkspaceSwitcherListElement) {
     return;
   }
 
@@ -7077,7 +7093,7 @@ function renderWebWorkspaceSwitcher() {
 }
 
 function renderTgWorkspaceTools() {
-  if (isWebMode || !tgWorkspaceCardElement) {
+  if (useWebLoginFlow() || !tgWorkspaceCardElement) {
     return;
   }
 
@@ -7382,7 +7398,7 @@ function syncWorkspaceChrome() {
   syncWebTeamSettingsCardVisibility();
   syncWebProfile();
 
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     const hint = document.querySelector(".web-sidebar-user-hint");
     if (hint && state.workspace) {
       hint.textContent =
@@ -7499,7 +7515,7 @@ function attachWorkspaceUi() {
   });
 
   tgWorkspaceCreateTeamButtonElement?.addEventListener("click", () => {
-    if (isWebMode) {
+    if (useWebLoginFlow()) {
       showWebModeChoice();
       if (webModeChoiceTeamPanelElement) {
         webModeChoiceTeamPanelElement.hidden = false;
@@ -7684,7 +7700,7 @@ async function syncWebLoginTelegramAppHint() {
 }
 
 function showWebLoginGate(errorMessage = "") {
-  if (!isWebMode || !webLoginGateElement) {
+  if (!useWebLoginFlow() || !webLoginGateElement) {
     return;
   }
 
@@ -7911,7 +7927,7 @@ async function downloadReportCsv() {
     state.reportExportQuery &&
     currentQuery !== state.reportExportQuery
   ) {
-    const rebuildHint = isWebMode
+    const rebuildHint = useWebLoginFlow()
       ? "Параметры отчёта изменились — нажмите «Показать», затем скачайте CSV."
       : "Параметры отчёта изменились — нажмите «Построить отчёт», затем скачайте CSV.";
     setStatus(rebuildHint, "error");
@@ -8071,7 +8087,7 @@ async function openReportCsvInNewTab() {
     state.reportExportQuery &&
     currentQuery !== state.reportExportQuery
   ) {
-    const rebuildHint = isWebMode
+    const rebuildHint = useWebLoginFlow()
       ? "Параметры отчёта изменились — нажмите «Показать», затем откройте выписку."
       : "Параметры отчёта изменились — нажмите «Построить отчёт», затем откройте выписку.";
     setStatus(rebuildHint, "error");
@@ -8300,7 +8316,7 @@ function buildAppDataApiUrl(options = {}) {
 
 function scheduleDebouncedBackgroundRefresh(delayMs = 900) {
   if (
-    (isWebMode && document.body.classList.contains("web-login-gate-open")) ||
+    (useWebLoginFlow() && document.body.classList.contains("web-login-gate-open")) ||
     document.body.classList.contains("workspace-mode-choice-open") ||
     document.body.classList.contains("workspace-invite-gate-open")
   ) {
@@ -8333,7 +8349,7 @@ function afterBootstrapRender(options = {}) {
     partial: options.backgroundRefresh === true
   });
 
-  if (activeScreen === "ledger" && !isWebMode) {
+  if (activeScreen === "ledger" && !useWebLoginFlow()) {
     populateTgActivityFilterSelects();
     ensureTgOpsDefaultDates();
     if (!tgOpsFilterSnapshotInitialized) {
@@ -8383,7 +8399,7 @@ async function refreshAppData(options = {}) {
       applyBootstrapPayload(payload);
     }
 
-    if (isWebMode) {
+    if (useWebLoginFlow()) {
       hideWebLoginGate();
     }
 
@@ -8394,7 +8410,7 @@ async function refreshAppData(options = {}) {
     afterBootstrapRender(options);
     return payload;
   } catch (error) {
-    if (isWebMode && isApiUnauthorizedError(error)) {
+    if (useWebLoginFlow() && isApiUnauthorizedError(error)) {
       showWebLoginGate();
     }
 
@@ -8407,7 +8423,7 @@ async function refreshAppData(options = {}) {
 }
 
 async function loadApp(options = {}) {
-  if (!isWebMode && !tg) {
+  if (!useWebLoginFlow() && !tg) {
     if (userNameElement) {
       userNameElement.textContent = "Откройте приложение из Telegram";
     }
@@ -8425,12 +8441,12 @@ async function loadApp(options = {}) {
   if (bgRefresh) {
     try {
       await refreshAppData(options);
-      if (isWebMode) {
+      if (useWebLoginFlow()) {
         hideWebLoginGate();
       }
     } catch (error) {
       console.error(error);
-      if (isWebMode && isApiUnauthorizedError(error)) {
+      if (useWebLoginFlow() && isApiUnauthorizedError(error)) {
         showWebLoginGate(error instanceof Error ? error.message : "");
       }
     } finally {
@@ -8441,7 +8457,7 @@ async function loadApp(options = {}) {
     return;
   }
 
-  if (isWebMode) {
+  if (useWebLoginFlow()) {
     if (webInviteCapturedThisPageLoad) {
       webInviteCapturedThisPageLoad = false;
 
@@ -8559,18 +8575,18 @@ async function loadApp(options = {}) {
     syncViewportMetrics();
     bindTelegramViewportListeners();
 
-    if (!getInitData() && !isWebMode) {
+    if (!getInitData() && !useWebLoginFlow()) {
       if (userNameElement) {
         userNameElement.textContent = "Подключение...";
       }
       setStatus("Ожидаем данные сессии от Telegram...");
     }
 
-    const initDataReady = isWebMode ? "web-session" : await waitForTelegramInitData(12000);
+    const initDataReady = useWebLoginFlow() ? "web-session" : await waitForTelegramInitData(12000);
 
     syncInviteFromTelegramStartParam();
 
-    if (!initDataReady && !isWebMode) {
+    if (!initDataReady && !useWebLoginFlow()) {
       if (userNameElement) {
         userNameElement.textContent = "Ожидаем Telegram";
       }
@@ -8773,7 +8789,7 @@ function attachFxReferencePanelListeners() {
 let tgAccountsScreenChromeAttached = false;
 
 function attachTgAccountsScreenChrome() {
-  if (isWebMode || tgAccountsScreenChromeAttached) {
+  if (useWebLoginFlow() || tgAccountsScreenChromeAttached) {
     return;
   }
   tgAccountsScreenChromeAttached = true;
@@ -9271,7 +9287,7 @@ document.querySelector("#screen-home .tg-home-quick-actions")?.addEventListener(
   }
 });
 
-if (isWebMode) {
+if (useWebLoginFlow()) {
     document.body.classList.add("web-mode");
     webTopNav?.removeAttribute("hidden");
     syncWebPageTitle("home");
@@ -9463,7 +9479,7 @@ document.getElementById("webTransferTipMore")?.addEventListener("click", () => {
 document.querySelectorAll("[data-web-new-entry]").forEach((button) => {
   button.addEventListener("click", () => {
     const kind = button.dataset.webNewEntry;
-    if (isWebMode) {
+    if (useWebLoginFlow()) {
       closeWebNewEntryMenu();
     }
     if (kind === "transfer") {
@@ -9473,7 +9489,7 @@ document.querySelectorAll("[data-web-new-entry]").forEach((button) => {
       openEntryScreenForKind(kind);
     } else if (kind === "account") {
       closeEntryTypeModal();
-      if (isWebMode) {
+      if (useWebLoginFlow()) {
         openScreen("accounts");
         window.requestAnimationFrame(() => {
           window.requestAnimationFrame(() => {
@@ -9802,9 +9818,9 @@ try {
   populateReportCategoryFilterOptions();
 
   if (reportDownloadCsvLabel) {
-    reportDownloadCsvLabel.textContent = isWebMode ? "Скачать отчёт" : "Скачать CSV";
+    reportDownloadCsvLabel.textContent = useWebLoginFlow() ? "Скачать отчёт" : "Скачать CSV";
   }
-  if (!isWebMode && reportSubmitButton) {
+  if (!useWebLoginFlow() && reportSubmitButton) {
     reportSubmitButton.textContent = "Построить отчёт";
   }
   syncReportPeriodSegmented();
