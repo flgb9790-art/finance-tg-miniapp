@@ -379,10 +379,21 @@ export function createHttpApp(): express.Express {
       setHeaders(res, absolutePathOnDisk) {
         const posixPath = absolutePathOnDisk.replaceAll("\\", "/");
         if (posixPath.includes("/mini-app/")) {
-          res.setHeader(
-            "Cache-Control",
-            "private, no-cache, no-store, max-age=0, must-revalidate"
-          );
+          const fileName = path.basename(absolutePathOnDisk).toLowerCase();
+
+          if (fileName === "index.html") {
+            res.setHeader(
+              "Cache-Control",
+              "private, no-cache, no-store, max-age=0, must-revalidate"
+            );
+          } else if (/\.(js|css)$/i.test(fileName)) {
+            res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+          } else {
+            res.setHeader(
+              "Cache-Control",
+              "private, no-cache, no-store, max-age=0, must-revalidate"
+            );
+          }
         }
       }
     })
@@ -578,6 +589,7 @@ export function createHttpApp(): express.Express {
         ]);
 
       let summary = null;
+      let homeReport = null;
 
       try {
         const dashboard = await buildLightRefreshDashboard(
@@ -587,6 +599,7 @@ export function createHttpApp(): express.Express {
           categoriesCount
         );
         summary = dashboard.summary;
+        homeReport = dashboard.homeReport;
       } catch (error) {
         console.error("Failed to build refresh dashboard", error);
       }
@@ -598,6 +611,7 @@ export function createHttpApp(): express.Express {
         recentEntries: typeof activity.recentEntries;
         recentTransfers: typeof activity.recentTransfers;
         summary: typeof summary;
+        homeReport: typeof homeReport;
         categories?: Awaited<ReturnType<typeof listCategories>>;
       } = {
         workspace,
@@ -605,7 +619,8 @@ export function createHttpApp(): express.Express {
         accounts,
         recentEntries: activity.recentEntries,
         recentTransfers: activity.recentTransfers,
-        summary
+        summary,
+        homeReport
       };
 
       if (include.has("categories")) {

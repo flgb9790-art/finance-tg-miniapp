@@ -564,7 +564,12 @@ function mapExpenseCategoryTotals(
     .sort((left, right) => right.total - left.total);
 }
 
-/** Доходы/расходы месяца в валюте отчёта (без переводов, балансов и спарклайнов). */
+export type HomeReportChrome = {
+  sparkLast7Days: ReportSparkLast7Days;
+  dailySeries: ReportDailyPoint[];
+};
+
+/** Доходы/расходы месяца в валюте отчёта + данные для мини-графиков на главной. */
 export async function computeMonthEntryTotalsInReportingCurrency(
   workspaceId: string,
   reportingCurrency: string,
@@ -576,6 +581,7 @@ export async function computeMonthEntryTotalsInReportingCurrency(
   net: number;
   expenseByCategory: ReportCategoryItem[];
   ratesUpdatedAt: string | null;
+  homeReport: HomeReportChrome;
 }> {
   const bundle = await resolveReportEntriesBundle({
     workspaceId,
@@ -627,6 +633,8 @@ export async function computeMonthEntryTotalsInReportingCurrency(
   let incomes = 0;
   let expenses = 0;
   const expenseByCategoryMap = new Map<string, number>();
+  const dailyMap = new Map<string, { income: number; expense: number }>();
+  const sparkByDaySlot = new Map<string, { income: number; expense: number; count: number }>();
 
   for (const entry of bundle.entries) {
     const convertedAmount = convertSynced(
@@ -635,8 +643,19 @@ export async function computeMonthEntryTotalsInReportingCurrency(
       reportingCurrency
     );
 
+    const occurredAt = String(entry.occurred_at);
+    const day = utcDayFromOccurredAt(occurredAt);
+    const sparkSlot = utcSparkSlotFromOccurredAt(occurredAt);
+    const sparkKey = `${day}:${sparkSlot}`;
+    const sparkBucket = sparkByDaySlot.get(sparkKey) ?? { income: 0, expense: 0, count: 0 };
+
     if (entry.kind === "income") {
       incomes += convertedAmount;
+      const d = dailyMap.get(day) ?? { income: 0, expense: 0 };
+      d.income += convertedAmount;
+      dailyMap.set(day, d);
+      sparkBucket.income += convertedAmount;
+      sparkBucket.count += 1;
     } else {
       expenses += convertedAmount;
       const categoryName = entry.category?.name ?? "Без категории";
@@ -644,15 +663,37 @@ export async function computeMonthEntryTotalsInReportingCurrency(
         categoryName,
         (expenseByCategoryMap.get(categoryName) ?? 0) + convertedAmount
       );
+      const d = dailyMap.get(day) ?? { income: 0, expense: 0 };
+      d.expense += convertedAmount;
+      dailyMap.set(day, d);
+      sparkBucket.expense += convertedAmount;
+      sparkBucket.count += 1;
     }
+
+    sparkByDaySlot.set(sparkKey, sparkBucket);
   }
+
+  const dayKeys = enumerateUtcDaysInclusive(startDate, endDate);
+  const sparkLast7Days = buildReportSparkLast7Days(dayKeys, sparkByDaySlot);
+  const dailySeries: ReportDailyPoint[] = dayKeys.map((date) => {
+    const bucket = dailyMap.get(date) ?? { income: 0, expense: 0 };
+    const inc = Number(bucket.income.toFixed(2));
+    const exp = Number(bucket.expense.toFixed(2));
+    return {
+      date,
+      income: inc,
+      expense: exp,
+      net: Number((inc - exp).toFixed(2))
+    };
+  });
 
   return {
     incomes: Number(incomes.toFixed(2)),
     expenses: Number(expenses.toFixed(2)),
     net: Number((incomes - expenses).toFixed(2)),
     expenseByCategory: mapExpenseCategoryTotals(expenseByCategoryMap, reportingCurrency),
-    ratesUpdatedAt: await getLatestExchangeRateUpdate()
+    ratesUpdatedAt: await getLatestExchangeRateUpdate(),
+    homeReport: { sparkLast7Days, dailySeries }
   };
 }
 
@@ -727,7 +768,7 @@ export async function buildLightRefreshDashboard(
   reportingCurrency: string,
   accounts: AccountRow[],
   categoriesCount: number
-): Promise<{ summary: DashboardSummary }> {
+): Promise<{ summary: DashboardSummary; homeReport: HomeReportChrome }> {
   const monthRange = resolveReportRange("month");
   const totals = await computeMonthEntryTotalsInReportingCurrency(
     workspaceId,
@@ -773,7 +814,7 @@ export async function buildLightRefreshDashboard(
     reportingCurrency
   );
 
-  return { summary };
+  return { summary, homeReport: totals.homeReport };
 }
 
 export async function getDashboardSummary(

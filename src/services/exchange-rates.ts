@@ -86,15 +86,14 @@ export async function syncExchangeRates(): Promise<{
     }
   );
 
-  const upsertRows = Object.keys(supportedRates).flatMap((baseCode) =>
-    Object.keys(supportedRates)
-      .filter((quoteCode) => quoteCode !== baseCode)
-      .map((quoteCode) => ({
-        base_currency_code: baseCode,
-        quote_currency_code: quoteCode,
-        rate: roundRate(supportedRates[quoteCode] / supportedRates[baseCode])
-      }))
-  );
+  /** API returns USD-based quotes; store USD→X only (O(n) upsert instead of O(n²)). */
+  const upsertRows = Object.keys(supportedRates)
+    .filter((quoteCode) => quoteCode !== "USD")
+    .map((quoteCode) => ({
+      base_currency_code: "USD",
+      quote_currency_code: quoteCode,
+      rate: roundRate(supportedRates[quoteCode])
+    }));
 
   if (upsertRows.length === 0) {
     return {
@@ -154,7 +153,7 @@ export async function getExchangeRate(
     return cached.rate;
   }
 
-  async function readRate(): Promise<number | null> {
+  async function readDirectRate(): Promise<number | null> {
     const { data, error } = await supabase
       .from("exchange_rates")
       .select("rate")
@@ -169,9 +168,42 @@ export async function getExchangeRate(
     return data ? Number(data.rate) : null;
   }
 
-  const existingRate = await readRate();
+  async function readUsdQuotePerUnit(currencyCode: string): Promise<number | null> {
+    if (currencyCode === "USD") {
+      return 1;
+    }
 
-  if (existingRate !== null) {
+    const { data, error } = await supabase
+      .from("exchange_rates")
+      .select("rate")
+      .eq("base_currency_code", "USD")
+      .eq("quote_currency_code", currencyCode)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    const raw = data ? Number(data.rate) : null;
+    return raw !== null && raw > 0 ? raw : null;
+  }
+
+  async function deriveViaUsd(): Promise<number | null> {
+    const [fromPerUsd, toPerUsd] = await Promise.all([
+      readUsdQuotePerUnit(fromCurrencyCode),
+      readUsdQuotePerUnit(toCurrencyCode)
+    ]);
+
+    if (fromPerUsd === null || toPerUsd === null || fromPerUsd <= 0) {
+      return null;
+    }
+
+    return roundRate(toPerUsd / fromPerUsd);
+  }
+
+  const existingRate = await readDirectRate();
+
+  if (existingRate !== null && existingRate > 0) {
     memoryRateCache.set(cacheKey, {
       rate: existingRate,
       expiresAt: Date.now() + MEMORY_RATE_TTL_MS
@@ -192,7 +224,7 @@ export async function getExchangeRate(
     }
 
     const raw = data ? Number(data.rate) : null;
-    return raw !== null && raw > 0 ? 1 / raw : null;
+    return raw !== null && raw > 0 ? roundRate(1 / raw) : null;
   })();
 
   if (reverseRate !== null) {
@@ -201,6 +233,16 @@ export async function getExchangeRate(
       expiresAt: Date.now() + MEMORY_RATE_TTL_MS
     });
     return reverseRate;
+  }
+
+  const viaUsd = await deriveViaUsd();
+
+  if (viaUsd !== null) {
+    memoryRateCache.set(cacheKey, {
+      rate: viaUsd,
+      expiresAt: Date.now() + MEMORY_RATE_TTL_MS
+    });
+    return viaUsd;
   }
 
   void syncExchangeRates().catch((error) => {

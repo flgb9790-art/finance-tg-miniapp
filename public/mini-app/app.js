@@ -5047,9 +5047,14 @@ function fallbackAccentFromCategoryId(categoryId) {
   return CATEGORY_UI_PALETTE[Math.abs(h) % CATEGORY_UI_PALETTE.length];
 }
 
-function resolveCategoryDotColor(category) {
-  const stored = readCategoryAccent(category.id);
-  return stored || fallbackAccentFromCategoryId(category.id);
+function resolveCategoryDotColor(category, accentMap) {
+  const map = accentMap ?? readCategoryAccentMap();
+  const stored = map[category.id];
+  const hex =
+    typeof stored === "string" && /^#[0-9a-fA-F]{6}$/.test(stored.trim())
+      ? stored.trim().toLowerCase()
+      : "";
+  return hex || fallbackAccentFromCategoryId(category.id);
 }
 
 function formatCategoryCountRu(n) {
@@ -5098,11 +5103,11 @@ function writeCategoryUiMetaMap(map) {
   }
 }
 
-function readCategoryUiMeta(categoryId) {
+function readCategoryUiMeta(categoryId, metaMap) {
   if (!categoryId) {
     return { description: "", iconKey: DEFAULT_CATEGORY_ICON_KEY };
   }
-  const m = readCategoryUiMetaMap();
+  const m = metaMap ?? readCategoryUiMetaMap();
   const row = m[categoryId];
   if (!row || typeof row !== "object") {
     return { description: "", iconKey: DEFAULT_CATEGORY_ICON_KEY };
@@ -5335,11 +5340,14 @@ function applyAccentSwatchesForCategoryId(categoryId) {
   syncTgCategoryPreview();
 }
 
-function buildWebCategoriesTableRowsHtml(items) {
+function buildWebCategoriesTableRowsHtml(items, uiMetaMap, accentMap) {
+  const metaById = uiMetaMap ?? readCategoryUiMetaMap();
+  const accents = accentMap ?? readCategoryAccentMap();
+
   return items
     .map((category) => {
-      const dot = resolveCategoryDotColor(category);
-      const meta = readCategoryUiMeta(category.id);
+      const dot = resolveCategoryDotColor(category, accents);
+      const meta = readCategoryUiMeta(category.id, metaById);
       const glyph = getCategoryIconGlyph(meta.iconKey);
       const kindSlug = category.kind === "income" ? "income" : "expense";
       const tileBg = escapeHtml(rgbaFromHex(dot, 0.14));
@@ -5386,7 +5394,9 @@ function renderWebCategoriesTableSection(kind, categories) {
     emptyEl.hidden = true;
   }
 
-  tbody.innerHTML = buildWebCategoriesTableRowsHtml(items);
+  const uiMetaMap = readCategoryUiMetaMap();
+  const accentMap = readCategoryAccentMap();
+  tbody.innerHTML = buildWebCategoriesTableRowsHtml(items, uiMetaMap, accentMap);
 }
 
 function renderWebCategoriesTable(categories) {
@@ -5492,6 +5502,8 @@ function startCategoryEdit(categoryId) {
 }
 
 function renderCategories(categories) {
+  const uiMetaMap = readCategoryUiMetaMap();
+  const accentMap = readCategoryAccentMap();
   const incomeCategories = categories.filter((category) => category.kind === "income");
   const expenseCategories = categories.filter((category) => category.kind === "expense");
 
@@ -5526,9 +5538,9 @@ function renderCategories(categories) {
     targetElement.innerHTML = items
       .map((category) => {
         const kindSlug = category.kind === "income" ? "income" : "expense";
-        const meta = readCategoryUiMeta(category.id);
+        const meta = readCategoryUiMeta(category.id, uiMetaMap);
         const glyph = getCategoryIconGlyph(meta.iconKey);
-        const dot = resolveCategoryDotColor(category);
+        const dot = resolveCategoryDotColor(category, accentMap);
         const tileBg = escapeHtml(rgbaFromHex(dot, 0.14));
         const tileRing = escapeHtml(rgbaFromHex(dot, 0.28));
 
@@ -5772,9 +5784,11 @@ function populateTgActivityFilterSelects() {
     accSel.value = prevAcc;
   }
 
+  const uiMetaMap = readCategoryUiMetaMap();
+
   catSel.innerHTML = `<option value="">${escapeHtml("Все категории")}</option>${state.categories
     .map((c) => {
-      const g = getCategoryIconGlyph(readCategoryUiMeta(c.id).iconKey);
+      const g = getCategoryIconGlyph(readCategoryUiMeta(c.id, uiMetaMap).iconKey);
       return `<option value="${escapeHtml(c.id)}">${g} ${escapeHtml(c.name)} (${escapeHtml(formatKind(c.kind))})</option>`;
     })
     .join("")}`;
@@ -7661,9 +7675,11 @@ function populateCategoryOptions() {
     return;
   }
 
+  const uiMetaMap = readCategoryUiMetaMap();
+
   entryCategoryInput.innerHTML = filteredCategories
     .map((category) => {
-      const g = getCategoryIconGlyph(readCategoryUiMeta(category.id).iconKey);
+      const g = getCategoryIconGlyph(readCategoryUiMeta(category.id, uiMetaMap).iconKey);
       return `<option value="${escapeHtml(category.id)}">${g} ${escapeHtml(category.name)}</option>`;
     })
     .join("");
@@ -7679,11 +7695,11 @@ function renderAll(options = {}) {
     safeRenderStep("accounts", () => renderAccounts(state.accounts));
   }
 
-  if (!partial || screen === "categories") {
+  if (!partial || screen === "categories" || screen === "activity" || screen === "transfer") {
     safeRenderStep("categories", () => renderCategories(state.categories));
   }
 
-  if (!partial || screen === "ledger") {
+  if (!partial || screen === "ledger" || screen === "activity") {
     safeRenderStep("tgActivityFilters", () => populateTgActivityFilterSelects());
   }
 
@@ -7722,7 +7738,8 @@ function renderAll(options = {}) {
     screen === "transfer" ||
     screen === "accounts" ||
     screen === "reports" ||
-    screen === "home"
+    screen === "home" ||
+    screen === "ledger"
   ) {
     safeRenderStep("accountOptions", () => populateAccountOptions());
     safeRenderStep("categoryOptions", () => populateCategoryOptions());
@@ -8612,6 +8629,101 @@ function syncWebTeamSettingsCardVisibility() {
   webTeamSettingsCardElement.hidden = !isTeam;
 }
 
+function renderWebTeamMembersList(members, isOwner) {
+  if (!webTeamMembersListElement) {
+    return;
+  }
+
+  webTeamMembersListElement.replaceChildren();
+
+  if (!Array.isArray(members) || members.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "muted";
+    empty.textContent = "Пока нет участников";
+    webTeamMembersListElement.appendChild(empty);
+    return;
+  }
+
+  const currentUserId = String(state.user?.id ?? "").trim();
+
+  members.forEach((member) => {
+    const item = document.createElement("li");
+    item.className = "web-team-member-item";
+
+    const name = document.createElement("span");
+    name.className = "web-team-member-name";
+    name.textContent = formatWorkspaceMemberLabel(member);
+
+    const trailing = document.createElement("div");
+    trailing.className = "web-team-member-trailing";
+
+    const role = document.createElement("span");
+    role.className = "muted web-team-member-role";
+    role.textContent = member.role === "owner" ? "Владелец" : "Участник";
+
+    trailing.append(role);
+
+    const memberUserId = String(member.userId ?? "").trim();
+    const canRemove =
+      isOwner && member.role !== "owner" && memberUserId && memberUserId !== currentUserId;
+
+    if (canRemove) {
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "ghost-button web-team-member-remove";
+      removeButton.textContent = "Исключить";
+      removeButton.addEventListener("click", () => {
+        void (async () => {
+          const label = formatWorkspaceMemberLabel(member);
+          const confirmed = window.confirm(`Исключить «${label}» из команды?`);
+
+          if (!confirmed) {
+            return;
+          }
+
+          if (webTeamSettingsErrorElement) {
+            webTeamSettingsErrorElement.hidden = true;
+            webTeamSettingsErrorElement.textContent = "";
+          }
+
+          try {
+            removeButton.disabled = true;
+            await apiFetch(`/api/workspaces/members/${encodeURIComponent(memberUserId)}`, {
+              method: "DELETE"
+            });
+
+            if (state.workspace) {
+              const nextCount = Math.max(1, (state.workspace.memberCount ?? 1) - 1);
+              state.workspace = { ...state.workspace, memberCount: nextCount };
+              const idx = state.workspaces.findIndex((item) => item.id === state.workspace.id);
+              if (idx >= 0) {
+                state.workspaces[idx] = { ...state.workspaces[idx], memberCount: nextCount };
+              }
+            }
+
+            screenFetchCache.teamMembers = { key: "", members: null, at: 0 };
+            await loadWebTeamSettings();
+            syncWorkspaceChrome();
+            setStatus("Участник исключён из команды", "success");
+          } catch (error) {
+            if (webTeamSettingsErrorElement) {
+              webTeamSettingsErrorElement.hidden = false;
+              webTeamSettingsErrorElement.textContent =
+                error instanceof Error ? error.message : "Не удалось исключить участника";
+            }
+          } finally {
+            removeButton.disabled = false;
+          }
+        })();
+      });
+      trailing.append(removeButton);
+    }
+
+    item.append(name, trailing);
+    webTeamMembersListElement.appendChild(item);
+  });
+}
+
 async function loadWebTeamSettings() {
   if (state.workspace?.kind !== "team") {
     return;
@@ -8666,102 +8778,33 @@ async function loadWebTeamSettings() {
     webTeamNameInputElement.readOnly = !isOwner;
   }
 
+  const workspaceId = String(state.workspace?.id ?? "").trim();
+  const membersCacheKey = workspaceId || "unknown";
+
+  if (
+    screenCacheFresh(screenFetchCache.teamMembers, membersCacheKey) &&
+    Array.isArray(screenFetchCache.teamMembers.members)
+  ) {
+    renderWebTeamMembersList(screenFetchCache.teamMembers.members, isOwner);
+
+    if (isOwner) {
+      await loadWebTeamInvitesList();
+    } else if (webTeamInvitesBlockElement) {
+      webTeamInvitesBlockElement.hidden = true;
+    }
+    return;
+  }
+
   try {
     const payload = await apiFetch("/api/workspaces/members");
     const members = Array.isArray(payload.members) ? payload.members : [];
+    screenFetchCache.teamMembers = {
+      key: membersCacheKey,
+      members,
+      at: Date.now()
+    };
 
-    if (webTeamMembersListElement) {
-      webTeamMembersListElement.replaceChildren();
-
-      if (members.length === 0) {
-        const empty = document.createElement("li");
-        empty.className = "muted";
-        empty.textContent = "Пока нет участников";
-        webTeamMembersListElement.appendChild(empty);
-      } else {
-        const currentUserId = String(state.user?.id ?? "").trim();
-
-        members.forEach((member) => {
-          const item = document.createElement("li");
-          item.className = "web-team-member-item";
-
-          const name = document.createElement("span");
-          name.className = "web-team-member-name";
-          name.textContent = formatWorkspaceMemberLabel(member);
-
-          const trailing = document.createElement("div");
-          trailing.className = "web-team-member-trailing";
-
-          const role = document.createElement("span");
-          role.className = "muted web-team-member-role";
-          role.textContent = member.role === "owner" ? "Владелец" : "Участник";
-
-          trailing.append(role);
-
-          const memberUserId = String(member.userId ?? "").trim();
-          const canRemove =
-            isOwner &&
-            member.role !== "owner" &&
-            memberUserId &&
-            memberUserId !== currentUserId;
-
-          if (canRemove) {
-            const removeButton = document.createElement("button");
-            removeButton.type = "button";
-            removeButton.className = "ghost-button web-team-member-remove";
-            removeButton.textContent = "Исключить";
-            removeButton.addEventListener("click", () => {
-              void (async () => {
-                const label = formatWorkspaceMemberLabel(member);
-                const confirmed = window.confirm(`Исключить «${label}» из команды?`);
-
-                if (!confirmed) {
-                  return;
-                }
-
-                if (webTeamSettingsErrorElement) {
-                  webTeamSettingsErrorElement.hidden = true;
-                  webTeamSettingsErrorElement.textContent = "";
-                }
-
-                try {
-                  removeButton.disabled = true;
-                  await apiFetch(
-                    `/api/workspaces/members/${encodeURIComponent(memberUserId)}`,
-                    { method: "DELETE" }
-                  );
-
-                  if (state.workspace) {
-                    const nextCount = Math.max(1, (state.workspace.memberCount ?? 1) - 1);
-                    state.workspace = { ...state.workspace, memberCount: nextCount };
-                    const idx = state.workspaces.findIndex((item) => item.id === state.workspace.id);
-                    if (idx >= 0) {
-                      state.workspaces[idx] = { ...state.workspaces[idx], memberCount: nextCount };
-                    }
-                  }
-
-                  await loadWebTeamSettings();
-                  syncWorkspaceChrome();
-                  setStatus("Участник исключён из команды", "success");
-                } catch (error) {
-                  if (webTeamSettingsErrorElement) {
-                    webTeamSettingsErrorElement.hidden = false;
-                    webTeamSettingsErrorElement.textContent =
-                      error instanceof Error ? error.message : "Не удалось исключить участника";
-                  }
-                } finally {
-                  removeButton.disabled = false;
-                }
-              })();
-            });
-            trailing.append(removeButton);
-          }
-
-          item.append(name, trailing);
-          webTeamMembersListElement.appendChild(item);
-        });
-      }
-    }
+    renderWebTeamMembersList(members, isOwner);
 
     if (isOwner) {
       await loadWebTeamInvitesList();
@@ -10445,6 +10488,23 @@ function applyReportingCurrencyFromSummary(summary) {
   syncReportingCurrencyInputs(resolvedReportingCurrency);
 }
 
+function mergeHomeReportChrome(homeReport) {
+  if (!homeReport || typeof homeReport !== "object") {
+    return;
+  }
+
+  const reportingCurrency =
+    state.summary?.reportingCurrency ?? currentReportingCurrencySelection();
+  const prev = state.report && typeof state.report === "object" ? state.report : {};
+
+  state.report = {
+    ...prev,
+    reportingCurrency: prev.reportingCurrency ?? reportingCurrency,
+    sparkLast7Days: homeReport.sparkLast7Days ?? prev.sparkLast7Days,
+    dailySeries: homeReport.dailySeries ?? prev.dailySeries
+  };
+}
+
 function applyDashboardPayload(payload) {
   const activeScreen = document.body.dataset.appActiveScreen ?? "home";
   const onReportsScreen = activeScreen === "reports";
@@ -10452,6 +10512,14 @@ function applyDashboardPayload(payload) {
   if (payload.summary !== undefined && payload.summary !== null) {
     state.summary = payload.summary;
     applyReportingCurrencyFromSummary(payload.summary);
+  }
+
+  if (payload.homeReport) {
+    mergeHomeReportChrome(payload.homeReport);
+
+    if (activeScreen === "home" && useWebLoginFlow()) {
+      syncWebDashSparkCharts();
+    }
   }
 
   if (!onReportsScreen && payload.report !== undefined) {
