@@ -374,8 +374,10 @@ export async function listOperationsTimeline(
     });
     transferRows = [];
   } else if (query.kind === "all") {
-    entryRows = await fetchEntriesWindow(workspaceId, base);
-    transferRows = [];
+    [entryRows, transferRows] = await Promise.all([
+      fetchEntriesWindow(workspaceId, base),
+      fetchTransfersWindow(workspaceId, base)
+    ]);
   }
 
   const merged: OperationTimelineItem[] = [
