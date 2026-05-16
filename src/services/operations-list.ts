@@ -97,6 +97,8 @@ function firstQueryString(value: unknown): string | undefined {
 const HISTORY_SEARCH_DB_CAP = 2000;
 /** Per-table fetch cap for paginated history (merge then slice). */
 const HISTORY_MERGE_FETCH_CAP = 800;
+/** Cap FX summary rows for history totals (avoids unbounded scans). */
+const HISTORY_SUMMARY_ROW_CAP = 8000;
 
 type EntrySummaryRow = {
   amount: string;
@@ -409,6 +411,8 @@ async function fetchEntrySummaryRows(
     q = q.eq("category_id", opts.categoryId);
   }
 
+  q = q.limit(HISTORY_SUMMARY_ROW_CAP);
+
   const { data, error } = await q;
 
   if (error) {
@@ -416,6 +420,117 @@ async function fetchEntrySummaryRows(
   }
 
   return (data ?? []) as EntrySummaryRow[];
+}
+
+type TimelineRpcRow = {
+  row_kind: string;
+  row_id: string;
+  occurred_at: string;
+  total_count: number | string;
+};
+
+async function fetchEntriesByIds(
+  workspaceId: string,
+  ids: string[]
+): Promise<Map<string, EntryListItem>> {
+  if (ids.length === 0) {
+    return new Map();
+  }
+
+  const { data, error } = await supabase
+    .from("entries")
+    .select(ENTRY_LIST_SELECT)
+    .eq("workspace_id", workspaceId)
+    .in("id", ids);
+
+  if (error) {
+    throw error;
+  }
+
+  return new Map(
+    ((data ?? []) as EntryListItem[]).map((entry) => [entry.id, entry])
+  );
+}
+
+async function fetchTransfersByIds(
+  workspaceId: string,
+  ids: string[]
+): Promise<Map<string, TransferListItem>> {
+  if (ids.length === 0) {
+    return new Map();
+  }
+
+  const { data, error } = await supabase
+    .from("transfers")
+    .select(TRANSFER_LIST_SELECT)
+    .eq("workspace_id", workspaceId)
+    .in("id", ids);
+
+  if (error) {
+    throw error;
+  }
+
+  return new Map(
+    ((data ?? []) as TransferListItem[]).map((transfer) => [transfer.id, transfer])
+  );
+}
+
+async function fetchTimelinePageViaRpc(
+  workspaceId: string,
+  query: OperationsListQuery
+): Promise<{ rows: TimelineRpcRow[]; total: number } | null> {
+  const { data, error } = await supabase.rpc("fetch_operations_timeline_page", {
+    p_workspace_id: workspaceId,
+    p_from: query.from,
+    p_to: query.to,
+    p_kind: query.kind,
+    p_account_id: query.accountId ?? null,
+    p_category_id: query.categoryId ?? null,
+    p_limit: query.limit,
+    p_offset: query.offset
+  });
+
+  if (error) {
+    console.warn("fetch_operations_timeline_page unavailable, using legacy merge", error.message);
+    return null;
+  }
+
+  const rows = (data ?? []) as TimelineRpcRow[];
+  const total =
+    rows.length > 0 ? Number(rows[0]?.total_count ?? rows.length) : 0;
+
+  return { rows, total };
+}
+
+async function buildHistorySummary(
+  workspaceId: string,
+  reportingCurrency: string,
+  query: OperationsListQuery,
+  total: number
+): Promise<OperationsListResult["summary"]> {
+  const entryKind =
+    query.kind === "income" || query.kind === "expense"
+      ? (query.kind as OperationKind)
+      : undefined;
+
+  const summaryRows = await fetchEntrySummaryRows(workspaceId, {
+    from: query.from,
+    to: query.to,
+    accountId: query.accountId,
+    categoryId: query.categoryId,
+    kind: entryKind
+  });
+  const { income, expense } = await sumEntrySummaryRowsReporting(
+    summaryRows,
+    reportingCurrency
+  );
+
+  return {
+    operationsCount: total,
+    incomeReporting: income,
+    expenseReporting: expense,
+    netReporting: Number((income - expense).toFixed(2))
+  };
 }
 
 async function sumEntrySummaryRowsReporting(
@@ -476,7 +591,71 @@ async function sumEntriesReporting(
   return { income, expense };
 }
 
-async function listOperationsTimelineHistoryPaginated(
+async function listOperationsTimelineHistoryViaRpc(
+  workspaceId: string,
+  reportingCurrency: string,
+  query: OperationsListQuery
+): Promise<OperationsListResult | null> {
+  const page = await fetchTimelinePageViaRpc(workspaceId, query);
+
+  if (!page) {
+    return null;
+  }
+
+  const entryIds = page.rows
+    .filter((row) => row.row_kind === "entry")
+    .map((row) => row.row_id);
+  const transferIds = page.rows
+    .filter((row) => row.row_kind === "transfer")
+    .map((row) => row.row_id);
+
+  const [entryById, transferById] = await Promise.all([
+    fetchEntriesByIds(workspaceId, entryIds),
+    fetchTransfersByIds(workspaceId, transferIds)
+  ]);
+
+  const timeline: OperationTimelineItem[] = [];
+
+  for (const row of page.rows) {
+    if (row.row_kind === "entry") {
+      const entry = entryById.get(row.row_id);
+
+      if (entry) {
+        timeline.push({
+          kind: "entry",
+          occurredAt: entry.occurred_at,
+          entry
+        });
+      }
+    } else if (row.row_kind === "transfer") {
+      const transfer = transferById.get(row.row_id);
+
+      if (transfer) {
+        timeline.push({
+          kind: "transfer",
+          occurredAt: transfer.occurred_at,
+          transfer
+        });
+      }
+    }
+  }
+
+  const summary = await buildHistorySummary(
+    workspaceId,
+    reportingCurrency,
+    query,
+    page.total
+  );
+
+  return {
+    reportingCurrency,
+    items: timeline.map((row) => serializeTimelineItem(row)),
+    total: page.total,
+    summary
+  };
+}
+
+async function listOperationsTimelineHistoryLegacy(
   workspaceId: string,
   reportingCurrency: string,
   query: OperationsListQuery
@@ -561,30 +740,37 @@ async function listOperationsTimelineHistoryPaginated(
   const total = entryTotal + transferTotal;
   const page = merged.slice(query.offset, query.offset + query.limit);
   const items = page.map((row) => serializeTimelineItem(row));
-
-  const summaryRows = await fetchEntrySummaryRows(workspaceId, {
-    from: query.from,
-    to: query.to,
-    accountId: query.accountId,
-    categoryId: query.categoryId,
-    kind: entryKind
-  });
-  const { income, expense } = await sumEntrySummaryRowsReporting(
-    summaryRows,
-    reportingCurrency
+  const summary = await buildHistorySummary(
+    workspaceId,
+    reportingCurrency,
+    query,
+    total
   );
 
   return {
     reportingCurrency,
     items,
     total,
-    summary: {
-      operationsCount: total,
-      incomeReporting: income,
-      expenseReporting: expense,
-      netReporting: Number((income - expense).toFixed(2))
-    }
+    summary
   };
+}
+
+async function listOperationsTimelineHistoryPaginated(
+  workspaceId: string,
+  reportingCurrency: string,
+  query: OperationsListQuery
+): Promise<OperationsListResult> {
+  const viaRpc = await listOperationsTimelineHistoryViaRpc(
+    workspaceId,
+    reportingCurrency,
+    query
+  );
+
+  if (viaRpc) {
+    return viaRpc;
+  }
+
+  return listOperationsTimelineHistoryLegacy(workspaceId, reportingCurrency, query);
 }
 
 export async function listOperationsTimeline(

@@ -295,7 +295,8 @@ export async function getSpotlightQuotesForBase(
     }
 
     const perUnitOfCodeInBase = await getExchangeRate(def.code, base);
-    const quotePerBase = await getExchangeRate(base, def.code);
+    const quotePerBase =
+      perUnitOfCodeInBase > 0 ? roundRate(1 / perUnitOfCodeInBase) : 0;
     const amountInBase = Number(
       (perUnitOfCodeInBase * def.displayUnit).toFixed(6)
     );
@@ -310,7 +311,7 @@ export async function getSpotlightQuotesForBase(
       displayUnit: def.displayUnit,
       label,
       amountInBase,
-      quotePerBase: Number(quotePerBase.toFixed(8))
+      quotePerBase
     });
   }
 

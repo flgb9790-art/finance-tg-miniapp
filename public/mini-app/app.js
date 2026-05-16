@@ -516,6 +516,13 @@ function invalidateReportsScreenCache() {
   screenFetchCache.reports = { key: "", report: null, exportQuery: "", at: 0 };
 }
 
+function invalidateAllScreenCaches() {
+  invalidateOperationsScreenCache();
+  invalidateReportsScreenCache();
+  screenFetchCache.auditLog = { key: "", events: null, total: 0, at: 0 };
+  screenFetchCache.teamMembers = { workspaceId: "", members: null, at: 0 };
+}
+
 let categoryUiMetaMapCache = null;
 let categoryAccentMapCache = null;
 let accountUiMetaMapCache = null;
@@ -1198,18 +1205,14 @@ function scheduleScrollFieldIntoView(element) {
     return;
   }
 
-  const run = () => {
+  window.requestAnimationFrame(() => {
     const useNearest = !useWebLoginFlow();
     element.scrollIntoView({
       block: useNearest ? "nearest" : "center",
       behavior: useNearest ? "auto" : "smooth",
       inline: "nearest"
     });
-  };
-
-  window.requestAnimationFrame(run);
-  window.setTimeout(run, 120);
-  window.setTimeout(run, 360);
+  });
 }
 
 function getAvailableCurrencies() {
@@ -8362,6 +8365,7 @@ async function switchWebWorkspace(workspaceId) {
   }
 
   writePersistedWorkspaceId(id);
+  invalidateAllScreenCaches();
 
   const target = Array.isArray(state.workspaces)
     ? state.workspaces.find((item) => item.id === id)
@@ -11954,9 +11958,20 @@ if (useWebLoginFlow()) {
     void refreshWebOperationsBoard();
   });
 
+  let webOpsSearchDebounceTimer = null;
+
+  webOpsSearchInput?.addEventListener("input", () => {
+    window.clearTimeout(webOpsSearchDebounceTimer);
+    webOpsSearchDebounceTimer = window.setTimeout(() => {
+      webOpsOffset = 0;
+      void refreshWebOperationsBoard();
+    }, 400);
+  });
+
   webOpsSearchInput?.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       event.preventDefault();
+      window.clearTimeout(webOpsSearchDebounceTimer);
       webOpsOffset = 0;
       void refreshWebOperationsBoard();
     }
