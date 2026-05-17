@@ -1706,11 +1706,10 @@ export function createHttpApp(): express.Express {
     try {
       await authenticateMiniAppUser(req);
       const result = await syncExchangeRates();
-      const ratesUpdatedAt = await getLatestExchangeRateUpdate();
 
       res.json({
         ...result,
-        ratesUpdatedAt
+        ratesUpdatedAt: result.updatedAt
       });
     } catch (error) {
       console.error("Failed to sync exchange rates", error);

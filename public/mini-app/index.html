@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260517ui-v13";
+        var BALANCY_CLIENT_ASSET_REV = "20260517ui-v14";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -1382,7 +1382,11 @@
           </div>
 
           <section class="card activity-form-card web-op-entry-sheet">
-            <div class="section-header section-header--telegram-only">
+            <div class="tg-screen-card-head tg-only-block">
+              <h2 class="tg-screen-card-title">Доходы и расходы</h2>
+              <p class="tg-screen-card-sub muted">Вносите доходы и расходы на счета</p>
+            </div>
+            <div class="section-header section-header--telegram-only web-only-block">
               <div>
                 <p class="section-label">Операции</p>
                 <h2>Доходы и расходы</h2>
@@ -1509,7 +1513,7 @@
 
           <div class="web-transfer-main">
           <div class="web-transfer-sheet">
-            <header class="tg-transfer-top tg-only-block" aria-label="Перевод между счетами">
+            <header class="tg-transfer-top tg-transfer-top--outside tg-only-block" aria-label="Перевод между счетами">
               <button type="button" id="tgTransferScreenBackButton" class="tg-transfer-back-btn" hidden aria-hidden="true" tabindex="-1" aria-label="Назад">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path
@@ -1528,6 +1532,10 @@
             </header>
 
             <section class="card activity-form-card web-transfer-card">
+              <div class="tg-screen-card-head tg-only-block">
+                <h2 class="tg-screen-card-title">Перевод между счетами</h2>
+                <p class="tg-screen-card-sub muted">Переведите средства с одного счёта на другой.</p>
+              </div>
               <div class="section-header web-transfer-card-head">
                 <div>
                   <p class="section-label">Перевод</p>
@@ -2373,18 +2381,18 @@
 
                   <div class="web-cat-kind-picks" role="group" aria-label="Тип категории">
                     <button type="button" class="web-cat-kind-pick is-selected" data-set-category-kind="income">
-                      <span class="web-cat-kind-pick-icon-ring web-cat-kind-pick-icon-ring--income" aria-hidden="true">
-                        <span class="web-cat-kind-pick-icon web-cat-kind-pick-icon--up">↑</span>
+                      <span class="web-cat-kind-pick-copy">
+                        <span class="web-cat-kind-pick-title">Доход</span>
+                        <span class="web-cat-kind-pick-desc muted">Категория для доходов</span>
                       </span>
-                      <span class="web-cat-kind-pick-title">Доход</span>
-                      <span class="web-cat-kind-pick-desc muted">Категория для доходов</span>
+                      <span class="web-cat-kind-pick-icon" aria-hidden="true">↑</span>
                     </button>
                     <button type="button" class="web-cat-kind-pick" data-set-category-kind="expense">
-                      <span class="web-cat-kind-pick-icon-ring web-cat-kind-pick-icon-ring--expense" aria-hidden="true">
-                        <span class="web-cat-kind-pick-icon web-cat-kind-pick-icon--down">↓</span>
+                      <span class="web-cat-kind-pick-copy">
+                        <span class="web-cat-kind-pick-title">Расход</span>
+                        <span class="web-cat-kind-pick-desc muted">Категория для расходов</span>
                       </span>
-                      <span class="web-cat-kind-pick-title">Расход</span>
-                      <span class="web-cat-kind-pick-desc muted">Категория для расходов</span>
+                      <span class="web-cat-kind-pick-icon" aria-hidden="true">↓</span>
                     </button>
                   </div>
 

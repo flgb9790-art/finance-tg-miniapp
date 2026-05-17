@@ -114,13 +114,16 @@ export async function syncExchangeRates(): Promise<{
     }
   );
 
+  const syncedAt = new Date().toISOString();
+
   /** API returns USD-based quotes; store USD→X only (O(n) upsert instead of O(n²)). */
   const upsertRows = Object.keys(supportedRates)
     .filter((quoteCode) => quoteCode !== "USD")
     .map((quoteCode) => ({
       base_currency_code: "USD",
       quote_currency_code: quoteCode,
-      rate: roundRate(supportedRates[quoteCode])
+      rate: roundRate(supportedRates[quoteCode]),
+      updated_at: syncedAt
     }));
 
   if (upsertRows.length === 0) {
