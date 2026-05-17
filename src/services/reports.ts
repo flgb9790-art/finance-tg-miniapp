@@ -791,6 +791,140 @@ async function listEntriesForMonthTotals(
   return (data ?? []) as unknown as MonthTotalsEntryRow[];
 }
 
+async function buildMonthTotalsFromReportAggregates(
+  aggregates: ReportPeriodAggregates,
+  reportingCurrency: string,
+  startDate: string,
+  endDate: string
+): Promise<{
+  incomes: number;
+  expenses: number;
+  net: number;
+  expenseByCategory: ReportCategoryItem[];
+  homeReport: HomeReportChrome;
+}> {
+  const currencyCodes = [
+    ...aggregates.currencyKind.map((row) => row.currency_code),
+    ...aggregates.category.map((row) => row.currency_code),
+    ...aggregates.utcDay.map((row) => row.currency_code),
+    ...aggregates.utcDaySlot.map((row) => row.currency_code)
+  ];
+
+  await preloadExchangeRatesToReportingCurrency(currencyCodes, reportingCurrency);
+
+  const rateCache = new Map<string, number>();
+
+  await Promise.all(
+    [...new Set(currencyCodes)]
+      .filter((code) => code.length > 0 && code !== reportingCurrency)
+      .map(async (code) => {
+        rateCache.set(
+          `${code}:${reportingCurrency}`,
+          await getExchangeRate(code, reportingCurrency)
+        );
+      })
+  );
+
+  function convertSynced(
+    amount: number,
+    fromCurrencyCode: string,
+    toCurrencyCode: string
+  ): number {
+    if (fromCurrencyCode === toCurrencyCode) {
+      return Number(amount.toFixed(2));
+    }
+
+    const rate = rateCache.get(`${fromCurrencyCode}:${toCurrencyCode}`);
+
+    if (rate === undefined) {
+      throw new Error(
+        `Exchange rate ${fromCurrencyCode} -> ${toCurrencyCode} was not warmed`
+      );
+    }
+
+    return Number((amount * rate).toFixed(2));
+  }
+
+  let incomes = 0;
+  let expenses = 0;
+  const expenseByCategoryMap = new Map<string, number>();
+  const dailyMap = new Map<string, { income: number; expense: number }>();
+  const sparkByDaySlot = new Map<string, { income: number; expense: number; count: number }>();
+
+  for (const row of aggregates.currencyKind) {
+    const converted = convertSynced(row.total_amount, row.currency_code, reportingCurrency);
+
+    if (row.kind === "income") {
+      incomes += converted;
+    } else {
+      expenses += converted;
+    }
+  }
+
+  for (const row of aggregates.category) {
+    if (row.kind !== "expense") {
+      continue;
+    }
+
+    const converted = convertSynced(row.total_amount, row.currency_code, reportingCurrency);
+    expenseByCategoryMap.set(
+      row.category_name,
+      (expenseByCategoryMap.get(row.category_name) ?? 0) + converted
+    );
+  }
+
+  for (const row of aggregates.utcDay) {
+    const converted = convertSynced(row.total_amount, row.currency_code, reportingCurrency);
+    const bucket = dailyMap.get(row.day_utc) ?? { income: 0, expense: 0 };
+
+    if (row.kind === "income") {
+      bucket.income += converted;
+    } else {
+      bucket.expense += converted;
+    }
+
+    dailyMap.set(row.day_utc, bucket);
+  }
+
+  for (const row of aggregates.utcDaySlot) {
+    const converted = convertSynced(row.total_amount, row.currency_code, reportingCurrency);
+    const sparkKey = `${row.day_utc}:${row.spark_slot}`;
+    const sparkBucket = sparkByDaySlot.get(sparkKey) ?? { income: 0, expense: 0, count: 0 };
+
+    if (row.kind === "income") {
+      sparkBucket.income += converted;
+      sparkBucket.count += row.entry_count;
+    } else {
+      sparkBucket.expense += converted;
+      sparkBucket.count += row.entry_count;
+    }
+
+    sparkByDaySlot.set(sparkKey, sparkBucket);
+  }
+
+  const dayKeys = enumerateUtcDaysInclusive(startDate, endDate);
+  const sparkLast7Days = buildReportSparkLast7Days(dayKeys, sparkByDaySlot);
+  const dailySeries: ReportDailyPoint[] = dayKeys.map((date) => {
+    const bucket = dailyMap.get(date) ?? { income: 0, expense: 0 };
+    const inc = Number(bucket.income.toFixed(2));
+    const exp = Number(bucket.expense.toFixed(2));
+    return {
+      date,
+      income: inc,
+      expense: exp,
+      net: Number((inc - exp).toFixed(2))
+    };
+  });
+
+  return {
+    incomes: Number(incomes.toFixed(2)),
+    expenses: Number(expenses.toFixed(2)),
+    net: Number((incomes - expenses).toFixed(2)),
+    expenseByCategory: mapExpenseCategoryTotals(expenseByCategoryMap, reportingCurrency),
+    homeReport: { sparkLast7Days, dailySeries }
+  };
+}
+
 /** Доходы/расходы месяца в валюте отчёта + данные для мини-графиков на главной. */
 export async function computeMonthEntryTotalsInReportingCurrency(
   workspaceId: string,
@@ -805,6 +939,25 @@ export async function computeMonthEntryTotalsInReportingCurrency(
   ratesUpdatedAt: string | null;
   homeReport: HomeReportChrome;
 }> {
+  const aggregates = await fetchReportPeriodAggregatesViaRpc(workspaceId, {
+    from: startDate,
+    to: endDate
+  });
+
+  if (aggregates) {
+    const totals = await buildMonthTotalsFromReportAggregates(
+      aggregates,
+      reportingCurrency,
+      startDate,
+      endDate
+    );
+
+    return {
+      ...totals,
+      ratesUpdatedAt: await getLatestExchangeRateUpdate()
+    };
+  }
+
   const entries = await listEntriesForMonthTotals(workspaceId, startDate, endDate);
 
   const currencyCodes = entries.map((entry) => String(entry.currency_code ?? ""));

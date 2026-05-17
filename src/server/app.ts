@@ -585,30 +585,34 @@ export function createHttpApp(): express.Express {
           : []
       );
 
-      const [accounts, activity, categoriesCount, workspace, workspaces] =
+      const accountsPromise = listAccounts(ws.workspaceId);
+      const categoriesCountPromise = countActiveCategories(ws.workspaceId);
+      const dashboardPromise = Promise.all([accountsPromise, categoriesCountPromise])
+        .then(([accounts, categoriesCount]) =>
+          buildLightRefreshDashboard(
+            ws.workspaceId,
+            reportingCurrency,
+            accounts,
+            categoriesCount
+          )
+        )
+        .catch((error) => {
+          console.error("Failed to build refresh dashboard", error);
+          return null;
+        });
+
+      const [accounts, activity, categoriesCount, workspace, workspaces, dashboard] =
         await Promise.all([
-          listAccounts(ws.workspaceId),
+          accountsPromise,
           getRecentActivity(ws.workspaceId),
-          countActiveCategories(ws.workspaceId),
+          categoriesCountPromise,
           buildWorkspaceApiDto(ws),
-          buildWorkspacesListPayload(appUser.id)
+          buildWorkspacesListPayload(appUser.id),
+          dashboardPromise
         ]);
 
-      let summary = null;
-      let homeReport = null;
-
-      try {
-        const dashboard = await buildLightRefreshDashboard(
-          ws.workspaceId,
-          reportingCurrency,
-          accounts,
-          categoriesCount
-        );
-        summary = dashboard.summary;
-        homeReport = dashboard.homeReport;
-      } catch (error) {
-        console.error("Failed to build refresh dashboard", error);
-      }
+      const summary = dashboard?.summary ?? null;
+      const homeReport = dashboard?.homeReport ?? null;
 
       const payload: {
         workspace: typeof workspace;
@@ -648,31 +652,35 @@ export function createHttpApp(): express.Express {
       const { appUser, ws } = await withAuthWorkspace(req);
       const reportingCurrency = await resolveReportingCurrency(req);
 
-      const [accounts, categories, currencies, activity, workspace, workspaces] =
+      const accountsPromise = listAccounts(ws.workspaceId);
+      const categoriesPromise = listCategories(ws.workspaceId);
+      const dashboardPromise = Promise.all([accountsPromise, categoriesPromise])
+        .then(([accounts, categories]) =>
+          buildLightRefreshDashboard(
+            ws.workspaceId,
+            reportingCurrency,
+            accounts,
+            categories.length
+          )
+        )
+        .catch((error) => {
+          console.error("Failed to build bootstrap dashboard", error);
+          return null;
+        });
+
+      const [accounts, categories, currencies, activity, workspace, workspaces, dashboard] =
         await Promise.all([
-          listAccounts(ws.workspaceId),
-          listCategories(ws.workspaceId),
+          accountsPromise,
+          categoriesPromise,
           listActiveCurrencies(),
           getRecentActivity(ws.workspaceId),
           buildWorkspaceApiDto(ws),
-          buildWorkspacesListPayload(appUser.id)
+          buildWorkspacesListPayload(appUser.id),
+          dashboardPromise
         ]);
 
-      let summary = null;
-      let homeReport = null;
-
-      try {
-        const dashboard = await buildLightRefreshDashboard(
-          ws.workspaceId,
-          reportingCurrency,
-          accounts,
-          categories.length
-        );
-        summary = dashboard.summary;
-        homeReport = dashboard.homeReport;
-      } catch (error) {
-        console.error("Failed to build bootstrap dashboard", error);
-      }
+      const summary = dashboard?.summary ?? null;
+      const homeReport = dashboard?.homeReport ?? null;
 
       res.json({
         user: appUser,
