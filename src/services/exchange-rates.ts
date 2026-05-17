@@ -247,12 +247,17 @@ async function lookupExchangeRate(
   return deriveViaUsd();
 }
 
+function normalizeExchangeCurrencyCode(code: string): string {
+  const normalized = code.trim().toUpperCase();
+  return normalized === "USDT" ? "USD" : normalized;
+}
+
 export async function getExchangeRate(
   fromCurrencyCode: string,
   toCurrencyCode: string
 ): Promise<number> {
-  const from = fromCurrencyCode.trim().toUpperCase();
-  const to = toCurrencyCode.trim().toUpperCase();
+  const from = normalizeExchangeCurrencyCode(fromCurrencyCode);
+  const to = normalizeExchangeCurrencyCode(toCurrencyCode);
 
   if (from === to) {
     return 1;
