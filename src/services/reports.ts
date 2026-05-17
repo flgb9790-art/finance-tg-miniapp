@@ -352,6 +352,175 @@ async function listEntriesStrictlyAfter(
   );
 }
 
+type ReportPeriodAggregateRow = {
+  agg_section: string;
+  category_name: string | null;
+  currency_code: string;
+  kind: string;
+  day_utc: string | null;
+  spark_slot: number | null;
+  total_amount: number | string;
+  entry_count: number | string | null;
+};
+
+type ReportPeriodAggregates = {
+  currencyKind: {
+    currency_code: string;
+    kind: string;
+    total_amount: number;
+    entry_count: number;
+  }[];
+  category: {
+    category_name: string;
+    kind: string;
+    currency_code: string;
+    total_amount: number;
+  }[];
+  utcDay: {
+    day_utc: string;
+    kind: string;
+    currency_code: string;
+    total_amount: number;
+    entry_count: number;
+  }[];
+  utcDaySlot: {
+    day_utc: string;
+    spark_slot: number;
+    kind: string;
+    currency_code: string;
+    total_amount: number;
+    entry_count: number;
+  }[];
+};
+
+type CurrencyKindNetRow = {
+  currency_code: string;
+  kind: string;
+  total_amount: number;
+};
+
+function parseReportPeriodAggregateRows(
+  rows: ReportPeriodAggregateRow[]
+): ReportPeriodAggregates {
+  const out: ReportPeriodAggregates = {
+    currencyKind: [],
+    category: [],
+    utcDay: [],
+    utcDaySlot: []
+  };
+
+  for (const row of rows) {
+    const amount = Number(row.total_amount);
+    const section = row.agg_section;
+
+    if (section === "currency_kind") {
+      out.currencyKind.push({
+        currency_code: String(row.currency_code ?? ""),
+        kind: String(row.kind ?? ""),
+        total_amount: amount,
+        entry_count: Number(row.entry_count ?? 0)
+      });
+    } else if (section === "category") {
+      out.category.push({
+        category_name: String(row.category_name ?? "Без категории"),
+        kind: String(row.kind ?? ""),
+        currency_code: String(row.currency_code ?? ""),
+        total_amount: amount
+      });
+    } else if (section === "utc_day" && row.day_utc) {
+      out.utcDay.push({
+        day_utc: String(row.day_utc).slice(0, 10),
+        kind: String(row.kind ?? ""),
+        currency_code: String(row.currency_code ?? ""),
+        total_amount: amount,
+        entry_count: Number(row.entry_count ?? 0)
+      });
+    } else if (section === "utc_day_slot" && row.day_utc) {
+      out.utcDaySlot.push({
+        day_utc: String(row.day_utc).slice(0, 10),
+        spark_slot: Number(row.spark_slot ?? 0),
+        kind: String(row.kind ?? ""),
+        currency_code: String(row.currency_code ?? ""),
+        total_amount: amount,
+        entry_count: Number(row.entry_count ?? 0)
+      });
+    }
+  }
+
+  return out;
+}
+
+async function fetchReportPeriodAggregatesViaRpc(
+  workspaceId: string,
+  opts: {
+    from: string;
+    to: string;
+    accountId?: string;
+    categoryId?: string;
+    kind?: OperationKind;
+  }
+): Promise<ReportPeriodAggregates | null> {
+  const { data, error } = await supabase.rpc("fetch_report_period_aggregates", {
+    p_workspace_id: workspaceId,
+    p_from: opts.from,
+    p_to: opts.to,
+    p_account_id: opts.accountId ?? null,
+    p_category_id: opts.categoryId ?? null,
+    p_kind: opts.kind ?? null
+  });
+
+  if (error) {
+    console.warn(
+      "fetch_report_period_aggregates unavailable, using entry scan",
+      error.message
+    );
+    return null;
+  }
+
+  return parseReportPeriodAggregateRows((data ?? []) as ReportPeriodAggregateRow[]);
+}
+
+async function fetchReportEntriesNetAfterViaRpc(
+  workspaceId: string,
+  afterOccurredAt: string
+): Promise<CurrencyKindNetRow[] | null> {
+  const { data, error } = await supabase.rpc("fetch_report_entries_net_after", {
+    p_workspace_id: workspaceId,
+    p_after: afterOccurredAt
+  });
+
+  if (error) {
+    console.warn(
+      "fetch_report_entries_net_after unavailable, using row scan",
+      error.message
+    );
+    return null;
+  }
+
+  return ((data ?? []) as { currency_code: string; kind: string; total_amount: number | string }[]).map(
+    (row) => ({
+      currency_code: String(row.currency_code ?? ""),
+      kind: String(row.kind ?? ""),
+      total_amount: Number(row.total_amount)
+    })
+  );
+}
+
+function sumSignedNetReporting(
+  rows: CurrencyKindNetRow[],
+  convertSynced: (amount: number, from: string, to: string) => number,
+  reportingCurrency: string
+): number {
+  let net = 0;
+
+  for (const row of rows) {
+    const converted = convertSynced(row.total_amount, row.currency_code, reportingCurrency);
+    net += row.kind === "income" ? converted : -converted;
+  }
+
+  return net;
+}
+
 type ReportEntriesBundle = {
   startDate: string;
   endDate: string;
@@ -815,18 +984,34 @@ export async function buildBootstrapMonthDashboard(
   categoriesCount: number
 ): Promise<{ summary: DashboardSummary; report: ReportResult }> {
   const monthRange = resolveReportRange("month");
-  const monthBundle = await resolveReportEntriesBundle({
-    workspaceId,
-    period: "month",
-    startDate: monthRange.startDate,
-    endDate: monthRange.endDate,
-    reportingCurrency
+  const aggregates = await fetchReportPeriodAggregatesViaRpc(workspaceId, {
+    from: monthRange.startDate,
+    to: monthRange.endDate
   });
-  const report = await aggregateReportFromBundle(
-    { workspaceId, period: "month" },
-    monthBundle,
-    { accounts }
-  );
+
+  const report = aggregates
+    ? await aggregateReportFromRpcAggregates(
+        { workspaceId, period: "month" },
+        {
+          startDate: monthRange.startDate,
+          endDate: monthRange.endDate,
+          reportingCurrency,
+          aggregates
+        },
+        { accounts }
+      )
+    : await aggregateReportFromBundle(
+        { workspaceId, period: "month" },
+        await resolveReportEntriesBundle({
+          workspaceId,
+          period: "month",
+          startDate: monthRange.startDate,
+          endDate: monthRange.endDate,
+          reportingCurrency
+        }),
+        { accounts }
+      );
+
   const summary = await buildDashboardSummaryFromParts(
     accounts,
     categoriesCount,
@@ -922,6 +1107,328 @@ export async function getDashboardSummary(
   );
 
   return summary;
+}
+
+type ReportRpcContext = {
+  startDate: string;
+  endDate: string;
+  reportingCurrency: string;
+  appliedCategory?: ReportResult["appliedCategory"];
+  accountId?: string;
+  kind?: OperationKind;
+  aggregates: ReportPeriodAggregates;
+};
+
+async function aggregateReportFromRpcAggregates(
+  input: { workspaceId: string; period: ReportPeriod },
+  ctx: ReportRpcContext,
+  options?: { accounts?: AccountRow[]; detail?: ReportDetailLevel }
+): Promise<ReportResult> {
+  const { startDate, endDate, reportingCurrency, appliedCategory, aggregates } = ctx;
+  const hasEntryFilters = Boolean(appliedCategory || ctx.accountId || ctx.kind);
+  const light = options?.detail === "light";
+
+  const accountsPromise =
+    options?.accounts !== undefined
+      ? Promise.resolve(options.accounts)
+      : listAccounts(input.workspaceId);
+
+  const [transfers, accounts, netAfterRpc, unfilteredAggregates] = await Promise.all([
+    listTransfersByRange(input.workspaceId, startDate, endDate),
+    accountsPromise,
+    light
+      ? Promise.resolve(null as CurrencyKindNetRow[] | null)
+      : fetchReportEntriesNetAfterViaRpc(input.workspaceId, endDate),
+    light || !hasEntryFilters
+      ? Promise.resolve(null as ReportPeriodAggregates | null)
+      : fetchReportPeriodAggregatesViaRpc(input.workspaceId, {
+          from: startDate,
+          to: endDate
+        })
+  ]);
+
+  const currencyCodes = new Set<string>();
+
+  for (const row of aggregates.currencyKind) {
+    currencyCodes.add(row.currency_code);
+  }
+
+  for (const row of aggregates.category) {
+    currencyCodes.add(row.currency_code);
+  }
+
+  for (const account of accounts) {
+    currencyCodes.add(String(account.currency_code ?? ""));
+  }
+
+  for (const transfer of transfers) {
+    currencyCodes.add(String(transfer.from_currency_code ?? ""));
+  }
+
+  if (netAfterRpc) {
+    for (const row of netAfterRpc) {
+      currencyCodes.add(row.currency_code);
+    }
+  }
+
+  if (unfilteredAggregates) {
+    for (const row of unfilteredAggregates.currencyKind) {
+      currencyCodes.add(row.currency_code);
+    }
+  }
+
+  const rateCache = new Map<string, number>();
+  const rateTargets = [...currencyCodes].filter(
+    (code) => code.length > 0 && code !== reportingCurrency
+  );
+
+  await Promise.all(
+    rateTargets.map(async (code) => {
+      rateCache.set(
+        `${code}:${reportingCurrency}`,
+        await getExchangeRate(code, reportingCurrency)
+      );
+    })
+  );
+
+  function convertSynced(
+    amount: number,
+    fromCurrencyCode: string,
+    toCurrencyCode: string
+  ): number {
+    if (fromCurrencyCode === toCurrencyCode) {
+      return Number(amount.toFixed(2));
+    }
+
+    const key = `${fromCurrencyCode}:${toCurrencyCode}`;
+    const rate = rateCache.get(key);
+
+    if (rate === undefined) {
+      throw new Error(`Exchange rate ${fromCurrencyCode} -> ${toCurrencyCode} was not warmed`);
+    }
+
+    return Number((amount * rate).toFixed(2));
+  }
+
+  let incomes = 0;
+  let expenses = 0;
+  let incomeEntryCount = 0;
+  let expenseEntryCount = 0;
+  const expenseByCategoryMap = new Map<string, number>();
+  const incomeByCategoryMap = new Map<string, number>();
+  const dailyMap = new Map<string, { income: number; expense: number }>();
+  const monthlyMap = new Map<string, { income: number; expense: number }>();
+  const sparkByDaySlot = new Map<string, { income: number; expense: number; count: number }>();
+
+  for (const row of aggregates.currencyKind) {
+    const converted = convertSynced(row.total_amount, row.currency_code, reportingCurrency);
+
+    if (row.kind === "income") {
+      incomes += converted;
+      incomeEntryCount += row.entry_count;
+    } else {
+      expenses += converted;
+      expenseEntryCount += row.entry_count;
+    }
+  }
+
+  for (const row of aggregates.category) {
+    const converted = convertSynced(row.total_amount, row.currency_code, reportingCurrency);
+
+    if (row.kind === "income") {
+      incomeByCategoryMap.set(
+        row.category_name,
+        (incomeByCategoryMap.get(row.category_name) ?? 0) + converted
+      );
+    } else {
+      expenseByCategoryMap.set(
+        row.category_name,
+        (expenseByCategoryMap.get(row.category_name) ?? 0) + converted
+      );
+    }
+  }
+
+  for (const row of aggregates.utcDay) {
+    const converted = convertSynced(row.total_amount, row.currency_code, reportingCurrency);
+    const bucket = dailyMap.get(row.day_utc) ?? { income: 0, expense: 0 };
+
+    if (row.kind === "income") {
+      bucket.income += converted;
+    } else {
+      bucket.expense += converted;
+    }
+
+    dailyMap.set(row.day_utc, bucket);
+
+    if (!light) {
+      const monthKey = row.day_utc.slice(0, 7);
+      const monthBucket = monthlyMap.get(monthKey) ?? { income: 0, expense: 0 };
+
+      if (row.kind === "income") {
+        monthBucket.income += converted;
+      } else {
+        monthBucket.expense += converted;
+      }
+
+      monthlyMap.set(monthKey, monthBucket);
+    }
+  }
+
+  for (const row of aggregates.utcDaySlot) {
+    const converted = convertSynced(row.total_amount, row.currency_code, reportingCurrency);
+    const sparkKey = `${row.day_utc}:${row.spark_slot}`;
+    const sparkBucket = sparkByDaySlot.get(sparkKey) ?? { income: 0, expense: 0, count: 0 };
+
+    if (row.kind === "income") {
+      sparkBucket.income += converted;
+      sparkBucket.count += row.entry_count;
+    } else {
+      sparkBucket.expense += converted;
+      sparkBucket.count += row.entry_count;
+    }
+
+    sparkByDaySlot.set(sparkKey, sparkBucket);
+  }
+
+  const mapToSortedItems = (mapping: Map<string, number>): ReportCategoryItem[] =>
+    Array.from(mapping.entries())
+      .map(([categoryName, total]) => ({
+        categoryName,
+        total: Number(total.toFixed(2)),
+        currencyCode: reportingCurrency
+      }))
+      .sort((left, right) => right.total - left.total);
+
+  const currentTotalBalance = accounts.reduce((sum, account) => {
+    return (
+      sum +
+      convertSynced(Number(account.balance), account.currency_code, reportingCurrency)
+    );
+  }, 0);
+
+  const dayKeys = enumerateUtcDaysInclusive(startDate, endDate);
+  const sparkLast7Days = buildReportSparkLast7Days(dayKeys, sparkByDaySlot);
+  const dailySeries: ReportDailyPoint[] = dayKeys.map((date) => {
+    const bucket = dailyMap.get(date) ?? { income: 0, expense: 0 };
+    const inc = Number(bucket.income.toFixed(2));
+    const exp = Number(bucket.expense.toFixed(2));
+    return {
+      date,
+      income: inc,
+      expense: exp,
+      net: Number((inc - exp).toFixed(2))
+    };
+  });
+
+  const monthKeys = enumerateMonthsInclusive(startDate, endDate);
+  const monthlySeries: ReportMonthlyPoint[] = light
+    ? []
+    : monthKeys.map((mk) => {
+        const bucket = monthlyMap.get(mk) ?? { income: 0, expense: 0 };
+        const inc = Number(bucket.income.toFixed(2));
+        const exp = Number(bucket.expense.toFixed(2));
+        return {
+          monthKey: mk,
+          income: inc,
+          expense: exp,
+          net: Number((inc - exp).toFixed(2))
+        };
+      });
+
+  const operationsCount =
+    incomeEntryCount +
+    expenseEntryCount +
+    (appliedCategory ? 0 : transfers.length);
+
+  let transfersVolumeReporting = 0;
+  for (const transfer of transfers) {
+    transfersVolumeReporting += convertSynced(
+      Number(transfer.from_amount),
+      transfer.from_currency_code,
+      reportingCurrency
+    );
+  }
+
+  let balanceAtPeriodEndReporting: number | null = null;
+  let balanceAtPeriodStartReporting: number | null = null;
+  let categoryMatrix: ReportCategoryMatrixRow[] = [];
+
+  if (!light) {
+    const netUnfilteredPeriod = unfilteredAggregates
+      ? sumSignedNetReporting(
+          unfilteredAggregates.currencyKind,
+          convertSynced,
+          reportingCurrency
+        )
+      : incomes - expenses;
+
+    let netAfterPeriod = 0;
+
+    if (netAfterRpc) {
+      netAfterPeriod = sumSignedNetReporting(netAfterRpc, convertSynced, reportingCurrency);
+    } else {
+      const entriesAfterPeriod = await listEntriesStrictlyAfter(input.workspaceId, endDate);
+
+      for (const row of entriesAfterPeriod) {
+        const convertedAmount = convertSynced(
+          row.amount,
+          row.currency_code,
+          reportingCurrency
+        );
+        netAfterPeriod += row.kind === "income" ? convertedAmount : -convertedAmount;
+      }
+    }
+
+    balanceAtPeriodEndReporting = Number(
+      (currentTotalBalance - netAfterPeriod).toFixed(2)
+    );
+    balanceAtPeriodStartReporting = Number(
+      (balanceAtPeriodEndReporting - netUnfilteredPeriod).toFixed(2)
+    );
+
+    const categoryNames = new Set<string>([
+      ...incomeByCategoryMap.keys(),
+      ...expenseByCategoryMap.keys()
+    ]);
+    const totalExpenseForShare = expenses > 0 ? expenses : 0;
+    categoryMatrix = Array.from(categoryNames)
+      .map((categoryName) => {
+        const inc = Number((incomeByCategoryMap.get(categoryName) ?? 0).toFixed(2));
+        const exp = Number((expenseByCategoryMap.get(categoryName) ?? 0).toFixed(2));
+        const net = Number((inc - exp).toFixed(2));
+        const expenseShare =
+          totalExpenseForShare > 0 ? Number((exp / totalExpenseForShare).toFixed(4)) : 0;
+        return { categoryName, income: inc, expense: exp, net, expenseShare };
+      })
+      .sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
+  }
+
+  return {
+    period: input.period,
+    startDate,
+    endDate,
+    reportingCurrency,
+    incomes: Number(incomes.toFixed(2)),
+    expenses: Number(expenses.toFixed(2)),
+    net: Number((incomes - expenses).toFixed(2)),
+    currentTotalBalance: Number(currentTotalBalance.toFixed(2)),
+    incomeByCategory: mapToSortedItems(incomeByCategoryMap),
+    expenseByCategory: mapToSortedItems(expenseByCategoryMap),
+    transfersCount: appliedCategory ? 0 : transfers.length,
+    operationsCount,
+    dailySeries,
+    monthlySeries,
+    sparkLast7Days,
+    incomeEntryCount,
+    expenseEntryCount,
+    transfersVolumeReporting: Number(transfersVolumeReporting.toFixed(2)),
+    balanceAtPeriodEndReporting,
+    balanceAtPeriodStartReporting,
+    compareToPrevious: null,
+    categoryMatrix,
+    ratesUpdatedAt: await getLatestExchangeRateUpdate(),
+    appliedCategory
+  };
 }
 
 async function aggregateReportFromBundle(
@@ -1225,6 +1732,60 @@ async function buildReportFromInput(
   },
   options?: { detail?: ReportDetailLevel }
 ): Promise<ReportResult> {
+  const reportingCurrency = input.reportingCurrency ?? env.reportingCurrency;
+  const range =
+    input.period === "custom"
+      ? {
+          startDate: input.startDate ?? "",
+          endDate: input.endDate ?? ""
+        }
+      : resolveReportRange(input.period);
+
+  const { startDate, endDate } =
+    input.period === "custom"
+      ? resolveReportRange("custom", range.startDate, range.endDate)
+      : range;
+
+  let appliedCategory: ReportResult["appliedCategory"];
+
+  if (input.categoryId) {
+    const categoryRow = await getCategoryById(input.categoryId, input.workspaceId);
+
+    if (!categoryRow) {
+      throw new Error("Категория не найдена");
+    }
+
+    appliedCategory = {
+      id: categoryRow.id,
+      name: categoryRow.name,
+      kind: categoryRow.kind
+    };
+  }
+
+  const aggregates = await fetchReportPeriodAggregatesViaRpc(input.workspaceId, {
+    from: startDate,
+    to: endDate,
+    accountId: input.accountId,
+    categoryId: input.categoryId,
+    kind: input.kind
+  });
+
+  if (aggregates) {
+    return aggregateReportFromRpcAggregates(
+      input,
+      {
+        startDate,
+        endDate,
+        reportingCurrency,
+        appliedCategory,
+        accountId: input.accountId,
+        kind: input.kind,
+        aggregates
+      },
+      { detail: options?.detail ?? "full" }
+    );
+  }
+
   const bundle = await resolveReportEntriesBundle(input);
 
   return aggregateReportFromBundle(input, bundle, {
