@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260517perf-v7";
+        var BALANCY_CLIENT_ASSET_REV = "20260517ui-v2";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -1414,19 +1414,15 @@
                 </div>
               </label>
 
-              <label class="web-op-field-span-2">
+              <label class="web-op-field-span-2 web-op-comment-with-attach">
                 <span>Комментарий</span>
-                <input
-                  id="entryNoteInput"
-                  name="note"
-                  placeholder="Добавьте комментарий (необязательно)"
-                  type="text"
-                />
-              </label>
-
-              <div class="entry-photo-field web-op-field-span-2">
-                <span>Фото чека</span>
-                <div class="entry-photo-actions">
+                <div class="web-op-comment-attach-row">
+                  <input
+                    id="entryNoteInput"
+                    name="note"
+                    placeholder="Добавьте комментарий (необязательно)"
+                    type="text"
+                  />
                   <input
                     id="entryPhotoInput"
                     type="file"
@@ -1434,9 +1430,15 @@
                     capture="environment"
                     hidden
                   />
-                  <button type="button" id="entryPhotoPickButton" class="ghost-button">
-                    Прикрепить фото
-                  </button>
+                  <button
+                    type="button"
+                    id="entryPhotoPickButton"
+                    class="balancy-attach-btn"
+                    aria-label="Прикрепить фото"
+                    title="Прикрепить фото"
+                  ></button>
+                </div>
+                <div class="entry-photo-actions entry-photo-actions--secondary">
                   <button type="button" id="entryPhotoRemoveButton" class="ghost-button" hidden>
                     Убрать фото
                   </button>
@@ -1447,7 +1449,7 @@
                 <div id="entryPhotoPreview" class="entry-photo-preview" hidden>
                   <img id="entryPhotoPreviewImg" alt="Превью чека" />
                 </div>
-              </div>
+              </label>
 
               <div class="web-op-form-actions">
                 <button id="entrySubmitButton" class="primary-button" type="button">Сохранить операцию</button>
@@ -1569,42 +1571,44 @@
                   </label>
                 </div>
 
-                <label class="web-transfer-field web-transfer-field--amount">
-                  <span>Сумма перевода <span class="web-op-req" aria-hidden="true">*</span></span>
-                  <div class="web-transfer-amount-row">
-                    <input
-                      id="transferFromAmountInput"
-                      min="0.01"
-                      name="fromAmount"
-                      placeholder="0.00"
-                      required
-                      step="0.01"
-                      type="number"
-                      class="web-transfer-amount-input"
-                    />
-                    <span id="webTransferAmountCurrencyBadge" class="web-transfer-currency-badge">USD</span>
-                  </div>
-                  <p id="transferFromMinHint" class="tg-transfer-min-hint muted"></p>
-                </label>
+                <div class="web-transfer-amounts-grid">
+                  <label class="web-transfer-field web-transfer-field--amount">
+                    <span>Сумма перевода <span class="web-op-req" aria-hidden="true">*</span></span>
+                    <div class="web-transfer-amount-row">
+                      <input
+                        id="transferFromAmountInput"
+                        min="0.01"
+                        name="fromAmount"
+                        placeholder="0.00"
+                        required
+                        step="0.01"
+                        type="number"
+                        class="web-transfer-amount-input"
+                      />
+                      <span id="webTransferAmountCurrencyBadge" class="web-transfer-currency-badge">USD</span>
+                    </div>
+                    <p id="transferFromMinHint" class="tg-transfer-min-hint muted"></p>
+                  </label>
 
-                <label class="web-transfer-secondary-amount">
-                  <span>Сумма зачисления</span>
-                  <div class="web-transfer-amount-row web-transfer-amount-row--to">
-                    <input
-                      id="transferToAmountInput"
-                      min="0.01"
-                      name="toAmount"
-                      placeholder="Оставьте пустым для автоконвертации"
-                      step="0.01"
-                      type="number"
-                      class="web-transfer-amount-input"
-                    />
-                    <span id="webTransferToAmountCurrencyBadge" class="web-transfer-currency-badge">USD</span>
-                  </div>
-                  <p id="transferRateHint" class="tg-transfer-rate-hint muted" hidden>
-                    <span id="transferRateHintText"></span>
-                  </p>
-                </label>
+                  <label class="web-transfer-secondary-amount">
+                    <span>Сумма зачисления</span>
+                    <div class="web-transfer-amount-row web-transfer-amount-row--to">
+                      <input
+                        id="transferToAmountInput"
+                        min="0.01"
+                        name="toAmount"
+                        placeholder="Оставьте пустым для автоконвертации"
+                        step="0.01"
+                        type="number"
+                        class="web-transfer-amount-input"
+                      />
+                      <span id="webTransferToAmountCurrencyBadge" class="web-transfer-currency-badge">USD</span>
+                    </div>
+                    <p id="transferRateHint" class="tg-transfer-rate-hint muted" hidden>
+                      <span id="transferRateHintText"></span>
+                    </p>
+                  </label>
+                </div>
 
                 <label class="web-transfer-field">
                   <span>Дата и время <span class="web-op-req" aria-hidden="true">*</span></span>
@@ -1613,14 +1617,10 @@
                   </div>
                 </label>
 
-                <label class="web-transfer-field">
+                <label class="web-transfer-field web-transfer-field--comment">
                   <span>Комментарий</span>
-                  <input id="transferNoteInput" name="note" placeholder="Необязательно" type="text" />
-                </label>
-
-                <div class="entry-photo-field web-transfer-photo-field">
-                  <span>Фото / чек</span>
-                  <div class="entry-photo-actions">
+                  <div class="web-op-comment-attach-row">
+                    <input id="transferNoteInput" name="note" placeholder="Необязательно" type="text" />
                     <input
                       id="transferPhotoInput"
                       type="file"
@@ -1628,9 +1628,15 @@
                       capture="environment"
                       hidden
                     />
-                    <button type="button" id="transferPhotoPickButton" class="ghost-button">
-                      Прикрепить фото
-                    </button>
+                    <button
+                      type="button"
+                      id="transferPhotoPickButton"
+                      class="balancy-attach-btn"
+                      aria-label="Прикрепить фото"
+                      title="Прикрепить фото"
+                    ></button>
+                  </div>
+                  <div class="entry-photo-actions entry-photo-actions--secondary">
                     <button type="button" id="transferPhotoRemoveButton" class="ghost-button" hidden>
                       Убрать фото
                     </button>
@@ -1641,7 +1647,7 @@
                   <div id="transferPhotoPreview" class="entry-photo-preview" hidden>
                     <img id="transferPhotoPreviewImg" alt="Превью вложения" />
                   </div>
-                </div>
+                </label>
 
                 <div class="tg-transfer-security tg-only-block" role="status">
                   <span class="tg-transfer-security-ico" aria-hidden="true">
