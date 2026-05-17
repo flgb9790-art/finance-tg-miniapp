@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260517ui-v9";
+        var BALANCY_CLIENT_ASSET_REV = "20260517ui-v10";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -1060,6 +1060,30 @@
 
         <section id="screen-accounts" class="screen" data-screen="accounts">
           <div class="web-accounts-page">
+<div class="balancy-hint-card tg-only-block" data-balancy-hint="accountsSwipeTg" role="status" hidden>
+              <span class="balancy-hint-icon" aria-hidden="true">💡</span>
+              <div class="balancy-hint-copy">
+                <strong class="balancy-hint-title">Счета</strong>
+                <p class="balancy-hint-text muted">
+                  Чтобы изменить или удалить счёт, смахните строку влево — появятся кнопки «Изменить» и «Удалить».
+                </p>
+              </div>
+              <button type="button" class="balancy-hint-close" data-balancy-hint-close="accountsSwipeTg" aria-label="Закрыть подсказку">
+                ×
+              </button>
+            </div>
+            <div class="balancy-hint-card web-accounts-toolbar--web" data-balancy-hint="accountsSwipeWeb" role="status" hidden>
+              <span class="balancy-hint-icon" aria-hidden="true">💡</span>
+              <div class="balancy-hint-copy">
+                <strong class="balancy-hint-title">Счета</strong>
+                <p class="balancy-hint-text muted">
+                  В веб-версии действия со счётом доступны в таблице справа (карандаш и удаление).
+                </p>
+              </div>
+              <button type="button" class="balancy-hint-close" data-balancy-hint-close="accountsSwipeWeb" aria-label="Закрыть подсказку">
+                ×
+              </button>
+            </div>
             <div class="web-accounts-layout">
               <div class="web-accounts-main">
                 <header class="tg-accounts-screen-head tg-only-block" aria-label="Счета">
@@ -1088,30 +1112,7 @@
                   <dl class="tg-accounts-summary-dl" id="tgAccountsSummaryDl"></dl>
                 </section>
 
-                <div class="balancy-hint-card tg-only-block" data-balancy-hint="accountsSwipeTg" role="status" hidden>
-                  <span class="balancy-hint-icon" aria-hidden="true">💡</span>
-                  <div class="balancy-hint-copy">
-                    <strong class="balancy-hint-title">Счета</strong>
-                    <p class="balancy-hint-text muted">
-                      Чтобы изменить или удалить счёт, смахните строку влево — появятся кнопки «Изменить» и «Удалить».
-                    </p>
-                  </div>
-                  <button type="button" class="balancy-hint-close" data-balancy-hint-close="accountsSwipeTg" aria-label="Закрыть подсказку">
-                    ×
-                  </button>
-                </div>
-                <div class="balancy-hint-card web-accounts-toolbar--web" data-balancy-hint="accountsSwipeWeb" role="status" hidden>
-                  <span class="balancy-hint-icon" aria-hidden="true">💡</span>
-                  <div class="balancy-hint-copy">
-                    <strong class="balancy-hint-title">Счета</strong>
-                    <p class="balancy-hint-text muted">
-                      В веб-версии действия со счётом доступны в таблице справа (карандаш и удаление).
-                    </p>
-                  </div>
-                  <button type="button" class="balancy-hint-close" data-balancy-hint-close="accountsSwipeWeb" aria-label="Закрыть подсказку">
-                    ×
-                  </button>
-                </div>
+                
               </div>
 
               <aside class="web-accounts-panel web-categories-panel" id="webAccountsSidePanel">
@@ -1326,6 +1327,19 @@
         </section>
 
         <section id="screen-activity" class="screen" data-screen="activity">
+          <div class="balancy-hint-card" data-balancy-hint="activityForm" role="status" hidden>
+            <span class="balancy-hint-icon" aria-hidden="true">💡</span>
+            <div class="balancy-hint-copy">
+              <strong class="balancy-hint-title">Операция</strong>
+              <p class="balancy-hint-text muted">
+                Выберите счёт и категорию, укажите сумму и при необходимости время — комментарий по желанию. Перевод между
+                счетами доступен через кнопку «+» вверху или блок «Перевод» на главной.
+              </p>
+            </div>
+            <button type="button" class="balancy-hint-close" data-balancy-hint-close="activityForm" aria-label="Закрыть подсказку">
+              ×
+            </button>
+          </div>
           <div class="web-activity-layout">
           <section class="card compact-section-card web-activity-recent-card web-only-block" aria-label="Последние операции">
             <div class="section-header">
@@ -1460,19 +1474,7 @@
             </form>
           </section>
 
-          <div class="balancy-hint-card" data-balancy-hint="activityForm" role="status" hidden>
-            <span class="balancy-hint-icon" aria-hidden="true">💡</span>
-            <div class="balancy-hint-copy">
-              <strong class="balancy-hint-title">Операция</strong>
-              <p class="balancy-hint-text muted">
-                Выберите счёт и категорию, укажите сумму и при необходимости время — комментарий по желанию. Перевод между
-                счетами доступен через кнопку «+» вверху или блок «Перевод» на главной.
-              </p>
-            </div>
-            <button type="button" class="balancy-hint-close" data-balancy-hint-close="activityForm" aria-label="Закрыть подсказку">
-              ×
-            </button>
-          </div>
+          
 
           </div>
           </div>
@@ -2217,6 +2219,30 @@
 
         <section id="screen-categories" class="screen" data-screen="categories">
           <div class="web-categories-page">
+<div class="balancy-hint-card tg-only-block" data-balancy-hint="categoriesSwipeTg" role="status" hidden>
+              <span class="balancy-hint-icon" aria-hidden="true">💡</span>
+              <div class="balancy-hint-copy">
+                <strong class="balancy-hint-title">Категории</strong>
+                <p class="balancy-hint-text muted">
+                  Чтобы изменить или удалить категорию, смахните строку влево — появятся кнопки «Изменить» и «Удалить».
+                </p>
+              </div>
+              <button type="button" class="balancy-hint-close" data-balancy-hint-close="categoriesSwipeTg" aria-label="Закрыть подсказку">
+                ×
+              </button>
+            </div>
+            <div class="balancy-hint-card web-categories-toolbar--web" data-balancy-hint="categoriesSwipeWeb" role="status" hidden>
+              <span class="balancy-hint-icon" aria-hidden="true">💡</span>
+              <div class="balancy-hint-copy">
+                <strong class="balancy-hint-title">Категории</strong>
+                <p class="balancy-hint-text muted">
+                  В веб-версии действия с категорией — в колонке справа в таблице.
+                </p>
+              </div>
+              <button type="button" class="balancy-hint-close" data-balancy-hint-close="categoriesSwipeWeb" aria-label="Закрыть подсказку">
+                ×
+              </button>
+            </div>
             <div class="web-categories-layout">
               <div class="web-categories-main">
                 <div class="web-categories-list-stack web-categories-toolbar--web">
@@ -2278,30 +2304,7 @@
                   </section>
                 </div>
 
-                <div class="balancy-hint-card tg-only-block" data-balancy-hint="categoriesSwipeTg" role="status" hidden>
-                  <span class="balancy-hint-icon" aria-hidden="true">💡</span>
-                  <div class="balancy-hint-copy">
-                    <strong class="balancy-hint-title">Категории</strong>
-                    <p class="balancy-hint-text muted">
-                      Чтобы изменить или удалить категорию, смахните строку влево — появятся кнопки «Изменить» и «Удалить».
-                    </p>
-                  </div>
-                  <button type="button" class="balancy-hint-close" data-balancy-hint-close="categoriesSwipeTg" aria-label="Закрыть подсказку">
-                    ×
-                  </button>
-                </div>
-                <div class="balancy-hint-card web-categories-toolbar--web" data-balancy-hint="categoriesSwipeWeb" role="status" hidden>
-                  <span class="balancy-hint-icon" aria-hidden="true">💡</span>
-                  <div class="balancy-hint-copy">
-                    <strong class="balancy-hint-title">Категории</strong>
-                    <p class="balancy-hint-text muted">
-                      В веб-версии действия с категорией — в колонке справа в таблице.
-                    </p>
-                  </div>
-                  <button type="button" class="balancy-hint-close" data-balancy-hint-close="categoriesSwipeWeb" aria-label="Закрыть подсказку">
-                    ×
-                  </button>
-                </div>
+                
 
                 <div class="web-categories-legacy-wrap">
                   <div class="category-columns">
