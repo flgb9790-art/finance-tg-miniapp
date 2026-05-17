@@ -26,7 +26,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260517ui-v15";
+        var BALANCY_CLIENT_ASSET_REV = "20260517ui-v16";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -2320,17 +2320,26 @@
 
                 
 
-                <div class="web-categories-legacy-wrap">
-                  <div class="category-columns">
-                    <div>
-                      <p class="section-label">Доходы</p>
-                      <div id="incomeCategoriesList" class="category-list"></div>
+                                <div class="web-categories-legacy-wrap">
+                  <section class="web-accounts-list-shell web-accounts-surface tg-categories-list-shell">
+                    <header class="web-accounts-list-head">
+                      <h2 class="web-accounts-title">Доходы</h2>
+                      <span id="tgCategoriesIncomeBadge" class="web-accounts-head-badge">0</span>
+                    </header>
+                    <div class="web-accounts-list-body">
+                      <div id="incomeCategoriesList" class="category-list accounts-list"></div>
                     </div>
-                    <div>
-                      <p class="section-label">Расходы</p>
-                      <div id="expenseCategoriesList" class="category-list"></div>
+                  </section>
+
+                  <section class="web-accounts-list-shell web-accounts-surface tg-categories-list-shell">
+                    <header class="web-accounts-list-head">
+                      <h2 class="web-accounts-title">Расходы</h2>
+                      <span id="tgCategoriesExpenseBadge" class="web-accounts-head-badge">0</span>
+                    </header>
+                    <div class="web-accounts-list-body">
+                      <div id="expenseCategoriesList" class="category-list accounts-list"></div>
                     </div>
-                  </div>
+                  </section>
                 </div>
               </div>
 
