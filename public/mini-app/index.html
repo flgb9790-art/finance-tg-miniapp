@@ -38,7 +38,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260518ui-v31";
+        var BALANCY_CLIENT_ASSET_REV = "20260518ui-v32";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -869,7 +869,7 @@
                 <button type="button" id="webOpenAuditLogButton" class="ghost-button web-ops-filter-action web-audit-log-apply-btn web-settings-panel__action">
                   <span>Открыть журнал изменений</span>
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M14 3h7v7M10 14 21 3M15 9h6v6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M14 4h6v6M10 14 20 4M13 4H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </button>
               </div>
@@ -976,6 +976,7 @@
                 type="button"
                 id="webAccountResetButton"
                 class="ghost-button web-ops-filter-action web-audit-log-apply-btn web-team-danger-action web-account-reset-btn"
+                hidden
               >
                 <span>Сбросить аккаунт</span>
               </button>
@@ -3453,7 +3454,7 @@
         var CLIENT_ASSET_REV =
           typeof window.__BALANCY_CLIENT_ASSET_REV === "string"
             ? window.__BALANCY_CLIENT_ASSET_REV
-            : "20260518ui-v31";
+            : "20260518ui-v32";
 
         var scriptEl = document.createElement("script");
         /* Обычный скрипт: в app.js нет import/export; type=module на части WebView Telegram даёт пустой экран после сплэша. */
