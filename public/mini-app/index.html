@@ -38,7 +38,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260518ui-v32";
+        var BALANCY_CLIENT_ASSET_REV = "20260518ui-v33";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -948,7 +948,7 @@
                 <button
                   type="button"
                   id="webTeamDissolveButton"
-                  class="ghost-button web-ops-filter-action web-audit-log-apply-btn web-team-danger-action"
+                  class="ghost-button web-ops-filter-action web-audit-log-apply-btn web-settings-panel__action web-team-danger-action"
                   hidden
                 >
                   <span>Распустить команду</span>
@@ -957,7 +957,7 @@
               <p id="webTeamSettingsError" class="inline-error web-team-settings-error" hidden></p>
             </article>
 
-            <article id="webAccountDangerCard" class="card web-settings-panel web-settings-panel--danger">
+            <article id="webAccountDangerCard" class="card web-settings-panel web-settings-panel--danger" hidden>
               <div class="web-settings-panel__head">
                 <span class="web-settings-panel__icon web-settings-panel__icon--team" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -975,7 +975,7 @@
               <button
                 type="button"
                 id="webAccountResetButton"
-                class="ghost-button web-ops-filter-action web-audit-log-apply-btn web-team-danger-action web-account-reset-btn"
+                class="ghost-button web-ops-filter-action web-audit-log-apply-btn web-settings-panel__action web-team-danger-action web-account-reset-btn"
                 hidden
               >
                 <span>Сбросить аккаунт</span>
@@ -3454,7 +3454,7 @@
         var CLIENT_ASSET_REV =
           typeof window.__BALANCY_CLIENT_ASSET_REV === "string"
             ? window.__BALANCY_CLIENT_ASSET_REV
-            : "20260518ui-v32";
+            : "20260518ui-v33";
 
         var scriptEl = document.createElement("script");
         /* Обычный скрипт: в app.js нет import/export; type=module на части WebView Telegram даёт пустой экран после сплэша. */
