@@ -8,6 +8,7 @@ import {
   createAccount,
   deleteAccount,
   listAccounts,
+  normalizeAccountCurrencyCode,
   updateAccount
 } from "../services/accounts.js";
 import {
@@ -753,7 +754,13 @@ export function createHttpApp(): express.Express {
         return;
       }
 
-      const currency = await getCurrencyByCode(currencyCode);
+      const accountType = type as "cash" | "card" | "crypto" | "savings" | "other";
+      const resolvedCurrencyCode = normalizeAccountCurrencyCode(
+        accountType,
+        currencyCode
+      );
+
+      const currency = await getCurrencyByCode(resolvedCurrencyCode);
 
       if (!currency) {
         res.status(400).json({ error: "Currency code is invalid" });
@@ -769,8 +776,8 @@ export function createHttpApp(): express.Express {
         workspaceId: ws.workspaceId,
         createdByUserId: appUser.id,
         name,
-        type: type as "cash" | "card" | "crypto" | "savings" | "other",
-        currencyCode,
+        type: accountType,
+        currencyCode: resolvedCurrencyCode,
         balance
       });
 
@@ -823,7 +830,13 @@ export function createHttpApp(): express.Express {
         return;
       }
 
-      const currency = await getCurrencyByCode(currencyCode);
+      const accountType = type as "cash" | "card" | "crypto" | "savings" | "other";
+      const resolvedCurrencyCode = normalizeAccountCurrencyCode(
+        accountType,
+        currencyCode
+      );
+
+      const currency = await getCurrencyByCode(resolvedCurrencyCode);
 
       if (!currency) {
         res.status(400).json({ error: "Currency code is invalid" });
@@ -839,8 +852,8 @@ export function createHttpApp(): express.Express {
         accountId,
         workspaceId: ws.workspaceId,
         name,
-        type: type as "cash" | "card" | "crypto" | "savings" | "other",
-        currencyCode,
+        type: accountType,
+        currencyCode: resolvedCurrencyCode,
         balance
       });
 

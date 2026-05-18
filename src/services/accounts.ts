@@ -31,6 +31,18 @@ export interface UpdateAccountInput {
   balance: number;
 }
 
+/** Crypto accounts are stored and shown as USDT; rates still use USD. */
+export function normalizeAccountCurrencyCode(
+  type: AccountType,
+  currencyCode: string
+): string {
+  const code = currencyCode.trim().toUpperCase();
+  if (type === "crypto") {
+    return "USDT";
+  }
+  return code;
+}
+
 export async function createAccount(
   input: CreateAccountInput
 ): Promise<AccountRow> {
