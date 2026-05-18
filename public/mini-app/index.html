@@ -38,7 +38,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260517ui-v27";
+        var BALANCY_CLIENT_ASSET_REV = "20260517ui-v28";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -1854,132 +1854,200 @@
 
         <section id="screen-instruction" class="screen" data-screen="instruction">
           <div class="web-instruction-root">
-            <nav class="web-instr-toc card" aria-label="Содержание инструкции">
-              <p class="web-instr-toc-title">Содержание</p>
-              <ol class="web-instr-toc-list">
-                <li><a href="#web-instr-start">Быстрый старт</a></li>
-                <li><a href="#web-instr-nav">Навигация и верхняя панель</a></li>
-                <li><a href="#web-instr-home">Главная</a></li>
-                <li><a href="#web-instr-accounts">Счета</a></li>
-                <li><a href="#web-instr-categories">Категории</a></li>
-                <li><a href="#web-instr-activity">Операции: доход и расход</a></li>
-                <li><a href="#web-instr-transfer">Переводы между счетами</a></li>
-                <li><a href="#web-instr-history">История операций</a></li>
-                <li><a href="#web-instr-reports">Отчёты</a></li>
-                <li><a href="#web-instr-settings">Настройки, профиль и рабочие пространства</a></li>
-              </ol>
-            </nav>
-            <p class="help-doc-lede muted">
-              Полная пошаговая инструкция для браузера: от первой настройки до отчётов, переводов и управления рабочим пространством.
-            </p>
+            <div class="web-instr-main-column">
+              <nav class="web-instr-toc card" aria-label="Содержание инструкции">
+                <p class="web-instr-toc-title">Содержание</p>
+                <ol class="web-instr-toc-list">
+                  <li><a href="#web-instr-start">Быстрый старт</a></li>
+                  <li><a href="#web-instr-nav">Навигация и верхняя панель</a></li>
+                  <li><a href="#web-instr-home">Главная</a></li>
+                  <li><a href="#web-instr-accounts">Счета</a></li>
+                  <li><a href="#web-instr-categories">Категории</a></li>
+                  <li><a href="#web-instr-activity">Операции: доход и расход</a></li>
+                  <li><a href="#web-instr-transfer">Переводы между счетами</a></li>
+                  <li><a href="#web-instr-history">История операций</a></li>
+                  <li><a href="#web-instr-reports">Отчёты</a></li>
+                  <li><a href="#web-instr-settings">Настройки и профиль</a></li>
+                </ol>
+              </nav>
+              <p class="help-doc-lede muted">
+                Полная пошаговая инструкция для браузера: от первой настройки до отчётов, переводов и управления рабочим пространством.
+              </p>
 
-            <article id="web-instr-start" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">1. Быстрый старт</h3>
-              <ol class="help-doc-list help-doc-numbered">
-                <li>Войдите в веб-версию через Telegram и откройте раздел <strong>Главная</strong>.</li>
-                <li>Создайте первый <strong>счёт</strong> в разделе «Счета».</li>
-                <li>Добавьте категории в разделе <strong>Категории</strong>: хотя бы одну для доходов и одну для расходов.</li>
-                <li>Создайте первую запись через <strong>+ Новая запись</strong> (доход/расход) или раздел «Операции».</li>
-                <li>Проверьте, что баланс и блоки на главной обновились.</li>
-              </ol>
-            </article>
+              <article id="web-instr-start" class="help-doc-section card help-doc-callout web-instr-section">
+                <h3 class="help-doc-h3">1. Быстрый старт</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Войдите в веб-версию через Telegram и откройте раздел <strong>Главная</strong>.</li>
+                  <li>Создайте первый <strong>счёт</strong> в разделе «Счета».</li>
+                  <li>Добавьте категории в разделе <strong>Категории</strong>: хотя бы одну для доходов и одну для расходов.</li>
+                  <li>Создайте первую запись через <strong>+ Новая запись</strong> (доход/расход) или раздел «Операции».</li>
+                  <li>Проверьте, что баланс и блоки на главной обновились.</li>
+                </ol>
+              </article>
 
-            <article id="web-instr-nav" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">2. Навигация и верхняя панель</h3>
-              <p class="muted">В левом меню доступны разделы: Главная, Счета, Категории, Операции, Переводы, Отчёты, История, Инструкция.</p>
-              <ul class="help-doc-list">
-                <li><strong>+ Новая запись</strong> в шапке: быстрый доступ к доходу, расходу, переводу, созданию счёта и категории.</li>
-                <li><strong>Обновить</strong> в шапке: синхронизирует данные по всем блокам.</li>
-                <li>На узкой ширине меню открывается через кнопку <strong>бургер</strong>.</li>
-              </ul>
-            </article>
+              <article id="web-instr-nav" class="help-doc-section card help-doc-callout web-instr-section">
+                <h3 class="help-doc-h3">2. Навигация и верхняя панель</h3>
+                <p class="muted">В левом меню доступны разделы: Главная, Счета, Категории, Операции, Переводы, Отчёты, История, Инструкция.</p>
+                <ul class="help-doc-list">
+                  <li><strong>+ Новая запись</strong> в шапке: быстрый доступ к доходу, расходу, переводу, созданию счёта и категории.</li>
+                  <li><strong>Обновить</strong> в шапке: синхронизирует данные по всем блокам.</li>
+                  <li>На узкой ширине меню открывается через кнопку <strong>бургер</strong>.</li>
+                </ul>
+              </article>
 
-            <article id="web-instr-home" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">3. Главная</h3>
-              <ol class="help-doc-list help-doc-numbered">
-                <li>В карточке «Общий баланс» выберите валюту отображения (это не меняет валюты самих счетов).</li>
-                <li>Следите за блоками месяца: доходы, расходы и чистый поток.</li>
-                <li>Проверьте блок «Остатки по валютам» и список ваших счетов.</li>
-                <li>В карточке «История» видно последние движения, чтобы быстро перейти к деталям.</li>
-              </ol>
-            </article>
+              <article id="web-instr-home" class="help-doc-section card help-doc-callout web-instr-section">
+                <h3 class="help-doc-h3">3. Главная</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>В карточке «Общий баланс» выберите валюту отображения (это не меняет валюты самих счетов).</li>
+                  <li>Следите за блоками месяца: доходы, расходы и чистый поток.</li>
+                  <li>Проверьте блок «Остатки по валютам» и список ваших счетов.</li>
+                  <li>В карточке «История» видно последние движения, чтобы быстро перейти к деталям.</li>
+                </ol>
+              </article>
 
-            <article id="web-instr-accounts" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">4. Счета</h3>
-              <ol class="help-doc-list help-doc-numbered">
-                <li>Откройте «Счета» и нажмите <strong>Добавить счёт</strong>.</li>
-                <li>Заполните: название, тип, валюту, стартовый баланс, иконку и цвет.</li>
-                <li>Нажмите <strong>Создать счёт</strong>.</li>
-                <li>Для изменения счёта нажмите редактирование в строке/карточке и сохраните изменения.</li>
-                <li>Для крипто-счёта выбирайте тип <strong>Криптовалюта</strong>: валюта фиксируется как USDT.</li>
-              </ol>
-            </article>
+              <article id="web-instr-accounts" class="help-doc-section card help-doc-callout web-instr-section">
+                <h3 class="help-doc-h3">4. Счета</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Откройте «Счета» и нажмите <strong>Добавить счёт</strong>.</li>
+                  <li>Заполните: название, тип, валюту, стартовый баланс, иконку и цвет.</li>
+                  <li>Нажмите <strong>Создать счёт</strong>.</li>
+                  <li>Для изменения счёта нажмите редактирование в строке/карточке и сохраните изменения.</li>
+                  <li>Для крипто-счёта выбирайте тип <strong>Криптовалюта</strong>: валюта фиксируется как USDT.</li>
+                </ol>
+              </article>
 
-            <article id="web-instr-categories" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">5. Категории</h3>
-              <ol class="help-doc-list help-doc-numbered">
-                <li>Откройте «Категории» и выберите режим: <strong>Доход</strong> или <strong>Расход</strong>.</li>
-                <li>Введите название, задайте цвет и иконку.</li>
-                <li>Сохраните категорию.</li>
-                <li>Редактируйте или удаляйте ненужные категории из списка.</li>
-              </ol>
-            </article>
+              <article id="web-instr-categories" class="help-doc-section card help-doc-callout web-instr-section">
+                <h3 class="help-doc-h3">5. Категории</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Откройте «Категории» и выберите режим: <strong>Доход</strong> или <strong>Расход</strong>.</li>
+                  <li>Введите название, задайте цвет и иконку.</li>
+                  <li>Сохраните категорию.</li>
+                  <li>Редактируйте или удаляйте ненужные категории из списка.</li>
+                </ol>
+              </article>
 
-            <article id="web-instr-activity" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">6. Операции: доход и расход</h3>
-              <ol class="help-doc-list help-doc-numbered">
-                <li>Откройте «Операции» или используйте <strong>+ Новая запись</strong>.</li>
-                <li>Выберите тип: доход или расход.</li>
-                <li>Выберите счёт и категорию.</li>
-                <li>Укажите сумму, дату/время, при необходимости комментарий.</li>
-                <li>Нажмите <strong>Сохранить операцию</strong> и проверьте обновление главной и истории.</li>
-              </ol>
-            </article>
+              <article id="web-instr-activity" class="help-doc-section card help-doc-callout web-instr-section">
+                <h3 class="help-doc-h3">6. Операции: доход и расход</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Откройте «Операции» или используйте <strong>+ Новая запись</strong>.</li>
+                  <li>Выберите тип: доход или расход.</li>
+                  <li>Выберите счёт и категорию.</li>
+                  <li>Укажите сумму, дату/время, при необходимости комментарий.</li>
+                  <li>Нажмите <strong>Сохранить операцию</strong> и проверьте обновление главной и истории.</li>
+                </ol>
+              </article>
 
-            <article id="web-instr-transfer" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">7. Переводы между счетами</h3>
-              <ol class="help-doc-list help-doc-numbered">
-                <li>Откройте раздел «Переводы» или выберите перевод в <strong>+ Новая запись</strong>.</li>
-                <li>Укажите счёт списания и счёт зачисления (кнопка со стрелками меняет их местами).</li>
-                <li>Введите сумму списания и дату.</li>
-                <li>Если валюты разные, проверьте/уточните сумму зачисления.</li>
-                <li>Сохраните перевод.</li>
-              </ol>
-              <p class="muted">Переводы меняют остатки счетов, но не должны искажать общий баланс системы.</p>
-            </article>
+              <article id="web-instr-transfer" class="help-doc-section card help-doc-callout web-instr-section">
+                <h3 class="help-doc-h3">7. Переводы между счетами</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Откройте раздел «Переводы» или выберите перевод в <strong>+ Новая запись</strong>.</li>
+                  <li>Укажите счёт списания и счёт зачисления (кнопка со стрелками меняет их местами).</li>
+                  <li>Введите сумму списания и дату.</li>
+                  <li>Если валюты разные, проверьте/уточните сумму зачисления.</li>
+                  <li>Сохраните перевод.</li>
+                </ol>
+                <p class="muted">Переводы меняют остатки счетов, но не должны искажать общий баланс системы.</p>
+              </article>
 
-            <article id="web-instr-history" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">8. История операций</h3>
-              <ol class="help-doc-list help-doc-numbered">
-                <li>Откройте «История».</li>
-                <li>Установите период «С/По».</li>
-                <li>При необходимости задайте фильтры: тип, счёт, категория, поиск.</li>
-                <li>Нажмите <strong>Показать</strong>.</li>
-                <li>Используйте пагинацию внизу таблицы.</li>
-              </ol>
-            </article>
+              <article id="web-instr-history" class="help-doc-section card help-doc-callout web-instr-section">
+                <h3 class="help-doc-h3">8. История операций</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Откройте «История».</li>
+                  <li>Установите период «С/По».</li>
+                  <li>При необходимости задайте фильтры: тип, счёт, категория, поиск.</li>
+                  <li>Нажмите <strong>Показать</strong>.</li>
+                  <li>Используйте пагинацию внизу таблицы.</li>
+                </ol>
+              </article>
 
-            <article id="web-instr-reports" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">9. Отчёты</h3>
-              <ol class="help-doc-list help-doc-numbered">
-                <li>Откройте «Отчёты» и выберите период: неделя, месяц, квартал, год или произвольные даты.</li>
-                <li>Задайте валюту отчёта и фильтры (по счету, категории, типу), если нужно.</li>
-                <li>Нажмите <strong>Показать</strong> / <strong>Построить отчёт</strong>.</li>
-                <li>Проверьте таблицы и графики: итоги, категории, динамику.</li>
-                <li>При необходимости скачайте CSV.</li>
-              </ol>
-            </article>
+              <article id="web-instr-reports" class="help-doc-section card help-doc-callout web-instr-section">
+                <h3 class="help-doc-h3">9. Отчёты</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Откройте «Отчёты» и выберите период: неделя, месяц, квартал, год или произвольные даты.</li>
+                  <li>Задайте валюту отчёта и фильтры (по счету, категории, типу), если нужно.</li>
+                  <li>Нажмите <strong>Показать</strong> / <strong>Построить отчёт</strong>.</li>
+                  <li>Проверьте таблицы и графики: итоги, категории, динамику.</li>
+                  <li>При необходимости скачайте CSV.</li>
+                </ol>
+              </article>
 
-            <article id="web-instr-settings" class="help-doc-section card help-doc-callout web-instr-section">
-              <h3 class="help-doc-h3">10. Настройки, профиль и рабочие пространства</h3>
-              <ol class="help-doc-list help-doc-numbered">
-                <li>Нажмите на профиль внизу бокового меню.</li>
-                <li>Откройте <strong>Настройки</strong> для параметров интерфейса и подсказок.</li>
-                <li>В профиле доступна <strong>смена пользователя</strong> (выход).</li>
-                <li>Если включен режим команд, в профиле можно переключать <strong>личное / командное</strong> пространство.</li>
-                <li>После смены режима проверьте, что вы в нужном пространстве перед внесением операций.</li>
-              </ol>
-            </article>
+              <article id="web-instr-settings" class="help-doc-section card help-doc-callout web-instr-section">
+                <h3 class="help-doc-h3">10. Настройки и профиль</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Нажмите на профиль внизу бокового меню.</li>
+                  <li>Откройте <strong>Настройки</strong> для параметров интерфейса и подсказок.</li>
+                  <li>В профиле доступна <strong>смена пользователя</strong> (выход).</li>
+                </ol>
+              </article>
+            </div>
+
+            <aside class="web-instr-team-column" aria-label="Инструкция по командному режиму">
+              <article class="help-doc-section card help-doc-callout web-instr-team-section">
+                <h3 class="help-doc-h3">Командный режим: полная инструкция</h3>
+                <p class="muted">
+                  Этот блок — отдельная инструкция по работе команды: создание группы, приглашения, принятие приглашений и управление участниками.
+                </p>
+              </article>
+
+              <article class="help-doc-section card help-doc-callout web-instr-team-section">
+                <h3 class="help-doc-h3">1. Как создать группу</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Откройте профиль внизу бокового меню.</li>
+                  <li>Перейдите в режим <strong>Команда</strong> (если доступен) или в раздел рабочих пространств.</li>
+                  <li>Нажмите создание нового командного пространства / группы.</li>
+                  <li>Укажите название группы и сохраните.</li>
+                </ol>
+              </article>
+
+              <article class="help-doc-section card help-doc-callout web-instr-team-section">
+                <h3 class="help-doc-h3">2. Как пригласить участника</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Откройте нужную группу в командном режиме.</li>
+                  <li>Перейдите в управление участниками команды.</li>
+                  <li>Нажмите <strong>Пригласить участника</strong>.</li>
+                  <li>Скопируйте приглашение (ссылку/код) и отправьте его человеку в Telegram.</li>
+                </ol>
+              </article>
+
+              <article class="help-doc-section card help-doc-callout web-instr-team-section">
+                <h3 class="help-doc-h3">3. Инструкция для участника: как принять приглашение</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Откройте приглашение, которое прислал владелец команды.</li>
+                  <li>Перейдите по ссылке в бот/приложение Balancy.</li>
+                  <li>Подтвердите вход и принятие приглашения в команду.</li>
+                  <li>После подтверждения переключитесь в <strong>Командный режим</strong> и выберите нужную группу.</li>
+                </ol>
+              </article>
+
+              <article class="help-doc-section card help-doc-callout web-instr-team-section">
+                <h3 class="help-doc-h3">4. Что делать участнику после входа в команду</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Проверьте, что в профиле выбрана команда, а не личный режим.</li>
+                  <li>Создавайте операции, переводы, категории и счета только в нужном пространстве.</li>
+                  <li>Перед добавлением данных убедитесь, что не перепутан режим (личный/командный).</li>
+                </ol>
+              </article>
+
+              <article class="help-doc-section card help-doc-callout web-instr-team-section">
+                <h3 class="help-doc-h3">5. Как удалить участника из команды</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Откройте команду и раздел участников.</li>
+                  <li>Найдите нужного участника в списке.</li>
+                  <li>Выберите действие <strong>Удалить из команды</strong> / <strong>Исключить</strong>.</li>
+                  <li>Подтвердите удаление.</li>
+                </ol>
+                <p class="muted">Обычно это действие доступно владельцу команды или администратору.</p>
+              </article>
+
+              <article class="help-doc-section card help-doc-callout web-instr-team-section">
+                <h3 class="help-doc-h3">6. Переключение личного и командного режима</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Откройте профиль.</li>
+                  <li>Выберите личное или командное пространство.</li>
+                  <li>После переключения вернитесь на главную и убедитесь, что данные соответствуют выбранному режиму.</li>
+                </ol>
+              </article>
+            </aside>
           </div>
 
           <div class="tg-instruction-root">
@@ -2092,6 +2160,18 @@
                   <li>Откройте «Ещё» → <strong>Настройки</strong> для параметров интерфейса и подсказок.</li>
                   <li>На главной меняйте валюту отображения баланса в карточке «Общий баланс».</li>
                   <li>Если данные отображаются неактуально, обновите экран (потяните вниз) или перезапустите мини-приложение.</li>
+                </ol>
+              </article>
+
+              <article class="help-doc-section card help-doc-callout">
+                <h3 class="help-doc-h3">10. Командный режим (Telegram)</h3>
+                <ol class="help-doc-list help-doc-numbered">
+                  <li>Откройте «Ещё» или профиль и переключитесь в <strong>Командный режим</strong>.</li>
+                  <li>Чтобы создать группу: откройте рабочие пространства команды, нажмите создание группы, задайте название и сохраните.</li>
+                  <li>Чтобы пригласить участника: в нужной группе откройте участников, нажмите приглашение и отправьте ссылку/код человеку.</li>
+                  <li>Для участника: открыть приглашение, перейти в Balancy, подтвердить принятие и выбрать командный режим.</li>
+                  <li>Чтобы удалить участника: откройте список участников группы, выберите нужного пользователя и действие «Удалить».</li>
+                  <li>Всегда проверяйте активный режим (личный/командный) перед созданием операций и счетов.</li>
                 </ol>
               </article>
             </div>
