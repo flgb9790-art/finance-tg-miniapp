@@ -8,6 +8,7 @@ import {
   createTeamWorkspace,
   createWorkspaceInvite,
   DEFAULT_INVITE_EXPIRES_DAYS,
+  dissolveTeamWorkspace,
   ensurePersonalWorkspace,
   getActiveInviteByToken,
   getPersonalWorkspaceForUser,
@@ -17,6 +18,7 @@ import {
   listActiveWorkspaceInvites,
   listWorkspaceMembersWithProfiles,
   listWorkspacesForUser,
+  resetPersonalWorkspaceLedger,
   revokeWorkspaceInvite,
   updateTeamWorkspaceName
 } from "../services/workspaces.js";
@@ -424,6 +426,59 @@ export function registerWorkspaceRoutes(app: Express, deps: WorkspaceRoutesDeps)
       });
     } catch (error) {
       console.error("Failed to leave team workspace", error);
+      res.status(workspaceErrorStatus(error)).json({
+        error: workspaceErrorMessage(error)
+      });
+    }
+  });
+
+  app.post("/api/workspaces/team/dissolve", async (req, res) => {
+    try {
+      const { appUser, ws } = await requireWorkspaceContext(req, deps);
+
+      if (ws.workspace.kind !== "team") {
+        res.status(400).json({ error: "Not in a team workspace" });
+        return;
+      }
+
+      await dissolveTeamWorkspace(ws.workspaceId, appUser.id);
+
+      const personal =
+        (await getPersonalWorkspaceForUser(appUser.id)) ??
+        (await ensurePersonalWorkspace(appUser.id));
+      const membership = await assertWorkspaceMember(personal.id, appUser.id);
+
+      setActiveWorkspaceCookie(res, personal.id);
+
+      res.json({
+        workspace: await buildWorkspaceApiDto({
+          appUserId: appUser.id,
+          workspaceId: personal.id,
+          role: membership.role,
+          workspace: personal
+        }),
+        workspaces: await buildWorkspacesListPayload(appUser.id)
+      });
+    } catch (error) {
+      console.error("Failed to dissolve team workspace", error);
+      res.status(workspaceErrorStatus(error)).json({
+        error: workspaceErrorMessage(error)
+      });
+    }
+  });
+
+  app.post("/api/account/reset", async (req, res) => {
+    try {
+      const { appUser, ws } = await requireWorkspaceContext(req, deps);
+      await resetPersonalWorkspaceLedger(ws.workspaceId, appUser.id);
+
+      res.json({
+        ok: true,
+        workspace: await buildWorkspaceApiDto(ws),
+        workspaces: await buildWorkspacesListPayload(appUser.id)
+      });
+    } catch (error) {
+      console.error("Failed to reset account data", error);
       res.status(workspaceErrorStatus(error)).json({
         error: workspaceErrorMessage(error)
       });

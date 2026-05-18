@@ -38,7 +38,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260517ui-v29";
+        var BALANCY_CLIENT_ASSET_REV = "20260518ui-v30";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -944,7 +944,41 @@
                   Владелец не может покинуть команду.
                 </p>
               </div>
+              <div class="web-team-dissolve-block">
+                <button
+                  type="button"
+                  id="webTeamDissolveButton"
+                  class="ghost-button web-ops-filter-action web-audit-log-apply-btn web-team-danger-action"
+                  hidden
+                >
+                  <span>Распустить команду</span>
+                </button>
+              </div>
               <p id="webTeamSettingsError" class="inline-error web-team-settings-error" hidden></p>
+            </article>
+
+            <article id="webAccountDangerCard" class="card web-settings-panel web-settings-panel--danger">
+              <div class="web-settings-panel__head">
+                <span class="web-settings-panel__icon web-settings-panel__icon--team" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 8v5M12 16h.01M10 3h4l7 12-2 6H5l-2-6 7-12Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <div class="web-settings-panel__copy">
+                  <p class="section-label">Аккаунт</p>
+                  <h2 class="web-settings-panel__title">Сброс данных</h2>
+                  <p class="muted web-settings-panel__lede">
+                    Полный сброс удалит счета, категории, операции, переводы и историю в текущем личном пространстве.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                id="webAccountResetButton"
+                class="ghost-button web-ops-filter-action web-audit-log-apply-btn web-team-danger-action web-account-reset-btn"
+              >
+                <span>Сбросить аккаунт</span>
+              </button>
             </article>
 
         </section>
@@ -3359,6 +3393,29 @@
         </div>
       </div>
     </div>
+
+    <div id="dangerConfirmModal" class="balancy-app-modal danger-confirm-modal" hidden>
+      <div class="balancy-app-modal__backdrop danger-confirm-modal-backdrop"></div>
+      <section
+        class="balancy-app-modal__panel danger-confirm-modal-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dangerConfirmTitle"
+      >
+        <header class="balancy-app-modal__head danger-confirm-modal-head">
+          <div class="balancy-app-modal__head-copy">
+            <h2 id="dangerConfirmTitle" class="balancy-app-modal__title">Подтверждение</h2>
+          </div>
+        </header>
+        <div class="balancy-app-modal__body danger-confirm-modal-body">
+          <p id="dangerConfirmMessage" class="muted danger-confirm-modal-message"></p>
+          <div class="danger-confirm-modal-actions">
+            <button type="button" id="dangerConfirmYesButton" class="primary-button danger-confirm-yes">Да</button>
+            <button type="button" id="dangerConfirmNoButton" class="ghost-button danger-confirm-no">Нет</button>
+          </div>
+        </div>
+      </section>
+    </div>
     <div id="globalBusyOverlay" class="global-busy-overlay" hidden>
       <div class="global-busy-card" role="status">
         <div class="global-busy-spinner" aria-hidden="true"></div>
@@ -3396,7 +3453,7 @@
         var CLIENT_ASSET_REV =
           typeof window.__BALANCY_CLIENT_ASSET_REV === "string"
             ? window.__BALANCY_CLIENT_ASSET_REV
-            : "20260513web-minimal";
+            : "20260518ui-v30";
 
         var scriptEl = document.createElement("script");
         /* Обычный скрипт: в app.js нет import/export; type=module на части WebView Telegram даёт пустой экран после сплэша. */

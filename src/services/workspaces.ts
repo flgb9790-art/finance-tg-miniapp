@@ -778,3 +778,65 @@ export async function leaveTeamWorkspace(
     throw error;
   }
 }
+
+export async function dissolveTeamWorkspace(
+  workspaceId: string,
+  actorUserId: string
+): Promise<void> {
+  const workspace = await getWorkspaceById(workspaceId);
+
+  if (!workspace || workspace.kind !== "team") {
+    throw new WorkspaceError("not_found", "Team workspace not found");
+  }
+
+  const actor = await assertWorkspaceMember(workspaceId, actorUserId);
+
+  if (actor.role !== "owner") {
+    throw new WorkspaceError("forbidden", "Only the team owner can dissolve the workspace");
+  }
+
+  const { error } = await supabase
+    .from("workspaces")
+    .delete()
+    .eq("id", workspaceId);
+
+  if (error) {
+    logSupabaseError("dissolveTeamWorkspace", error);
+    throw error;
+  }
+}
+
+export async function resetPersonalWorkspaceLedger(
+  workspaceId: string,
+  actorUserId: string
+): Promise<void> {
+  const workspace = await getWorkspaceById(workspaceId);
+
+  if (!workspace || workspace.kind !== "personal") {
+    throw new WorkspaceError(
+      "forbidden",
+      "Сброс аккаунта доступен только в личном пространстве"
+    );
+  }
+
+  if (workspace.owner_user_id !== actorUserId) {
+    throw new WorkspaceError("forbidden", "Only the personal workspace owner can reset data");
+  }
+
+  const deleteByWorkspace = async (table: string): Promise<void> => {
+    const { error } = await supabase
+      .from(table)
+      .delete()
+      .eq("workspace_id", workspaceId);
+
+    if (error) {
+      logSupabaseError(`resetPersonalWorkspaceLedger ${table}`, error);
+      throw error;
+    }
+  };
+
+  await deleteByWorkspace("transfers");
+  await deleteByWorkspace("entries");
+  await deleteByWorkspace("accounts");
+  await deleteByWorkspace("categories");
+}
