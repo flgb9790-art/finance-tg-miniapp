@@ -38,7 +38,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260517ui-v28";
+        var BALANCY_CLIENT_ASSET_REV = "20260517ui-v29";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -1857,18 +1857,35 @@
             <div class="web-instr-main-column">
               <nav class="web-instr-toc card" aria-label="Содержание инструкции">
                 <p class="web-instr-toc-title">Содержание</p>
-                <ol class="web-instr-toc-list">
-                  <li><a href="#web-instr-start">Быстрый старт</a></li>
-                  <li><a href="#web-instr-nav">Навигация и верхняя панель</a></li>
-                  <li><a href="#web-instr-home">Главная</a></li>
-                  <li><a href="#web-instr-accounts">Счета</a></li>
-                  <li><a href="#web-instr-categories">Категории</a></li>
-                  <li><a href="#web-instr-activity">Операции: доход и расход</a></li>
-                  <li><a href="#web-instr-transfer">Переводы между счетами</a></li>
-                  <li><a href="#web-instr-history">История операций</a></li>
-                  <li><a href="#web-instr-reports">Отчёты</a></li>
-                  <li><a href="#web-instr-settings">Настройки и профиль</a></li>
-                </ol>
+                <div class="web-instr-toc-grid">
+                  <div class="web-instr-toc-col">
+                    <p class="web-instr-toc-subtitle muted">Основная инструкция</p>
+                    <ol class="web-instr-toc-list">
+                      <li><a href="#web-instr-start">Быстрый старт</a></li>
+                      <li><a href="#web-instr-nav">Навигация и верхняя панель</a></li>
+                      <li><a href="#web-instr-home">Главная</a></li>
+                      <li><a href="#web-instr-accounts">Счета</a></li>
+                      <li><a href="#web-instr-categories">Категории</a></li>
+                      <li><a href="#web-instr-activity">Операции: доход и расход</a></li>
+                      <li><a href="#web-instr-transfer">Переводы между счетами</a></li>
+                      <li><a href="#web-instr-history">История операций</a></li>
+                      <li><a href="#web-instr-reports">Отчёты</a></li>
+                      <li><a href="#web-instr-settings">Настройки и профиль</a></li>
+                    </ol>
+                  </div>
+                  <div class="web-instr-toc-col">
+                    <p class="web-instr-toc-subtitle muted">Командный режим</p>
+                    <ol class="web-instr-toc-list">
+                      <li><a href="#web-team-instr-intro">Введение</a></li>
+                      <li><a href="#web-team-instr-create">Как создать группу</a></li>
+                      <li><a href="#web-team-instr-invite">Как пригласить участника</a></li>
+                      <li><a href="#web-team-instr-accept">Как принять приглашение</a></li>
+                      <li><a href="#web-team-instr-after-join">Что делать после входа</a></li>
+                      <li><a href="#web-team-instr-remove">Как удалить участника</a></li>
+                      <li><a href="#web-team-instr-switch">Переключение режимов</a></li>
+                    </ol>
+                  </div>
+                </div>
               </nav>
               <p class="help-doc-lede muted">
                 Полная пошаговая инструкция для браузера: от первой настройки до отчётов, переводов и управления рабочим пространством.
@@ -1981,15 +1998,15 @@
               </article>
             </div>
 
-            <aside class="web-instr-team-column" aria-label="Инструкция по командному режиму">
-              <article class="help-doc-section card help-doc-callout web-instr-team-section">
+            <div class="web-instr-team-bottom" aria-label="Инструкция по командному режиму">
+              <article id="web-team-instr-intro" class="help-doc-section card help-doc-callout web-instr-team-section">
                 <h3 class="help-doc-h3">Командный режим: полная инструкция</h3>
                 <p class="muted">
                   Этот блок — отдельная инструкция по работе команды: создание группы, приглашения, принятие приглашений и управление участниками.
                 </p>
               </article>
 
-              <article class="help-doc-section card help-doc-callout web-instr-team-section">
+              <article id="web-team-instr-create" class="help-doc-section card help-doc-callout web-instr-team-section">
                 <h3 class="help-doc-h3">1. Как создать группу</h3>
                 <ol class="help-doc-list help-doc-numbered">
                   <li>Откройте профиль внизу бокового меню.</li>
@@ -1999,7 +2016,7 @@
                 </ol>
               </article>
 
-              <article class="help-doc-section card help-doc-callout web-instr-team-section">
+              <article id="web-team-instr-invite" class="help-doc-section card help-doc-callout web-instr-team-section">
                 <h3 class="help-doc-h3">2. Как пригласить участника</h3>
                 <ol class="help-doc-list help-doc-numbered">
                   <li>Откройте нужную группу в командном режиме.</li>
@@ -2009,7 +2026,7 @@
                 </ol>
               </article>
 
-              <article class="help-doc-section card help-doc-callout web-instr-team-section">
+              <article id="web-team-instr-accept" class="help-doc-section card help-doc-callout web-instr-team-section">
                 <h3 class="help-doc-h3">3. Инструкция для участника: как принять приглашение</h3>
                 <ol class="help-doc-list help-doc-numbered">
                   <li>Откройте приглашение, которое прислал владелец команды.</li>
@@ -2019,7 +2036,7 @@
                 </ol>
               </article>
 
-              <article class="help-doc-section card help-doc-callout web-instr-team-section">
+              <article id="web-team-instr-after-join" class="help-doc-section card help-doc-callout web-instr-team-section">
                 <h3 class="help-doc-h3">4. Что делать участнику после входа в команду</h3>
                 <ol class="help-doc-list help-doc-numbered">
                   <li>Проверьте, что в профиле выбрана команда, а не личный режим.</li>
@@ -2028,7 +2045,7 @@
                 </ol>
               </article>
 
-              <article class="help-doc-section card help-doc-callout web-instr-team-section">
+              <article id="web-team-instr-remove" class="help-doc-section card help-doc-callout web-instr-team-section">
                 <h3 class="help-doc-h3">5. Как удалить участника из команды</h3>
                 <ol class="help-doc-list help-doc-numbered">
                   <li>Откройте команду и раздел участников.</li>
@@ -2039,7 +2056,7 @@
                 <p class="muted">Обычно это действие доступно владельцу команды или администратору.</p>
               </article>
 
-              <article class="help-doc-section card help-doc-callout web-instr-team-section">
+              <article id="web-team-instr-switch" class="help-doc-section card help-doc-callout web-instr-team-section">
                 <h3 class="help-doc-h3">6. Переключение личного и командного режима</h3>
                 <ol class="help-doc-list help-doc-numbered">
                   <li>Откройте профиль.</li>
@@ -2047,7 +2064,7 @@
                   <li>После переключения вернитесь на главную и убедитесь, что данные соответствуют выбранному режиму.</li>
                 </ol>
               </article>
-            </aside>
+            </div>
           </div>
 
           <div class="tg-instruction-root">
