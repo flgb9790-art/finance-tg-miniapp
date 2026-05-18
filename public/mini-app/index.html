@@ -20,13 +20,25 @@
         visibility: visible !important;
         opacity: 1 !important;
       }
+
+      .app-splash-brand {
+        overflow: visible;
+        min-height: auto;
+      }
+
+      .app-splash-wordmark {
+        display: inline-block;
+        line-height: 1.22;
+        padding: 0.12em 0 0.22em;
+        overflow: visible;
+      }
     </style>
     <script>
       document.documentElement.classList.add("balancy-boot-pending");
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260517ui-v25";
+        var BALANCY_CLIENT_ASSET_REV = "20260517ui-v26";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
