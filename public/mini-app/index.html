@@ -29,8 +29,9 @@
 
       .app-splash-brand-row {
         display: inline-flex;
+        flex-direction: column;
         align-items: center;
-        gap: 10px;
+        gap: 6px;
       }
 
       .app-splash-wordmark {
@@ -46,12 +47,12 @@
       }
 
       .app-splash-logo {
-        width: 34px;
-        height: 34px;
+        width: 42px;
+        height: 42px;
       }
 
       .app-splash-tagline {
-        margin-top: -3px;
+        margin-top: -1px;
       }
     </style>
     <script>
@@ -59,7 +60,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260518ui-v38";
+        var BALANCY_CLIENT_ASSET_REV = "20260518ui-v39";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -3489,7 +3490,7 @@
         var CLIENT_ASSET_REV =
           typeof window.__BALANCY_CLIENT_ASSET_REV === "string"
             ? window.__BALANCY_CLIENT_ASSET_REV
-            : "20260518ui-v38";
+            : "20260518ui-v39";
 
         var scriptEl = document.createElement("script");
         /* Обычный скрипт: в app.js нет import/export; type=module на части WebView Telegram даёт пустой экран после сплэша. */
