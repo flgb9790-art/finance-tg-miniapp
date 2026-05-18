@@ -27,11 +27,31 @@
         min-height: auto;
       }
 
+      .app-splash-brand-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+
       .app-splash-wordmark {
         display: inline-block;
         line-height: 1.22;
         padding: 0.12em 0 0.22em;
         overflow: visible;
+      }
+
+      .balancy-brand-logo {
+        display: inline-block;
+        object-fit: contain;
+      }
+
+      .app-splash-logo {
+        width: 34px;
+        height: 34px;
+      }
+
+      .app-splash-tagline {
+        margin-top: -3px;
       }
     </style>
     <script>
@@ -39,7 +59,7 @@
     </script>
     <script>
       (function setBalancyClientRev() {
-        var BALANCY_CLIENT_ASSET_REV = "20260518ui-v36";
+        var BALANCY_CLIENT_ASSET_REV = "20260518ui-v38";
         window.__BALANCY_CLIENT_ASSET_REV = BALANCY_CLIENT_ASSET_REV;
         var link = document.createElement("link");
         link.rel = "stylesheet";
@@ -53,7 +73,15 @@
     <div id="appSplash" class="app-splash" role="status" aria-live="polite" aria-label="Загрузка Balancy">
       <div class="app-splash-inner">
         <div class="app-splash-brand">
-          <span class="app-splash-wordmark">Balancy</span>
+          <div class="app-splash-brand-row">
+            <img
+              src="/mini-app/balancy-mark.svg"
+              alt=""
+              class="balancy-brand-logo app-splash-logo"
+              aria-hidden="true"
+            />
+            <span class="app-splash-wordmark">Balancy</span>
+          </div>
           <div class="app-splash-tagline">Баланс и учёт в одном месте</div>
         </div>
         <div class="app-splash-footer">
@@ -163,6 +191,12 @@
       <aside class="web-sidebar" aria-label="Меню Balancy">
         <div class="web-sidebar-top">
           <button type="button" class="web-sidebar-brand" data-web-nav="home" aria-label="Balancy — на главную">
+            <img
+              src="/mini-app/balancy-mark.svg"
+              alt=""
+              class="balancy-brand-logo web-sidebar-logo"
+              aria-hidden="true"
+            />
             <span class="brand-wordmark">Balancy</span>
           </button>
         </div>
@@ -3455,7 +3489,7 @@
         var CLIENT_ASSET_REV =
           typeof window.__BALANCY_CLIENT_ASSET_REV === "string"
             ? window.__BALANCY_CLIENT_ASSET_REV
-            : "20260518ui-v36";
+            : "20260518ui-v38";
 
         var scriptEl = document.createElement("script");
         /* Обычный скрипт: в app.js нет import/export; type=module на части WebView Telegram даёт пустой экран после сплэша. */
