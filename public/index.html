@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Balancy - Учет личных и командных финансов</title>
+    <meta
+      name="description"
+      content="Balancy - мини-приложение для учета личных и командных финансов: счета, категории, операции, переводы, история и отчеты."
+    />
+    <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
+    <link rel="canonical" href="/" />
+    <link rel="icon" type="image/svg+xml" href="/mini-app/favicon-b.svg" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Balancy - Учет личных и командных финансов" />
+    <meta
+      property="og:description"
+      content="Счета, операции, переводы, отчеты и командный режим - в одном Telegram mini app."
+    />
+    <meta property="og:url" content="/" />
+    <meta property="og:image" content="/mini-app/assets/balancy-welcome-16x9.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Balancy - Учет личных и командных финансов" />
+    <meta
+      name="twitter:description"
+      content="Ведите личные и командные финансы в удобном Telegram mini app."
+    />
+    <meta name="twitter:image" content="/mini-app/assets/balancy-welcome-16x9.svg" />
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+        font-family: Inter, Segoe UI, Arial, sans-serif;
+        background: #f3f5fa;
+        color: #12122b;
+      }
+      main {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 32px 20px 40px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid rgba(18, 18, 43, 0.1);
+        border-radius: 16px;
+        padding: 24px;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-size: 34px;
+      }
+      p {
+        margin: 0;
+        line-height: 1.55;
+      }
+      .actions {
+        margin-top: 18px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 16px;
+        border-radius: 10px;
+        border: 1px solid transparent;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .btn-primary {
+        background: #312e81;
+        color: #fff;
+      }
+      .btn-ghost {
+        border-color: rgba(18, 18, 43, 0.2);
+        color: #12122b;
+        background: #fff;
+      }
+      .grid {
+        margin-top: 16px;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+      .muted {
+        color: #5c6470;
+      }
+    </style>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Balancy",
+        "url": "/",
+        "logo": "/mini-app/favicon-b.svg"
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Balancy",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Web, iOS, Android",
+        "url": "/",
+        "description": "Учет личных и командных финансов в Telegram mini app."
+      }
+    </script>
+  </head>
+  <body>
+    <main>
+      <section class="card">
+        <h1>Balancy</h1>
+        <p class="muted">
+          Удобный учет личных и командных финансов: счета, категории, операции, переводы, история и отчеты.
+        </p>
+        <div class="actions">
+          <a class="btn btn-primary" href="/mini-app/">Открыть приложение</a>
+          <a class="btn btn-ghost" href="/web">Веб-версия</a>
+          <a class="btn btn-ghost" href="/faq">FAQ</a>
+        </div>
+      </section>
+
+      <section class="grid" aria-label="Преимущества">
+        <article class="card">
+          <h2>Личный учет</h2>
+          <p class="muted">Контролируйте доходы и расходы по счетам и категориям.</p>
+        </article>
+        <article class="card">
+          <h2>Командный режим</h2>
+          <p class="muted">Работайте вместе: приглашения, участники, журнал изменений.</p>
+        </article>
+        <article class="card">
+          <h2>Отчеты и история</h2>
+          <p class="muted">Анализируйте динамику, экспортируйте CSV и отслеживайте операции.</p>
+        </article>
+      </section>
+    </main>
+  </body>
+  </html>

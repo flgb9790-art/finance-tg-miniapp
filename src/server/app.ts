@@ -150,6 +150,7 @@ const currentDirPath = path.dirname(currentFilePath);
 const projectRootPath = path.resolve(currentDirPath, "../../");
 const publicPath = path.join(projectRootPath, "public");
 const miniAppHtmlPath = path.join(publicPath, "mini-app", "index.html");
+const landingHtmlPath = path.join(publicPath, "index.html");
 const maxTelegramLoginAgeSeconds = 24 * 60 * 60;
 const sessionCookieName = "balancy_session";
 const sessionTtlSeconds = 60 * 60 * 24 * 30;
@@ -448,8 +449,53 @@ export function createHttpApp(): express.Express {
     );
   });
 
+  app.get("/robots.txt", (req, res) => {
+    const appUrl =
+      env.appUrl?.trim().replace(/\/+$/, "") ||
+      `${req.protocol}://${req.get("host")}`.replace(/\/+$/, "");
+
+    res.type("text/plain").send(
+      [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /api/",
+        "",
+        `Sitemap: ${appUrl}/sitemap.xml`
+      ].join("\n")
+    );
+  });
+
+  app.get("/sitemap.xml", (req, res) => {
+    const appUrl =
+      env.appUrl?.trim().replace(/\/+$/, "") ||
+      `${req.protocol}://${req.get("host")}`.replace(/\/+$/, "");
+
+    const urls = ["/", "/faq", "/web", "/mini-app/"];
+    const now = new Date().toISOString();
+
+    const body = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls
+  .map(
+    (entry) => `  <url>
+    <loc>${appUrl}${entry}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>${entry === "/" ? "1.0" : "0.7"}</priority>
+  </url>`
+  )
+  .join("\n")}
+</urlset>`;
+
+    res.type("application/xml").send(body);
+  });
+
   app.get("/", (_req, res) => {
-    res.redirect(302, "/mini-app/");
+    res.setHeader(
+      "Cache-Control",
+      "private, no-cache, no-store, max-age=0, must-revalidate"
+    );
+    res.sendFile(landingHtmlPath);
   });
 
   app.get("/web", (req, res) => {
