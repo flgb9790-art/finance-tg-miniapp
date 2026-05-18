@@ -604,13 +604,6 @@ export async function acceptWorkspaceInvite(
     };
   }
 
-  if (await userHasTeamWorkspace(userId)) {
-    throw new WorkspaceError(
-      "team_already_exists",
-      "Вы уже состоите в другой команде. В этой версии можно быть только в одной команде."
-    );
-  }
-
   const memberCount = await countWorkspaceMembers(workspace.id);
 
   if (memberCount >= workspace.max_members) {
@@ -806,21 +799,20 @@ export async function dissolveTeamWorkspace(
   }
 }
 
-export async function resetPersonalWorkspaceLedger(
+export async function resetWorkspaceLedger(
   workspaceId: string,
   actorUserId: string
 ): Promise<void> {
   const workspace = await getWorkspaceById(workspaceId);
 
-  if (!workspace || workspace.kind !== "personal") {
-    throw new WorkspaceError(
-      "forbidden",
-      "Сброс аккаунта доступен только в личном пространстве"
-    );
+  if (!workspace) {
+    throw new WorkspaceError("not_found", "Workspace not found");
   }
 
-  if (workspace.owner_user_id !== actorUserId) {
-    throw new WorkspaceError("forbidden", "Only the personal workspace owner can reset data");
+  const actor = await assertWorkspaceMember(workspaceId, actorUserId);
+
+  if (actor.role !== "owner" || workspace.owner_user_id !== actorUserId) {
+    throw new WorkspaceError("forbidden", "Сброс доступен только владельцу пространства");
   }
 
   const deleteByWorkspace = async (table: string): Promise<void> => {
@@ -830,7 +822,7 @@ export async function resetPersonalWorkspaceLedger(
       .eq("workspace_id", workspaceId);
 
     if (error) {
-      logSupabaseError(`resetPersonalWorkspaceLedger ${table}`, error);
+      logSupabaseError(`resetWorkspaceLedger ${table}`, error);
       throw error;
     }
   };

@@ -18,7 +18,7 @@ import {
   listActiveWorkspaceInvites,
   listWorkspaceMembersWithProfiles,
   listWorkspacesForUser,
-  resetPersonalWorkspaceLedger,
+  resetWorkspaceLedger,
   revokeWorkspaceInvite,
   updateTeamWorkspaceName
 } from "../services/workspaces.js";
@@ -470,7 +470,7 @@ export function registerWorkspaceRoutes(app: Express, deps: WorkspaceRoutesDeps)
   app.post("/api/account/reset", async (req, res) => {
     try {
       const { appUser, ws } = await requireWorkspaceContext(req, deps);
-      await resetPersonalWorkspaceLedger(ws.workspaceId, appUser.id);
+      await resetWorkspaceLedger(ws.workspaceId, appUser.id);
 
       res.json({
         ok: true,
