@@ -9,7 +9,7 @@
       content="Ответы на частые вопросы по Balancy: личный и командный режим, приглашения, операции, отчеты и безопасность данных."
     />
     <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
-    <link rel="canonical" href="/faq" />
+    <link rel="canonical" href="/faq.html" />
     <link rel="icon" type="image/svg+xml" href="/mini-app/favicon-b.svg" />
 
     <meta property="og:type" content="website" />
@@ -18,7 +18,7 @@
       property="og:description"
       content="Все основные вопросы о Balancy: от входа до работы в командном режиме."
     />
-    <meta property="og:url" content="/faq" />
+    <meta property="og:url" content="/faq.html" />
     <meta property="og:image" content="/landing/landing-preview.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Balancy - FAQ по учету финансов" />
@@ -141,7 +141,7 @@
         background:
           radial-gradient(circle at 78% 24%, rgba(255, 255, 255, 0.24), transparent 34%),
           linear-gradient(135deg, #6c62ff 0%, #4f3ddf 55%, #4332c4 100%);
-        box-shadow: 0 16px 36px rgba(79, 61, 223, 0.34);
+        box-shadow: 0 8px 18px rgba(79, 61, 223, 0.24);
       }
 
       .faq-list {
@@ -151,7 +151,7 @@
       }
 
       .topic-row {
-        margin-top: 14px;
+        margin-top: 24px;
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
@@ -183,8 +183,8 @@
         align-items: center;
         justify-content: space-between;
         gap: 14px;
-        font-size: 19px;
-        font-weight: 700;
+        font-size: 17px;
+        font-weight: 600;
       }
 
       .faq-item > summary::-webkit-details-marker {
@@ -201,12 +201,17 @@
         border-radius: 50%;
         border: 1px solid rgba(99, 102, 241, 0.55);
         color: #4b36d8;
-        line-height: 1;
-        font-size: 18px;
+        line-height: 26px;
+        font-size: 20px;
+        font-weight: 500;
+        font-family: "Segoe UI", Arial, sans-serif;
+        text-align: center;
+        transform: translateY(-0.5px);
       }
 
       .faq-item[open] > summary::after {
         content: "−";
+        transform: translateY(-1px);
       }
 
       .faq-answer {
@@ -240,7 +245,8 @@
         }
 
         .faq-item > summary {
-          font-size: 17px;
+          font-size: 16px;
+          font-weight: 550;
           padding: 16px;
         }
 
