@@ -179,12 +179,14 @@
         list-style: none;
         cursor: pointer;
         padding: 18px 20px;
+        padding-right: 56px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 14px;
         font-size: 17px;
         font-weight: 600;
+        position: relative;
       }
 
       .faq-item > summary::-webkit-details-marker {
@@ -192,26 +194,32 @@
       }
 
       .faq-item > summary::after {
-        content: "+";
-        flex: 0 0 auto;
+        content: "";
+        position: absolute;
+        right: 20px;
+        top: 50%;
         width: 26px;
         height: 26px;
-        display: grid;
-        place-items: center;
         border-radius: 50%;
         border: 1px solid rgba(99, 102, 241, 0.55);
-        color: #4b36d8;
-        line-height: 26px;
-        font-size: 20px;
-        font-weight: 500;
-        font-family: "Segoe UI", Arial, sans-serif;
-        text-align: center;
-        transform: translateY(-0.5px);
+        transform: translateY(-50%);
       }
 
-      .faq-item[open] > summary::after {
-        content: "−";
-        transform: translateY(-1px);
+      .faq-item > summary::before {
+        content: "";
+        position: absolute;
+        right: 33px;
+        top: 50%;
+        width: 10px;
+        height: 10px;
+        transform: translate(50%, -50%);
+        background:
+          linear-gradient(#4b36d8, #4b36d8) center / 10px 1.8px no-repeat,
+          linear-gradient(#4b36d8, #4b36d8) center / 1.8px 10px no-repeat;
+      }
+
+      .faq-item[open] > summary::before {
+        background: linear-gradient(#4b36d8, #4b36d8) center / 10px 1.8px no-repeat;
       }
 
       .faq-answer {
@@ -248,10 +256,19 @@
           font-size: 16px;
           font-weight: 550;
           padding: 16px;
+          padding-right: 52px;
         }
 
         .faq-answer {
           padding: 0 16px 16px;
+        }
+
+        .faq-item > summary::after {
+          right: 16px;
+        }
+
+        .faq-item > summary::before {
+          right: 29px;
         }
       }
     </style>
@@ -431,5 +448,29 @@
         </details>
       </section>
     </main>
+    <script>
+      (function setupFaqTopicLinks() {
+        var topicLinks = document.querySelectorAll(".topic-chip[href^='#']");
+        if (!topicLinks.length) return;
+
+        topicLinks.forEach(function (link) {
+          link.addEventListener("click", function (event) {
+            event.preventDefault();
+            var targetId = link.getAttribute("href");
+            if (!targetId) return;
+            var target = document.querySelector(targetId);
+            if (!(target instanceof HTMLDetailsElement)) return;
+
+            document.querySelectorAll(".faq-item").forEach(function (item) {
+              if (item !== target && item instanceof HTMLDetailsElement) {
+                item.open = false;
+              }
+            });
+            target.open = true;
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        });
+      })();
+    </script>
   </body>
 </html>
