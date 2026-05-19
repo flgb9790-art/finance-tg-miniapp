@@ -54,6 +54,24 @@
         padding: 44px 18px 54px;
       }
 
+      .crumbs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        color: #60698a;
+        font-size: 14px;
+      }
+
+      .crumbs a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .crumbs a:hover {
+        color: #4b36d8;
+      }
+
       .hero-card,
       .faq-item {
         background: rgba(255, 255, 255, 0.88);
@@ -130,6 +148,27 @@
         margin-top: 18px;
         display: grid;
         gap: 12px;
+      }
+
+      .topic-row {
+        margin-top: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .topic-chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        padding: 0 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(99, 102, 241, 0.22);
+        background: rgba(255, 255, 255, 0.9);
+        color: #3f3a9d;
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
       }
 
       .faq-item {
@@ -213,6 +252,26 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Главная",
+            "item": "/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "FAQ",
+            "item": "/faq"
+          }
+        ]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
         "@type": "FAQPage",
         "mainEntity": [
           {
@@ -220,7 +279,7 @@
             "name": "Как начать пользоваться Balancy?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Откройте приложение по ссылке /mini-app/, создайте первый счет и добавьте операцию дохода или расхода."
+              "text": "Откройте Balancy, создайте первый счет и добавьте операцию дохода или расхода. После этого на главной странице сразу появятся баланс и динамика."
             }
           },
           {
@@ -236,7 +295,7 @@
             "name": "Где посмотреть историю изменений?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "В командном режиме откройте раздел Настройки и нажмите кнопку Журнал изменений."
+              "text": "В командном режиме откройте раздел Настройки и нажмите кнопку Журнал изменений. Там фиксируются ключевые действия участников."
             }
           },
           {
@@ -249,10 +308,34 @@
           },
           {
             "@type": "Question",
-            "name": "Как связаться по вопросам внедрения Balancy?",
+            "name": "Можно ли принимать приглашение в команду, если у меня уже есть команда?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Используйте контактный канал, указанный в вашем боте/приложении Balancy."
+              "text": "Да, можно. Balancy позволяет принимать новые инвайты в командные пространства без ограничения на одно приглашение."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Как открыть Balancy на ПК?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "На десктопе используйте кнопку Открыть приложение или Веб-версия. Если установлен Telegram Desktop, откроется Mini App через deep-link."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Насколько безопасны данные в Balancy?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Balancy работает по HTTPS и использует авторизацию Telegram. Права доступа в рабочих пространствах зависят от роли пользователя."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Где получить помощь по внедрению Balancy?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Используйте контакты поддержки внутри вашего бота или внутренний канал команды, где разворачивается Balancy."
             }
           }
         ]
@@ -261,6 +344,12 @@
   </head>
   <body>
     <main class="page">
+      <nav class="crumbs" aria-label="Хлебные крошки">
+        <a href="/">Главная</a>
+        <span>/</span>
+        <span>FAQ</span>
+      </nav>
+
       <section class="hero-card">
         <h1 class="brand-title">FAQ Balancy</h1>
         <p class="subtitle">Частые вопросы о работе с личными и командными финансами в Balancy.</p>
@@ -270,10 +359,17 @@
           >
           <a class="btn" href="/">На главную</a>
         </div>
+        <div class="topic-row" aria-label="Темы FAQ">
+          <a class="topic-chip" href="#start">Старт</a>
+          <a class="topic-chip" href="#team">Команда</a>
+          <a class="topic-chip" href="#reports">Отчеты</a>
+          <a class="topic-chip" href="#security">Безопасность</a>
+          <a class="topic-chip" href="#desktop">ПК и Web</a>
+        </div>
       </section>
 
       <section class="faq-list" aria-label="Вопросы и ответы">
-        <details class="faq-item" open>
+        <details class="faq-item" id="start" open>
           <summary>Как начать пользоваться Balancy?</summary>
           <p class="faq-answer">
             Откройте приложение, создайте первый счет и добавьте операцию дохода или расхода. После этого на главной
@@ -281,11 +377,19 @@
           </p>
         </details>
 
-        <details class="faq-item">
+        <details class="faq-item" id="team">
           <summary>Можно ли работать в команде?</summary>
           <p class="faq-answer">
             Да. Владелец создает команду и приглашает участников по ссылке. Участники работают в общем рабочем
             пространстве и видят актуальные данные.
+          </p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Можно ли принять инвайт, если у меня уже есть команда?</summary>
+          <p class="faq-answer">
+            Да. В Balancy можно принимать приглашения в другие командные рабочие пространства, даже если вы уже
+            создали свою команду.
           </p>
         </details>
 
@@ -296,7 +400,7 @@
           </p>
         </details>
 
-        <details class="faq-item">
+        <details class="faq-item" id="reports">
           <summary>Поддерживается ли экспорт отчетов?</summary>
           <p class="faq-answer">
             Да. В разделе «Отчеты» выберите период и фильтры, после чего выгрузите данные в CSV для дальнейшего
@@ -304,7 +408,15 @@
           </p>
         </details>
 
-        <details class="faq-item">
+        <details class="faq-item" id="desktop">
+          <summary>Как открыть Balancy на ПК?</summary>
+          <p class="faq-answer">
+            Используйте кнопку «Открыть приложение» (через Telegram Desktop deep-link) или «Веб-версия» для работы в
+            браузере.
+          </p>
+        </details>
+
+        <details class="faq-item" id="security">
           <summary>Безопасно ли хранить данные в Balancy?</summary>
           <p class="faq-answer">
             Приложение работает по HTTPS и использует авторизацию Telegram. Доступ к данным определяется правами
