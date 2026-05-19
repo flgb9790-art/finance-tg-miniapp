@@ -470,7 +470,7 @@ export function createHttpApp(): express.Express {
       env.appUrl?.trim().replace(/\/+$/, "") ||
       `${req.protocol}://${req.get("host")}`.replace(/\/+$/, "");
 
-    const urls = ["/", "/faq", "/web", "/mini-app/"];
+    const urls = ["/", "/faq.html", "/web", "/mini-app/"];
     const now = new Date().toISOString();
 
     const body = `<?xml version="1.0" encoding="UTF-8"?>
