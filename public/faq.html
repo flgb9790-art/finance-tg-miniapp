@@ -19,77 +19,195 @@
       content="Все основные вопросы о Balancy: от входа до работы в командном режиме."
     />
     <meta property="og:url" content="/faq" />
-    <meta property="og:image" content="/mini-app/assets/balancy-welcome-16x9.svg" />
+    <meta property="og:image" content="/landing/landing-preview.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Balancy - FAQ по учету финансов" />
     <meta name="twitter:description" content="Частые вопросы и ответы по работе с Balancy." />
-    <meta name="twitter:image" content="/mini-app/assets/balancy-welcome-16x9.svg" />
+    <meta name="twitter:image" content="/landing/landing-preview.png" />
 
     <style>
       :root {
-        color-scheme: light;
+        --text: #0d102b;
+        --muted: #687086;
+        --line: #e4e7f2;
       }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         margin: 0;
-        font-family: Inter, Segoe UI, Arial, sans-serif;
-        background: #f3f5fa;
-        color: #12122b;
+        min-height: 100vh;
+        font-family: Inter, "SF Pro Display", "Segoe UI", Arial, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 11% 63%, rgba(99, 102, 241, 0.14), transparent 25%),
+          radial-gradient(circle at 78% 13%, rgba(99, 102, 241, 0.16), transparent 34%),
+          radial-gradient(circle at 61% 82%, rgba(99, 102, 241, 0.13), transparent 34%),
+          linear-gradient(135deg, #ffffff 0%, #f8f9ff 43%, #f2efff 100%);
       }
-      main {
-        max-width: 900px;
+
+      .page {
+        width: min(1020px, 100%);
         margin: 0 auto;
-        padding: 28px 20px 44px;
+        padding: 44px 18px 54px;
       }
-      .card {
-        background: #fff;
-        border: 1px solid rgba(18, 18, 43, 0.1);
-        border-radius: 16px;
-        padding: 22px;
+
+      .hero-card,
+      .faq-item {
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(228, 231, 242, 0.95);
+        border-radius: 18px;
+        box-shadow: 0 18px 46px rgba(42, 41, 92, 0.09);
       }
-      .stack {
-        display: grid;
-        gap: 12px;
+
+      .hero-card {
+        padding: 24px;
       }
-      h1 {
-        margin: 0 0 10px;
-        font-size: 32px;
-      }
-      h2 {
+
+      .brand-title {
         margin: 0 0 8px;
-        font-size: 20px;
+        font-size: 48px;
+        line-height: 1.04;
+        letter-spacing: -0.04em;
+        color: transparent;
+        background: linear-gradient(135deg, #1a2663 0%, #4a3bd8 48%, #6a63ff 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
       }
-      p {
+
+      .subtitle {
         margin: 0;
-        line-height: 1.55;
+        max-width: 700px;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.6;
       }
-      .muted {
-        color: #5c6470;
-      }
+
       .actions {
         margin-top: 16px;
         display: flex;
         gap: 10px;
         flex-wrap: wrap;
       }
+
       .btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 40px;
-        padding: 0 16px;
-        border-radius: 10px;
-        border: 1px solid transparent;
+        min-height: 46px;
+        padding: 0 18px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
         text-decoration: none;
-        font-weight: 600;
+        font-weight: 500;
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.84);
+        white-space: nowrap;
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease,
+          border-color 0.2s ease;
       }
+
+      .btn:hover {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 14px 30px rgba(41, 39, 99, 0.14);
+        border-color: rgba(79, 61, 223, 0.32);
+      }
+
       .btn-primary {
-        background: #312e81;
         color: #fff;
+        border: 0;
+        background:
+          radial-gradient(circle at 78% 24%, rgba(255, 255, 255, 0.24), transparent 34%),
+          linear-gradient(135deg, #6c62ff 0%, #4f3ddf 55%, #4332c4 100%);
+        box-shadow: 0 16px 36px rgba(79, 61, 223, 0.34);
       }
-      .btn-ghost {
-        border-color: rgba(18, 18, 43, 0.2);
-        color: #12122b;
-        background: #fff;
+
+      .faq-list {
+        margin-top: 18px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .faq-item {
+        overflow: hidden;
+      }
+
+      .faq-item > summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 18px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        font-size: 19px;
+        font-weight: 700;
+      }
+
+      .faq-item > summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .faq-item > summary::after {
+        content: "+";
+        flex: 0 0 auto;
+        width: 26px;
+        height: 26px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        border: 1px solid rgba(99, 102, 241, 0.55);
+        color: #4b36d8;
+        line-height: 1;
+        font-size: 18px;
+      }
+
+      .faq-item[open] > summary::after {
+        content: "−";
+      }
+
+      .faq-answer {
+        margin: 0;
+        padding: 0 20px 18px;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.58;
+      }
+
+      @media (max-width: 640px) {
+        .page {
+          padding: 28px 12px 42px;
+        }
+
+        .brand-title {
+          font-size: 40px;
+        }
+
+        .subtitle {
+          font-size: 15px;
+        }
+
+        .actions {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .btn {
+          width: 100%;
+        }
+
+        .faq-item > summary {
+          font-size: 17px;
+          padding: 16px;
+        }
+
+        .faq-answer {
+          padding: 0 16px 16px;
+        }
       }
     </style>
     <script type="application/ld+json">
@@ -142,50 +260,58 @@
     </script>
   </head>
   <body>
-    <main>
-      <section class="card">
-        <h1>FAQ Balancy</h1>
-        <p class="muted">
-          Частые вопросы о работе с личными и командными финансами в Balancy.
-        </p>
+    <main class="page">
+      <section class="hero-card">
+        <h1 class="brand-title">FAQ Balancy</h1>
+        <p class="subtitle">Частые вопросы о работе с личными и командными финансами в Balancy.</p>
         <div class="actions">
-          <a class="btn btn-primary" href="/mini-app/">Открыть приложение</a>
-          <a class="btn btn-ghost" href="/">На главную</a>
+          <a class="btn btn-primary" href="https://t.me/MyBalancy_bot?startapp=app" target="_blank" rel="noopener noreferrer"
+            >Открыть приложение</a
+          >
+          <a class="btn" href="/">На главную</a>
         </div>
       </section>
 
-      <section class="stack" aria-label="Вопросы и ответы" style="margin-top: 14px">
-        <article class="card">
-          <h2>Как начать пользоваться Balancy?</h2>
-          <p class="muted">
-            Откройте приложение, создайте первый счет и добавьте операцию. После этого на главной появятся баланс и динамика.
+      <section class="faq-list" aria-label="Вопросы и ответы">
+        <details class="faq-item" open>
+          <summary>Как начать пользоваться Balancy?</summary>
+          <p class="faq-answer">
+            Откройте приложение, создайте первый счет и добавьте операцию дохода или расхода. После этого на главной
+            автоматически появятся баланс и динамика.
           </p>
-        </article>
-        <article class="card">
-          <h2>Можно ли работать в команде?</h2>
-          <p class="muted">
-            Да, владелец создает команду и приглашает участников по ссылке. Все операции команды ведутся в общем пространстве.
+        </details>
+
+        <details class="faq-item">
+          <summary>Можно ли работать в команде?</summary>
+          <p class="faq-answer">
+            Да. Владелец создает команду и приглашает участников по ссылке. Участники работают в общем рабочем
+            пространстве и видят актуальные данные.
           </p>
-        </article>
-        <article class="card">
-          <h2>Где смотреть историю изменений?</h2>
-          <p class="muted">
-            В командном режиме откройте Настройки и используйте кнопку Журнал изменений.
+        </details>
+
+        <details class="faq-item">
+          <summary>Где смотреть историю изменений?</summary>
+          <p class="faq-answer">
+            В командном режиме откройте настройки и нажмите «Журнал изменений». Там видно кто и когда обновлял данные.
           </p>
-        </article>
-        <article class="card">
-          <h2>Поддерживается ли экспорт отчетов?</h2>
-          <p class="muted">
-            Да. В разделе Отчеты можно выбрать период и скачать CSV.
+        </details>
+
+        <details class="faq-item">
+          <summary>Поддерживается ли экспорт отчетов?</summary>
+          <p class="faq-answer">
+            Да. В разделе «Отчеты» выберите период и фильтры, после чего выгрузите данные в CSV для дальнейшего
+            анализа.
           </p>
-        </article>
-        <article class="card">
-          <h2>Безопасно ли хранить данные в Balancy?</h2>
-          <p class="muted">
-            Приложение работает по HTTPS и использует стандартную авторизацию Telegram в соответствии с настройками окружения.
+        </details>
+
+        <details class="faq-item">
+          <summary>Безопасно ли хранить данные в Balancy?</summary>
+          <p class="faq-answer">
+            Приложение работает по HTTPS и использует авторизацию Telegram. Доступ к данным определяется правами
+            пользователя в рабочем пространстве.
           </p>
-        </article>
+        </details>
       </section>
     </main>
   </body>
-  </html>
+</html>

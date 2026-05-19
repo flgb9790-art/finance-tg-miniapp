@@ -114,6 +114,21 @@
         white-space: nowrap;
         color: var(--text);
         background: rgba(255, 255, 255, 0.84);
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease,
+          border-color 0.2s ease,
+          filter 0.2s ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 14px 30px rgba(41, 39, 99, 0.14);
+        border-color: rgba(79, 61, 223, 0.32);
+      }
+
+      .btn:active {
+        transform: translateY(0) scale(0.99);
       }
 
       .btn-primary {
@@ -124,6 +139,11 @@
           radial-gradient(circle at 78% 24%, rgba(255, 255, 255, 0.24), transparent 34%),
           linear-gradient(135deg, #6c62ff 0%, #4f3ddf 55%, #4332c4 100%);
         box-shadow: 0 16px 36px rgba(79, 61, 223, 0.34);
+      }
+
+      .btn-primary:hover {
+        filter: brightness(1.04);
+        box-shadow: 0 20px 40px rgba(79, 61, 223, 0.44);
       }
 
       .btn-icon {
