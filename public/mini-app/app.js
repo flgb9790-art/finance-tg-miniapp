@@ -231,7 +231,7 @@
           <strong>\u041F\u043E\u043A\u0430 \u043F\u0443\u0441\u0442\u043E</strong>
           <p class="account-meta">\u0414\u043E\u0431\u0430\u0432\u044C\u0442\u0435 \u043F\u0435\u0440\u0432\u0443\u044E \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044E \u043D\u0430 \u044D\u0442\u043E\u0439 \u0432\u043A\u043B\u0430\u0434\u043A\u0435.</p>
         </div>
-      `;return}d.innerHTML=l.map(m=>{const p=m.kind==="income"?"income":"expense",E=readCategoryUiMeta(m.id,u),f=getCategoryIconGlyph(E.iconKey),h=resolveCategoryDotColor(m,t),b=escapeHtml(rgbaFromHex(h,.14)),y=escapeHtml(rgbaFromHex(h,.28));return`
+        `;return}d.innerHTML=l.map(m=>{const p=m.kind==="income"?"income":"expense",E=readCategoryUiMeta(m.id,u),f=getCategoryIconGlyph(E.iconKey),h=resolveCategoryDotColor(m,t),b=escapeHtml(rgbaFromHex(h,.14)),y=escapeHtml(rgbaFromHex(h,.28)),g=String(E.description??"").trim();return`
           <div class="category-item swipe-row">
             <div class="swipe-row-actions" aria-hidden="true">
               <button class="icon-action-button" data-category-edit-id="${escapeHtml(m.id)}" type="button" title="\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u0442\u044C" aria-label="\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043A\u0430\u0442\u0435\u0433\u043E\u0440\u0438\u044E">
@@ -246,6 +246,7 @@
                 <span class="category-strip-icon-tile" style="background:${b};box-shadow:inset 0 0 0 1px ${y}" aria-hidden="true">${f}</span>
                 <div class="category-strip-text">
                   <strong class="category-strip-name">${escapeHtml(m.name)}</strong>
+                  ${g?`<span class="category-strip-desc">${escapeHtml(g)}</span>`:""}
                   <span class="category-strip-kind category-strip-kind--${p}">${escapeHtml(formatKind(m.kind))}</span>
                 </div>
               </div>
